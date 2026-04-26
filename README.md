@@ -1,43 +1,49 @@
-# Astro Starter Kit: Minimal
+# Unveiled MVP
+
+Astro SSR starter configured with Bun, Drizzle ORM, PGlite for local development, managed Postgres for cloud, Better Auth, Tailwind CSS, shadcn/ui conventions, Biome, and TanStack Query.
+
+## Commands
 
 ```sh
-bun create astro@latest -- --template minimal
+bun install
+bun run dev
+bun run check
+bun run build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Database
 
-## 🚀 Project Structure
+Local development uses PGlite when `DATABASE_URL` is empty. The local database is stored at `./.data/pglite` and is ignored by Git.
 
-Inside of your Astro project, you'll see the following folders and files:
+```sh
+bun run db:generate
+bun run db:migrate:local
+```
+
+Cloud environments should set `DATABASE_URL` to a Postgres connection string, then run:
+
+```sh
+bun run db:migrate
+```
+
+Copy `.env.example` to `.env` for local values.
+
+## Auth
+
+Better Auth is configured in `src/lib/auth.ts` and mounted at:
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+/api/auth/[...all]
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+The Drizzle schema includes the Better Auth `user`, `session`, `account`, and `verification` tables.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## UI Workbench
 
-Any static assets, like images, can be placed in the `public/` directory.
+Use Astro pages as a lightweight Storybook alternative:
 
-## 🧞 Commands
+```text
+/workbench
+```
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+The workbench includes shadcn/ui-style button variants and a TanStack Query React island backed by `/api/health.json`.

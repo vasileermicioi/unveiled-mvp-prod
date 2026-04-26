@@ -3,6 +3,9 @@ dist/
 # generated types
 .astro/
 
+# local PGlite database
+.data/
+
 # dependencies
 node_modules/
 
