@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!dist", "!.astro", "!node_modules", "!drizzle"]
+    "includes": [
+      "**",
+      "!dist",
+      "!.astro",
+      "!node_modules",
+      "!drizzle",
+      "!_old_app"
+    ]
   },
   "formatter": {
     "enabled": true,

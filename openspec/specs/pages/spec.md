@@ -1,0 +1,419 @@
+## Purpose
+
+Define visible page behavior using `_old_app/` only as a visual UI and displayed-data reference. These specs describe what users see, what they can interact with, and what displayed data is required.
+
+## Requirements
+
+### Requirement: Landing Page
+This requirement SHALL use legacy reference path: `_old_app/App.tsx`.
+
+The landing page SHALL visually match the legacy landing experience while using the target app architecture.
+
+#### Scenario: Visible elements render
+- **WHEN** the landing page is shown
+- **THEN** it displays the Unveiled logo/nav, headline `Unveiled Berlin`, short membership value proposition, Discover CTA, How it works CTA, live-synced trust line, and a bordered login/register form
+- **AND** the form shows segmented Login/Register controls, high-contrast error/notice panels, field labels, primary submit CTA, Guest Explorer action, Admin Access visual action, and trust labels `Member-owned`, `Verified Events`, `Berlin Focused`
+
+#### Scenario: Displayed fields render
+- **WHEN** Login mode is active
+- **THEN** visible fields are Email and Password
+- **AND** a Forgot password action is visible
+- **WHEN** Register mode is active
+- **THEN** visible fields are First Name, Last Name, Email, and Password
+
+#### Scenario: User interactions render feedback
+- **WHEN** the user switches Login/Register mode
+- **THEN** the active segment uses dark fill and inactive segment is muted
+- **WHEN** visible validation or status messages exist
+- **THEN** messages appear above fields in high-contrast panels with compact uppercase text and icon treatment where shown
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the landing form renders
+- **THEN** it uses a white panel, thick dark border, offset shadow, compact uppercase labels, grey field backgrounds, and a full-width dark primary CTA
+
+#### Scenario: Data requirements are met
+- **WHEN** the landing page renders
+- **THEN** required display data is localized hero copy, CTA labels, form labels, visible error/notice text, and optional venue-check-in message text
+
+### Requirement: Public Discover Page
+This requirement SHALL use legacy reference path: `_old_app/components/AccessPage.tsx`.
+
+The public discover page SHALL preview membership value, current event access, and active partner venues.
+
+#### Scenario: Visible elements render
+- **WHEN** the page is shown
+- **THEN** it displays a bordered hero panel with eyebrow text, large headline, support copy, membership CTA, browse-live-events CTA, and three stacked stat cards
+- **AND** it displays three value cards, featured events, membership category cards, missing-favorite-venue support panel, and partner venue cards
+
+#### Scenario: Displayed fields render
+- **WHEN** stats render
+- **THEN** visible fields are upcoming event count, active partner venue count, and membership value copy
+- **WHEN** partner cards render
+- **THEN** visible fields are partner logo or initial, partner name, and partner address
+
+#### Scenario: User interactions render
+- **WHEN** membership CTA is activated
+- **THEN** the user is taken toward membership
+- **WHEN** browse-live-events CTA or event card CTA is activated
+- **THEN** the event browsing or event-detail experience opens visibly
+
+#### Scenario: Empty state renders
+- **WHEN** there are no upcoming featured events
+- **THEN** a dashed bordered empty state says no upcoming events are available
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the page is displayed on desktop
+- **THEN** the hero uses a two-column layout with text left and stat cards right
+- **WHEN** displayed on mobile
+- **THEN** sections stack, category cards use a compact grid, and event cards collapse responsively
+
+#### Scenario: Data requirements are met
+- **WHEN** the page renders
+- **THEN** required display data is upcoming events, active partners, membership category labels, support email, and localized section copy
+
+### Requirement: How It Works Page
+This requirement SHALL use legacy reference path: `_old_app/components/HowItWorksPage.tsx`.
+
+The how-it-works page SHALL explain the product through a simple visually branded sequence.
+
+#### Scenario: Visible elements render
+- **WHEN** the page is shown
+- **THEN** it displays an intro panel with eyebrow, headline, and support copy
+- **AND** it displays three step cards and a dark value-point band
+
+#### Scenario: Displayed fields render
+- **WHEN** step cards render
+- **THEN** each card displays a numbered title and body copy
+- **WHEN** value points render
+- **THEN** three compact uppercase value statements are visible
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the page renders
+- **THEN** it uses thick borders, white cards, dark/yellow contrast, uppercase headings, and a three-column desktop step grid that stacks on mobile
+
+#### Scenario: Data requirements are met
+- **WHEN** the page renders
+- **THEN** required display data is localized intro copy, three step titles, three step bodies, and three value-point labels
+
+### Requirement: FAQ Page And Help Section
+This requirement SHALL use legacy reference path: `_old_app/components/FaqPage.tsx`, `_old_app/components/HelpSection.tsx`.
+
+The FAQ page SHALL present support content and a visible accordion interaction.
+
+#### Scenario: Visible elements render
+- **WHEN** the FAQ page is shown
+- **THEN** it displays Support eyebrow, FAQ heading, support summary copy, help panel, support email link, accordion questions, answers, and Back CTA
+
+#### Scenario: User interactions render
+- **WHEN** a question row is selected
+- **THEN** the selected answer opens below the question
+- **AND** the open question row uses dark fill with white text
+- **WHEN** the open question is selected again
+- **THEN** the answer closes
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the help panel renders
+- **THEN** it uses a white bordered panel with offset shadow, compact uppercase section label, and bordered question rows
+
+#### Scenario: Data requirements are met
+- **WHEN** FAQ content renders
+- **THEN** required display data is localized questions, answers, support email, page summary copy, and Back CTA label
+
+### Requirement: Onboarding Page
+This requirement SHALL use legacy reference path: `_old_app/components/Onboarding.tsx`.
+
+The onboarding page SHALL visually match the four-step preference wizard.
+
+#### Scenario: Visible elements render
+- **WHEN** onboarding is shown
+- **THEN** it displays step counter, percentage, progress bar, headline, subtitle, step content, Back action when applicable, and primary Next/Skip/Finish CTA
+
+#### Scenario: Displayed fields render
+- **WHEN** step one is active
+- **THEN** age group buttons `18-25`, `26-35`, `36-50`, and `50+` are visible
+- **WHEN** step two is active
+- **THEN** interest and mood chips are visible
+- **WHEN** step three is active
+- **THEN** district chips and max-distance slider are visible
+- **WHEN** step four is active
+- **THEN** timing chips, preferred day buttons, language chips, and accessibility toggle are visible
+
+#### Scenario: User interactions render
+- **WHEN** a chip, age button, day button, language button, or accessibility toggle is selected
+- **THEN** selected state is visually distinct from unselected state
+- **WHEN** max distance changes
+- **THEN** the visible kilometer value updates
+- **WHEN** no age group is selected on step one
+- **THEN** the primary CTA reads as Skip
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the wizard renders
+- **THEN** it uses a centered narrow layout, animated step transitions, rounded preference chips, and a dark primary CTA with brand-yellow hover treatment
+
+#### Scenario: Data requirements are met
+- **WHEN** onboarding renders
+- **THEN** required display data is localized labels, age options, interest options, mood options, district options, distance range/value, timing options, day options, language options, accessibility state, and submit/loading text
+
+### Requirement: Membership Page
+This requirement SHALL use legacy reference path: `_old_app/components/CheckoutView.tsx`.
+
+The membership page SHALL display the plan, payment controls, status states, and support links as visible UI behavior.
+
+#### Scenario: Visible elements render
+- **WHEN** membership page is shown
+- **THEN** it displays a bordered white panel with membership eyebrow, headline, `Basic Berlin` plan, `29€/mo`, perk list, payment method controls, promo-code field, submit CTA, guarantee copy, support email, and FAQ link
+
+#### Scenario: Displayed fields render
+- **WHEN** Credit Card is selected
+- **THEN** visible fields are Card Number, Expiry Date, and CVV/CVC
+- **WHEN** PayPal is selected
+- **THEN** a dashed redirect placeholder is visible instead of card fields
+
+#### Scenario: Validation messages render
+- **WHEN** card input is visibly invalid
+- **THEN** field-level messages appear below the related card field in small bold uppercase text
+
+#### Scenario: Status states render
+- **WHEN** frozen status is shown
+- **THEN** a dark frozen-account notice appears and payment controls are disabled
+- **WHEN** already-active status is shown
+- **THEN** a success panel with celebration icon, success title/subtitle, and Enter The Void CTA appears
+- **WHEN** submission is loading
+- **THEN** the submit CTA shows a spinner
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the page renders
+- **THEN** it uses a white bordered panel, left plan/perk column, right payment column, dark/yellow CTA treatment, compact uppercase labels, and responsive single-column mobile layout
+
+#### Scenario: Data requirements are met
+- **WHEN** membership UI renders
+- **THEN** required display data is plan name, plan price, perk labels, selected payment method, promo code value, visible field validation messages, frozen/success copy, guarantee text, and support email
+
+### Requirement: App Discovery And Saved Pages
+This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/EventCard.tsx`, `_old_app/components/EventMap.tsx`.
+
+The discovery and saved pages SHALL show filterable event grids, optional map, membership status banner, and empty states.
+
+#### Scenario: Visible elements render
+- **WHEN** discovery is shown
+- **THEN** it displays optional venue-check-in message, optional membership gate banner, active range summary, visible event count, filter toggle, map toggle, optional filter panel, optional map panel, event grid, and no-results state
+
+#### Scenario: Filter fields render
+- **WHEN** the filter panel is open
+- **THEN** visible controls are Category select, Kulturhaus/venue select, From date, To date, Reset action, and Apply Filters action
+- **AND** the filter toggle shows active filter count when filters are selected
+
+#### Scenario: Sorting and grouping behavior is visible
+- **WHEN** events are displayed
+- **THEN** they appear as event cards in a responsive grid
+- **AND** the active range label reflects Today, saved upcoming events, from date, until date, or date range
+
+#### Scenario: User interactions render
+- **WHEN** filter toggle is opened
+- **THEN** the map panel closes
+- **WHEN** map toggle is opened
+- **THEN** the filter panel closes
+- **WHEN** Reset is selected
+- **THEN** selected filters visibly clear
+- **WHEN** an event card is selected
+- **THEN** the booking/detail modal opens
+
+#### Scenario: Loading/error/empty states render
+- **WHEN** the map is loading
+- **THEN** a branded loading state appears in the reserved map area
+- **WHEN** map loading fails
+- **THEN** a dark error state with retry action appears
+- **WHEN** no events match filters
+- **THEN** a large dashed no-results state appears
+
+#### Scenario: Visual parity is preserved
+- **WHEN** desktop discovery renders
+- **THEN** controls are large bordered horizontal panels and cards use a three-column grid
+- **WHEN** mobile discovery renders
+- **THEN** controls stack vertically and cards collapse to one column
+
+#### Scenario: Data requirements are met
+- **WHEN** discovery renders
+- **THEN** required display data is event list, saved-event indicators, category options, partner options, selected date filters, active range label, visible count, map coordinates, and localized banner/empty text
+
+### Requirement: Booking Modal
+This requirement SHALL use legacy reference path: `_old_app/components/BookingModal.tsx`.
+
+The booking modal SHALL visually match the full-screen event detail and redemption flow.
+
+#### Scenario: Visible elements render
+- **WHEN** an event is opened
+- **THEN** a full-screen brand-yellow modal displays logo, close button, category/partner line, event title, description, location, ticket quantity selector, total credits, primary action, and no-refunds copy
+
+#### Scenario: Displayed fields render
+- **WHEN** the modal opens
+- **THEN** displayed fields are event category, partner name, title, description, address, credit price, selected ticket count, total credits, and available redemption-related labels after success
+
+#### Scenario: User interactions render
+- **WHEN** plus or minus controls are used
+- **THEN** ticket quantity visibly changes between 1 and 3 and total credits updates
+- **WHEN** close is selected
+- **THEN** the modal disappears
+
+#### Scenario: Success states render
+- **WHEN** waitlist success is shown
+- **THEN** the success headline uses waitlist copy and a return-to-feed action remains visible
+- **WHEN** booking success is shown for password entry
+- **THEN** a white bordered code panel shows password label, code, copy action, and explanatory text
+- **WHEN** booking success is shown for voucher entry
+- **THEN** a dark code panel shows voucher code, copy action, partner ticket link, visible URL, and missing-partner-website fallback when needed
+- **AND** calendar download, ticket support email, and return-to-feed action are visible
+
+#### Scenario: Visual parity is preserved
+- **WHEN** the modal renders on desktop
+- **THEN** event copy and ticket controls use a two-column layout with large spacing
+- **WHEN** it renders on mobile
+- **THEN** sections stack and remain scrollable inside the full-screen modal
+
+#### Scenario: Data requirements are met
+- **WHEN** booking modal renders
+- **THEN** required display data is selected event display data, viewer booking gate labels, ticket quantity, total credit calculation, redemption type, redemption code, redemption URL, copied state, loading state, and support email
+
+### Requirement: Bookings Page
+This requirement SHALL use legacy reference path: `_old_app/components/BookingsView.tsx`.
+
+The bookings page SHALL display ticket cards or a clear empty state.
+
+#### Scenario: Empty state renders
+- **WHEN** no bookings are visible
+- **THEN** a dashed bordered centered empty state shows ticket icon, headline, explanatory copy, and Back to Feed CTA
+
+#### Scenario: Booking list renders
+- **WHEN** bookings exist
+- **THEN** the page displays heading, active booking count, support panel, support email, FAQ action, and a responsive grid of booking cards
+
+#### Scenario: Booking card renders
+- **WHEN** a booking card appears
+- **THEN** visible elements include event image, event title, ticket count badge, formatted event date, event address, ticket-code label, code value, optional copy button, venue QR guidance, and status badge
+
+#### Scenario: User interactions render
+- **WHEN** code copy is selected
+- **THEN** the copy icon changes to a check state temporarily
+- **WHEN** FAQ action is selected
+- **THEN** FAQ content becomes available visibly
+
+#### Scenario: Visual parity is preserved
+- **WHEN** booking cards render
+- **THEN** cards use bordered white panels, image blocks with grayscale hover behavior, compact uppercase metadata, and two-column desktop grid with one-column mobile layout
+
+#### Scenario: Data requirements are met
+- **WHEN** bookings render
+- **THEN** required display data is booking count, booking status, ticket count, redemption code, checked-in timestamp when present, event image, event title, event date label, event address, and support email
+
+### Requirement: Profile Page
+This requirement SHALL use legacy reference path: `_old_app/components/ProfileView.tsx`.
+
+The profile page SHALL display identity, wallet, billing, and preference editing panels.
+
+#### Scenario: Visible elements render
+- **WHEN** profile is shown
+- **THEN** it displays page heading, `Identity // Billing // Vibes` subtitle, wallet card with credits, Refill CTA, Identity panel, Billing panel, and Vibes panel
+
+#### Scenario: Displayed fields render
+- **WHEN** Identity panel renders
+- **THEN** fields are First Name, Last Name, Email, and Save Account CTA
+- **WHEN** Billing panel renders
+- **THEN** it shows current plan, active badge, next bill date, billing address field, payment method choices, Apply Changes CTA, and Cancel Subscription action
+- **WHEN** Vibes panel renders
+- **THEN** it shows age group buttons, interest chips, mood chips, district chips, radius slider, timing chips, preferred day buttons, language chips, accessibility toggle, and Save Vibes CTA
+
+#### Scenario: User interactions render
+- **WHEN** payment method or preference controls are selected
+- **THEN** selected states are visually distinct
+- **WHEN** billing update is loading
+- **THEN** Apply Changes shows a spinner
+
+#### Scenario: Visual parity is preserved
+- **WHEN** desktop profile renders
+- **THEN** Identity, Billing, and Vibes appear as three columns
+- **WHEN** mobile profile renders
+- **THEN** panels stack vertically
+
+#### Scenario: Data requirements are met
+- **WHEN** profile renders
+- **THEN** required display data is first name, last name, email, credits, billing address, payment method, plan label, status label, derived next bill date, and preference values
+
+### Requirement: Partner Portal Page
+This requirement SHALL use legacy reference path: `_old_app/components/PartnerPortal.tsx`.
+
+The partner portal SHALL display venue identity, QR link, guest search/filter/export controls, and guest check-in rows.
+
+#### Scenario: Visible elements render
+- **WHEN** partner portal is shown
+- **THEN** it displays portal label, partner name, address, total guests card, venue QR check-in link panel, search input, event filter select, Download Codes action, and guest list panel
+
+#### Scenario: Displayed fields render
+- **WHEN** guest row renders
+- **THEN** it displays guest short ID, ticket count, code, event title, check-in status text, optional checked-in timestamp, and check-in button
+
+#### Scenario: User interactions render
+- **WHEN** Copy Venue Link is selected
+- **THEN** the button temporarily reads Copied
+- **WHEN** search text changes
+- **THEN** guest rows visibly filter by booking/code text
+- **WHEN** event filter changes
+- **THEN** guest rows visibly filter by event
+- **WHEN** Download Codes is disabled
+- **THEN** it appears muted
+- **WHEN** check-in is not available
+- **THEN** the row action appears disabled with Not Open Yet or checked-in state
+
+#### Scenario: Visual parity is preserved
+- **WHEN** partner portal renders
+- **THEN** it uses softer rounded white operational panels, slate/indigo accents, a centered medium-width container, and guest rows that stack on mobile and align horizontally on wider screens
+
+#### Scenario: Data requirements are met
+- **WHEN** partner portal renders
+- **THEN** required display data is partner name, partner address, venue QR URL or missing-token text, total guest count, event options, guest booking rows, booking codes, ticket counts, booking statuses, event titles, and checked-in timestamps
+
+### Requirement: Admin Page
+This requirement SHALL use legacy reference path: `_old_app/components/AdminPanel.tsx`.
+
+The admin page SHALL display dashboard, events, partners, and members management surfaces with visible operational controls.
+
+#### Scenario: Dashboard visible elements render
+- **WHEN** dashboard tab is active
+- **THEN** it displays Admin Central heading, quick actions, stat cards, recent bookings panel, export partner select, and CSV export action
+- **AND** stat cards show total bookings, credits burned, active partners, and total guests
+
+#### Scenario: Events manager visible elements render
+- **WHEN** events tab is active
+- **THEN** it displays Events Library heading, Add New Event toggle, optional event form, and event rows with image, title, partner, date, code strategy, ticket availability, credit price, export, edit, and delete actions
+
+#### Scenario: Event form visible fields render
+- **WHEN** event form is open
+- **THEN** visible controls include title, partner host, credit price, capacity, redemption method, code strategy or voucher fields, description, optional info, accessibility checkbox, language chips/custom language, age group chips, timing mode, single/series mode, date/time fields, venue address display, image URL/upload, image preview, and publish CTA
+
+#### Scenario: Series builder visible fields render
+- **WHEN** series mode is active
+- **THEN** visible controls include manual slots or date-range mode, start date, end date, weekday buttons, daily time slots, excluded dates, add/remove controls, total occurrence count, and first ten occurrence preview
+
+#### Scenario: Partners manager visible elements render
+- **WHEN** partners tab is active
+- **THEN** it displays Partner Registry heading, Register New Partner toggle, optional partner form, and partner rows with logo/initial, name, address, contact email, venue QR token, portal login, create portal login action, generate venue QR action, edit action, and delete action
+
+#### Scenario: Partner form visible fields render
+- **WHEN** partner form is open
+- **THEN** visible fields are Institution Name, Contact Email, Full Venue Address, Logo URL/upload, logo preview, and submit CTA
+- **AND** visible validation messages appear below invalid required fields
+
+#### Scenario: Members manager visible elements render
+- **WHEN** users tab is active
+- **THEN** it displays Membership HQ heading, refresh action, member search field, loading state, empty state, and member rows with name, email, role, subscription status, credits, booking count, event-open count, and expand/collapse label
+
+#### Scenario: Expanded member visible elements render
+- **WHEN** a member row is expanded
+- **THEN** it displays credit adjustment input, Apply Credits action, Freeze/Unfreeze action, preferences, history counts, past events, waitlist/saved/recent-intel sections, and behavior summaries
+
+#### Scenario: Visual parity is preserved
+- **WHEN** admin surfaces render
+- **THEN** they use dense bordered operational panels, bold uppercase headings, large stat cards, row dividers, strong action buttons, and responsive form grids
+
+#### Scenario: Data requirements are met
+- **WHEN** admin surfaces render
+- **THEN** required display data is dashboard metrics, recent booking rows, event rows, partner rows, member rows, form field values/options, loading/empty messages, validation messages, and export-ready visible columns

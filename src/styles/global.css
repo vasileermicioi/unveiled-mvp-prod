@@ -3,6 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "EK Notice Sans";
+  src:
+    url("/fonts/EKNoticeSans-Black.woff2") format("woff2"),
+    url("/fonts/EKNoticeSans-Black.woff") format("woff"),
+    url("/fonts/EKNoticeSans-Black.otf") format("opentype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 900;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -22,42 +33,200 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-grey: var(--brand-grey);
+  --color-brand-dark: var(--brand-dark);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.99 0.003 247.86);
-  --foreground: oklch(0.2 0.025 255.72);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.025 255.72);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.025 255.72);
-  --primary: oklch(0.48 0.15 250.69);
-  --primary-foreground: oklch(0.98 0.005 247.86);
-  --secondary: oklch(0.93 0.016 255.51);
-  --secondary-foreground: oklch(0.26 0.034 254.14);
-  --muted: oklch(0.95 0.01 255.51);
-  --muted-foreground: oklch(0.48 0.035 257.12);
-  --accent: oklch(0.91 0.04 187.06);
-  --accent-foreground: oklch(0.24 0.042 196.18);
-  --destructive: oklch(0.58 0.21 27.33);
-  --border: oklch(0.9 0.013 255.51);
-  --input: oklch(0.9 0.013 255.51);
-  --ring: oklch(0.62 0.16 248.12);
+  --brand-yellow: #faff86;
+  --brand-cream: #feffe2;
+  --brand-grey: #f5f5f5;
+  --brand-dark: #202621;
+  --brand-white: #ffffff;
+  --brand-error: #ff5f57;
+  --brand-success: #35c46b;
+  --background: var(--brand-grey);
+  --foreground: var(--brand-dark);
+  --card: var(--brand-white);
+  --card-foreground: var(--brand-dark);
+  --popover: var(--brand-white);
+  --popover-foreground: var(--brand-dark);
+  --primary: var(--brand-dark);
+  --primary-foreground: var(--brand-white);
+  --secondary: var(--brand-yellow);
+  --secondary-foreground: var(--brand-dark);
+  --muted: var(--brand-cream);
+  --muted-foreground: rgb(32 38 33 / 0.62);
+  --accent: var(--brand-yellow);
+  --accent-foreground: var(--brand-dark);
+  --destructive: var(--brand-error);
+  --border: var(--brand-dark);
+  --input: var(--brand-dark);
+  --ring: var(--brand-dark);
+  --font-body:
+    "Work Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display:
+    "EK Notice Sans", Impact, Haettenschweiler, "Arial Black", sans-serif;
+  --shadow-unveiled-sm: 4px 4px 0 0 var(--brand-dark);
+  --shadow-unveiled: 6px 6px 0 0 var(--brand-dark);
+  --shadow-unveiled-lg: 12px 12px 0 0 var(--brand-dark);
+  --border-unveiled: 3px solid var(--brand-dark);
+  --border-unveiled-lg: 4px solid var(--brand-dark);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--brand-yellow);
+    color: var(--brand-dark);
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family:
-      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", sans-serif;
+    min-width: 320px;
+    overflow-x: hidden;
+    background: var(--brand-yellow);
+    color: var(--brand-dark);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--brand-dark);
+    color: var(--brand-yellow);
+  }
+
+  h1,
+  h2,
+  h3,
+  .display-font {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .unveiled-border {
+    border: var(--border-unveiled);
+  }
+
+  .unveiled-border-lg {
+    border: var(--border-unveiled-lg);
+  }
+
+  .unveiled-shadow {
+    box-shadow: var(--shadow-unveiled);
+  }
+
+  .unveiled-shadow-lg {
+    box-shadow: var(--shadow-unveiled-lg);
+  }
+
+  .unveiled-card-hover {
+    transition:
+      box-shadow 180ms ease,
+      transform 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .unveiled-card-hover:hover {
+    box-shadow: 8px 8px 0 0 var(--brand-dark);
+    transform: translate(-2px, -2px);
+  }
+
+  .unveiled-meta {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .headline-xl {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 11vw, 7.5rem);
+    font-weight: 900;
+    line-height: 0.82;
+    text-transform: uppercase;
+  }
+
+  .headline-lg {
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 8vw, 5.5rem);
+    font-weight: 900;
+    line-height: 0.86;
+    text-transform: uppercase;
+  }
+
+  .headline-md {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.75rem);
+    font-weight: 900;
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+
+  .page-shell {
+    min-height: 100vh;
+    background: var(--brand-yellow);
+  }
+
+  .content-shell {
+    width: min(100%, 1280px);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  @layer components {
+    .unveiled-border {
+      border-width: 4px;
+    }
+
+    .unveiled-shadow {
+      box-shadow: var(--shadow-unveiled-lg);
+    }
+
+    .unveiled-card-hover:hover {
+      box-shadow: 16px 16px 0 0 var(--brand-dark);
+      transform: translate(-4px, -4px);
+    }
+
+    .content-shell {
+      padding-inline: 1.5rem;
+    }
   }
 }
