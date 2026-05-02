@@ -28,3 +28,4 @@ pnpm-debug.log*
 
 # refactor
 _old_app/
+.tmp/
