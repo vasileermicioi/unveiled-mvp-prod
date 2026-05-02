@@ -6,27 +6,17 @@ import {
   Calendar,
   Check,
   ChevronDown,
-  CircleAlert,
-  Coins,
   Copy,
   CreditCard,
   Download,
   ExternalLink,
-  Filter,
   Heart,
   Loader2,
-  Lock,
-  LogOut,
   Mail,
-  Map as MapIcon,
   MapPin,
   Minus,
   Plus,
   QrCode,
-  Settings,
-  Ticket,
-  User,
-  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -46,6 +36,22 @@ import {
   TextInput,
 } from "@/components/ui/unveiled-primitives";
 import {
+  AppShell,
+  DiscoveryShell,
+  ModalShell,
+  PageShell,
+  ShellLogo,
+} from "@/components/unveiled/app-shell";
+import {
+  createDemoShellViewModel,
+  demoDiscoveryShell,
+  demoModalShell,
+  demoPageShells,
+  demoShellStates,
+  type ShellNavItemId,
+  shellDemoViews,
+} from "@/lib/app-shell-view-models";
+import {
   adminEvents,
   bookings,
   derivedValues,
@@ -57,7 +63,8 @@ import {
 } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 
-type View =
+type View = Extract<
+  ShellNavItemId,
   | "landing"
   | "discover"
   | "how"
@@ -66,218 +73,8 @@ type View =
   | "bookings"
   | "profile"
   | "partner"
-  | "admin";
-
-const views: { id: View; label: string }[] = [
-  { id: "landing", label: "Landing" },
-  { id: "discover", label: "Discover" },
-  { id: "how", label: "How it works" },
-  { id: "faq", label: "FAQ" },
-  { id: "member", label: "Member feed" },
-  { id: "bookings", label: "Bookings" },
-  { id: "profile", label: "Profile" },
-  { id: "partner", label: "Partner" },
-  { id: "admin", label: "Admin" },
-];
-
-function Logo({ className }: { className?: string }) {
-  return (
-    <img
-      src="/logos/unveiled-logo-black.svg"
-      alt="Unveiled"
-      className={cn("h-7 w-auto md:h-9", className)}
-    />
-  );
-}
-
-function ShellNav({
-  view,
-  setView,
-  savedCount,
-}: {
-  view: View;
-  setView: (view: View) => void;
-  savedCount: number;
-}) {
-  const isOperational = view === "partner" || view === "admin";
-  const isMember = ["member", "bookings", "profile"].includes(view);
-
-  return (
-    <nav className="sticky top-0 z-50 border-b-4 border-brand-dark bg-white">
-      <div className="content-shell">
-        <div className="flex min-h-20 items-center justify-between gap-4">
-          <button
-            type="button"
-            className="flex min-w-0 items-center gap-3 text-left"
-            onClick={() => setView(isOperational ? view : "landing")}
-          >
-            <Logo />
-            {!isMember && !isOperational ? (
-              <span className="hidden max-w-56 text-[8px] font-black uppercase tracking-[0.25em] opacity-45 md:block">
-                Curated cultural access in Berlin
-              </span>
-            ) : null}
-          </button>
-
-          <div className="hidden items-center gap-1 lg:flex">
-            {views.slice(1, 4).map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                variant={view === item.id ? "active" : "ghost"}
-                size="sm"
-                onClick={() => setView(item.id)}
-              >
-                {item.label}
-              </Button>
-            ))}
-            {isOperational ? (
-              <Button type="button" variant="active" size="sm">
-                <Settings />
-                {view === "admin" ? "Admin" : "Partner"}
-              </Button>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-3">
-            {isMember ? (
-              <>
-                <Button
-                  type="button"
-                  variant={view === "member" ? "active" : "ghost"}
-                  size="sm"
-                  className="hidden sm:inline-flex"
-                  onClick={() => setView("member")}
-                >
-                  Current access
-                </Button>
-                <Button
-                  type="button"
-                  variant={view === "bookings" ? "active" : "muted"}
-                  size="icon-sm"
-                  onClick={() => setView("bookings")}
-                  aria-label="Bookings"
-                >
-                  <Ticket />
-                </Button>
-                <Button
-                  type="button"
-                  variant={view === "member" ? "active" : "muted"}
-                  size="icon-sm"
-                  onClick={() => setView("member")}
-                  aria-label="Saved events"
-                >
-                  <Bookmark />
-                  {savedCount > 0 ? (
-                    <span className="absolute -mt-8 ml-7 grid size-5 place-items-center rounded-full bg-brand-dark text-[9px] text-white">
-                      {savedCount}
-                    </span>
-                  ) : null}
-                </Button>
-                <Badge tone="yellow" className="hidden sm:inline-flex">
-                  <Coins className="size-3" />
-                  {profile.credits} credits
-                </Badge>
-                <Button
-                  type="button"
-                  variant={view === "profile" ? "active" : "muted"}
-                  size="icon-sm"
-                  onClick={() => setView("profile")}
-                  aria-label="Profile"
-                >
-                  <User />
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => setView("member")}
-              >
-                Become a member
-              </Button>
-            )}
-
-            <div className="flex overflow-hidden border-2 border-brand-dark bg-brand-grey">
-              <button
-                type="button"
-                className="bg-brand-dark px-2 py-1 text-[9px] font-black text-white"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 text-[9px] font-black opacity-45"
-              >
-                DE
-              </button>
-            </div>
-            {isMember || isOperational ? (
-              <Button
-                type="button"
-                variant="muted"
-                size="icon-sm"
-                aria-label="Log out"
-              >
-                <LogOut />
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function StatusBanners({ view }: { view: View }) {
-  if (view === "member") {
-    return (
-      <div className="grid gap-3">
-        <Panel
-          tone="cream"
-          shadow={false}
-          className="flex items-start gap-3 p-4"
-        >
-          <CircleAlert className="mt-0.5 size-5 shrink-0" />
-          <div>
-            <p className="unveiled-meta">Venue check-in message</p>
-            <p className="text-sm font-bold">
-              Venue check-in registered successfully.
-            </p>
-          </div>
-        </Panel>
-        <Panel
-          tone="white"
-          shadow={false}
-          className="flex items-start gap-3 p-4"
-        >
-          <Lock className="mt-0.5 size-5 shrink-0" />
-          <div>
-            <p className="unveiled-meta">Membership notice</p>
-            <p className="text-sm font-bold">
-              Your membership is active. Credits refresh on the next billing
-              date.
-            </p>
-          </div>
-        </Panel>
-      </div>
-    );
-  }
-  if (view === "partner") {
-    return (
-      <Panel
-        tone="yellow"
-        shadow={false}
-        className="flex items-center justify-between gap-4 p-4"
-      >
-        <span className="unveiled-meta">Partner portal active</span>
-        <Badge tone="white">{derivedValues.guestTotal}</Badge>
-      </Panel>
-    );
-  }
-  return null;
-}
+  | "admin"
+>;
 
 function LandingPage({ setView }: { setView: (view: View) => void }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -663,204 +460,199 @@ function BookingModal({
   const total = count * event.creditPrice;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-brand-yellow">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b-4 border-brand-dark bg-brand-yellow/90 p-5 backdrop-blur md:p-10">
-        <Logo />
-        <button
-          type="button"
-          className="transition-transform hover:rotate-90"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          <X className="size-10 md:size-12" />
-        </button>
-      </header>
-
-      <div className="mx-auto grid w-full max-w-7xl gap-8 p-5 md:p-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
-        {success ? (
-          <div className="lg:col-span-2">
-            <div className="mx-auto max-w-5xl space-y-10 text-center">
-              <h2 className="headline-xl">
-                {event.remainingCapacity === 0
-                  ? "Waitlist success"
-                  : "Booking success"}
-              </h2>
-              <div className="grid gap-6 text-left md:grid-cols-2">
-                <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
-                  <p className="unveiled-meta opacity-55">
-                    {event.ticketType === "Voucher"
-                      ? "Ticket code"
-                      : "Password to enter"}
-                  </p>
-                  <p className="mt-6 break-all font-display text-5xl font-black uppercase">
-                    {event.ticketType === "Voucher" ? "UNV-BER-25" : "UNVEILED"}
-                  </p>
-                  <Button
-                    type="button"
-                    className="mt-8"
-                    variant={
-                      copied
-                        ? "copied"
-                        : event.ticketType === "Voucher"
-                          ? "yellow"
-                          : "primary"
-                    }
-                    onClick={() => setCopied(true)}
-                  >
-                    {copied ? <Check /> : <Copy />}
-                    {copied ? "Copied" : "Copy code"}
-                  </Button>
-                </Panel>
-                <Panel
-                  tone="dark"
-                  className="flex flex-col justify-between gap-8"
+    <ModalShell
+      modal={{
+        ...demoModalShell,
+        heading: event.title,
+        metadata: `${event.category} // ${event.partnerName}`,
+        layout: success ? "single" : "split",
+      }}
+      onAction={(actionId) => {
+        if (actionId === "close-modal") onClose();
+      }}
+    >
+      {success ? (
+        <div className="lg:col-span-2">
+          <div className="mx-auto max-w-5xl space-y-10 text-center">
+            <h2 className="headline-xl">
+              {event.remainingCapacity === 0
+                ? "Waitlist success"
+                : "Booking success"}
+            </h2>
+            <div className="grid gap-6 text-left md:grid-cols-2">
+              <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
+                <p className="unveiled-meta opacity-55">
+                  {event.ticketType === "Voucher"
+                    ? "Ticket code"
+                    : "Password to enter"}
+                </p>
+                <p className="mt-6 break-all font-display text-5xl font-black uppercase">
+                  {event.ticketType === "Voucher" ? "UNV-BER-25" : "UNVEILED"}
+                </p>
+                <Button
+                  type="button"
+                  className="mt-8"
+                  variant={
+                    copied
+                      ? "copied"
+                      : event.ticketType === "Voucher"
+                        ? "yellow"
+                        : "primary"
+                  }
+                  onClick={() => setCopied(true)}
                 >
-                  <div>
-                    <p className="unveiled-meta opacity-55">Save the date</p>
-                    <p className="headline-md mt-5">Mark the moment</p>
-                  </div>
-                  <Button type="button" variant="yellow">
-                    <Calendar />
-                    Sync to life
-                  </Button>
-                </Panel>
-              </div>
-              <Button type="button" variant="link" onClick={onClose}>
-                Return to feed
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <section className="space-y-8">
-              <div>
-                <p className="unveiled-meta opacity-45">
-                  {event.category}
-                  {" // "}
-                  {event.partnerName}
-                </p>
-                <h2 className="headline-lg mt-4">{event.title}</h2>
-              </div>
-              <p className="max-w-2xl text-xl font-bold leading-relaxed opacity-80">
-                {event.description}
-              </p>
-              <div className="border-t-2 border-brand-dark/15 pt-6">
-                <p className="unveiled-meta opacity-45">Location</p>
-                <p className="mt-2 text-2xl font-black uppercase tracking-tight">
-                  {event.address}
-                </p>
-              </div>
-              <Panel tone="cream" shadow={false} className="p-4">
-                <p className="unveiled-meta">Gate copy</p>
-                <p className="mt-2 text-sm font-bold">
-                  Active membership required. Password and voucher redemption
-                  states are rendered after booking.
-                </p>
+                  {copied ? <Check /> : <Copy />}
+                  {copied ? "Copied" : "Copy code"}
+                </Button>
               </Panel>
-            </section>
-
-            <Panel tone="dark" className="space-y-8">
-              <div className="flex items-center justify-between gap-4">
-                <span className="unveiled-meta">Tickets</span>
-                <div className="flex items-center gap-7 font-display text-5xl font-black">
-                  <button
-                    type="button"
-                    onClick={() => setCount(Math.max(1, count - 1))}
-                  >
-                    <Minus />
-                  </button>
-                  {count}
-                  <button
-                    type="button"
-                    onClick={() => setCount(Math.min(3, count + 1))}
-                  >
-                    <Plus />
-                  </button>
-                </div>
-              </div>
-              <Divider className="bg-brand-yellow/25" />
-              <div className="flex items-end justify-between gap-4">
-                <span className="unveiled-meta opacity-55">Total</span>
-                <span className="font-display text-5xl font-black uppercase">
-                  {total} credits
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="yellow"
-                className="w-full"
-                onClick={() => setSuccess(true)}
+              <Panel
+                tone="dark"
+                className="flex flex-col justify-between gap-8"
               >
-                {event.remainingCapacity === 0
-                  ? "Join waitlist"
-                  : "Confirm access"}
-                <ArrowRight />
-              </Button>
+                <div>
+                  <p className="unveiled-meta opacity-55">Save the date</p>
+                  <p className="headline-md mt-5">Mark the moment</p>
+                </div>
+                <Button type="button" variant="yellow">
+                  <Calendar />
+                  Sync to life
+                </Button>
+              </Panel>
+            </div>
+            <Button type="button" variant="link" onClick={onClose}>
+              Return to feed
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <section className="space-y-8">
+            <div>
+              <p className="unveiled-meta opacity-45">
+                {event.category}
+                {" // "}
+                {event.partnerName}
+              </p>
+              <h2 className="headline-lg mt-4">{event.title}</h2>
+            </div>
+            <p className="max-w-2xl text-xl font-bold leading-relaxed opacity-80">
+              {event.description}
+            </p>
+            <div className="border-t-2 border-brand-dark/15 pt-6">
+              <p className="unveiled-meta opacity-45">Location</p>
+              <p className="mt-2 text-2xl font-black uppercase tracking-tight">
+                {event.address}
+              </p>
+            </div>
+            <Panel tone="cream" shadow={false} className="p-4">
+              <p className="unveiled-meta">Gate copy</p>
+              <p className="mt-2 text-sm font-bold">
+                Active membership required. Password and voucher redemption
+                states are rendered after booking.
+              </p>
             </Panel>
-          </>
-        )}
-      </div>
-    </div>
+          </section>
+
+          <Panel tone="dark" className="space-y-8">
+            <div className="flex items-center justify-between gap-4">
+              <span className="unveiled-meta">Tickets</span>
+              <div className="flex items-center gap-7 font-display text-5xl font-black">
+                <button
+                  type="button"
+                  onClick={() => setCount(Math.max(1, count - 1))}
+                >
+                  <Minus />
+                </button>
+                {count}
+                <button
+                  type="button"
+                  onClick={() => setCount(Math.min(3, count + 1))}
+                >
+                  <Plus />
+                </button>
+              </div>
+            </div>
+            <Divider className="bg-brand-yellow/25" />
+            <div className="flex items-end justify-between gap-4">
+              <span className="unveiled-meta opacity-55">Total</span>
+              <span className="font-display text-5xl font-black uppercase">
+                {total} credits
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="yellow"
+              className="w-full"
+              onClick={() => setSuccess(true)}
+            >
+              {event.remainingCapacity === 0
+                ? "Join waitlist"
+                : "Confirm access"}
+              <ArrowRight />
+            </Button>
+          </Panel>
+        </>
+      )}
+    </ModalShell>
   );
 }
 
 function MemberFeed() {
   const [selected, setSelected] = useState<EventCardView | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
-  const [mapOpen, setMapOpen] = useState(true);
+  const [mapOpen, setMapOpen] = useState(false);
   const visible = useMemo(() => events, []);
+  const discovery = {
+    ...demoDiscoveryShell,
+    filtersOpen,
+    mapOpen,
+    visibleResultCount: visible.length,
+    resultCountLabel: derivedValues.visibleEventCount,
+    activeRangeLabel: derivedValues.activeRangeLabel,
+  };
 
   return (
-    <div className="space-y-6 py-8">
-      <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-        <div>
-          <Badge tone="white">{derivedValues.activeRangeLabel}</Badge>
-          <h1 className="headline-lg mt-4">Today in Berlin.</h1>
-          <p className="mt-3 text-sm font-black uppercase tracking-widest opacity-55">
-            {derivedValues.visibleEventCount}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant={filtersOpen ? "active" : "secondary"}
-            onClick={() => setFiltersOpen(!filtersOpen)}
-          >
-            <Filter />
-            Filters
-          </Button>
-          <Button
-            type="button"
-            variant={mapOpen ? "active" : "secondary"}
-            onClick={() => setMapOpen(!mapOpen)}
-          >
-            <MapIcon />
-            Map
-          </Button>
-        </div>
-      </div>
-      {filtersOpen ? <DiscoveryFilters /> : null}
-      {mapOpen ? (
-        <Panel tone="cream" shadow={false} className="min-h-72 p-0">
-          <div className="grid h-full min-h-72 place-items-center border-[12px] border-brand-cream bg-[linear-gradient(135deg,#feffe2_25%,#f5f5f5_25%,#f5f5f5_50%,#feffe2_50%,#feffe2_75%,#f5f5f5_75%)] bg-[length:36px_36px]">
-            <div className="border-4 border-brand-dark bg-white p-5 text-center unveiled-shadow">
-              <MapPin className="mx-auto mb-3 size-8" />
-              <p className="unveiled-meta">Map markers</p>
-              <p className="mt-2 text-sm font-bold">
-                {events.map((event) => event.mapLabel).join(" // ")}
-              </p>
+    <div className="space-y-6">
+      <Panel tone="white">
+        <Badge tone="yellow">Member feed</Badge>
+        <h1 className="headline-lg mt-5">Today in Berlin.</h1>
+      </Panel>
+      <DiscoveryShell
+        discovery={discovery}
+        filterPanel={<DiscoveryFilters />}
+        mapPanel={
+          <Panel tone="cream" shadow={false} className="min-h-72 p-0">
+            <div className="grid h-full min-h-72 place-items-center border-[12px] border-brand-cream bg-[linear-gradient(135deg,#feffe2_25%,#f5f5f5_25%,#f5f5f5_50%,#feffe2_50%,#feffe2_75%,#f5f5f5_75%)] bg-[length:36px_36px]">
+              <div className="border-4 border-brand-dark bg-white p-5 text-center unveiled-shadow">
+                <MapPin className="mx-auto mb-3 size-8" />
+                <p className="unveiled-meta">Map markers</p>
+                <p className="mt-2 text-sm font-bold">
+                  {events.map((event) => event.mapLabel).join(" // ")}
+                </p>
+              </div>
             </div>
-          </div>
-        </Panel>
-      ) : null}
-      <div className="grid gap-5 lg:grid-cols-3">
-        {visible.map((event) => (
-          <EventCard key={event.id} event={event} onOpen={setSelected} />
-        ))}
-      </div>
+          </Panel>
+        }
+        onAction={(actionId) => {
+          if (actionId === "toggle-filters") {
+            setFiltersOpen((open) => !open);
+            setMapOpen(false);
+          }
+          if (actionId === "toggle-map") {
+            setMapOpen((open) => !open);
+            setFiltersOpen(false);
+          }
+        }}
+      >
+        <div className="grid gap-5 lg:grid-cols-3">
+          {visible.map((event) => (
+            <EventCard key={event.id} event={event} onOpen={setSelected} />
+          ))}
+        </div>
+      </DiscoveryShell>
       <StatePanel
-        title="No results"
-        text="Filter combinations render this bordered empty state with reset action."
+        title={demoShellStates.empty.title}
+        text={demoShellStates.empty.message}
         action={
           <Button type="button" variant="secondary">
             Reset all
@@ -1207,7 +999,7 @@ function AdminPanel() {
           </Field>
           <Panel tone="cream" shadow={false} className="p-4">
             <p className="unveiled-meta">Logo preview</p>
-            <Logo className="mt-4" />
+            <ShellLogo className="mt-4" />
           </Panel>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary">
@@ -1265,27 +1057,48 @@ function AdminPanel() {
 export function VisualSystemApp() {
   const [view, setView] = useState<View>("landing");
   const savedCount = events.filter((event) => event.saved).length;
+  const shell = createDemoShellViewModel(view, {
+    savedCount,
+    creditCount: profile.credits,
+  });
+  const pageShell =
+    view === "member"
+      ? demoPageShells.member
+      : view === "partner"
+        ? demoPageShells.partner
+        : view === "admin"
+          ? demoPageShells.admin
+          : view === "discover"
+            ? demoPageShells.public
+            : undefined;
+  const navigateShell = (actionId: string) => {
+    const target = shellDemoViews.find((item) => item.id === actionId);
+    if (target) setView(target.id as View);
+    if (actionId === "membership") setView("landing");
+    if (actionId === "logo")
+      setView(view === "partner" || view === "admin" ? view : "landing");
+    if (actionId === "profile") setView("profile");
+    if (actionId === "logout") setView("landing");
+  };
 
   return (
-    <div className="page-shell">
-      <ShellNav view={view} setView={setView} savedCount={savedCount} />
-      <main className="content-shell space-y-6 pb-16">
-        <div className="pt-6">
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
-            {views.map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                size="sm"
-                variant={view === item.id ? "active" : "secondary"}
-                onClick={() => setView(item.id)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
+    <AppShell shell={shell} onAction={navigateShell}>
+      <div className="pt-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+          {shellDemoViews.map((item) => (
+            <Button
+              key={item.id}
+              type="button"
+              size="sm"
+              variant={view === item.id ? "active" : "secondary"}
+              onClick={() => setView(item.id as View)}
+            >
+              {item.label}
+            </Button>
+          ))}
         </div>
-        <StatusBanners view={view} />
+      </div>
+      <PageShell page={pageShell} onAction={navigateShell}>
         {view === "landing" ? <LandingPage setView={setView} /> : null}
         {view === "discover" ? <PublicDiscover setView={setView} /> : null}
         {view === "how" ? <HowItWorks /> : null}
@@ -1295,7 +1108,7 @@ export function VisualSystemApp() {
         {view === "profile" ? <ProfilePage /> : null}
         {view === "partner" ? <PartnerPortal /> : null}
         {view === "admin" ? <AdminPanel /> : null}
-      </main>
-    </div>
+      </PageShell>
+    </AppShell>
   );
 }
