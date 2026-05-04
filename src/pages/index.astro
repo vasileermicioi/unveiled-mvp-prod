@@ -1,8 +1,13 @@
 ---
 import { VisualSystemApp } from "@/components/unveiled/visual-system-app";
 import BaseLayout from "@/layouts/base-layout.astro";
+import { createShellFromViewer } from "@/lib/auth-display";
+import { getViewer } from "@/lib/auth-profile";
+
+const viewer = await getViewer(Astro.request);
+const initialShell = createShellFromViewer(viewer, "landing");
 ---
 
 <BaseLayout title="Unveiled">
-  <VisualSystemApp client:load />
+  <VisualSystemApp client:load initialShell={initialShell} />
 </BaseLayout>

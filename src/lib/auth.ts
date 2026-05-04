@@ -11,6 +11,10 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async () => {
+      // Email delivery is wired by a later provider-specific change. This keeps
+      // the recovery endpoint non-enumerating in development.
+    },
   },
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,

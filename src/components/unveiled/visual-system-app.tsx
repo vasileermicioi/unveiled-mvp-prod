@@ -43,6 +43,7 @@ import {
   ShellLogo,
 } from "@/components/unveiled/app-shell";
 import {
+  type AppShellViewModel,
   createDemoShellViewModel,
   demoDiscoveryShell,
   demoModalShell,
@@ -1054,13 +1055,18 @@ function AdminPanel() {
   );
 }
 
-export function VisualSystemApp() {
+export function VisualSystemApp({
+  initialShell,
+}: {
+  initialShell?: AppShellViewModel;
+}) {
   const [view, setView] = useState<View>("landing");
   const savedCount = events.filter((event) => event.saved).length;
-  const shell = createDemoShellViewModel(view, {
+  const demoShell = createDemoShellViewModel(view, {
     savedCount,
     creditCount: profile.credits,
   });
+  const shell = view === "landing" && initialShell ? initialShell : demoShell;
   const pageShell =
     view === "member"
       ? demoPageShells.member
@@ -1071,14 +1077,17 @@ export function VisualSystemApp() {
           : view === "discover"
             ? demoPageShells.public
             : undefined;
-  const navigateShell = (actionId: string) => {
+  const navigateShell = async (actionId: string) => {
     const target = shellDemoViews.find((item) => item.id === actionId);
     if (target) setView(target.id as View);
     if (actionId === "membership") setView("landing");
     if (actionId === "logo")
       setView(view === "partner" || view === "admin" ? view : "landing");
     if (actionId === "profile") setView("profile");
-    if (actionId === "logout") setView("landing");
+    if (actionId === "logout") {
+      await fetch("/api/account/logout", { method: "POST" });
+      setView("landing");
+    }
   };
 
   return (
