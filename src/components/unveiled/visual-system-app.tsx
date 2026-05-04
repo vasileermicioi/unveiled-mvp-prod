@@ -1,3 +1,5 @@
+import { actions } from "astro:actions";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -19,6 +21,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +55,9 @@ import {
   type ShellNavItemId,
   shellDemoViews,
 } from "@/lib/app-shell-view-models";
+import { formFailure } from "@/lib/forms/action-result";
+import { applyFormActionResult } from "@/lib/forms/client-action";
+import { loginSchema, signupSchema } from "@/lib/forms/schemas";
 import {
   adminEvents,
   bookings,
@@ -77,8 +83,77 @@ type View = Extract<
   | "admin"
 >;
 
+type AuthLandingValues = {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  callbackURL?: string;
+};
+
+async function runServerAction<TData>(
+  action: () => Promise<{
+    data?:
+      | { ok: true; notice?: { message: string }; data?: TData }
+      | { ok: false; formError?: string };
+    error?: unknown;
+  }>,
+  setMessage: (message: string) => void,
+) {
+  const result = await action();
+  if (result.error || !result.data) {
+    setMessage("The request could not be completed.");
+    return;
+  }
+  if (!result.data.ok) {
+    setMessage(result.data.formError ?? "Check the highlighted fields.");
+    return;
+  }
+  setMessage(result.data.notice?.message ?? "Saved.");
+}
+
 function LandingPage({ setView }: { setView: (view: View) => void }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [formMessage, setFormMessage] = useState(
+    "Use your member email to continue.",
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const activeSchema = mode === "login" ? loginSchema : signupSchema;
+  const form = useForm<AuthLandingValues>({
+    resolver: zodResolver(activeSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      callbackURL: "/",
+    },
+  });
+
+  async function submitAuth(values: AuthLandingValues) {
+    setIsSubmitting(true);
+    setFormMessage("");
+
+    const result =
+      mode === "login"
+        ? await actions.login(values)
+        : await actions.signup(values);
+
+    const actionResult = result.error
+      ? formFailure("The request could not be completed.")
+      : result.data;
+
+    await applyFormActionResult(actionResult, {
+      form,
+      onFormError: setFormMessage,
+      onNotice: setFormMessage,
+    });
+
+    setIsSubmitting(false);
+    if (actionResult.ok && actionResult.data?.nextPath) {
+      window.location.assign(actionResult.data.nextPath);
+    }
+  }
 
   return (
     <div className="grid gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-16">
@@ -156,36 +231,51 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
         <Panel tone="cream" shadow={false} className="p-4">
           <p className="unveiled-meta">Notice</p>
           <p className="text-sm font-bold">
-            Use your member email to continue.
+            {formMessage || "Use your member email to continue."}
           </p>
         </Panel>
-        <div className="grid gap-4">
+        <form className="grid gap-4" onSubmit={form.handleSubmit(submitAuth)}>
           {mode === "signup" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="First name"
-                error={formContracts.landing.visibleMessages[2]}
+                error={form.formState.errors.firstName?.message}
               >
-                <TextInput placeholder="Alex" />
+                <TextInput placeholder="Alex" {...form.register("firstName")} />
               </Field>
-              <Field label="Last name">
-                <TextInput placeholder="Morgan" />
+              <Field
+                label="Last name"
+                error={form.formState.errors.lastName?.message}
+              >
+                <TextInput
+                  placeholder="Morgan"
+                  {...form.register("lastName")}
+                />
               </Field>
             </div>
           ) : null}
-          <Field label="Email" error={formContracts.landing.visibleMessages[0]}>
-            <TextInput type="email" placeholder="you@example.com" />
+          <Field label="Email" error={form.formState.errors.email?.message}>
+            <TextInput
+              type="email"
+              placeholder="you@example.com"
+              {...form.register("email")}
+            />
           </Field>
           <Field
             label="Password"
+            error={form.formState.errors.password?.message}
             helper={formContracts.landing.visibleMessages[1]}
           >
-            <TextInput type="password" placeholder="••••••••" />
+            <TextInput
+              type="password"
+              placeholder="••••••••"
+              {...form.register("password")}
+            />
           </Field>
-        </div>
-        <Button type="button" className="w-full" loading={mode === "signup"}>
-          {mode === "login" ? "Login" : "Start membership"}
-        </Button>
+          <Button type="submit" className="w-full" loading={isSubmitting}>
+            {mode === "login" ? "Login" : "Start membership"}
+          </Button>
+        </form>
       </Panel>
     </div>
   );
@@ -740,6 +830,16 @@ function BookingsPage() {
 }
 
 function ProfilePage() {
+  const [profileMessage, setProfileMessage] = useState(
+    "Profile changes submit through server actions.",
+  );
+  const [membershipMessage, setMembershipMessage] = useState(
+    "Membership details use the placeholder action until provider integration.",
+  );
+  const [preferenceMessage, setPreferenceMessage] = useState(
+    "Preference and onboarding state can be saved from this panel.",
+  );
+
   return (
     <div className="space-y-8 py-8">
       <Panel
@@ -760,28 +860,140 @@ function ProfilePage() {
         />
       </Panel>
       <div className="grid gap-5 lg:grid-cols-3">
-        <Panel tone="cream" shadow={false}>
+        <Panel
+          tone="cream"
+          shadow={false}
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(
+              event.currentTarget as HTMLFormElement,
+            );
+            void runServerAction(
+              () =>
+                actions.updateProfile({
+                  firstName: String(formData.get("firstName") || ""),
+                  lastName: String(formData.get("lastName") || ""),
+                  language: "DE",
+                  billingAddress: String(formData.get("billingAddress") || ""),
+                  newsletterOptIn: formData.get("newsletterOptIn") === "on",
+                }),
+              setProfileMessage,
+            );
+          }}
+        >
           <p className="unveiled-meta">Identity</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
+            {profileMessage}
+          </p>
           <Field label="Name" className="mt-5">
-            <TextInput defaultValue={profile.name} />
+            <TextInput name="firstName" defaultValue="Alex" />
+          </Field>
+          <Field label="Last name" className="mt-4">
+            <TextInput name="lastName" defaultValue="Morgan" />
           </Field>
           <Field label="Email" className="mt-4">
             <TextInput defaultValue={profile.email} disabled />
           </Field>
+          <Field label="Billing address" className="mt-4">
+            <TextInput name="billingAddress" placeholder="Berlin" />
+          </Field>
+          <label className="mt-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
+            <input name="newsletterOptIn" type="checkbox" />
+            Newsletter
+          </label>
+          <Button type="submit" className="mt-5" variant="secondary">
+            Save profile
+          </Button>
         </Panel>
-        <Panel tone="white" shadow={false}>
+        <Panel
+          tone="white"
+          shadow={false}
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(
+              event.currentTarget as HTMLFormElement,
+            );
+            void runServerAction(
+              () =>
+                actions.updateMembership({
+                  paymentMethod: String(
+                    formData.get("paymentMethod") || "CARD",
+                  ),
+                  promoCode: String(formData.get("promoCode") || ""),
+                  cardNumber: String(formData.get("cardNumber") || ""),
+                  expiry: String(formData.get("expiry") || ""),
+                  cvc: String(formData.get("cvc") || ""),
+                  isFrozen: false,
+                  isActive: false,
+                }),
+              setMembershipMessage,
+            );
+          }}
+        >
           <p className="unveiled-meta">Billing</p>
           <p className="headline-md mt-5">{profile.monthlyCredits} credits</p>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
             {profile.billingLabel}
           </p>
-          <Button type="button" variant="secondary" className="mt-6">
+          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
+            {membershipMessage}
+          </p>
+          <Field label="Payment method" className="mt-5">
+            <SelectInput name="paymentMethod" defaultValue="CARD">
+              <option value="CARD">Card</option>
+              <option value="PAYPAL">PayPal</option>
+              <option value="SEPA">SEPA</option>
+            </SelectInput>
+          </Field>
+          <Field label="Card number" className="mt-4">
+            <TextInput name="cardNumber" defaultValue="424242424242" />
+          </Field>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Expiry">
+              <TextInput name="expiry" defaultValue="12/30" />
+            </Field>
+            <Field label="CVC">
+              <TextInput name="cvc" defaultValue="123" />
+            </Field>
+          </div>
+          <Field label="Promo code" className="mt-4">
+            <TextInput name="promoCode" placeholder="Optional" />
+          </Field>
+          <Button type="submit" variant="secondary" className="mt-6">
             <CreditCard />
-            Manage billing
+            Save billing
           </Button>
         </Panel>
-        <Panel tone="dark" shadow={false}>
+        <Panel
+          tone="dark"
+          shadow={false}
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void runServerAction(
+              () =>
+                actions.saveOnboarding({
+                  ageGroup: "26-35",
+                  interests: ["Theater", "Kino"],
+                  moods: ["Leicht"],
+                  districts: ["Mitte"],
+                  maxDistance: 10,
+                  timing: ["After Work"],
+                  preferredDays: ["Fr"],
+                  preferredLanguages: ["DE"],
+                  accessibility: false,
+                  onboardingComplete: true,
+                }),
+              setPreferenceMessage,
+            );
+          }}
+        >
           <p className="unveiled-meta opacity-55">Vibes</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-60">
+            {preferenceMessage}
+          </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {profile.vibes.map((vibe) => (
               <Badge key={vibe} tone="yellow">
@@ -794,6 +1006,9 @@ function ProfilePage() {
             <Loader2 className="size-4 animate-spin" />
             Loading preference preview
           </div>
+          <Button type="submit" variant="yellow" className="mt-6">
+            Save onboarding
+          </Button>
         </Panel>
       </div>
     </div>
@@ -801,6 +1016,10 @@ function ProfilePage() {
 }
 
 function PartnerPortal() {
+  const [checkInMessage, setCheckInMessage] = useState(
+    "Check-in actions enforce partner ownership on the server.",
+  );
+
   return (
     <div className="space-y-8 py-8">
       <Panel
@@ -865,12 +1084,28 @@ function PartnerPortal() {
                 guest.checkedInLabel === "Checked in" ? "copied" : "primary"
               }
               disabled={guest.checkedInLabel === "Disabled"}
+              onClick={() =>
+                void runServerAction(
+                  () =>
+                    actions.checkInBooking({
+                      bookingId: "demo-booking",
+                      partnerId: "demo-partner",
+                    }),
+                  setCheckInMessage,
+                )
+              }
             >
               {guest.checkedInLabel}
             </Button>
           </TableRow>
         ))}
       </TableShell>
+      <Panel tone="cream" shadow={false} className="p-4">
+        <p className="unveiled-meta">Check-in status</p>
+        <p className="mt-2 text-sm font-bold uppercase tracking-widest">
+          {checkInMessage}
+        </p>
+      </Panel>
       <StatePanel
         title="No guests"
         text="Search and event filters can render an empty guest list state."
@@ -880,6 +1115,10 @@ function PartnerPortal() {
 }
 
 function AdminPanel() {
+  const [adminMessage, setAdminMessage] = useState(
+    "Admin forms submit through authorized Astro Actions.",
+  );
+
   return (
     <div className="space-y-8 py-8">
       <Panel tone="white">
@@ -927,11 +1166,57 @@ function AdminPanel() {
         ))}
       </TableShell>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Panel tone="white" shadow={false} className="space-y-4">
+        <Panel
+          tone="white"
+          shadow={false}
+          className="space-y-4"
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(
+              event.currentTarget as HTMLFormElement,
+            );
+            void runServerAction(
+              () =>
+                actions.saveEvent({
+                  partnerId: "demo-partner",
+                  title: String(formData.get("title") || ""),
+                  description: String(formData.get("description") || ""),
+                  category: "Theater",
+                  eventType: "Drop",
+                  dateTime: `${String(formData.get("date") || "2026-05-04")}T${String(formData.get("time") || "19:00")}:00.000Z`,
+                  timingMode: "TIME_SLOT",
+                  startTimeMinutes: 19 * 60,
+                  weekday: 1,
+                  address: "Berlin",
+                  neighborhood: "Mitte",
+                  imageUrl: "",
+                  tags: [],
+                  creditPrice: Number(formData.get("credits") || 0),
+                  totalCapacity: Number(formData.get("capacity") || 1),
+                  ticketType: "SECRET_CODE",
+                  secretCodeMode: "MANUAL",
+                  secretCode: "UNVEILED",
+                  barrierFree: false,
+                  languages: ["DE"],
+                  targetAgeGroups: ["26-35"],
+                  series: {
+                    enabled: true,
+                    count: 3,
+                    intervalDays: 7,
+                  },
+                }),
+              setAdminMessage,
+            );
+          }}
+        >
           <p className="headline-md">Event form</p>
+          <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+            {adminMessage}
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Title" error={formContracts.event.visibleMessages[0]}>
-              <TextInput placeholder="Event title" />
+              <TextInput name="title" placeholder="Event title" />
             </Field>
             <Field label="Partner">
               <SelectInput>
@@ -939,29 +1224,32 @@ function AdminPanel() {
               </SelectInput>
             </Field>
             <Field label="Date">
-              <TextInput type="date" />
+              <TextInput name="date" type="date" defaultValue="2026-05-04" />
             </Field>
             <Field label="Time">
-              <TextInput type="time" />
+              <TextInput name="time" type="time" defaultValue="19:00" />
             </Field>
             <Field label="Credits">
-              <TextInput type="number" defaultValue={2} />
+              <TextInput name="credits" type="number" defaultValue={2} />
             </Field>
             <Field
               label="Capacity"
               error={formContracts.event.visibleMessages[1]}
             >
-              <TextInput type="number" defaultValue={0} />
+              <TextInput name="capacity" type="number" defaultValue={1} />
             </Field>
           </div>
           <Field label="Optional info">
-            <TextArea placeholder="Door notes, redemption details, image alt text" />
+            <TextArea
+              name="description"
+              placeholder="Door notes, redemption details, image alt text"
+            />
           </Field>
           <Panel tone="cream" shadow={false} className="p-4">
             <p className="unveiled-meta">Image preview</p>
             <div className="mt-3 h-36 border-4 border-brand-dark bg-brand-grey" />
           </Panel>
-          <Button type="button">Publish event</Button>
+          <Button type="submit">Publish event</Button>
         </Panel>
         <Panel tone="cream" shadow={false} className="space-y-5">
           <p className="headline-md">Series builder</p>
@@ -987,16 +1275,40 @@ function AdminPanel() {
             ))}
           </div>
         </Panel>
-        <Panel tone="white" shadow={false} className="space-y-4">
+        <Panel
+          tone="white"
+          shadow={false}
+          className="space-y-4"
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(
+              event.currentTarget as HTMLFormElement,
+            );
+            void runServerAction(
+              () =>
+                actions.savePartner({
+                  name: String(formData.get("name") || ""),
+                  contactEmail: String(formData.get("contactEmail") || ""),
+                  address: String(formData.get("address") || "Berlin"),
+                  logoUrl: "",
+                }),
+              setAdminMessage,
+            );
+          }}
+        >
           <p className="headline-md">Partners</p>
           <Field
             label="Venue name"
             error={formContracts.partner.visibleMessages[0]}
           >
-            <TextInput placeholder="Venue name" />
+            <TextInput name="name" placeholder="Venue name" />
           </Field>
           <Field label="Contact email">
-            <TextInput placeholder="partner@example.com" />
+            <TextInput name="contactEmail" placeholder="partner@example.com" />
+          </Field>
+          <Field label="Address">
+            <TextInput name="address" placeholder="Berlin" />
           </Field>
           <Panel tone="cream" shadow={false} className="p-4">
             <p className="unveiled-meta">Logo preview</p>
@@ -1012,9 +1324,35 @@ function AdminPanel() {
             <Button type="button" variant="destructive">
               Delete
             </Button>
+            <Button type="submit" variant="primary">
+              Save
+            </Button>
           </div>
         </Panel>
-        <Panel tone="dark" shadow={false} className="space-y-4">
+        <Panel
+          tone="dark"
+          shadow={false}
+          className="space-y-4"
+          as="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(
+              event.currentTarget as HTMLFormElement,
+            );
+            void runServerAction(
+              () =>
+                actions.updateMember({
+                  userId: String(formData.get("userId") || ""),
+                  subscriptionStatus: "PAUSED",
+                  creditAdjustment: Number(
+                    formData.get("creditAdjustment") || 0,
+                  ),
+                  reason: "Admin panel adjustment",
+                }),
+              setAdminMessage,
+            );
+          }}
+        >
           <p className="headline-md">Members</p>
           <Field label="Search members" className="text-brand-yellow">
             <TextInput placeholder="Name or email" />
@@ -1033,7 +1371,9 @@ function AdminPanel() {
                 <Button type="button" size="sm" variant="secondary">
                   + Credit
                 </Button>
-                <Button type="button" size="sm" variant="muted">
+                <input name="userId" type="hidden" value="demo-user" />
+                <input name="creditAdjustment" type="hidden" value="1" />
+                <Button type="submit" size="sm" variant="muted">
                   Freeze
                 </Button>
               </div>

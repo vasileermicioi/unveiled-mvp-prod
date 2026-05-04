@@ -3,16 +3,20 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Panel({
+  as,
   className,
   tone = "white",
   shadow = true,
   ...props
 }: React.HTMLAttributes<HTMLElement> & {
+  as?: "section" | "form";
   tone?: "white" | "yellow" | "cream" | "dark" | "grey";
   shadow?: boolean;
 }) {
+  const Component = as ?? "section";
+
   return (
-    <section
+    <Component
       className={cn(
         "border-4 border-brand-dark p-5 md:p-8",
         tone === "white" && "bg-white text-brand-dark",
