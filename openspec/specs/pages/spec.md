@@ -237,7 +237,7 @@ The discovery and saved pages SHALL show filterable event grids, optional map, m
 ### Requirement: Booking Modal
 This requirement SHALL use legacy reference path: `_old_app/components/BookingModal.tsx`.
 
-The booking modal SHALL visually match the full-screen event detail and redemption flow.
+The booking modal SHALL visually match the full-screen event detail and redemption flow and SHALL submit booking and waitlist actions through the transactional backend outcomes.
 
 #### Scenario: Visible elements render
 - **WHEN** an event is opened
@@ -253,9 +253,15 @@ The booking modal SHALL visually match the full-screen event detail and redempti
 - **WHEN** close is selected
 - **THEN** the modal disappears
 
-#### Scenario: Success states render
-- **WHEN** waitlist success is shown
+#### Scenario: Booking action renders typed failures
+- **WHEN** the transactional booking action returns sold out, insufficient credits, inactive subscription, duplicate idempotency key conflict, invalid event, invalid quantity, or unsupported redemption setup
+- **THEN** the modal renders the matching visible failure message and any available next action without showing a confirmed booking success panel
+
+#### Scenario: Waitlist action renders success
+- **WHEN** the transactional waitlist action returns a waitlist success result
 - **THEN** the success headline uses waitlist copy and a return-to-feed action remains visible
+
+#### Scenario: Success states render
 - **WHEN** booking success is shown for password entry
 - **THEN** a white bordered code panel shows password label, code, copy action, and explanatory text
 - **WHEN** booking success is shown for voucher entry
@@ -270,7 +276,7 @@ The booking modal SHALL visually match the full-screen event detail and redempti
 
 #### Scenario: Data requirements are met
 - **WHEN** booking modal renders
-- **THEN** required display data is selected event display data, viewer booking gate labels, ticket quantity, total credit calculation, redemption type, redemption code, redemption URL, copied state, loading state, and support email
+- **THEN** required display data is selected event display data, viewer booking gate labels, ticket quantity, total credit calculation, redemption type, redemption code, redemption URL, copied state, loading state, support email, waitlist availability, typed booking failure state, and idempotent action result state
 
 ### Requirement: Bookings Page
 This requirement SHALL use legacy reference path: `_old_app/components/BookingsView.tsx`.
@@ -499,4 +505,15 @@ Pages with mutating form interactions SHALL submit through typed Astro Actions a
 #### Scenario: Discovery filters remain local
 - **WHEN** a user changes discovery filters, sorting, map visibility, modal state, or other non-mutating controls
 - **THEN** the page updates local or URL-backed state without requiring an Astro Action.
+
+### Requirement: Admin Booking And Credit Actions
+Admin pages SHALL submit admin ticket creation and credit adjustment flows through authorized transactional backend actions and render their outcomes.
+
+#### Scenario: Admin ticket action renders result
+- **WHEN** an authorized admin creates a ticket for a member and event
+- **THEN** the admin page renders the created booking result or a typed failure state without requiring a page redesign
+
+#### Scenario: Admin credit adjustment renders result
+- **WHEN** an authorized admin adjusts a member credit balance with a reason
+- **THEN** the admin page renders the updated credit balance and ledger result or a typed failure state without requiring a page redesign
 

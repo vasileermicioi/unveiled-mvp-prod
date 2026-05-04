@@ -325,6 +325,9 @@ export const bookings = pgTable(
     redemptionInfo: text("redemption_info"),
     redemptionUrl: text("redemption_url"),
     idempotencyKey: text("idempotency_key"),
+    adminActorId: text("admin_actor_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     checkedInAt: timestamp("checked_in_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -337,6 +340,7 @@ export const bookings = pgTable(
     ),
     index("bookings_partner_id_status_idx").on(table.partnerId, table.status),
     index("bookings_event_id_idx").on(table.eventId),
+    index("bookings_admin_actor_id_idx").on(table.adminActorId),
     uniqueIndex("bookings_user_id_idempotency_key_unique").on(
       table.userId,
       table.idempotencyKey,
@@ -360,6 +364,10 @@ export const waitlistEntries = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
+    uniqueIndex("waitlist_entries_event_id_user_id_unique").on(
+      table.eventId,
+      table.userId,
+    ),
     index("waitlist_entries_event_id_created_at_idx").on(
       table.eventId,
       table.createdAt,
@@ -383,6 +391,15 @@ export const creditLedgerEntries = pgTable(
     type: ledgerTypeEnum("type").notNull(),
     description: text("description").notNull(),
     idempotencyKey: text("idempotency_key"),
+    relatedBookingId: text("related_booking_id").references(() => bookings.id, {
+      onDelete: "set null",
+    }),
+    relatedEventId: text("related_event_id").references(() => events.id, {
+      onDelete: "set null",
+    }),
+    actorUserId: text("actor_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     timestamp: timestamp("timestamp").notNull().defaultNow(),
   },
   (table) => [
@@ -394,6 +411,38 @@ export const creditLedgerEntries = pgTable(
       table.userId,
       table.idempotencyKey,
     ),
+    index("credit_ledger_entries_related_booking_id_idx").on(
+      table.relatedBookingId,
+    ),
+    index("credit_ledger_entries_related_event_id_idx").on(
+      table.relatedEventId,
+    ),
+    index("credit_ledger_entries_actor_user_id_idx").on(table.actorUserId),
+  ],
+);
+
+export const bookingIdempotencyRecords = pgTable(
+  "booking_idempotency_records",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    idempotencyKey: text("idempotency_key").notNull(),
+    requestFingerprint: text("request_fingerprint").notNull(),
+    bookingId: text("booking_id").references(() => bookings.id, {
+      onDelete: "set null",
+    }),
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("booking_idempotency_records_user_id_key_unique").on(
+      table.userId,
+      table.idempotencyKey,
+    ),
+    index("booking_idempotency_records_booking_id_idx").on(table.bookingId),
   ],
 );
 

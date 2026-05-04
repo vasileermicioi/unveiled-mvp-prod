@@ -60,13 +60,16 @@ import { applyFormActionResult } from "@/lib/forms/client-action";
 import { loginSchema, signupSchema } from "@/lib/forms/schemas";
 import {
   adminEvents,
+  bookingFailures,
   bookings,
+  creditLedgerEntries,
   derivedValues,
   type EventCardView,
   events,
   formContracts,
   partnerGuests,
   profile,
+  waitlistEntries,
 } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 
@@ -546,9 +549,16 @@ function BookingModal({
   onClose: () => void;
 }) {
   const [count, setCount] = useState(1);
-  const [success, setSuccess] = useState(false);
+  const [result, setResult] = useState<
+    | null
+    | { state: "confirmed"; code: string; url?: string }
+    | { state: "waitlist" }
+    | { state: "failure"; message: string; waitlistAvailable?: boolean }
+  >(null);
   const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const total = count * event.creditPrice;
+  const success = result?.state === "confirmed" || result?.state === "waitlist";
 
   return (
     <ModalShell
@@ -566,36 +576,51 @@ function BookingModal({
         <div className="lg:col-span-2">
           <div className="mx-auto max-w-5xl space-y-10 text-center">
             <h2 className="headline-xl">
-              {event.remainingCapacity === 0
+              {result?.state === "waitlist"
                 ? "Waitlist success"
                 : "Booking success"}
             </h2>
             <div className="grid gap-6 text-left md:grid-cols-2">
-              <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
-                <p className="unveiled-meta opacity-55">
-                  {event.ticketType === "Voucher"
-                    ? "Ticket code"
-                    : "Password to enter"}
-                </p>
-                <p className="mt-6 break-all font-display text-5xl font-black uppercase">
-                  {event.ticketType === "Voucher" ? "UNV-BER-25" : "UNVEILED"}
-                </p>
-                <Button
-                  type="button"
-                  className="mt-8"
-                  variant={
-                    copied
-                      ? "copied"
-                      : event.ticketType === "Voucher"
-                        ? "yellow"
-                        : "primary"
-                  }
-                  onClick={() => setCopied(true)}
-                >
-                  {copied ? <Check /> : <Copy />}
-                  {copied ? "Copied" : "Copy code"}
-                </Button>
-              </Panel>
+              {result?.state === "confirmed" ? (
+                <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
+                  <p className="unveiled-meta opacity-55">
+                    {event.ticketType === "Voucher"
+                      ? "Ticket code"
+                      : "Password to enter"}
+                  </p>
+                  <p className="mt-6 break-all font-display text-5xl font-black uppercase">
+                    {result.code}
+                  </p>
+                  {result.url ? (
+                    <p className="mt-4 break-all text-sm font-bold opacity-65">
+                      {result.url}
+                    </p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    className="mt-8"
+                    variant={
+                      copied
+                        ? "copied"
+                        : event.ticketType === "Voucher"
+                          ? "yellow"
+                          : "primary"
+                    }
+                    onClick={() => setCopied(true)}
+                  >
+                    {copied ? <Check /> : <Copy />}
+                    {copied ? "Copied" : "Copy code"}
+                  </Button>
+                </Panel>
+              ) : (
+                <Panel tone="white">
+                  <p className="unveiled-meta opacity-55">Waitlist</p>
+                  <p className="headline-md mt-5">You're on the list</p>
+                  <p className="mt-4 text-sm font-bold opacity-70">
+                    No credits were debited and capacity was not changed.
+                  </p>
+                </Panel>
+              )}
               <Panel
                 tone="dark"
                 className="flex flex-col justify-between gap-8"
@@ -641,6 +666,14 @@ function BookingModal({
                 Active membership required. Password and voucher redemption
                 states are rendered after booking.
               </p>
+              {result?.state === "failure" ? (
+                <p className="mt-4 border-t-2 border-brand-dark/20 pt-4 text-sm font-black uppercase text-red-700">
+                  {result.message}
+                  {result.waitlistAvailable
+                    ? " Join the waitlist instead."
+                    : ""}
+                </p>
+              ) : null}
             </Panel>
           </section>
 
@@ -674,11 +707,63 @@ function BookingModal({
               type="button"
               variant="yellow"
               className="w-full"
-              onClick={() => setSuccess(true)}
+              disabled={submitting}
+              onClick={async () => {
+                setSubmitting(true);
+                const response =
+                  event.remainingCapacity === 0
+                    ? await actions.joinWaitlist({
+                        eventId: event.id,
+                        ticketQuantity: count,
+                      })
+                    : await actions.bookEvent({
+                        eventId: event.id,
+                        ticketQuantity: count,
+                        idempotencyKey: crypto.randomUUID(),
+                      });
+
+                setSubmitting(false);
+                if (response.error || !response.data) {
+                  setResult({
+                    state: "failure",
+                    message: "The request could not be completed.",
+                  });
+                  return;
+                }
+
+                if (!response.data.ok) {
+                  setResult({
+                    state: "failure",
+                    message:
+                      response.data.formError ??
+                      "Check the highlighted fields.",
+                    waitlistAvailable: event.remainingCapacity === 0,
+                  });
+                  return;
+                }
+
+                const data = response.data.data;
+                if (data?.state === "confirmed") {
+                  setResult({
+                    state: "confirmed",
+                    code: data.redemption.code,
+                    url: data.redemption.url,
+                  });
+                  return;
+                }
+
+                if (data?.state === "waitlist") {
+                  setResult({ state: "waitlist" });
+                }
+              }}
             >
-              {event.remainingCapacity === 0
-                ? "Join waitlist"
-                : "Confirm access"}
+              {submitting ? (
+                <Loader2 className="animate-spin" />
+              ) : event.remainingCapacity === 0 ? (
+                "Join waitlist"
+              ) : (
+                "Confirm access"
+              )}
               <ArrowRight />
             </Button>
           </Panel>
@@ -789,8 +874,19 @@ function BookingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="unveiled-meta opacity-45">{booking.dateLabel}</p>
+                <p className="mt-1 text-xs font-bold uppercase opacity-45">
+                  {booking.eventAddress}
+                </p>
                 <p className="font-display text-3xl font-black uppercase">
                   {booking.redemptionCode}
+                </p>
+                {booking.redemptionUrl ? (
+                  <p className="mt-2 break-all text-xs font-bold uppercase opacity-45">
+                    {booking.redemptionUrl}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-xs font-bold uppercase opacity-45">
+                  {booking.totalCredits} credits spent
                 </p>
               </div>
               <Button
@@ -804,6 +900,55 @@ function BookingsPage() {
           </Card>
         ))}
       </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {waitlistEntries.map((entry) => (
+          <Card key={entry.id} className="p-6">
+            <Badge tone="yellow">{entry.statusLabel}</Badge>
+            <p className="headline-md mt-4">{entry.eventTitle}</p>
+            <p className="mt-2 text-sm font-bold opacity-60">
+              {entry.dateLabel} {" // "} {entry.eventAddress}
+            </p>
+            <p className="unveiled-meta mt-5 opacity-45">
+              {entry.createdLabel}
+            </p>
+          </Card>
+        ))}
+        {bookingFailures.map((failure) => (
+          <Card key={failure.state} className="p-6">
+            <Badge tone="white">{failure.state}</Badge>
+            <p className="mt-4 text-sm font-black uppercase">
+              {failure.message}
+            </p>
+            {failure.creditBalance !== undefined ? (
+              <p className="mt-3 text-xs font-bold uppercase opacity-55">
+                {failure.creditBalance} available / {failure.requiredCredits}{" "}
+                required
+              </p>
+            ) : null}
+          </Card>
+        ))}
+      </div>
+      <Panel tone="white">
+        <Badge tone="yellow">Credit ledger</Badge>
+        <div className="mt-5 space-y-3">
+          {creditLedgerEntries.map((entry) => (
+            <TableRow key={entry.id}>
+              <span className="font-black uppercase">
+                {entry.reasonLabel}
+                {entry.relatedLabel ? ` // ${entry.relatedLabel}` : ""}
+              </span>
+              <span>{entry.createdLabel}</span>
+              <span>
+                {entry.actorLabel ? `Actor: ${entry.actorLabel}` : "Member"}
+              </span>
+              <span className="font-black">
+                {entry.amount > 0 ? "+" : ""}
+                {entry.amount} credits
+              </span>
+            </TableRow>
+          ))}
+        </div>
+      </Panel>
       <StatePanel
         title="No bookings yet"
         text="The empty booking state keeps support close and uses the same bordered panel."
@@ -1341,12 +1486,9 @@ function AdminPanel() {
             );
             void runServerAction(
               () =>
-                actions.updateMember({
+                actions.adjustMemberCredits({
                   userId: String(formData.get("userId") || ""),
-                  subscriptionStatus: "PAUSED",
-                  creditAdjustment: Number(
-                    formData.get("creditAdjustment") || 0,
-                  ),
+                  amount: Number(formData.get("creditAdjustment") || 0),
                   reason: "Admin panel adjustment",
                 }),
               setAdminMessage,
@@ -1374,11 +1516,32 @@ function AdminPanel() {
                 <input name="userId" type="hidden" value="demo-user" />
                 <input name="creditAdjustment" type="hidden" value="1" />
                 <Button type="submit" size="sm" variant="muted">
-                  Freeze
+                  Adjust
                 </Button>
               </div>
             </div>
             <Divider className="my-4" />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                void runServerAction(
+                  () =>
+                    actions.createAdminTicket({
+                      userId: "demo-user",
+                      eventId: events[0]?.id ?? "",
+                      ticketQuantity: 1,
+                      consumeCapacity: true,
+                      debitCredits: false,
+                      idempotencyKey: crypto.randomUUID(),
+                    }),
+                  setAdminMessage,
+                );
+              }}
+            >
+              Create ticket
+            </Button>
             <p className="text-xs font-bold uppercase tracking-widest opacity-60">
               History, preferences, bookings, and adjustment controls are
               expandable.

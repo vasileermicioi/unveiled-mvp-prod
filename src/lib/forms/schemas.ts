@@ -361,3 +361,34 @@ export const checkInSchema = z.object({
   partnerId: optionalTrimmedString(120),
 });
 export type CheckInInput = z.infer<typeof checkInSchema>;
+
+export const bookingActionSchema = z.object({
+  eventId: requiredString("Event is required.", 120),
+  ticketQuantity: z.coerce.number().int().min(1).max(3),
+  idempotencyKey: requiredString("Booking request key is required.", 200),
+});
+export type BookingActionInput = z.infer<typeof bookingActionSchema>;
+
+export const waitlistActionSchema = z.object({
+  eventId: requiredString("Event is required.", 120),
+  ticketQuantity: z.coerce.number().int().min(1).max(3).default(1),
+});
+export type WaitlistActionInput = z.infer<typeof waitlistActionSchema>;
+
+export const adminTicketSchema = z.object({
+  userId: requiredString("Member is required.", 120),
+  eventId: requiredString("Event is required.", 120),
+  ticketQuantity: z.coerce.number().int().min(1).max(3),
+  consumeCapacity: z.coerce.boolean().default(true),
+  debitCredits: z.coerce.boolean().default(false),
+  idempotencyKey: optionalTrimmedString(200),
+});
+export type AdminTicketInput = z.infer<typeof adminTicketSchema>;
+
+export const creditAdjustmentSchema = z.object({
+  userId: requiredString("Member is required.", 120),
+  amount: z.coerce.number().int().min(-10000).max(10000),
+  reason: requiredString("Reason is required.", 500),
+  idempotencyKey: optionalTrimmedString(200),
+});
+export type CreditAdjustmentInput = z.infer<typeof creditAdjustmentSchema>;

@@ -22,11 +22,52 @@ export type BookingCardView = {
   eventTitle: string;
   dateLabel: string;
   partnerName: string;
+  eventAddress: string;
   ticketCount: number;
+  totalCredits: number;
   statusLabel: string;
+  redemptionType: "SECRET_CODE" | "VOUCHER";
   redemptionCode: string;
+  redemptionUrl?: string;
   checkedInLabel: string;
   copied: boolean;
+};
+
+export type WaitlistCardView = {
+  id: string;
+  eventTitle: string;
+  dateLabel: string;
+  eventAddress: string;
+  statusLabel: string;
+  createdLabel: string;
+};
+
+export type BookingFailureView = {
+  state:
+    | "sold_out"
+    | "insufficient_credits"
+    | "inactive_subscription"
+    | "duplicate_idempotency_key"
+    | "invalid_event"
+    | "invalid_quantity"
+    | "unsupported_redemption_setup";
+  message: string;
+  retryAvailable: boolean;
+  waitlistAvailable: boolean;
+  membershipCta?: string;
+  creditBalance?: number;
+  requiredCredits?: number;
+};
+
+export type CreditLedgerEntryView = {
+  id: string;
+  amount: number;
+  direction: "credit" | "debit";
+  reasonLabel: string;
+  relatedLabel?: string;
+  actorLabel?: string;
+  createdLabel: string;
+  resultingBalance?: number;
 };
 
 export type GuestRowView = {
@@ -115,8 +156,11 @@ export const bookings: BookingCardView[] = [
     eventTitle: "Neon Gallery After Hours",
     dateLabel: "Tonight, 20:00",
     partnerName: "Kunsthalle Mitte",
+    eventAddress: "Auguststrasse 24, 10117 Berlin",
     ticketCount: 2,
+    totalCredits: 4,
     statusLabel: "Confirmed",
+    redemptionType: "SECRET_CODE",
     redemptionCode: "UNVEILED",
     checkedInLabel: "Not checked in",
     copied: true,
@@ -126,11 +170,64 @@ export const bookings: BookingCardView[] = [
     eventTitle: "Chef Counter Preview",
     dateLabel: "Fri, 19:00",
     partnerName: "Table 17",
+    eventAddress: "Oranienstrasse 17, 10999 Berlin",
     ticketCount: 1,
+    totalCredits: 4,
     statusLabel: "Voucher issued",
+    redemptionType: "VOUCHER",
     redemptionCode: "UNV-BER-25",
+    redemptionUrl: "https://table17.example",
     checkedInLabel: "Checked in 18:42",
     copied: false,
+  },
+];
+
+export const waitlistEntries: WaitlistCardView[] = [
+  {
+    id: "waitlist-1",
+    eventTitle: "Hidden Listening Room",
+    dateLabel: "Tomorrow, 21:30",
+    eventAddress: "Bottgerstrasse 16, 13357 Berlin",
+    statusLabel: "Waiting",
+    createdLabel: "Joined today",
+  },
+];
+
+export const bookingFailures: BookingFailureView[] = [
+  {
+    state: "sold_out",
+    message: "This event is sold out.",
+    retryAvailable: false,
+    waitlistAvailable: true,
+  },
+  {
+    state: "insufficient_credits",
+    message: "You need more credits for this booking.",
+    retryAvailable: false,
+    waitlistAvailable: false,
+    creditBalance: 1,
+    requiredCredits: 4,
+  },
+];
+
+export const creditLedgerEntries: CreditLedgerEntryView[] = [
+  {
+    id: "ledger-1",
+    amount: -4,
+    direction: "debit",
+    reasonLabel: "Booking",
+    relatedLabel: "Neon Gallery After Hours",
+    createdLabel: "Today",
+    resultingBalance: 8,
+  },
+  {
+    id: "ledger-2",
+    amount: 1,
+    direction: "credit",
+    reasonLabel: "Admin adjustment",
+    actorLabel: "Admin",
+    createdLabel: "Yesterday",
+    resultingBalance: 12,
   },
 ];
 

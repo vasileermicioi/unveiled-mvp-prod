@@ -11,6 +11,8 @@ export const queryKeys = {
   partner: (partnerId: string) => ["partners", partnerId] as const,
   bookings: ["bookings"] as const,
   booking: (bookingId: string) => ["bookings", bookingId] as const,
+  waitlist: ["waitlist"] as const,
+  ledger: (userId?: string) => ["ledger", userId ?? "current"] as const,
   adminMembers: ["admin", "members"] as const,
   checkIns: (partnerId?: string) => ["check-ins", partnerId ?? "all"] as const,
 } satisfies Record<

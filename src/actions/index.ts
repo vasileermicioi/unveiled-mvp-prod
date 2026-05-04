@@ -25,6 +25,16 @@ import {
   requireUser,
 } from "@/lib/auth-profile";
 import {
+  adjustUserCredits,
+  type BookingTransactionResult,
+  bookingFailureMessage,
+  bookMemberEvent,
+  type CreditAdjustmentResult,
+  createAdminTicket,
+  isBookingFailure,
+  joinEventWaitlist,
+} from "@/lib/booking-transactions";
+import {
   actionSuccess,
   type FormActionResult,
   formFailure,
@@ -33,7 +43,10 @@ import {
 } from "@/lib/forms/action-result";
 import { queryKeys } from "@/lib/forms/query-keys";
 import {
+  adminTicketSchema,
+  bookingActionSchema,
   checkInSchema,
+  creditAdjustmentSchema,
   eventFormSchema,
   loginSchema,
   memberAdminSchema,
@@ -44,6 +57,7 @@ import {
   preferenceSchema,
   profileSchema,
   signupSchema,
+  waitlistActionSchema,
 } from "@/lib/forms/schemas";
 
 const jsonInputSchema = z.record(z.string(), z.unknown());
@@ -59,6 +73,51 @@ function safeActionError(error: unknown) {
     return formFailure(error.message);
   }
   return formFailure("The request could not be completed.");
+}
+
+function bookingResultToAction(
+  result: BookingTransactionResult,
+): FormActionResult<BookingTransactionResult> {
+  if (isBookingFailure(result)) {
+    return formFailure(result.message || bookingFailureMessage(result.state));
+  }
+
+  return actionSuccess({
+    data: result,
+    notice: {
+      type: "success",
+      message:
+        result.state === "confirmed"
+          ? "Booking confirmed."
+          : "Waitlist joined.",
+    },
+    invalidate: [
+      queryKeys.bookings,
+      queryKeys.event(result.eventId),
+      queryKeys.events,
+      queryKeys.authViewer,
+      result.state === "waitlist" ? queryKeys.waitlist : queryKeys.ledger(),
+    ],
+  });
+}
+
+function creditAdjustmentResultToAction(
+  result: CreditAdjustmentResult,
+): FormActionResult<CreditAdjustmentResult> {
+  if (isBookingFailure(result)) {
+    return formFailure(result.message || bookingFailureMessage(result.state));
+  }
+
+  return actionSuccess({
+    data: result,
+    notice: { type: "success", message: "Credits adjusted." },
+    invalidate: [
+      queryKeys.adminMembers,
+      queryKeys.profile(result.userId),
+      queryKeys.ledger(result.userId),
+      queryKeys.authViewer,
+    ],
+  });
 }
 
 function applySetCookieHeaders(
@@ -454,6 +513,101 @@ export const server = {
             queryKeys.authViewer,
           ],
         });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  bookEvent: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(bookingActionSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await requireUser(context.request.headers);
+        return bookingResultToAction(
+          await bookMemberEvent({
+            userId: viewer.user.id,
+            eventId: parsed.data.eventId,
+            ticketQuantity: parsed.data.ticketQuantity,
+            idempotencyKey: parsed.data.idempotencyKey,
+          }),
+        );
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  joinWaitlist: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(waitlistActionSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await requireUser(context.request.headers);
+        return bookingResultToAction(
+          await joinEventWaitlist({
+            userId: viewer.user.id,
+            eventId: parsed.data.eventId,
+            ticketQuantity: parsed.data.ticketQuantity,
+          }),
+        );
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  createAdminTicket: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(adminTicketSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const admin = await requireAdmin(context.request.headers);
+        return bookingResultToAction(
+          await createAdminTicket({
+            adminUserId: admin.user.id,
+            userId: parsed.data.userId,
+            eventId: parsed.data.eventId,
+            ticketQuantity: parsed.data.ticketQuantity,
+            consumeCapacity: parsed.data.consumeCapacity,
+            debitCredits: parsed.data.debitCredits,
+            idempotencyKey: parsed.data.idempotencyKey,
+          }),
+        );
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  adjustMemberCredits: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(creditAdjustmentSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const admin = await requireAdmin(context.request.headers);
+        return creditAdjustmentResultToAction(
+          await adjustUserCredits({
+            adminUserId: admin.user.id,
+            userId: parsed.data.userId,
+            amount: parsed.data.amount,
+            reason: parsed.data.reason,
+            idempotencyKey: parsed.data.idempotencyKey,
+          }),
+        );
       } catch (error) {
         return safeActionError(error);
       }
