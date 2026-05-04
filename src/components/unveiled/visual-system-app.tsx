@@ -59,7 +59,9 @@ import { formFailure } from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
 import { loginSchema, signupSchema } from "@/lib/forms/schemas";
 import {
+  adminBillingDisplay,
   adminEvents,
+  billingDisplay,
   bookingFailures,
   bookings,
   creditLedgerEntries,
@@ -979,8 +981,11 @@ function ProfilePage() {
     "Profile changes submit through server actions.",
   );
   const [membershipMessage, setMembershipMessage] = useState(
-    "Membership details use the placeholder action until provider integration.",
+    "Choose a payment method to start Stripe subscription checkout.",
   );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
+  >();
   const [preferenceMessage, setPreferenceMessage] = useState(
     "Preference and onboarding state can be saved from this panel.",
   );
@@ -1063,13 +1068,8 @@ function ProfilePage() {
             void runServerAction(
               () =>
                 actions.updateMembership({
-                  paymentMethod: String(
-                    formData.get("paymentMethod") || "CARD",
-                  ),
+                  paymentMethod: selectedPaymentMethod,
                   promoCode: String(formData.get("promoCode") || ""),
-                  cardNumber: String(formData.get("cardNumber") || ""),
-                  expiry: String(formData.get("expiry") || ""),
-                  cvc: String(formData.get("cvc") || ""),
                   isFrozen: false,
                   isActive: false,
                 }),
@@ -1078,37 +1078,92 @@ function ProfilePage() {
           }}
         >
           <p className="unveiled-meta">Billing</p>
-          <p className="headline-md mt-5">{profile.monthlyCredits} credits</p>
+          <p className="headline-md mt-5">{billingDisplay.planLabel}</p>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
-            {profile.billingLabel}
+            {billingDisplay.planPriceLabel} {" // "}
+            {profile.monthlyCredits} credits monthly
+          </p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
+            {billingDisplay.subscriptionStatusLabel} {" // "}
+            {billingDisplay.paymentMethodDisplay} {" // "}
+            renews {billingDisplay.nextBillDateLabel}
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
             {membershipMessage}
           </p>
-          <Field label="Payment method" className="mt-5">
-            <SelectInput name="paymentMethod" defaultValue="CARD">
-              <option value="CARD">Card</option>
-              <option value="PAYPAL">PayPal</option>
-              <option value="SEPA">SEPA</option>
-            </SelectInput>
-          </Field>
-          <Field label="Card number" className="mt-4">
-            <TextInput name="cardNumber" defaultValue="424242424242" />
-          </Field>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Field label="Expiry">
-              <TextInput name="expiry" defaultValue="12/30" />
-            </Field>
-            <Field label="CVC">
-              <TextInput name="cvc" defaultValue="123" />
-            </Field>
+          <div className="mt-5 space-y-4">
+            <div>
+              <p className="unveiled-meta opacity-55">Express</p>
+              <button
+                type="button"
+                className={cn(
+                  "mt-2 flex w-full items-center justify-center gap-2 border-4 border-brand-dark px-4 py-4 text-sm font-black uppercase tracking-widest",
+                  selectedPaymentMethod === "EXPRESS"
+                    ? "bg-brand-dark text-white"
+                    : "bg-brand-yellow text-brand-dark",
+                )}
+                onClick={() => setSelectedPaymentMethod("EXPRESS")}
+              >
+                <CreditCard className="size-4" />
+                Apple Pay / Google Pay
+              </button>
+            </div>
+            <div>
+              <p className="unveiled-meta opacity-55">PayPal</p>
+              <button
+                type="button"
+                className={cn(
+                  "mt-2 flex w-full items-center justify-center gap-2 border-4 border-brand-dark px-4 py-3 text-sm font-black uppercase tracking-widest",
+                  selectedPaymentMethod === "PAYPAL"
+                    ? "bg-brand-dark text-white"
+                    : "bg-white text-brand-dark",
+                )}
+                onClick={() => setSelectedPaymentMethod("PAYPAL")}
+              >
+                PayPal
+              </button>
+            </div>
+            <div>
+              <p className="unveiled-meta opacity-55">Standard</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(["CARD", "SEPA"] as const).map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    className={cn(
+                      "border-4 border-brand-dark px-3 py-3 text-[10px] font-black uppercase tracking-widest",
+                      selectedPaymentMethod === method
+                        ? "bg-brand-dark text-white"
+                        : "bg-brand-grey text-brand-dark",
+                    )}
+                    onClick={() => setSelectedPaymentMethod(method)}
+                  >
+                    {method === "CARD" ? "Card" : "SEPA Direct Debit"}
+                  </button>
+                ))}
+              </div>
+              {selectedPaymentMethod === "CARD" ? (
+                <Panel tone="cream" shadow={false} className="mt-3 p-3">
+                  <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                    Stripe card fields mount here.
+                  </p>
+                </Panel>
+              ) : null}
+              {selectedPaymentMethod === "SEPA" ? (
+                <Panel tone="cream" shadow={false} className="mt-3 p-3">
+                  <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                    Stripe SEPA mandate and IBAN controls mount here.
+                  </p>
+                </Panel>
+              ) : null}
+            </div>
           </div>
           <Field label="Promo code" className="mt-4">
             <TextInput name="promoCode" placeholder="Optional" />
           </Field>
           <Button type="submit" variant="secondary" className="mt-6">
             <CreditCard />
-            Save billing
+            Start checkout
           </Button>
         </Panel>
         <Panel
@@ -1582,7 +1637,14 @@ function AdminPanel() {
                   Alex Morgan
                 </p>
                 <p className="text-xs font-bold opacity-55">
-                  Active {" // "} 8 credits
+                  {adminBillingDisplay.localSubscriptionStatusLabel} {" // "}
+                  {adminBillingDisplay.creditBalance} credits {" // "}
+                  {adminBillingDisplay.providerStatusLabel}
+                </p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                  {adminBillingDisplay.providerCustomerId} {" // "}
+                  {adminBillingDisplay.providerSubscriptionId} {" // synced "}
+                  {adminBillingDisplay.lastProviderSyncLabel}
                 </p>
               </div>
               <div className="flex gap-2">

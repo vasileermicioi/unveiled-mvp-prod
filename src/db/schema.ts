@@ -19,8 +19,11 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "PAUSED",
   "CANCELLED_PENDING",
   "INACTIVE",
+  "INCOMPLETE",
+  "ACTION_REQUIRED",
   "PAST_DUE",
   "UNPAID",
+  "ADMIN_FROZEN",
 ]);
 export const newsletterStatusEnum = pgEnum("newsletter_status", [
   "NONE",
@@ -32,6 +35,11 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "CARD",
   "PAYPAL",
   "SEPA",
+]);
+export const billingProviderEnum = pgEnum("billing_provider", ["STRIPE"]);
+export const billingOverrideTypeEnum = pgEnum("billing_override_type", [
+  "FREEZE",
+  "UNFREEZE",
 ]);
 export const ageGroupEnum = pgEnum("age_group", [
   "18-25",
@@ -391,6 +399,11 @@ export const creditLedgerEntries = pgTable(
     type: ledgerTypeEnum("type").notNull(),
     description: text("description").notNull(),
     idempotencyKey: text("idempotency_key"),
+    provider: billingProviderEnum("provider"),
+    providerInvoiceId: text("provider_invoice_id"),
+    providerSubscriptionId: text("provider_subscription_id"),
+    providerEventId: text("provider_event_id"),
+    refillIdempotencyKey: text("refill_idempotency_key"),
     relatedBookingId: text("related_booking_id").references(() => bookings.id, {
       onDelete: "set null",
     }),
@@ -418,6 +431,169 @@ export const creditLedgerEntries = pgTable(
       table.relatedEventId,
     ),
     index("credit_ledger_entries_actor_user_id_idx").on(table.actorUserId),
+    uniqueIndex("credit_ledger_entries_refill_idempotency_key_unique").on(
+      table.refillIdempotencyKey,
+    ),
+    index("credit_ledger_entries_provider_invoice_id_idx").on(
+      table.providerInvoiceId,
+    ),
+    index("credit_ledger_entries_provider_subscription_id_idx").on(
+      table.providerSubscriptionId,
+    ),
+  ],
+);
+
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: billingProviderEnum("provider").notNull().default("STRIPE"),
+    providerCustomerId: text("provider_customer_id").notNull(),
+    providerSubscriptionId: text("provider_subscription_id").notNull(),
+    providerPriceId: text("provider_price_id").notNull(),
+    planCode: text("plan_code").notNull().default("BASIC_BERLIN"),
+    status: subscriptionStatusEnum("status").notNull().default("INCOMPLETE"),
+    providerStatus: text("provider_status").notNull().default("incomplete"),
+    billingEmail: text("billing_email"),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    cancelAt: timestamp("cancel_at"),
+    canceledAt: timestamp("canceled_at"),
+    lastInvoiceId: text("last_invoice_id"),
+    defaultPaymentMethodId: text("default_payment_method_id"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    lastProviderSyncAt: timestamp("last_provider_sync_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("subscriptions_user_id_idx").on(table.userId),
+    uniqueIndex("subscriptions_provider_subscription_id_unique").on(
+      table.provider,
+      table.providerSubscriptionId,
+    ),
+    index("subscriptions_provider_customer_id_idx").on(
+      table.provider,
+      table.providerCustomerId,
+    ),
+    index("subscriptions_status_idx").on(table.status),
+  ],
+);
+
+export const providerEvents = pgTable(
+  "provider_events",
+  {
+    id: text("id").primaryKey(),
+    provider: billingProviderEnum("provider").notNull().default("STRIPE"),
+    providerEventId: text("provider_event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    providerCreatedAt: timestamp("provider_created_at"),
+    processedAt: timestamp("processed_at"),
+    processingStatus: text("processing_status").notNull().default("received"),
+    errorMessage: text("error_message"),
+    payload: jsonb("payload").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("provider_events_provider_event_id_unique").on(
+      table.provider,
+      table.providerEventId,
+    ),
+    index("provider_events_event_type_idx").on(table.eventType),
+    index("provider_events_processing_status_idx").on(table.processingStatus),
+  ],
+);
+
+export const paymentMethods = pgTable(
+  "payment_methods",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id").references(() => subscriptions.id, {
+      onDelete: "set null",
+    }),
+    provider: billingProviderEnum("provider").notNull().default("STRIPE"),
+    providerPaymentMethodId: text("provider_payment_method_id").notNull(),
+    type: paymentMethodEnum("type").notNull(),
+    brand: text("brand"),
+    last4: text("last4"),
+    expMonth: integer("exp_month"),
+    expYear: integer("exp_year"),
+    bankName: text("bank_name"),
+    walletType: text("wallet_type"),
+    displayLabel: text("display_label").notNull(),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("payment_methods_user_id_idx").on(table.userId),
+    uniqueIndex("payment_methods_provider_payment_method_unique").on(
+      table.provider,
+      table.providerPaymentMethodId,
+    ),
+    index("payment_methods_subscription_id_idx").on(table.subscriptionId),
+  ],
+);
+
+export const billingAddresses = pgTable(
+  "billing_addresses",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: billingProviderEnum("provider").notNull().default("STRIPE"),
+    providerCustomerId: text("provider_customer_id").notNull(),
+    name: text("name"),
+    country: text("country"),
+    postalCode: text("postal_code"),
+    city: text("city"),
+    line1: text("line_1"),
+    line2: text("line_2"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("billing_addresses_user_id_idx").on(table.userId),
+    uniqueIndex("billing_addresses_provider_customer_unique").on(
+      table.provider,
+      table.providerCustomerId,
+    ),
+  ],
+);
+
+export const billingAdminOverrides = pgTable(
+  "billing_admin_overrides",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    actorUserId: text("actor_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    type: billingOverrideTypeEnum("type").notNull(),
+    reason: text("reason").notNull(),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    clearedAt: timestamp("cleared_at"),
+  },
+  (table) => [
+    index("billing_admin_overrides_user_id_active_idx").on(
+      table.userId,
+      table.active,
+    ),
+    index("billing_admin_overrides_actor_user_id_idx").on(table.actorUserId),
   ],
 );
 

@@ -54,19 +54,16 @@ describe("form schemas", () => {
     expect("userId" in parsed).toBe(false);
   });
 
-  test("validates membership placeholder card fields", () => {
+  test("validates deliberate membership payment method selection", () => {
     expect(
       membershipSchema.safeParse({
-        paymentMethod: "CARD",
-        cardNumber: "1",
-        expiry: "12/30",
-        cvc: "123",
+        promoCode: "WELCOME",
       }).success,
     ).toBe(false);
 
     expect(
       membershipSchema.safeParse({
-        paymentMethod: "PAYPAL",
+        paymentMethod: "SEPA",
       }).success,
     ).toBe(true);
   });

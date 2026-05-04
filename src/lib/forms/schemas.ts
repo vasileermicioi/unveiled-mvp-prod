@@ -198,12 +198,18 @@ export const profileSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
 
-export const paymentMethodSchema = z.enum(["CARD", "PAYPAL", "SEPA"]);
+export const paymentMethodSchema = z.enum([
+  "EXPRESS",
+  "PAYPAL",
+  "CARD",
+  "SEPA",
+]);
 
 export const membershipSchema = z
   .object({
-    paymentMethod: paymentMethodSchema.default("CARD"),
+    paymentMethod: paymentMethodSchema.optional(),
     promoCode: optionalTrimmedString(80),
+    stripePaymentMethodId: optionalTrimmedString(200),
     cardNumber: z.string().optional(),
     expiry: z.string().optional(),
     cvc: z.string().optional(),
@@ -211,33 +217,15 @@ export const membershipSchema = z
     isActive: z.coerce.boolean().default(false),
   })
   .superRefine((data, ctx) => {
-    if (data.paymentMethod !== "CARD" || data.isFrozen || data.isActive) {
+    if (data.isFrozen || data.isActive) {
       return;
     }
 
-    const digits = (data.cardNumber || "").replace(/\D/g, "");
-    const expiry = (data.expiry || "").trim();
-    const cvc = (data.cvc || "").trim();
-
-    if (!digits || digits.length < 12) {
+    if (!data.paymentMethod) {
       ctx.addIssue({
         code: "custom",
-        path: ["cardNumber"],
-        message: formMessages.cardNumber.EN,
-      });
-    }
-    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["expiry"],
-        message: formMessages.expiry.EN,
-      });
-    }
-    if (!/^\d{3}$/.test(cvc)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["cvc"],
-        message: formMessages.cvc.EN,
+        path: ["paymentMethod"],
+        message: "Choose a payment method.",
       });
     }
   });

@@ -1,10 +1,12 @@
-import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { type Db, db } from "@/db/client";
 import {
+  billingAdminOverrides,
   bookings,
   events,
   partners,
+  subscriptions,
   user,
   userProfiles,
   waitlistEntries,
@@ -51,6 +53,13 @@ export type AdminMemberRow = {
   eventOpenCount: number;
   savedCount: number;
   waitlistCount: number;
+  providerCustomerId?: string | null;
+  providerSubscriptionId?: string | null;
+  providerStatus?: string | null;
+  lastProviderSyncAt?: Date | null;
+  currentPeriodStart?: Date | null;
+  currentPeriodEnd?: Date | null;
+  billingOverrideActions: Array<"freeze" | "unfreeze">;
 };
 
 export type PartnerGuestExportRow = {
@@ -644,7 +653,7 @@ export async function checkInWithVenueQrOperation(
 }
 
 export async function listAdminMembers(database: Db = db) {
-  return database
+  const rows = await database
     .select({
       userId: user.id,
       name: user.name,
@@ -656,33 +665,102 @@ export async function listAdminMembers(database: Db = db) {
       eventOpenCount: userProfiles.eventOpenCount,
       savedCount: userProfiles.savedCount,
       waitlistCount: userProfiles.waitlistCount,
+      providerCustomerId: subscriptions.providerCustomerId,
+      providerSubscriptionId: subscriptions.providerSubscriptionId,
+      providerStatus: subscriptions.providerStatus,
+      lastProviderSyncAt: subscriptions.lastProviderSyncAt,
+      currentPeriodStart: subscriptions.currentPeriodStart,
+      currentPeriodEnd: subscriptions.currentPeriodEnd,
     })
     .from(user)
     .innerJoin(userProfiles, eq(userProfiles.userId, user.id))
+    .leftJoin(subscriptions, eq(subscriptions.userId, user.id))
     .orderBy(asc(user.name), asc(user.email));
+
+  return rows.map((row) => ({
+    ...row,
+    billingOverrideActions:
+      row.subscriptionStatus === "ADMIN_FROZEN" ||
+      row.subscriptionStatus === "UNPAID"
+        ? (["unfreeze"] as const)
+        : (["freeze"] as const),
+  }));
 }
 
 export async function setMemberFreezeStatus(
-  input: { userId: string; frozen: boolean },
+  input: {
+    userId: string;
+    frozen: boolean;
+    actorUserId: string;
+    reason: string;
+  },
   database: Db = db,
 ) {
-  const [updated] = await database
-    .update(userProfiles)
-    .set({
-      subscriptionStatus: input.frozen ? "UNPAID" : "ACTIVE",
-      updatedAt: new Date(),
-    })
-    .where(eq(userProfiles.userId, input.userId))
-    .returning({
-      userId: userProfiles.userId,
-      subscriptionStatus: userProfiles.subscriptionStatus,
+  if (!input.reason.trim()) {
+    return failure("validation_error", "A freeze reason is required.");
+  }
+
+  return database.transaction(async (tx) => {
+    const profile = await tx.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, input.userId),
     });
-  if (!updated) return failure("not_found", "Member is not available.");
-  return {
-    state: "success" as const,
-    message: input.frozen ? "Member frozen." : "Member unfrozen.",
-    ...updated,
-  };
+    if (!profile) return failure("not_found", "Member is not available.");
+
+    if (input.frozen) {
+      await tx.insert(billingAdminOverrides).values({
+        id: newId(),
+        userId: input.userId,
+        actorUserId: input.actorUserId,
+        type: "FREEZE",
+        reason: input.reason.trim(),
+        active: true,
+      });
+    } else {
+      await tx
+        .update(billingAdminOverrides)
+        .set({ active: false, clearedAt: new Date() })
+        .where(
+          and(
+            eq(billingAdminOverrides.userId, input.userId),
+            eq(billingAdminOverrides.active, true),
+            isNull(billingAdminOverrides.clearedAt),
+          ),
+        );
+      await tx.insert(billingAdminOverrides).values({
+        id: newId(),
+        userId: input.userId,
+        actorUserId: input.actorUserId,
+        type: "UNFREEZE",
+        reason: input.reason.trim(),
+        active: false,
+        clearedAt: new Date(),
+      });
+    }
+
+    const subscription = await tx.query.subscriptions.findFirst({
+      where: eq(subscriptions.userId, input.userId),
+    });
+    const restoredStatus =
+      subscription?.status === "ACTIVE" ? "ACTIVE" : profile.subscriptionStatus;
+
+    const [updated] = await tx
+      .update(userProfiles)
+      .set({
+        subscriptionStatus: input.frozen ? "ADMIN_FROZEN" : restoredStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(userProfiles.userId, input.userId))
+      .returning({
+        userId: userProfiles.userId,
+        subscriptionStatus: userProfiles.subscriptionStatus,
+      });
+
+    return {
+      state: "success" as const,
+      message: input.frozen ? "Member frozen." : "Member unfrozen.",
+      ...updated,
+    };
+  });
 }
 
 export async function getPartnerGuestExportRows(

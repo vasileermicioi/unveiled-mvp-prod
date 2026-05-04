@@ -11,8 +11,11 @@ export type SubscriptionStatus =
   | "PAUSED"
   | "CANCELLED_PENDING"
   | "INACTIVE"
+  | "INCOMPLETE"
+  | "ACTION_REQUIRED"
   | "PAST_DUE"
-  | "UNPAID";
+  | "UNPAID"
+  | "ADMIN_FROZEN";
 
 type BetterAuthSession = typeof auth.$Infer.Session;
 type BetterAuthUser = BetterAuthSession["user"];

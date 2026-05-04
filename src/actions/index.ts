@@ -66,6 +66,7 @@ import {
   venueQrCheckInSchema,
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
+import { initializeBasicBerlinCheckout } from "@/lib/payments/subscriptions";
 
 const jsonInputSchema = z.record(z.string(), z.unknown());
 
@@ -324,16 +325,16 @@ export const server = {
 
       try {
         const viewer = await requireUser(context.request.headers);
-        await db
-          .update(userProfiles)
-          .set({
-            paymentMethod: parsed.data.paymentMethod,
-            updatedAt: new Date(),
-          })
-          .where(eq(userProfiles.userId, viewer.user.id));
+        const checkout = await initializeBasicBerlinCheckout({
+          userId: viewer.user.id,
+          email: viewer.user.email,
+          name: viewer.user.name,
+          promoCode: parsed.data.promoCode,
+        });
 
         return actionSuccess({
-          notice: { type: "success", message: "Membership details saved." },
+          data: checkout,
+          notice: { type: "success", message: "Membership checkout started." },
           invalidate: [queryKeys.profile(viewer.user.id), queryKeys.authViewer],
         });
       } catch (error) {
@@ -586,13 +587,17 @@ export const server = {
         .object({
           userId: z.string().trim().min(1),
           frozen: z.coerce.boolean(),
+          reason: z.string().trim().min(1).default("Admin billing override"),
         })
         .safeParse(input);
       if (!parsed.success) return validationFailure(parsed.error);
 
       try {
-        await requireAdmin(context.request.headers);
-        const result = await setMemberFreezeStatus(parsed.data);
+        const viewer = await requireAdmin(context.request.headers);
+        const result = await setMemberFreezeStatus({
+          ...parsed.data,
+          actorUserId: viewer.user.id,
+        });
         if (isOperationFailure(result)) return formFailure(result.message);
         return actionSuccess({
           data: result,

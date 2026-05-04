@@ -64,10 +64,41 @@ export type CreditLedgerEntryView = {
   amount: number;
   direction: "credit" | "debit";
   reasonLabel: string;
+  providerLabel?: string;
+  invoiceReferenceLabel?: string;
+  idempotencyReference?: string;
   relatedLabel?: string;
   actorLabel?: string;
   createdLabel: string;
   resultingBalance?: number;
+};
+
+export type BillingDisplayView = {
+  planLabel: string;
+  planPriceLabel: string;
+  subscriptionStatusLabel: string;
+  providerActionRequiredLabel?: string;
+  nextBillDateLabel: string;
+  currentPeriodEndLabel: string;
+  billingAddressDisplay: string;
+  paymentMethodDisplay: string;
+  supportEmail: string;
+  bookingAvailabilityState: "available" | "frozen";
+  frozenReasonLabel?: string;
+  recoveryActionLabel?: string;
+  profileAndBookingsVisible: boolean;
+};
+
+export type AdminBillingDisplayView = {
+  providerCustomerId: string;
+  providerSubscriptionId: string;
+  localSubscriptionStatusLabel: string;
+  providerStatusLabel: string;
+  lastProviderSyncLabel: string;
+  currentPeriodLabel: string;
+  paymentMethodDisplay: string;
+  creditBalance: number;
+  availableBillingOverrideActions: Array<"freeze" | "unfreeze">;
 };
 
 export type GuestRowView = {
@@ -222,12 +253,23 @@ export const creditLedgerEntries: CreditLedgerEntryView[] = [
   },
   {
     id: "ledger-2",
+    amount: 10,
+    direction: "credit",
+    reasonLabel: "Subscription refill",
+    providerLabel: "Stripe",
+    invoiceReferenceLabel: "Invoice in_123",
+    idempotencyReference: "stripe:invoice:in_123:credit_refill",
+    createdLabel: "Yesterday",
+    resultingBalance: 12,
+  },
+  {
+    id: "ledger-3",
     amount: 1,
     direction: "credit",
     reasonLabel: "Admin adjustment",
     actorLabel: "Admin",
-    createdLabel: "Yesterday",
-    resultingBalance: 12,
+    createdLabel: "Last week",
+    resultingBalance: 13,
   },
 ];
 
@@ -290,6 +332,40 @@ export const profile = {
   monthlyCredits: 10,
   billingLabel: "Renews on 04 May",
   vibes: ["Gallery openings", "Listening rooms", "Food previews"],
+};
+
+export const billingDisplay: BillingDisplayView = {
+  planLabel: "Basic Berlin",
+  planPriceLabel: "29€/mo",
+  subscriptionStatusLabel: "Active",
+  nextBillDateLabel: "04 Jun",
+  currentPeriodEndLabel: "04 Jun",
+  billingAddressDisplay: "Berlin",
+  paymentMethodDisplay: "Card ending 4242",
+  supportEmail: "support@unveiled.example",
+  bookingAvailabilityState: "available",
+  recoveryActionLabel: "Update billing",
+  profileAndBookingsVisible: true,
+};
+
+export const frozenBillingDisplay: BillingDisplayView = {
+  ...billingDisplay,
+  subscriptionStatusLabel: "Past due",
+  providerActionRequiredLabel: "Payment action required",
+  bookingAvailabilityState: "frozen",
+  frozenReasonLabel: "Credits frozen until billing is resolved",
+};
+
+export const adminBillingDisplay: AdminBillingDisplayView = {
+  providerCustomerId: "cus_demo",
+  providerSubscriptionId: "sub_demo",
+  localSubscriptionStatusLabel: "Active",
+  providerStatusLabel: "active",
+  lastProviderSyncLabel: "Today",
+  currentPeriodLabel: "04 May - 04 Jun",
+  paymentMethodDisplay: "Card ending 4242",
+  creditBalance: profile.credits,
+  availableBillingOverrideActions: ["freeze"],
 };
 
 export const formContracts = {

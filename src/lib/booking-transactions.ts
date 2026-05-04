@@ -9,6 +9,7 @@ import {
   userProfiles,
   waitlistEntries,
 } from "@/db/schema";
+import { isBookingAvailableForStatus } from "@/lib/payments/subscriptions";
 
 export type BookingFailureState =
   | "sold_out"
@@ -287,10 +288,10 @@ export async function bookMemberEvent(
     if (!profile) {
       return failure("unauthorized", "Member profile is not available.");
     }
-    if (profile.subscriptionStatus !== "ACTIVE") {
+    if (!isBookingAvailableForStatus(profile.subscriptionStatus)) {
       return failure(
         "inactive_subscription",
-        "An active membership is required to book.",
+        "Your credits are frozen. Update billing to book again.",
       );
     }
     if (!event) {
@@ -418,10 +419,10 @@ export async function joinEventWaitlist(
 
     if (!profile)
       return failure("unauthorized", "Member profile is not available.");
-    if (profile.subscriptionStatus !== "ACTIVE") {
+    if (!isBookingAvailableForStatus(profile.subscriptionStatus)) {
       return failure(
         "inactive_subscription",
-        "An active membership is required to join the waitlist.",
+        "Your credits are frozen. Update billing to join the waitlist.",
       );
     }
     if (!event) return failure("invalid_event", "Event is not available.");

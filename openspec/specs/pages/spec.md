@@ -155,21 +155,35 @@ The onboarding page SHALL visually match the four-step preference wizard.
 ### Requirement: Membership Page
 This requirement SHALL use legacy reference path: `_old_app/components/CheckoutView.tsx`.
 
-The membership page SHALL display the plan, payment controls, status states, and support links as visible UI behavior.
+The membership page SHALL display the plan, Stripe-backed payment controls, status states, and support links as visible UI behavior.
 
 #### Scenario: Visible elements render
 - **WHEN** membership page is shown
 - **THEN** it displays a bordered white panel with membership eyebrow, headline, `Basic Berlin` plan, `29€/mo`, perk list, payment method controls, promo-code field, submit CTA, guarantee copy, support email, and FAQ link
 
-#### Scenario: Displayed fields render
-- **WHEN** Credit Card is selected
-- **THEN** visible fields are Card Number, Expiry Date, and CVV/CVC
-- **WHEN** PayPal is selected
-- **THEN** a dashed redirect placeholder is visible instead of card fields
+#### Scenario: Express payment methods render first
+- **WHEN** Stripe reports Apple Pay or Google Pay availability for the current browser and device context
+- **THEN** the available express payment action appears at the top of the payment section as a large prominent action visible without scrolling
+
+#### Scenario: PayPal renders as a separate option
+- **WHEN** PayPal is enabled and available for the Stripe subscription checkout flow
+- **THEN** PayPal appears as its own separately highlighted button below express payment actions
+- **AND** PayPal is not hidden inside a generic dropdown or standard payment method selector
+
+#### Scenario: Standard payment methods render separately
+- **WHEN** standard payment methods are available
+- **THEN** card payment and SEPA Direct Debit appear in a separate lower section using tabs or a simple selector
+- **AND** selecting card shows Stripe card fields
+- **AND** selecting SEPA Direct Debit shows Stripe-supported mandate and bank account collection controls
+
+#### Scenario: No payment method is preselected
+- **WHEN** the membership page first loads
+- **THEN** no payment method is selected by default
+- **AND** the user must intentionally choose express payment, PayPal, card, or SEPA before submitting
 
 #### Scenario: Validation messages render
-- **WHEN** card input is visibly invalid
-- **THEN** field-level messages appear below the related card field in small bold uppercase text
+- **WHEN** Stripe payment controls, promo-code input, or server validation returns a visible validation error
+- **THEN** field-level or method-level messages appear near the related control in small bold uppercase text
 
 #### Scenario: Status states render
 - **WHEN** frozen status is shown
@@ -185,7 +199,7 @@ The membership page SHALL display the plan, payment controls, status states, and
 
 #### Scenario: Data requirements are met
 - **WHEN** membership UI renders
-- **THEN** required display data is plan name, plan price, perk labels, selected payment method, promo code value, visible field validation messages, frozen/success copy, guarantee text, and support email
+- **THEN** required display data is plan name, plan price, perk labels, selected payment method when present, promo code value, visible field validation messages, frozen/success copy, guarantee text, provider availability flags, billing action state, and support email
 
 ### Requirement: App Discovery And Saved Pages
 This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/EventCard.tsx`, `_old_app/components/EventMap.tsx`.
@@ -550,3 +564,17 @@ Pages SHALL support a member-facing venue QR check-in flow backed by the venue t
 #### Scenario: Venue QR check-in succeeds
 - **WHEN** the member venue QR operation marks a booking used
 - **THEN** the page renders a success state and affected booking/check-in views can show the checked-in status.
+
+### Requirement: Billing Recovery Page Behavior
+Member-facing pages SHALL preserve read access while clearly disabling booking actions when subscription billing freezes credits.
+
+#### Scenario: Frozen member views bookings
+- **WHEN** a frozen or past-due member opens profile, bookings, or credit ledger pages
+- **THEN** those pages remain visible
+- **AND** billing status and recovery support copy are visible
+
+#### Scenario: Frozen member attempts booking
+- **WHEN** a frozen or past-due member opens an event booking action
+- **THEN** the booking action is disabled or rejected with a billing recovery message
+- **AND** existing bookings remain visible
+
