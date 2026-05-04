@@ -1205,7 +1205,17 @@ function PartnerPortal() {
             <option>Chef Counter Preview</option>
           </SelectInput>
         </Field>
-        <Button type="button" className="self-end" variant="secondary">
+        <Button
+          type="button"
+          className="self-end"
+          variant="secondary"
+          onClick={() =>
+            void runServerAction(
+              () => actions.getPartnerBookingExportRows({}),
+              setCheckInMessage,
+            )
+          }
+        >
           <Download />
           Download CSV
         </Button>
@@ -1280,7 +1290,16 @@ function AdminPanel() {
           New event
           <Plus />
         </Button>
-        <Button type="button" variant="secondary">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() =>
+            void runServerAction(
+              () => actions.getAdminExportRows({}),
+              setAdminMessage,
+            )
+          }
+        >
           Partner export
           <ArrowDownToLine />
         </Button>
@@ -1307,6 +1326,19 @@ function AdminPanel() {
             <Badge tone={event.statusLabel === "Draft" ? "grey" : "yellow"}>
               {event.statusLabel}
             </Badge>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              onClick={() =>
+                void runServerAction(
+                  () => actions.deleteEvent({ eventId: event.title }),
+                  setAdminMessage,
+                )
+              }
+            >
+              Delete
+            </Button>
           </TableRow>
         ))}
       </TableShell>
@@ -1460,13 +1492,47 @@ function AdminPanel() {
             <ShellLogo className="mt-4" />
           </Panel>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                void runServerAction(
+                  () =>
+                    actions.createPartnerPortalAccess({
+                      partnerId: "demo-partner",
+                      email: "partner@example.com",
+                    }),
+                  setAdminMessage,
+                )
+              }
+            >
               <ExternalLink /> Portal
             </Button>
-            <Button type="button" variant="secondary">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                void runServerAction(
+                  () =>
+                    actions.rotatePartnerVenueToken({
+                      partnerId: "demo-partner",
+                    }),
+                  setAdminMessage,
+                )
+              }
+            >
               <QrCode /> QR
             </Button>
-            <Button type="button" variant="destructive">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                void runServerAction(
+                  () => actions.deletePartner({ partnerId: "demo-partner" }),
+                  setAdminMessage,
+                )
+              }
+            >
               Delete
             </Button>
             <Button type="submit" variant="primary">
@@ -1499,6 +1565,16 @@ function AdminPanel() {
           <Field label="Search members" className="text-brand-yellow">
             <TextInput placeholder="Name or email" />
           </Field>
+          <Button
+            type="button"
+            size="sm"
+            variant="yellow"
+            onClick={() =>
+              void runServerAction(() => actions.listUsers({}), setAdminMessage)
+            }
+          >
+            Refresh users
+          </Button>
           <Card className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -1512,6 +1588,23 @@ function AdminPanel() {
               <div className="flex gap-2">
                 <Button type="button" size="sm" variant="secondary">
                   + Credit
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={() =>
+                    void runServerAction(
+                      () =>
+                        actions.toggleUserFreeze({
+                          userId: "demo-user",
+                          frozen: true,
+                        }),
+                      setAdminMessage,
+                    )
+                  }
+                >
+                  Freeze
                 </Button>
                 <input name="userId" type="hidden" value="demo-user" />
                 <input name="creditAdjustment" type="hidden" value="1" />

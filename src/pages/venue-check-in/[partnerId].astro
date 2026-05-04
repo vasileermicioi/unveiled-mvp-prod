@@ -1,0 +1,82 @@
+---
+import BaseLayout from "@/layouts/base-layout.astro";
+import { getViewer } from "@/lib/auth-profile";
+
+const { partnerId } = Astro.params;
+const token = Astro.url.searchParams.get("token") ?? "";
+const viewer = await getViewer(Astro.request, { repairMissingProfile: false });
+const isGuest = viewer.kind === "guest";
+---
+
+<BaseLayout title="Venue Check-In">
+  <main class="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-12">
+    <section class="border-4 border-brand-dark bg-white p-6 shadow-[8px_8px_0_var(--color-brand-dark)]">
+      <p class="text-xs font-black uppercase tracking-widest text-brand-dark/60">
+        Venue check-in
+      </p>
+      <h1 class="mt-4 font-black text-3xl uppercase tracking-normal">
+        {isGuest ? "Sign in to check in" : "Confirm your venue check-in"}
+      </h1>
+      <p class="mt-4 text-sm font-bold uppercase tracking-widest text-brand-dark/70">
+        {
+          isGuest
+            ? "Authentication is required before booking eligibility is checked."
+            : "This secure link checks for your closest eligible confirmed booking at this venue."
+        }
+      </p>
+      {
+        isGuest ? (
+          <a
+            class="mt-6 inline-flex border-4 border-brand-dark bg-brand-yellow px-5 py-3 font-black text-sm uppercase tracking-widest text-brand-dark"
+            href={`/?venueCheckInPartner=${encodeURIComponent(partnerId ?? "")}&venueToken=${encodeURIComponent(token)}`}
+          >
+            Continue to sign in
+          </a>
+        ) : (
+          <form class="mt-6" data-venue-check-in-form>
+            <input name="partnerId" type="hidden" value={partnerId} />
+            <input name="venueToken" type="hidden" value={token} />
+            <button
+              class="border-4 border-brand-dark bg-brand-dark px-5 py-3 font-black text-sm uppercase tracking-widest text-white"
+              type="submit"
+            >
+              Check in
+            </button>
+            <p
+              class="mt-4 text-xs font-black uppercase tracking-widest"
+              data-venue-check-in-status
+            >
+              Ready
+            </p>
+          </form>
+        )
+      }
+    </section>
+  </main>
+  <script>
+    import { actions } from "astro:actions";
+
+    const form = document.querySelector("[data-venue-check-in-form]");
+    const status = document.querySelector("[data-venue-check-in-status]");
+
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(form as HTMLFormElement);
+      const partnerId = String(formData.get("partnerId") || "");
+      const venueToken = String(formData.get("venueToken") || "");
+      if (status) status.textContent = "Checking in...";
+      void actions
+        .checkInWithVenueQr({ partnerId, venueToken })
+        .then((result) => {
+          if (status) {
+            status.textContent = result.data?.ok
+              ? (result.data.notice?.message ?? "Checked in.")
+              : (result.data?.formError ?? "Check-in failed.");
+          }
+        })
+        .catch(() => {
+          if (status) status.textContent = "Check-in failed.";
+        });
+    });
+  </script>
+</BaseLayout>

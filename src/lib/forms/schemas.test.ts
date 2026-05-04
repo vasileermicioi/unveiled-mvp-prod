@@ -2,13 +2,17 @@ import { describe, expect, test } from "bun:test";
 
 import {
   checkInSchema,
+  deletePartnerSchema,
   eventFormSchema,
   loginSchema,
   memberAdminSchema,
   membershipSchema,
   onboardingSchema,
   partnerFormSchema,
+  partnerPortalAccessSchema,
+  partnerTokenSchema,
   signupSchema,
+  venueQrCheckInSchema,
 } from "@/lib/forms/schemas";
 
 describe("form schemas", () => {
@@ -89,10 +93,32 @@ describe("form schemas", () => {
       ticketType: "SECRET_CODE",
       secretCodeMode: "MANUAL",
       secretCode: "UNVEILED",
-      series: { enabled: true, count: 3, intervalDays: 7 },
+      series: {
+        enabled: true,
+        count: 3,
+        intervalDays: 7,
+        slotIsoDateTimes: ["2026-05-04T19:00:00.000Z"],
+      },
     });
 
     expect(event.series.count).toBe(3);
+    expect(event.series.slotIsoDateTimes).toEqual(["2026-05-04T19:00:00.000Z"]);
+    expect(
+      eventFormSchema.safeParse({
+        partnerId: "partner-1",
+        title: "Event",
+        category: "Theater",
+        eventType: "Drop",
+        dateTime: "2026-05-04T19:00:00.000Z",
+        address: "Berlin",
+        neighborhood: "Mitte",
+        creditPrice: 2,
+        totalCapacity: 10,
+        ticketType: "VOUCHER",
+        promoCode: "",
+        eventWebsiteUrl: "",
+      }).success,
+    ).toBe(false);
     expect(
       memberAdminSchema.safeParse({ userId: "user-1", creditAdjustment: 1 })
         .success,
@@ -100,5 +126,23 @@ describe("form schemas", () => {
     expect(checkInSchema.safeParse({ bookingId: "booking-1" }).success).toBe(
       true,
     );
+    expect(
+      venueQrCheckInSchema.safeParse({
+        partnerId: "partner-1",
+        venueToken: "token",
+      }).success,
+    ).toBe(true);
+    expect(
+      partnerPortalAccessSchema.safeParse({
+        partnerId: "partner-1",
+        email: "partner@example.com",
+      }).success,
+    ).toBe(true);
+    expect(
+      partnerTokenSchema.safeParse({ partnerId: "partner-1" }).success,
+    ).toBe(true);
+    expect(
+      deletePartnerSchema.safeParse({ partnerId: "partner-1" }).success,
+    ).toBe(true);
   });
 });

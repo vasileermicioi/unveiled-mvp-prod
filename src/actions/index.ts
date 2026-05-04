@@ -1,15 +1,24 @@
 import { type ActionAPIContext, defineAction } from "astro:actions";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db/client";
+import { creditLedgerEntries, userProfiles } from "@/db/schema";
 import {
-  bookings,
-  creditLedgerEntries,
-  events,
-  partners,
-  userProfiles,
-} from "@/db/schema";
+  checkInBookingOperation,
+  checkInWithVenueQrOperation,
+  deleteAdminEvent,
+  deleteAdminPartner,
+  getAdminExportRows,
+  getPartnerGuestExportRows,
+  isOperationFailure,
+  listAdminMembers,
+  provisionPartnerPortalAccess,
+  rotatePartnerVenueToken,
+  saveAdminEvent,
+  saveAdminPartner,
+  setMemberFreezeStatus,
+} from "@/lib/admin-operations";
 import {
   type AuthActionResult,
   loginWithEmail,
@@ -17,13 +26,7 @@ import {
   requestPasswordRecovery,
   signUpWithEmail,
 } from "@/lib/auth-account-actions";
-import {
-  AuthAccessError,
-  requireAdmin,
-  requireOwnerOrAdmin,
-  requirePartnerForResource,
-  requireUser,
-} from "@/lib/auth-profile";
+import { AuthAccessError, requireAdmin, requireUser } from "@/lib/auth-profile";
 import {
   adjustUserCredits,
   type BookingTransactionResult,
@@ -47,16 +50,20 @@ import {
   bookingActionSchema,
   checkInSchema,
   creditAdjustmentSchema,
+  deletePartnerSchema,
   eventFormSchema,
   loginSchema,
   memberAdminSchema,
   membershipSchema,
   onboardingSchema,
   partnerFormSchema,
+  partnerPortalAccessSchema,
+  partnerTokenSchema,
   passwordRecoverySchema,
   preferenceSchema,
   profileSchema,
   signupSchema,
+  venueQrCheckInSchema,
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
 
@@ -165,45 +172,6 @@ function authResultToFormAction(
     },
     invalidate: [queryKeys.authViewer],
   });
-}
-
-function getEventValues(input: z.infer<typeof eventFormSchema>, index = 0) {
-  const dateTime = new Date(input.dateTime);
-  if (index > 0) {
-    dateTime.setDate(dateTime.getDate() + input.series.intervalDays * index);
-  }
-
-  return {
-    partnerId: input.partnerId,
-    title: index > 0 ? `${input.title} ${index + 1}` : input.title,
-    description: input.description,
-    category: input.category,
-    eventType: input.eventType,
-    dateTime,
-    timingMode: input.timingMode,
-    startTimeMinutes: input.startTimeMinutes,
-    weekday: input.weekday,
-    address: input.address,
-    neighborhood: input.neighborhood,
-    lat: input.lat,
-    lng: input.lng,
-    imageUrl: input.imageUrl,
-    tags: input.tags,
-    creditPrice: input.creditPrice,
-    totalCapacity: input.totalCapacity,
-    remainingCapacity: input.remainingCapacity ?? input.totalCapacity,
-    ticketType: input.ticketType,
-    voucherTemplate: input.voucherTemplate,
-    secretCodeRules: input.secretCodeRules,
-    secretCode: input.secretCode,
-    secretCodeMode: input.secretCodeMode,
-    promoCode: input.promoCode,
-    eventWebsiteUrl: input.eventWebsiteUrl,
-    barrierFree: input.barrierFree,
-    languages: input.languages,
-    targetAgeGroups: input.targetAgeGroups,
-    updatedAt: new Date(),
-  };
 }
 
 export const server = {
@@ -383,33 +351,17 @@ export const server = {
 
       try {
         await requireAdmin(context.request.headers);
-        const id = parsed.data.id ?? newId();
-        const values = {
-          name: parsed.data.name,
-          contactEmail: parsed.data.contactEmail,
-          address: parsed.data.address,
-          logoUrl: parsed.data.logoUrl ?? null,
-          venueCheckInToken: parsed.data.venueCheckInToken ?? null,
-          portalUserEmail: parsed.data.portalUserEmail || null,
-          updatedAt: new Date(),
-        };
-
-        if (parsed.data.id) {
-          await db
-            .update(partners)
-            .set(values)
-            .where(eq(partners.id, parsed.data.id));
-        } else {
-          await db.insert(partners).values({
-            id,
-            ...values,
-          });
-        }
+        const result = await saveAdminPartner(parsed.data);
+        if (isOperationFailure(result)) return formFailure(result.message);
 
         return actionSuccess({
-          data: { partnerId: id },
-          notice: { type: "success", message: "Partner saved." },
-          invalidate: [queryKeys.partners, queryKeys.partner(id)],
+          data: { partnerId: result.partnerId },
+          notice: { type: "success", message: result.message },
+          invalidate: [
+            queryKeys.partners,
+            queryKeys.partner(result.partnerId),
+            queryKeys.events,
+          ],
         });
       } catch (error) {
         return safeActionError(error);
@@ -426,35 +378,143 @@ export const server = {
 
       try {
         await requireAdmin(context.request.headers);
-        const values = getEventValues(parsed.data);
-        const id = parsed.data.id ?? newId();
-
-        if (parsed.data.id) {
-          await db
-            .update(events)
-            .set(values)
-            .where(eq(events.id, parsed.data.id));
-        } else {
-          const count = parsed.data.series.enabled
-            ? parsed.data.series.count
-            : 1;
-          await db.insert(events).values(
-            Array.from({ length: count }, (_, index) => ({
-              id: index === 0 ? id : newId(),
-              ...getEventValues(parsed.data, index),
-              createdAt: new Date(),
-            })),
-          );
+        const result = await saveAdminEvent(parsed.data);
+        if (isOperationFailure(result)) {
+          return result.fieldErrors
+            ? {
+                ok: false,
+                fieldErrors: result.fieldErrors,
+                formError: result.message,
+              }
+            : formFailure(result.message);
         }
 
         return actionSuccess({
-          data: { eventId: id },
-          notice: { type: "success", message: "Event saved." },
+          data: { eventId: result.eventIds[0], eventIds: result.eventIds },
+          notice: { type: "success", message: result.message },
           invalidate: [
             queryKeys.events,
-            queryKeys.event(id),
+            ...result.eventIds.map((eventId) => queryKeys.event(eventId)),
             queryKeys.partners,
           ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  deleteEvent: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = z
+        .object({ eventId: z.string().trim().min(1) })
+        .safeParse(input);
+      if (!parsed.success) return validationFailure(parsed.error);
+
+      try {
+        await requireAdmin(context.request.headers);
+        const result = await deleteAdminEvent(parsed.data.eventId);
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: { eventId: result.eventId },
+          notice: { type: "success", message: result.message },
+          invalidate: [queryKeys.events, queryKeys.event(result.eventId)],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  rotatePartnerVenueToken: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(partnerTokenSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        await requireAdmin(context.request.headers);
+        const result = await rotatePartnerVenueToken(parsed.data.partnerId);
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: result,
+          notice: { type: "success", message: result.message },
+          invalidate: [
+            queryKeys.partners,
+            queryKeys.partner(parsed.data.partnerId),
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  createPartnerPortalAccess: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(partnerPortalAccessSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        await requireAdmin(context.request.headers);
+        const result = await provisionPartnerPortalAccess(parsed.data);
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: result,
+          notice: { type: "success", message: result.message },
+          invalidate: [
+            queryKeys.partners,
+            queryKeys.partner(parsed.data.partnerId),
+            queryKeys.authViewer,
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  deletePartner: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(deletePartnerSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        await requireAdmin(context.request.headers);
+        const result = await deleteAdminPartner(parsed.data.partnerId);
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: { partnerId: result.partnerId },
+          notice: { type: "success", message: result.message },
+          invalidate: [
+            queryKeys.partners,
+            queryKeys.partner(parsed.data.partnerId),
+            queryKeys.events,
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  listUsers: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (_input, context) => {
+      try {
+        await requireAdmin(context.request.headers);
+        const members = await listAdminMembers();
+        return actionSuccess({
+          data: { members },
+          invalidate: [queryKeys.adminMembers],
         });
       } catch (error) {
         return safeActionError(error);
@@ -471,7 +531,6 @@ export const server = {
 
       try {
         await requireAdmin(context.request.headers);
-        await requireOwnerOrAdmin(context.request.headers, parsed.data.userId);
 
         const [updated] = await db
           .update(userProfiles)
@@ -507,6 +566,37 @@ export const server = {
 
         return actionSuccess({
           notice: { type: "success", message: "Member updated." },
+          invalidate: [
+            queryKeys.adminMembers,
+            queryKeys.profile(parsed.data.userId),
+            queryKeys.authViewer,
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  toggleUserFreeze: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = z
+        .object({
+          userId: z.string().trim().min(1),
+          frozen: z.coerce.boolean(),
+        })
+        .safeParse(input);
+      if (!parsed.success) return validationFailure(parsed.error);
+
+      try {
+        await requireAdmin(context.request.headers);
+        const result = await setMemberFreezeStatus(parsed.data);
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: result,
+          notice: { type: "success", message: result.message },
           invalidate: [
             queryKeys.adminMembers,
             queryKeys.profile(parsed.data.userId),
@@ -622,43 +712,83 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const booking = await db.query.bookings.findFirst({
-          where: eq(bookings.id, parsed.data.bookingId),
+        const viewer = await requireUser(context.request.headers);
+        const result = await checkInBookingOperation({
+          bookingId: parsed.data.bookingId,
+          viewer,
         });
-        if (!booking)
-          return formFailure("The requested item is not available.");
-
-        await requirePartnerForResource(
-          context.request.headers,
-          booking.partnerId,
-        );
-
-        const [updated] = await db
-          .update(bookings)
-          .set({
-            status: "USED",
-            checkedInAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(bookings.id, parsed.data.bookingId),
-              eq(bookings.partnerId, booking.partnerId),
-            ),
-          )
-          .returning({ id: bookings.id });
-
-        if (!updated)
-          return formFailure("The requested item is not available.");
+        if (isOperationFailure(result)) return formFailure(result.message);
 
         return actionSuccess({
-          notice: { type: "success", message: "Guest checked in." },
+          data: result,
+          notice: { type: "success", message: result.message },
           invalidate: [
             queryKeys.booking(parsed.data.bookingId),
             queryKeys.bookings,
-            queryKeys.checkIns(booking.partnerId),
+            queryKeys.checkIns(result.partnerId),
           ],
         });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  checkInWithVenueQr: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(venueQrCheckInSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await requireUser(context.request.headers);
+        const result = await checkInWithVenueQrOperation({
+          userId: viewer.user.id,
+          partnerId: parsed.data.partnerId,
+          venueToken: parsed.data.venueToken,
+        });
+        if (isOperationFailure(result)) return formFailure(result.message);
+        return actionSuccess({
+          data: result,
+          notice: { type: "success", message: result.message },
+          invalidate: [
+            queryKeys.booking(result.bookingId),
+            queryKeys.bookings,
+            queryKeys.checkIns(result.partnerId),
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  getPartnerBookingExportRows: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (_input, context) => {
+      try {
+        const viewer = await requireUser(context.request.headers);
+        if (viewer.role !== "PARTNER" || !viewer.partnerId) {
+          return formFailure("You do not have access to this resource.");
+        }
+        const rows = await getPartnerGuestExportRows(viewer.partnerId);
+        return actionSuccess({ data: { rows } });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  getAdminExportRows: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (_input, context) => {
+      try {
+        await requireAdmin(context.request.headers);
+        const rows = await getAdminExportRows();
+        return actionSuccess({ data: { rows } });
       } catch (error) {
         return safeActionError(error);
       }

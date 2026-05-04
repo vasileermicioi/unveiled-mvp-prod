@@ -254,6 +254,24 @@ export const partnerFormSchema = z.object({
 });
 export type PartnerFormInput = z.infer<typeof partnerFormSchema>;
 
+export const partnerTokenSchema = z.object({
+  partnerId: requiredString("Partner is required.", 120),
+});
+export type PartnerTokenInput = z.infer<typeof partnerTokenSchema>;
+
+export const partnerPortalAccessSchema = z.object({
+  partnerId: requiredString("Partner is required.", 120),
+  email: z.union([email(), z.literal("")]).optional(),
+});
+export type PartnerPortalAccessInput = z.infer<
+  typeof partnerPortalAccessSchema
+>;
+
+export const deletePartnerSchema = z.object({
+  partnerId: requiredString("Partner is required.", 120),
+});
+export type DeletePartnerInput = z.infer<typeof deletePartnerSchema>;
+
 export const timingModeSchema = z.enum(["TIME_SLOT", "ALL_DAY"]);
 export const ticketTypeSchema = z.enum(["VOUCHER", "SECRET_CODE"]);
 export const secretCodeModeSchema = z.enum([
@@ -266,6 +284,7 @@ export const eventSeriesSchema = z.object({
   enabled: z.coerce.boolean().default(false),
   count: z.coerce.number().int().min(1).max(52).default(1),
   intervalDays: z.coerce.number().int().min(1).max(365).default(7),
+  slotIsoDateTimes: z.array(z.string().trim().min(1)).default([]),
 });
 export type EventSeriesInput = z.infer<typeof eventSeriesSchema>;
 
@@ -310,6 +329,7 @@ export const eventFormSchema = z
       enabled: false,
       count: 1,
       intervalDays: 7,
+      slotIsoDateTimes: [],
     }),
   })
   .superRefine((data, ctx) => {
@@ -326,7 +346,7 @@ export const eventFormSchema = z
 
     if (
       data.ticketType === "SECRET_CODE" &&
-      data.secretCodeMode === "MANUAL" &&
+      (data.secretCodeMode ?? "MANUAL") === "MANUAL" &&
       !data.secretCode
     ) {
       ctx.addIssue({
@@ -334,6 +354,23 @@ export const eventFormSchema = z
         path: ["secretCode"],
         message: "Manual secret code is required.",
       });
+    }
+
+    if (data.ticketType === "VOUCHER") {
+      if (!data.promoCode) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["promoCode"],
+          message: "Promo code is required for voucher events.",
+        });
+      }
+      if (!data.eventWebsiteUrl) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eventWebsiteUrl"],
+          message: "Event website URL is required for voucher events.",
+        });
+      }
     }
   });
 export type EventFormInput = z.infer<typeof eventFormSchema>;
@@ -361,6 +398,12 @@ export const checkInSchema = z.object({
   partnerId: optionalTrimmedString(120),
 });
 export type CheckInInput = z.infer<typeof checkInSchema>;
+
+export const venueQrCheckInSchema = z.object({
+  partnerId: requiredString("Partner is required.", 120),
+  venueToken: requiredString("Venue token is required.", 240),
+});
+export type VenueQrCheckInInput = z.infer<typeof venueQrCheckInSchema>;
 
 export const bookingActionSchema = z.object({
   eventId: requiredString("Event is required.", 120),
