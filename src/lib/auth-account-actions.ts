@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { createAuth } from "@/lib/auth";
 import type {
   AuthFormState,
   LoginInput,
@@ -6,6 +6,7 @@ import type {
   SignupInput,
 } from "@/lib/auth-forms";
 import { createDefaultUserProfile } from "@/lib/auth-profile";
+import type { RuntimeEnv } from "@/lib/env";
 
 export type AuthActionSuccess = {
   ok: true;
@@ -51,8 +52,10 @@ function getName(input: SignupInput) {
 
 export async function signUpWithEmail(
   input: SignupInput,
+  env?: RuntimeEnv,
 ): Promise<AuthActionResult> {
   try {
+    const auth = createAuth(env);
     const result = await auth.api.signUpEmail({
       body: {
         email: input.email,
@@ -83,8 +86,10 @@ export async function signUpWithEmail(
 
 export async function loginWithEmail(
   input: LoginInput,
+  env?: RuntimeEnv,
 ): Promise<AuthActionResult> {
   try {
+    const auth = createAuth(env);
     const result = await auth.api.signInEmail({
       body: {
         email: input.email,
@@ -109,8 +114,12 @@ export async function loginWithEmail(
   }
 }
 
-export async function logout(headers: Headers): Promise<AuthActionResult> {
+export async function logout(
+  headers: Headers,
+  env?: RuntimeEnv,
+): Promise<AuthActionResult> {
   try {
+    const auth = createAuth(env);
     const result = await auth.api.signOut({
       headers,
       returnHeaders: true,
@@ -129,8 +138,10 @@ export async function logout(headers: Headers): Promise<AuthActionResult> {
 
 export async function requestPasswordRecovery(
   input: PasswordRecoveryInput,
+  env?: RuntimeEnv,
 ): Promise<AuthActionResult> {
   try {
+    const auth = createAuth(env);
     await auth.api.requestPasswordReset({
       body: {
         email: input.email,

@@ -9,6 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "preview:cloudflare": "bun run build && wrangler dev --config dist/server/wrangler.json",
+    "deploy:cloudflare": "bun run build && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "astro",
     "check": "astro check && biome check .",
     "format": "biome format --write .",
@@ -20,9 +23,10 @@
     "jobs:daily-partner-codes": "bun run scripts/run-daily-partner-codes.ts"
   },
   "dependencies": {
-    "@astrojs/node": "^10.0.6",
+    "@astrojs/cloudflare": "^13.3.1",
     "@astrojs/react": "^5.0.4",
     "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@stripe/stripe-js": "^9.4.0",
     "@tailwindcss/vite": "^4.2.4",
@@ -36,7 +40,6 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.11.0",
-    "postgres": "^3.4.9",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.75.0",
@@ -49,9 +52,11 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
     "@biomejs/biome": "^2.4.13",
+    "@cloudflare/workers-types": "^4.20260506.1",
     "@types/bun": "^1.3.13",
     "@types/node": "^25.6.0",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.88.0"
   }
 }

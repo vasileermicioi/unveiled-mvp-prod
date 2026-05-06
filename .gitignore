@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# Cloudflare local/generated output
+.wrangler/
 
 # local PGlite database
 .data/

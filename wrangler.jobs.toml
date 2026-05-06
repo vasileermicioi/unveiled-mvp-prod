@@ -1,0 +1,8 @@
+name = "unveiled-jobs"
+main = "src/worker.ts"
+compatibility_date = "2026-05-06"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+observability = { enabled = true }
+
+[triggers]
+crons = ["59 23 * * *"]

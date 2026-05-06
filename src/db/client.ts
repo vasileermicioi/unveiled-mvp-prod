@@ -1,18 +1,44 @@
-import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 
 import * as schema from "@/db/schema";
+import { getRequiredEnv, type RuntimeEnv } from "@/lib/env";
 
-const databaseUrl = process.env.DATABASE_URL;
+export function createDb(env?: RuntimeEnv) {
+  const databaseUrl = getRequiredEnv("DATABASE_URL", env);
+  const sql = neon(databaseUrl);
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required.");
+  return drizzle(sql, { schema });
 }
 
-export const postgresClient = postgres(databaseUrl, {
-  prepare: false,
+type Database = ReturnType<typeof createDb>;
+
+let defaultDb: Database | undefined;
+
+export function getDb(env?: RuntimeEnv): Database {
+  if (env) return createDb(env);
+
+  defaultDb ??= createDb();
+  return defaultDb;
+}
+
+export const db = new Proxy({} as Database, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getDb(), prop, receiver);
+  },
 });
 
-export const db = drizzlePostgres(postgresClient, { schema });
+export const postgresClient = {
+  async end() {
+    // Neon HTTP does not keep a local TCP pool open, but existing scripts call
+    // postgresClient.end() after finishing.
+  },
+};
 
-export type Db = typeof db;
+export type Db = Database;
+
+export async function checkDatabaseConnection(env?: RuntimeEnv) {
+  const databaseUrl = getRequiredEnv("DATABASE_URL", env);
+  const sql = neon(databaseUrl);
+  await sql`select 1`;
+}

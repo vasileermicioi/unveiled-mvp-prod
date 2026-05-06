@@ -1,5 +1,11 @@
+import { env as cloudflareEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 
-import { auth } from "@/lib/auth";
+import { createAuth } from "@/lib/auth";
+import { getCloudflareEnv } from "@/lib/env";
 
-export const ALL: APIRoute = async ({ request }) => auth.handler(request);
+export const ALL: APIRoute = async ({ locals, request }) =>
+  createAuth({
+    ...getCloudflareEnv(locals),
+    ...(cloudflareEnv as Record<string, string | undefined>),
+  }).handler(request);
