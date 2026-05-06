@@ -1715,8 +1715,10 @@ function AdminPanel() {
 
 export function VisualSystemApp({
   initialShell,
+  initialDiscovery: _initialDiscovery,
 }: {
   initialShell?: AppShellViewModel;
+  initialDiscovery?: unknown;
 }) {
   const [view, setView] = useState<View>("landing");
   const savedCount = events.filter((event) => event.saved).length;

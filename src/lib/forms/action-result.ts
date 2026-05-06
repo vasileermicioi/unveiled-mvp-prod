@@ -2,6 +2,10 @@ import type { z } from "zod";
 
 export type FieldErrors = Record<string, string>;
 export type QueryInvalidationKey = readonly unknown[];
+export type QueryInvalidationHint = {
+  queryKey: QueryInvalidationKey;
+  exact?: boolean;
+};
 
 export type ActionNotice = {
   type: "success" | "info";
@@ -14,7 +18,7 @@ export type FormActionSuccess<TData = undefined> = {
   formError?: never;
   notice?: ActionNotice;
   data?: TData;
-  invalidate?: QueryInvalidationKey[];
+  invalidate?: Array<QueryInvalidationKey | QueryInvalidationHint>;
 };
 
 export type FormActionFailure = {

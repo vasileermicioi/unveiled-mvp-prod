@@ -1,3 +1,4 @@
+import { dataQueryKeys } from "@/lib/data-access/query-keys";
 import type { QueryInvalidationKey } from "@/lib/forms/action-result";
 
 export const queryKeys = {
@@ -15,9 +16,12 @@ export const queryKeys = {
   ledger: (userId?: string) => ["ledger", userId ?? "current"] as const,
   adminMembers: ["admin", "members"] as const,
   checkIns: (partnerId?: string) => ["check-ins", partnerId ?? "all"] as const,
+  data: dataQueryKeys,
 } satisfies Record<
   string,
-  QueryInvalidationKey | ((...args: never[]) => QueryInvalidationKey)
+  | QueryInvalidationKey
+  | Record<string, unknown>
+  | ((...args: never[]) => QueryInvalidationKey)
 >;
 
 export type QueryKeyFactory = typeof queryKeys;

@@ -38,6 +38,10 @@ import {
   joinEventWaitlist,
 } from "@/lib/booking-transactions";
 import {
+  invalidationHintsForScopes,
+  toQueryKeys,
+} from "@/lib/data-access/invalidation";
+import {
   actionSuccess,
   type FormActionResult,
   formFailure,
@@ -83,6 +87,12 @@ function safeActionError(error: unknown) {
   return formFailure("The request could not be completed.");
 }
 
+function dataAccessInvalidationKeys(
+  scopes: Parameters<typeof invalidationHintsForScopes>[0],
+) {
+  return toQueryKeys(invalidationHintsForScopes(scopes));
+}
+
 function bookingResultToAction(
   result: BookingTransactionResult,
 ): FormActionResult<BookingTransactionResult> {
@@ -105,6 +115,10 @@ function bookingResultToAction(
       queryKeys.events,
       queryKeys.authViewer,
       result.state === "waitlist" ? queryKeys.waitlist : queryKeys.ledger(),
+      ...dataAccessInvalidationKeys([
+        { type: "public-discovery" },
+        { type: "event", eventId: result.eventId },
+      ]),
     ],
   });
 }
@@ -124,6 +138,10 @@ function creditAdjustmentResultToAction(
       queryKeys.profile(result.userId),
       queryKeys.ledger(result.userId),
       queryKeys.authViewer,
+      ...dataAccessInvalidationKeys([
+        { type: "member", userId: result.userId },
+        { type: "admin" },
+      ]),
     ],
   });
 }
@@ -246,6 +264,10 @@ export const server = {
             queryKeys.profile(viewer.user.id),
             queryKeys.preferences(viewer.user.id),
             queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "member-preferences", userId: viewer.user.id },
+              { type: "member-profile", userId: viewer.user.id },
+            ]),
           ],
         });
       } catch (error) {
@@ -277,6 +299,9 @@ export const server = {
           invalidate: [
             queryKeys.profile(viewer.user.id),
             queryKeys.preferences(viewer.user.id),
+            ...dataAccessInvalidationKeys([
+              { type: "member-preferences", userId: viewer.user.id },
+            ]),
           ],
         });
       } catch (error) {
@@ -308,7 +333,13 @@ export const server = {
 
         return actionSuccess({
           notice: { type: "success", message: "Profile saved." },
-          invalidate: [queryKeys.profile(viewer.user.id), queryKeys.authViewer],
+          invalidate: [
+            queryKeys.profile(viewer.user.id),
+            queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "member-profile", userId: viewer.user.id },
+            ]),
+          ],
         });
       } catch (error) {
         return safeActionError(error);
@@ -335,7 +366,13 @@ export const server = {
         return actionSuccess({
           data: checkout,
           notice: { type: "success", message: "Membership checkout started." },
-          invalidate: [queryKeys.profile(viewer.user.id), queryKeys.authViewer],
+          invalidate: [
+            queryKeys.profile(viewer.user.id),
+            queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "member-profile", userId: viewer.user.id },
+            ]),
+          ],
         });
       } catch (error) {
         return safeActionError(error);
@@ -362,6 +399,11 @@ export const server = {
             queryKeys.partners,
             queryKeys.partner(result.partnerId),
             queryKeys.events,
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "partner", partnerId: result.partnerId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -397,6 +439,10 @@ export const server = {
             queryKeys.events,
             ...result.eventIds.map((eventId) => queryKeys.event(eventId)),
             queryKeys.partners,
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -421,7 +467,15 @@ export const server = {
         return actionSuccess({
           data: { eventId: result.eventId },
           notice: { type: "success", message: result.message },
-          invalidate: [queryKeys.events, queryKeys.event(result.eventId)],
+          invalidate: [
+            queryKeys.events,
+            queryKeys.event(result.eventId),
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "event", eventId: result.eventId },
+              { type: "admin" },
+            ]),
+          ],
         });
       } catch (error) {
         return safeActionError(error);
@@ -446,6 +500,10 @@ export const server = {
           invalidate: [
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
+            ...dataAccessInvalidationKeys([
+              { type: "partner", partnerId: parsed.data.partnerId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -472,6 +530,10 @@ export const server = {
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
             queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "partner", partnerId: parsed.data.partnerId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -498,6 +560,11 @@ export const server = {
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
             queryKeys.events,
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "partner", partnerId: parsed.data.partnerId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -515,7 +582,10 @@ export const server = {
         const members = await listAdminMembers();
         return actionSuccess({
           data: { members },
-          invalidate: [queryKeys.adminMembers],
+          invalidate: [
+            queryKeys.adminMembers,
+            ...dataAccessInvalidationKeys([{ type: "admin" }]),
+          ],
         });
       } catch (error) {
         return safeActionError(error);
@@ -571,6 +641,10 @@ export const server = {
             queryKeys.adminMembers,
             queryKeys.profile(parsed.data.userId),
             queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "member", userId: parsed.data.userId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -606,6 +680,10 @@ export const server = {
             queryKeys.adminMembers,
             queryKeys.profile(parsed.data.userId),
             queryKeys.authViewer,
+            ...dataAccessInvalidationKeys([
+              { type: "member", userId: parsed.data.userId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -731,6 +809,10 @@ export const server = {
             queryKeys.booking(parsed.data.bookingId),
             queryKeys.bookings,
             queryKeys.checkIns(result.partnerId),
+            ...dataAccessInvalidationKeys([
+              { type: "partner", partnerId: result.partnerId },
+              { type: "admin" },
+            ]),
           ],
         });
       } catch (error) {
@@ -761,6 +843,10 @@ export const server = {
             queryKeys.booking(result.bookingId),
             queryKeys.bookings,
             queryKeys.checkIns(result.partnerId),
+            ...dataAccessInvalidationKeys([
+              { type: "member-bookings", userId: viewer.user.id },
+              { type: "partner", partnerId: result.partnerId },
+            ]),
           ],
         });
       } catch (error) {

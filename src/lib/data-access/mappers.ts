@@ -1,0 +1,389 @@
+import type { InferSelectModel } from "drizzle-orm";
+
+import type {
+  bookings,
+  creditLedgerEntries,
+  events,
+  partners,
+  user,
+  userProfiles,
+  waitlistEntries,
+} from "@/db/schema";
+
+export type EventRow = InferSelectModel<typeof events>;
+export type PartnerRow = InferSelectModel<typeof partners>;
+export type BookingRow = InferSelectModel<typeof bookings>;
+export type UserRow = InferSelectModel<typeof user>;
+export type UserProfileRow = InferSelectModel<typeof userProfiles>;
+export type CreditLedgerRow = InferSelectModel<typeof creditLedgerEntries>;
+export type WaitlistRow = InferSelectModel<typeof waitlistEntries>;
+
+export type DataAccessEventView = {
+  id: string;
+  title: string;
+  partnerName: string;
+  partnerId: string;
+  category: string;
+  dateLabel: string;
+  neighborhood: string;
+  address: string;
+  imageUrl: string;
+  creditPrice: number;
+  remainingCapacity: number;
+  capacityLabel: string;
+  ticketType: "Secret code" | "Voucher" | "Waitlist";
+  description: string;
+  saved: boolean;
+  ctaLabel: string;
+  mapLabel: string;
+};
+
+export type DataAccessPartnerView = {
+  id: string;
+  name: string;
+  address: string;
+  contactEmail?: string;
+  logoUrl?: string | null;
+  logoInitial: string;
+  venueQrUrl?: string;
+  portalUserEmail?: string | null;
+};
+
+export type DataAccessBookingView = {
+  id: string;
+  eventId: string;
+  partnerId: string;
+  eventTitle: string;
+  dateLabel: string;
+  partnerName: string;
+  eventAddress: string;
+  ticketCount: number;
+  totalCredits: number;
+  statusLabel: string;
+  redemptionType: "SECRET_CODE" | "VOUCHER";
+  redemptionCode: string;
+  redemptionUrl?: string;
+  checkedInLabel: string;
+  copied: false;
+};
+
+export type DataAccessLedgerView = {
+  id: string;
+  amount: number;
+  direction: "credit" | "debit";
+  reasonLabel: string;
+  relatedLabel?: string;
+  actorLabel?: string;
+  createdLabel: string;
+  resultingBalance: number;
+};
+
+export type DataAccessProfileView = {
+  userId: string;
+  fullName: string;
+  email?: string;
+  firstName: string | null;
+  lastName: string | null;
+  credits: number;
+  currentPlanLabel: string;
+  statusBadgeLabel: string;
+  nextBillDate: string;
+  billingAddress: string;
+  paymentMethod: string;
+  language: "DE" | "EN";
+  onboardingComplete: boolean;
+};
+
+export type DataAccessPreferencesView = {
+  ageGroup: string | null;
+  interests: string[];
+  moods: string[];
+  districts: string[];
+  maxDistance: number;
+  timing: string[];
+  preferredDays: string[];
+  preferredLanguages: string[];
+  accessibility: boolean;
+};
+
+export type DataAccessGuestView = {
+  bookingId: string;
+  userId: string;
+  userShortId: string;
+  guestName: string;
+  guestEmail: string;
+  eventTitle: string;
+  redemptionCode: string | null;
+  statusLabel: string;
+  tickets: number;
+  createdAt: string;
+  checkedInLabel: string;
+  checkInAvailableLabel: string;
+};
+
+export type DataAccessAdminEventView = {
+  id: string;
+  title: string;
+  partnerName: string;
+  dateLabel: string;
+  capacityLabel: string;
+  statusLabel: string;
+};
+
+export type DataAccessAdminPartnerView = {
+  id: string;
+  name: string;
+  address: string;
+  contactEmail: string;
+  logoUrl?: string | null;
+  logoInitial: string;
+  venueQrTokenLabel: string;
+  portalLoginLabel: string;
+};
+
+export type DataAccessAdminMemberView = {
+  userId: string;
+  fullName: string;
+  email: string;
+  roleLabel: string;
+  subscriptionStatusLabel: string;
+  credits: number;
+  bookingCount: number;
+  eventOpenCount: number;
+  savedCount: number;
+  waitlistCount: number;
+};
+
+export function formatDateLabel(value: Date | string | null | undefined) {
+  if (!value) return "Not scheduled";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not scheduled";
+  return new Intl.DateTimeFormat("en", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function mapEventView(input: {
+  event: EventRow;
+  partner?: Pick<PartnerRow, "id" | "name"> | null;
+  saved?: boolean;
+}): DataAccessEventView {
+  const ticketType =
+    input.event.remainingCapacity <= 0
+      ? "Waitlist"
+      : input.event.ticketType === "VOUCHER"
+        ? "Voucher"
+        : "Secret code";
+
+  return {
+    id: input.event.id,
+    title: input.event.title,
+    partnerName: input.partner?.name ?? "Partner",
+    partnerId: input.partner?.id ?? input.event.partnerId,
+    category: input.event.category,
+    dateLabel: formatDateLabel(input.event.dateTime),
+    neighborhood: input.event.neighborhood,
+    address: input.event.address,
+    imageUrl: input.event.imageUrl,
+    creditPrice: input.event.creditPrice,
+    remainingCapacity: input.event.remainingCapacity,
+    capacityLabel:
+      input.event.remainingCapacity <= 0
+        ? "Waitlist"
+        : `${input.event.remainingCapacity} available`,
+    ticketType,
+    description: input.event.description,
+    saved: input.saved ?? false,
+    ctaLabel: input.event.remainingCapacity <= 0 ? "Join waitlist" : "Book now",
+    mapLabel: `${input.event.neighborhood} ${input.event.category}`,
+  };
+}
+
+export function mapPartnerView(partner: PartnerRow): DataAccessPartnerView {
+  return {
+    id: partner.id,
+    name: partner.name,
+    address: partner.address,
+    contactEmail: partner.contactEmail,
+    logoUrl: partner.logoUrl,
+    logoInitial: partner.name.trim().slice(0, 1).toUpperCase() || "U",
+    venueQrUrl: partner.venueCheckInToken
+      ? `/venue-check-in/${partner.venueCheckInToken}`
+      : undefined,
+    portalUserEmail: partner.portalUserEmail,
+  };
+}
+
+export function mapBookingView(input: {
+  booking: BookingRow;
+  event: EventRow;
+  partner: PartnerRow;
+}): DataAccessBookingView {
+  return {
+    id: input.booking.id,
+    eventId: input.event.id,
+    partnerId: input.partner.id,
+    eventTitle: input.event.title,
+    dateLabel: formatDateLabel(input.event.dateTime),
+    partnerName: input.partner.name,
+    eventAddress: input.event.address,
+    ticketCount: input.booking.ticketsCount,
+    totalCredits: input.booking.totalCredits,
+    statusLabel: labelize(input.booking.status),
+    redemptionType: input.booking.redemptionType ?? input.event.ticketType,
+    redemptionCode: input.booking.redemptionInfo ?? "",
+    redemptionUrl: input.booking.redemptionUrl ?? undefined,
+    checkedInLabel: input.booking.checkedInAt
+      ? `Checked in ${formatDateLabel(input.booking.checkedInAt)}`
+      : "Not checked in",
+    copied: false,
+  };
+}
+
+export function mapLedgerView(row: CreditLedgerRow): DataAccessLedgerView {
+  return {
+    id: row.id,
+    amount: row.amount,
+    direction: row.amount >= 0 ? "credit" : "debit",
+    reasonLabel: labelize(row.type),
+    relatedLabel: row.relatedEventId ?? row.relatedBookingId ?? undefined,
+    actorLabel: row.actorUserId ?? undefined,
+    createdLabel: formatDateLabel(row.timestamp),
+    resultingBalance: row.balanceAfter,
+  };
+}
+
+export function mapProfileView(input: {
+  profile: UserProfileRow;
+  user?: Pick<UserRow, "email" | "name"> | null;
+}): DataAccessProfileView {
+  const fullName =
+    [input.profile.firstName, input.profile.lastName]
+      .filter(Boolean)
+      .join(" ") ||
+    input.user?.name ||
+    "Member";
+
+  return {
+    userId: input.profile.userId,
+    fullName,
+    email: input.user?.email,
+    firstName: input.profile.firstName,
+    lastName: input.profile.lastName,
+    credits: input.profile.credits,
+    currentPlanLabel: labelize(input.profile.subscriptionPlan),
+    statusBadgeLabel: labelize(input.profile.subscriptionStatus),
+    nextBillDate: formatDateLabel(input.profile.subscriptionPeriodEnd),
+    billingAddress: input.profile.billingAddress ?? "Not set",
+    paymentMethod: input.profile.paymentMethod
+      ? labelize(input.profile.paymentMethod)
+      : "Not set",
+    language: input.profile.language,
+    onboardingComplete: input.profile.onboardingComplete,
+  };
+}
+
+export function mapPreferencesView(
+  profile: UserProfileRow,
+): DataAccessPreferencesView {
+  return {
+    ageGroup: profile.ageGroup,
+    interests: profile.interests,
+    moods: profile.moods,
+    districts: profile.districts,
+    maxDistance: profile.maxDistance,
+    timing: profile.timing,
+    preferredDays: profile.preferredDays,
+    preferredLanguages: profile.preferredLanguages,
+    accessibility: profile.accessibility,
+  };
+}
+
+export function mapGuestView(input: {
+  booking: BookingRow;
+  event: Pick<EventRow, "title" | "dateTime">;
+  user: Pick<UserRow, "name" | "email">;
+}): DataAccessGuestView {
+  return {
+    bookingId: input.booking.id,
+    userId: input.booking.userId,
+    userShortId: input.booking.userId.slice(0, 8),
+    guestName: input.user.name,
+    guestEmail: input.user.email,
+    eventTitle: input.event.title,
+    redemptionCode: input.booking.redemptionInfo,
+    statusLabel: labelize(input.booking.status),
+    tickets: input.booking.ticketsCount,
+    createdAt: formatDateLabel(input.booking.createdAt),
+    checkedInLabel: input.booking.checkedInAt
+      ? `Checked in ${formatDateLabel(input.booking.checkedInAt)}`
+      : "Not checked in",
+    checkInAvailableLabel:
+      input.booking.status === "CONFIRMED" ? "Check-in available" : "Closed",
+  };
+}
+
+export function mapAdminEventView(input: {
+  event: EventRow;
+  partner?: Pick<PartnerRow, "name"> | null;
+}): DataAccessAdminEventView {
+  return {
+    id: input.event.id,
+    title: input.event.title,
+    partnerName: input.partner?.name ?? "Partner",
+    dateLabel: formatDateLabel(input.event.dateTime),
+    capacityLabel: `${input.event.remainingCapacity}/${input.event.totalCapacity}`,
+    statusLabel: input.event.remainingCapacity <= 0 ? "Sold out" : "Open",
+  };
+}
+
+export function mapAdminPartnerView(
+  partner: PartnerRow,
+): DataAccessAdminPartnerView {
+  return {
+    id: partner.id,
+    name: partner.name,
+    address: partner.address,
+    contactEmail: partner.contactEmail,
+    logoUrl: partner.logoUrl,
+    logoInitial: partner.name.trim().slice(0, 1).toUpperCase() || "U",
+    venueQrTokenLabel: partner.venueCheckInToken ? "Token active" : "Missing",
+    portalLoginLabel: partner.portalUserEmail ?? "Not created",
+  };
+}
+
+export function mapAdminMemberView(input: {
+  profile: UserProfileRow;
+  user?: Pick<UserRow, "name" | "email"> | null;
+}): DataAccessAdminMemberView {
+  return {
+    userId: input.profile.userId,
+    fullName:
+      [input.profile.firstName, input.profile.lastName]
+        .filter(Boolean)
+        .join(" ") ||
+      input.user?.name ||
+      "Member",
+    email: input.user?.email ?? "",
+    roleLabel: labelize(input.profile.role),
+    subscriptionStatusLabel: labelize(input.profile.subscriptionStatus),
+    credits: input.profile.credits,
+    bookingCount: input.profile.bookingCount,
+    eventOpenCount: input.profile.eventOpenCount,
+    savedCount: input.profile.savedCount,
+    waitlistCount: input.profile.waitlistCount,
+  };
+}
+
+function labelize(value: string) {
+  return value
+    .toLowerCase()
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
+    .join(" ");
+}

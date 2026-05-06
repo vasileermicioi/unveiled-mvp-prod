@@ -1,7 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
-
-import type { FormActionResult } from "@/lib/forms/action-result";
+import type { QueryInvalidationHint } from "@/lib/data-access/invalidation";
+import type {
+  FormActionResult,
+  QueryInvalidationKey,
+} from "@/lib/forms/action-result";
 
 export type ApplyActionResultOptions<TFieldValues extends FieldValues> = {
   form: Pick<UseFormReturn<TFieldValues>, "setError" | "clearErrors">;
@@ -33,14 +36,31 @@ export async function applyFormActionResult<
   options.form.clearErrors();
   if (result.notice?.message) options.onNotice?.(result.notice.message);
   if (options.queryClient && result.invalidate) {
-    await Promise.all(
-      result.invalidate.map((queryKey) =>
-        options.queryClient?.invalidateQueries({ queryKey }),
-      ),
-    );
+    await invalidateActionQueries(options.queryClient, result.invalidate);
   }
 
   return result;
+}
+
+export async function invalidateActionQueries(
+  queryClient: Pick<QueryClient, "invalidateQueries">,
+  invalidate: Array<QueryInvalidationKey | QueryInvalidationHint>,
+) {
+  await Promise.all(
+    invalidate.map((entry) => {
+      const hint =
+        typeof entry === "object" &&
+        entry !== null &&
+        "queryKey" in entry &&
+        Array.isArray(entry.queryKey)
+          ? (entry as QueryInvalidationHint)
+          : undefined;
+      return queryClient.invalidateQueries({
+        queryKey: hint?.queryKey ?? (entry as QueryInvalidationKey),
+        exact: hint?.exact,
+      });
+    }),
+  );
 }
 
 export async function submitFormAction<

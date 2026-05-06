@@ -2,6 +2,9 @@
 import { WorkbenchClient } from "@/components/examples/workbench-client";
 import { Button } from "@/components/ui/button";
 import BaseLayout from "@/layouts/base-layout.astro";
+import { loadPublicDiscoveryData } from "@/lib/data-access/loaders";
+
+const initialDiscovery = await loadPublicDiscoveryData();
 ---
 
 <BaseLayout title="Workbench">
@@ -29,6 +32,6 @@ import BaseLayout from "@/layouts/base-layout.astro";
       </div>
     </section>
 
-    <WorkbenchClient client:load />
+    <WorkbenchClient client:load initialDiscovery={initialDiscovery} />
   </main>
 </BaseLayout>
