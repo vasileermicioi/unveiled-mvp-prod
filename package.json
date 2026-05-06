@@ -16,7 +16,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run scripts/seed-domain-data.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "jobs:daily-partner-codes": "bun run scripts/run-daily-partner-codes.ts"
   },
   "dependencies": {
     "@astrojs/node": "^10.0.6",

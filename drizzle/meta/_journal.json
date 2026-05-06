@@ -29,6 +29,13 @@
       "when": 1777878439063,
       "tag": "0003_eager_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778025600000,
+      "tag": "0004_daily_partner_codes",
+      "breakpoints": true
     }
   ]
 }

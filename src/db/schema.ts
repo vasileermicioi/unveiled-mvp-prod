@@ -37,6 +37,12 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "SEPA",
 ]);
 export const billingProviderEnum = pgEnum("billing_provider", ["STRIPE"]);
+export const jobSendStatusEnum = pgEnum("job_send_status", [
+  "CLAIMED",
+  "SENT",
+  "FAILED",
+  "SKIPPED",
+]);
 export const billingOverrideTypeEnum = pgEnum("billing_override_type", [
   "FREEZE",
   "UNFREEZE",
@@ -508,6 +514,44 @@ export const providerEvents = pgTable(
     ),
     index("provider_events_event_type_idx").on(table.eventType),
     index("provider_events_processing_status_idx").on(table.processingStatus),
+  ],
+);
+
+export const jobSendLogs = pgTable(
+  "job_send_logs",
+  {
+    id: text("id").primaryKey(),
+    jobName: text("job_name").notNull(),
+    partnerId: text("partner_id").references(() => partners.id, {
+      onDelete: "set null",
+    }),
+    windowStart: timestamp("window_start").notNull(),
+    windowEnd: timestamp("window_end").notNull(),
+    status: jobSendStatusEnum("status").notNull().default("CLAIMED"),
+    provider: text("provider"),
+    providerMessageId: text("provider_message_id"),
+    safeError: text("safe_error"),
+    details: jsonb("details")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    claimedAt: timestamp("claimed_at").notNull().defaultNow(),
+    sentAt: timestamp("sent_at"),
+    failedAt: timestamp("failed_at"),
+    skippedAt: timestamp("skipped_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("job_send_logs_job_partner_window_unique").on(
+      table.jobName,
+      table.partnerId,
+      table.windowStart,
+      table.windowEnd,
+    ),
+    index("job_send_logs_job_status_idx").on(table.jobName, table.status),
+    index("job_send_logs_partner_id_idx").on(table.partnerId),
+    index("job_send_logs_window_start_idx").on(table.windowStart),
   ],
 );
 
