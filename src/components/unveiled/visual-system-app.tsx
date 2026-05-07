@@ -80,6 +80,7 @@ type View = Extract<
   | "landing"
   | "discover"
   | "how"
+  | "membership"
   | "faq"
   | "member"
   | "bookings"
@@ -506,6 +507,86 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
           </details>
         ))}
       </div>
+    </div>
+  );
+}
+
+function MembershipPage() {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
+  >();
+
+  return (
+    <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <Panel tone="white" className="space-y-6">
+        <Badge tone="yellow">Membership</Badge>
+        <div>
+          <h1 className="headline-lg">Basic Berlin</h1>
+          <p className="mt-3 text-4xl font-black">29€/mo</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
+            Monthly credits, verified partner access, and member-only event
+            drops.
+          </p>
+        </div>
+        <Divider />
+        <div className="grid gap-3">
+          {[
+            "Curated Berlin culture access",
+            "Credits refreshed monthly",
+            "Password and voucher redemption",
+            "Support at support@unveiled.berlin",
+          ].map((perk) => (
+            <Badge key={perk} tone="white" className="justify-start">
+              <Check className="size-3" />
+              {perk}
+            </Badge>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel tone="cream" className="space-y-5">
+        <div>
+          <p className="unveiled-meta">Payment method</p>
+          <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
+            Sign in before provider checkout initializes. No payment method is
+            preselected.
+          </p>
+        </div>
+        <div className="grid gap-3">
+          {[
+            ["EXPRESS", "Apple Pay / Google Pay"],
+            ["PAYPAL", "PayPal"],
+            ["CARD", "Card"],
+            ["SEPA", "SEPA Direct Debit"],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={cn(
+                "flex items-center justify-between border-4 border-brand-dark bg-white px-4 py-4 text-left text-xs font-black uppercase tracking-widest",
+                selectedPaymentMethod === id && "bg-brand-dark text-white",
+              )}
+              onClick={() =>
+                setSelectedPaymentMethod(
+                  id as "EXPRESS" | "PAYPAL" | "CARD" | "SEPA",
+                )
+              }
+            >
+              {label}
+              <CreditCard className="size-4" />
+            </button>
+          ))}
+        </div>
+        <Field label="Promo code">
+          <TextInput placeholder="Optional" />
+        </Field>
+        <Button type="button" className="w-full">
+          Continue to checkout
+        </Button>
+        <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+          Guaranteed support and FAQ access remain visible before checkout.
+        </p>
+      </Panel>
     </div>
   );
 }
@@ -1716,17 +1797,19 @@ function AdminPanel() {
 export function VisualSystemApp({
   initialShell,
   initialDiscovery: _initialDiscovery,
+  initialView = "landing",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: unknown;
+  initialView?: View;
 }) {
-  const [view, setView] = useState<View>("landing");
+  const [view, setView] = useState<View>(initialView);
   const savedCount = events.filter((event) => event.saved).length;
   const demoShell = createDemoShellViewModel(view, {
     savedCount,
     creditCount: profile.credits,
   });
-  const shell = view === "landing" && initialShell ? initialShell : demoShell;
+  const shell = initialShell ? initialShell : demoShell;
   const pageShell =
     view === "member"
       ? demoPageShells.member
@@ -1740,37 +1823,40 @@ export function VisualSystemApp({
   const navigateShell = async (actionId: string) => {
     const target = shellDemoViews.find((item) => item.id === actionId);
     if (target) setView(target.id as View);
-    if (actionId === "membership") setView("landing");
+    if (actionId === "membership") window.location.assign("/membership");
     if (actionId === "logo")
       setView(view === "partner" || view === "admin" ? view : "landing");
     if (actionId === "profile") setView("profile");
     if (actionId === "logout") {
       await fetch("/api/account/logout", { method: "POST" });
-      setView("landing");
+      window.location.assign("/");
     }
   };
 
   return (
     <AppShell shell={shell} onAction={navigateShell}>
       <div className="pt-6">
-        <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
-          {shellDemoViews.map((item) => (
-            <Button
-              key={item.id}
-              type="button"
-              size="sm"
-              variant={view === item.id ? "active" : "secondary"}
-              onClick={() => setView(item.id as View)}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
+        {!initialShell ? (
+          <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+            {shellDemoViews.map((item) => (
+              <Button
+                key={item.id}
+                type="button"
+                size="sm"
+                variant={view === item.id ? "active" : "secondary"}
+                onClick={() => setView(item.id as View)}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
       </div>
       <PageShell page={pageShell} onAction={navigateShell}>
         {view === "landing" ? <LandingPage setView={setView} /> : null}
         {view === "discover" ? <PublicDiscover setView={setView} /> : null}
         {view === "how" ? <HowItWorks /> : null}
+        {view === "membership" ? <MembershipPage /> : null}
         {view === "faq" ? <FaqPage setView={setView} /> : null}
         {view === "member" ? <MemberFeed /> : null}
         {view === "bookings" ? <BookingsPage /> : null}

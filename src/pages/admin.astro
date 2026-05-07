@@ -1,0 +1,23 @@
+---
+import { VisualSystemApp } from "@/components/unveiled/visual-system-app";
+import BaseLayout from "@/layouts/base-layout.astro";
+import { createShellFromViewer } from "@/lib/auth-display";
+import { getViewer } from "@/lib/auth-profile";
+import { loadAdminData } from "@/lib/data-access/loaders";
+import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
+
+const viewer = await getViewer(Astro.request);
+const ownership = resolveRouteOwnership(viewer, productRoutes.admin);
+if (!ownership.ok)
+  return Astro.redirect(ownership.redirectTo, ownership.status);
+
+const initialShell = createShellFromViewer(
+  ownership.viewer,
+  ownership.route.id,
+);
+const initialDiscovery = await loadAdminData(ownership.viewer);
+---
+
+<BaseLayout title="Admin | Unveiled">
+  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="admin" />
+</BaseLayout>

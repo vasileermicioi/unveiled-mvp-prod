@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge, Panel, StatePanel } from "@/components/ui/unveiled-primitives";
 import type {
   AppShellViewModel,
@@ -98,18 +98,8 @@ function ShellActionButton({
 }) {
   const variant =
     action.variant ?? (action.active ? "active" : iconOnly ? "muted" : "ghost");
-
-  return (
-    <Button
-      type="button"
-      variant={variant}
-      size={iconOnly ? "icon-sm" : size}
-      loading={action.loading}
-      disabled={action.disabled}
-      aria-label={action.ariaLabel ?? (iconOnly ? action.label : undefined)}
-      className={cn("relative", className)}
-      onClick={() => onAction?.(action.id)}
-    >
+  const content = (
+    <>
       <ShellIcon name={action.icon} />
       {iconOnly ? null : <span>{action.label}</span>}
       {typeof action.count === "number" && action.count > 0 ? (
@@ -122,6 +112,37 @@ function ShellActionButton({
           {action.count}
         </span>
       ) : null}
+    </>
+  );
+
+  if (action.targetHref && !action.disabled && !action.loading) {
+    return (
+      <a
+        href={action.targetHref}
+        aria-label={action.ariaLabel ?? (iconOnly ? action.label : undefined)}
+        className={cn(
+          buttonVariants({ variant, size: iconOnly ? "icon-sm" : size }),
+          "relative",
+          className,
+        )}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      variant={variant}
+      size={iconOnly ? "icon-sm" : size}
+      loading={action.loading}
+      disabled={action.disabled}
+      aria-label={action.ariaLabel ?? (iconOnly ? action.label : undefined)}
+      className={cn("relative", className)}
+      onClick={() => onAction?.(action.id)}
+    >
+      {content}
     </Button>
   );
 }
@@ -170,18 +191,14 @@ export function ShellNavigation({
     <nav className="sticky top-0 z-50 border-b-2 border-brand-dark bg-white md:border-b-4">
       <div className="content-shell">
         <div className="flex min-h-16 items-center justify-between gap-3 md:min-h-20 md:gap-4">
-          <button
-            type="button"
-            className="flex min-w-0 items-center gap-3 text-left"
-            onClick={() => onAction?.("logo")}
-          >
+          <a href="/" className="flex min-w-0 items-center gap-3 text-left">
             <ShellLogo variant={shell.logo.variant} />
             {shell.tagline ? (
               <span className="hidden max-w-56 text-[8px] font-black uppercase tracking-[0.25em] opacity-45 md:block">
                 {shell.tagline}
               </span>
             ) : null}
-          </button>
+          </a>
 
           <div className="hidden min-w-0 items-center gap-1 lg:flex">
             {shell.navItems

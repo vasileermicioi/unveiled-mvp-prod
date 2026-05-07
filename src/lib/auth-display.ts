@@ -16,12 +16,28 @@ import {
   requireUser,
   type Viewer,
 } from "@/lib/auth-profile";
+import { routePathFor } from "@/lib/product-routes";
 
 const publicNavItems = [
-  { id: "discover", itemId: "discover", label: "Discover" },
-  { id: "how", itemId: "how", label: "How it works" },
-  { id: "membership", itemId: "membership", label: "Membership" },
-  { id: "faq", itemId: "faq", label: "FAQ" },
+  {
+    id: "discover",
+    itemId: "discover",
+    label: "Discover",
+    targetHref: routePathFor("discover"),
+  },
+  {
+    id: "how",
+    itemId: "how",
+    label: "How it works",
+    targetHref: routePathFor("how"),
+  },
+  {
+    id: "membership",
+    itemId: "membership",
+    label: "Membership",
+    targetHref: routePathFor("membership"),
+  },
+  { id: "faq", itemId: "faq", label: "FAQ", targetHref: routePathFor("faq") },
 ] satisfies AppShellViewModel["navItems"];
 
 function memberNavItems(activeItem: ShellNavItemId, savedCount: number) {
@@ -30,13 +46,21 @@ function memberNavItems(activeItem: ShellNavItemId, savedCount: number) {
       id: "member",
       itemId: "member",
       label: "Current access",
+      targetHref: routePathFor("member"),
       active: activeItem === "member" || activeItem === "saved",
     },
-    { id: "faq", itemId: "faq", label: "FAQ", active: activeItem === "faq" },
+    {
+      id: "faq",
+      itemId: "faq",
+      label: "FAQ",
+      targetHref: routePathFor("faq"),
+      active: activeItem === "faq",
+    },
     {
       id: "saved",
       itemId: "saved",
       label: "Saved",
+      targetHref: routePathFor("saved"),
       icon: "bookmark",
       collapseLabel: true,
       count: savedCount,
@@ -46,6 +70,7 @@ function memberNavItems(activeItem: ShellNavItemId, savedCount: number) {
       id: "bookings",
       itemId: "bookings",
       label: "Bookings",
+      targetHref: routePathFor("bookings"),
       icon: "ticket",
       collapseLabel: true,
       active: activeItem === "bookings",
@@ -59,6 +84,7 @@ function operationalNavItem(viewer: AuthenticatedViewer) {
       id: viewer.viewerContext,
       itemId: viewer.viewerContext,
       label: viewer.viewerContext === "admin" ? "Admin" : "Partner",
+      targetHref: routePathFor(viewer.viewerContext),
       icon: "settings",
       active: true,
     },
@@ -90,6 +116,8 @@ export function createShellFromViewer(
       ? {
           id: activeItem === "membership" ? "login" : "membership",
           label: activeItem === "membership" ? "Login" : "Become a member",
+          targetHref:
+            activeItem === "membership" ? "/" : routePathFor("membership"),
           variant: activeItem === "membership" ? "secondary" : "primary",
         }
       : undefined,

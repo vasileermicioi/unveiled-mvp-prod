@@ -35,6 +35,7 @@ export type ShellIconName =
 export type ShellActionView = {
   id: string;
   label: string;
+  targetHref?: string;
   icon?: ShellIconName;
   active?: boolean;
   disabled?: boolean;
