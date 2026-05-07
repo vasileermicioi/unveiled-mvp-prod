@@ -1,3 +1,4 @@
+import type { DiscoveryFilters } from "./query-keys";
 import type {
   AdminData,
   MemberData,
@@ -19,9 +20,19 @@ export type DataAccessResponse =
 
 export async function fetchDataAccessSurface<T extends DataAccessResponse>(
   surface: DataAccessSurface,
-  init?: RequestInit,
+  init?: RequestInit & { filters?: DiscoveryFilters },
 ): Promise<T["data"]> {
-  const response = await fetch(`/api/data-access/${surface}.json`, init);
+  const params = new URLSearchParams();
+  if (init?.filters) {
+    for (const [key, value] of Object.entries(init.filters)) {
+      if (value) params.set(key, value);
+    }
+  }
+  const query = params.toString();
+  const response = await fetch(
+    `/api/data-access/${surface}.json${query ? `?${query}` : ""}`,
+    init,
+  );
   if (!response.ok) {
     const fallback =
       response.status === 401

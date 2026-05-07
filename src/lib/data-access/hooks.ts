@@ -23,7 +23,7 @@ export function usePublicDiscoveryQuery(
       fetchDataAccessSurface<{
         surface: "public-discovery";
         data: PublicDiscoveryData;
-      }>("public-discovery"),
+      }>("public-discovery", { filters }),
     staleTime: queryStaleTimes.discovery,
     ...options,
   });
@@ -31,12 +31,16 @@ export function usePublicDiscoveryQuery(
 
 export function useMemberDataQuery(
   userId: string,
+  filters?: DiscoveryFilters,
   options: Partial<UseQueryOptions<MemberData>> = {},
 ) {
   return useQuery({
-    queryKey: dataQueryKeys.memberDiscovery(userId),
+    queryKey: dataQueryKeys.memberDiscovery(userId, filters),
     queryFn: () =>
-      fetchDataAccessSurface<{ surface: "member"; data: MemberData }>("member"),
+      fetchDataAccessSurface<{ surface: "member"; data: MemberData }>(
+        "member",
+        { filters },
+      ),
     staleTime: queryStaleTimes.capacitySensitive,
     ...options,
   });

@@ -4,6 +4,7 @@ import BaseLayout from "@/layouts/base-layout.astro";
 import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadPublicDiscoveryData } from "@/lib/data-access/loaders";
+import { createPublicInitialSurfaceData } from "@/lib/data-access/surface-data";
 import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
 
 const viewer = await getViewer(Astro.request);
@@ -15,7 +16,9 @@ const initialShell = createShellFromViewer(
   ownership.viewer,
   ownership.route.id,
 );
-const initialDiscovery = await loadPublicDiscoveryData();
+const initialDiscovery = createPublicInitialSurfaceData(
+  await loadPublicDiscoveryData(),
+);
 ---
 
 <BaseLayout title="FAQ | Unveiled">

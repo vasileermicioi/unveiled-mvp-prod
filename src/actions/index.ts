@@ -118,6 +118,7 @@ function bookingResultToAction(
       ...dataAccessInvalidationKeys([
         { type: "public-discovery" },
         { type: "event", eventId: result.eventId },
+        { type: "member-bookings", userId: result.userId },
       ]),
     ],
   });
@@ -265,6 +266,7 @@ export const server = {
             queryKeys.preferences(viewer.user.id),
             queryKeys.authViewer,
             ...dataAccessInvalidationKeys([
+              { type: "member", userId: viewer.user.id },
               { type: "member-preferences", userId: viewer.user.id },
               { type: "member-profile", userId: viewer.user.id },
             ]),
@@ -300,6 +302,7 @@ export const server = {
             queryKeys.profile(viewer.user.id),
             queryKeys.preferences(viewer.user.id),
             ...dataAccessInvalidationKeys([
+              { type: "member", userId: viewer.user.id },
               { type: "member-preferences", userId: viewer.user.id },
             ]),
           ],

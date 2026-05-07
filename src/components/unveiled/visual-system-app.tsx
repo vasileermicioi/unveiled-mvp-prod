@@ -20,9 +20,10 @@ import {
   Plus,
   QrCode,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { QueryProvider } from "@/components/providers/query-provider";
 import { Button } from "@/components/ui/button";
 import {
   Badge,
@@ -51,27 +52,32 @@ import {
   demoDiscoveryShell,
   demoModalShell,
   demoPageShells,
-  demoShellStates,
   type ShellNavItemId,
   shellDemoViews,
 } from "@/lib/app-shell-view-models";
+import {
+  useAdminDataQuery,
+  useMemberDataQuery,
+  usePartnerDataQuery,
+  usePublicDiscoveryQuery,
+} from "@/lib/data-access/hooks";
+import {
+  createLiveDataView,
+  emptyLiveDataView,
+  emptyPublicData,
+  type LiveDataView,
+} from "@/lib/data-access/live-view-adapters";
+import {
+  type InitialSurfaceData,
+  isInitialSurfaceData,
+} from "@/lib/data-access/surface-data";
 import { formFailure } from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
 import { loginSchema, signupSchema } from "@/lib/forms/schemas";
 import {
-  adminBillingDisplay,
-  adminEvents,
-  billingDisplay,
-  bookingFailures,
-  bookings,
-  creditLedgerEntries,
   derivedValues,
   type EventCardView,
-  events,
   formContracts,
-  partnerGuests,
-  profile,
-  waitlistEntries,
 } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +103,12 @@ type AuthLandingValues = {
   callbackURL?: string;
 };
 
+const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
+
+function useLiveData() {
+  return useContext(LiveDataContext);
+}
+
 async function runServerAction<TData>(
   action: () => Promise<{
     data?:
@@ -105,6 +117,7 @@ async function runServerAction<TData>(
     error?: unknown;
   }>,
   setMessage: (message: string) => void,
+  onSuccess?: () => void,
 ) {
   const result = await action();
   if (result.error || !result.data) {
@@ -116,6 +129,7 @@ async function runServerAction<TData>(
     return;
   }
   setMessage(result.data.notice?.message ?? "Saved.");
+  onSuccess?.();
 }
 
 function LandingPage({ setView }: { setView: (view: View) => void }) {
@@ -368,6 +382,8 @@ function EventCard({
 }
 
 function PublicDiscover({ setView }: { setView: (view: View) => void }) {
+  const live = useLiveData();
+
   return (
     <div className="space-y-10 py-8">
       <Panel
@@ -384,14 +400,14 @@ function PublicDiscover({ setView }: { setView: (view: View) => void }) {
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {derivedValues.publicStats.map((stat) => (
+          {live.publicStats.map((stat) => (
             <StatPanel key={stat.label} {...stat} />
           ))}
         </div>
       </Panel>
 
       <section className="grid gap-5 md:grid-cols-3">
-        {["Art", "Music", "Food"].map((category) => (
+        {live.publicCategories.map((category) => (
           <Card key={category} interactive className="bg-brand-cream p-6">
             <p className="headline-md">{category}</p>
             <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
@@ -402,7 +418,7 @@ function PublicDiscover({ setView }: { setView: (view: View) => void }) {
       </section>
 
       <section className="grid gap-5 lg:grid-cols-3">
-        {events.map((event) => (
+        {live.events.map((event) => (
           <EventCard
             key={event.id}
             event={event}
@@ -410,6 +426,30 @@ function PublicDiscover({ setView }: { setView: (view: View) => void }) {
             onOpen={() => setView("member")}
           />
         ))}
+        {live.events.length === 0 ? (
+          <StatePanel
+            title="Nothing public yet"
+            text={
+              live.isLoading
+                ? "Live event data is loading."
+                : live.isError
+                  ? "Live event data could not be loaded."
+                  : "No upcoming events are available."
+            }
+            state={
+              live.isLoading ? "loading" : live.isError ? "error" : "empty"
+            }
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={live.refetchActiveSurface}
+              >
+                Reset filters
+              </Button>
+            }
+          />
+        ) : null}
       </section>
 
       <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
@@ -421,15 +461,29 @@ function PublicDiscover({ setView }: { setView: (view: View) => void }) {
             <Mail />
           </Button>
         </Panel>
-        <StatePanel
-          title="Nothing public yet"
-          text="When filters hide all featured events, the empty state remains bordered and direct."
-          action={
-            <Button type="button" variant="secondary">
-              Reset filters
-            </Button>
-          }
-        />
+        <Panel tone="white">
+          <p className="unveiled-meta opacity-60">Active partners</p>
+          <div className="mt-4 grid gap-3">
+            {live.publicPartners.map((partner) => (
+              <div
+                key={partner.id}
+                className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
+              >
+                <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
+                  {partner.logoInitial}
+                </span>
+                <span>
+                  <span className="block text-xs font-black uppercase tracking-widest">
+                    {partner.name}
+                  </span>
+                  <span className="block text-xs font-bold opacity-55">
+                    {partner.address}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
       </section>
     </div>
   );
@@ -592,6 +646,8 @@ function MembershipPage() {
 }
 
 function DiscoveryFilters() {
+  const live = useLiveData();
+
   return (
     <Panel
       tone="white"
@@ -607,17 +663,19 @@ function DiscoveryFilters() {
       <Field label="Category">
         <SelectInput defaultValue="">
           <option value="">All categories</option>
-          <option>Art</option>
-          <option>Music</option>
-          <option>Food</option>
+          {live.publicCategories.map((category) => (
+            <option key={category}>{category}</option>
+          ))}
         </SelectInput>
       </Field>
       <Field label="Partner">
         <SelectInput defaultValue="">
           <option value="">All partners</option>
-          <option>Kunsthalle Mitte</option>
-          <option>Studio Lobe</option>
-          <option>Table 17</option>
+          {live.publicPartnerOptions.map((partner) => (
+            <option key={partner.id} value={partner.id}>
+              {partner.name}
+            </option>
+          ))}
         </SelectInput>
       </Field>
     </Panel>
@@ -631,6 +689,7 @@ function BookingModal({
   event: EventCardView;
   onClose: () => void;
 }) {
+  const live = useLiveData();
   const [count, setCount] = useState(1);
   const [result, setResult] = useState<
     | null
@@ -827,6 +886,7 @@ function BookingModal({
 
                 const data = response.data.data;
                 if (data?.state === "confirmed") {
+                  live.refetchActiveSurface();
                   setResult({
                     state: "confirmed",
                     code: data.redemption.code,
@@ -836,6 +896,7 @@ function BookingModal({
                 }
 
                 if (data?.state === "waitlist") {
+                  live.refetchActiveSurface();
                   setResult({ state: "waitlist" });
                 }
               }}
@@ -857,16 +918,17 @@ function BookingModal({
 }
 
 function MemberFeed() {
+  const live = useLiveData();
   const [selected, setSelected] = useState<EventCardView | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
-  const visible = useMemo(() => events, []);
+  const visible = useMemo(() => live.events, [live.events]);
   const discovery = {
     ...demoDiscoveryShell,
     filtersOpen,
     mapOpen,
     visibleResultCount: visible.length,
-    resultCountLabel: derivedValues.visibleEventCount,
+    resultCountLabel: live.visibleEventCountLabel,
     activeRangeLabel: derivedValues.activeRangeLabel,
   };
 
@@ -886,7 +948,8 @@ function MemberFeed() {
                 <MapPin className="mx-auto mb-3 size-8" />
                 <p className="unveiled-meta">Map markers</p>
                 <p className="mt-2 text-sm font-bold">
-                  {events.map((event) => event.mapLabel).join(" // ")}
+                  {visible.map((event) => event.mapLabel).join(" // ") ||
+                    "No live event markers"}
                 </p>
               </div>
             </div>
@@ -907,17 +970,30 @@ function MemberFeed() {
           {visible.map((event) => (
             <EventCard key={event.id} event={event} onOpen={setSelected} />
           ))}
+          {visible.length === 0 ? (
+            <StatePanel
+              title={live.isLoading ? "Loading events" : "No matching events"}
+              text={
+                live.isError
+                  ? "Live event data could not be loaded."
+                  : "No live events match the current filters."
+              }
+              state={
+                live.isLoading ? "loading" : live.isError ? "error" : "empty"
+              }
+              action={
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={live.refetchActiveSurface}
+                >
+                  Reset all
+                </Button>
+              }
+            />
+          ) : null}
         </div>
       </DiscoveryShell>
-      <StatePanel
-        title={demoShellStates.empty.title}
-        text={demoShellStates.empty.message}
-        action={
-          <Button type="button" variant="secondary">
-            Reset all
-          </Button>
-        }
-      />
       {selected ? (
         <BookingModal event={selected} onClose={() => setSelected(null)} />
       ) : null}
@@ -926,6 +1002,8 @@ function MemberFeed() {
 }
 
 function BookingsPage() {
+  const live = useLiveData();
+
   return (
     <div className="space-y-8 py-8">
       <Panel tone="white">
@@ -933,7 +1011,7 @@ function BookingsPage() {
         <h1 className="headline-lg mt-5">Your access codes.</h1>
       </Panel>
       <div className="grid gap-5 lg:grid-cols-2">
-        {bookings.map((booking) => (
+        {live.bookings.map((booking) => (
           <Card key={booking.id} className="p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -984,7 +1062,7 @@ function BookingsPage() {
         ))}
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        {waitlistEntries.map((entry) => (
+        {live.waitlistEntries.map((entry) => (
           <Card key={entry.id} className="p-6">
             <Badge tone="yellow">{entry.statusLabel}</Badge>
             <p className="headline-md mt-4">{entry.eventTitle}</p>
@@ -996,25 +1074,11 @@ function BookingsPage() {
             </p>
           </Card>
         ))}
-        {bookingFailures.map((failure) => (
-          <Card key={failure.state} className="p-6">
-            <Badge tone="white">{failure.state}</Badge>
-            <p className="mt-4 text-sm font-black uppercase">
-              {failure.message}
-            </p>
-            {failure.creditBalance !== undefined ? (
-              <p className="mt-3 text-xs font-bold uppercase opacity-55">
-                {failure.creditBalance} available / {failure.requiredCredits}{" "}
-                required
-              </p>
-            ) : null}
-          </Card>
-        ))}
       </div>
       <Panel tone="white">
         <Badge tone="yellow">Credit ledger</Badge>
         <div className="mt-5 space-y-3">
-          {creditLedgerEntries.map((entry) => (
+          {live.creditLedgerEntries.map((entry) => (
             <TableRow key={entry.id}>
               <span className="font-black uppercase">
                 {entry.reasonLabel}
@@ -1030,17 +1094,31 @@ function BookingsPage() {
               </span>
             </TableRow>
           ))}
+          {live.creditLedgerEntries.length === 0 ? (
+            <StatePanel
+              title="No credit history"
+              text="Ledger entries will appear after credits are added or spent."
+              state="empty"
+            />
+          ) : null}
         </div>
       </Panel>
-      <StatePanel
-        title="No bookings yet"
-        text="The empty booking state keeps support close and uses the same bordered panel."
-        action={
-          <Button type="button" variant="primary">
-            Browse events
-          </Button>
-        }
-      />
+      {live.bookings.length === 0 ? (
+        <StatePanel
+          title={live.isLoading ? "Loading bookings" : "No bookings yet"}
+          text={
+            live.isError
+              ? "Live booking data could not be loaded."
+              : "Your access codes will appear after booking."
+          }
+          state={live.isLoading ? "loading" : live.isError ? "error" : "empty"}
+          action={
+            <Button type="button" variant="primary">
+              Browse events
+            </Button>
+          }
+        />
+      ) : null}
       <Panel
         tone="dark"
         className="flex flex-wrap items-center justify-between gap-4"
@@ -1058,6 +1136,7 @@ function BookingsPage() {
 }
 
 function ProfilePage() {
+  const live = useLiveData();
   const [profileMessage, setProfileMessage] = useState(
     "Profile changes submit through server actions.",
   );
@@ -1078,16 +1157,16 @@ function ProfilePage() {
         className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end"
       >
         <div>
-          <Badge tone="success">{profile.membershipStatus}</Badge>
-          <h1 className="headline-lg mt-5">{profile.name}</h1>
+          <Badge tone="success">{live.profile.membershipStatus}</Badge>
+          <h1 className="headline-lg mt-5">{live.profile.name}</h1>
           <p className="mt-2 text-sm font-black uppercase tracking-widest opacity-55">
-            {profile.email}
+            {live.profile.email}
           </p>
         </div>
         <StatPanel
           label="Wallet"
-          value={`${profile.credits}`}
-          caption={derivedValues.totalCreditsLabel}
+          value={`${live.profile.credits}`}
+          caption={`${live.profile.credits} credits`}
         />
       </Panel>
       <div className="grid gap-5 lg:grid-cols-3">
@@ -1110,6 +1189,7 @@ function ProfilePage() {
                   newsletterOptIn: formData.get("newsletterOptIn") === "on",
                 }),
               setProfileMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
@@ -1118,13 +1198,19 @@ function ProfilePage() {
             {profileMessage}
           </p>
           <Field label="Name" className="mt-5">
-            <TextInput name="firstName" defaultValue="Alex" />
+            <TextInput
+              name="firstName"
+              defaultValue={live.profile.name.split(" ")[0] ?? ""}
+            />
           </Field>
           <Field label="Last name" className="mt-4">
-            <TextInput name="lastName" defaultValue="Morgan" />
+            <TextInput
+              name="lastName"
+              defaultValue={live.profile.name.split(" ").slice(1).join(" ")}
+            />
           </Field>
           <Field label="Email" className="mt-4">
-            <TextInput defaultValue={profile.email} disabled />
+            <TextInput defaultValue={live.profile.email} disabled />
           </Field>
           <Field label="Billing address" className="mt-4">
             <TextInput name="billingAddress" placeholder="Berlin" />
@@ -1155,19 +1241,20 @@ function ProfilePage() {
                   isActive: false,
                 }),
               setMembershipMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
           <p className="unveiled-meta">Billing</p>
-          <p className="headline-md mt-5">{billingDisplay.planLabel}</p>
+          <p className="headline-md mt-5">{live.billingDisplay.planLabel}</p>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
-            {billingDisplay.planPriceLabel} {" // "}
-            {profile.monthlyCredits} credits monthly
+            {live.billingDisplay.planPriceLabel} {" // "}
+            {live.profile.monthlyCredits} credits monthly
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
-            {billingDisplay.subscriptionStatusLabel} {" // "}
-            {billingDisplay.paymentMethodDisplay} {" // "}
-            renews {billingDisplay.nextBillDateLabel}
+            {live.billingDisplay.subscriptionStatusLabel} {" // "}
+            {live.billingDisplay.paymentMethodDisplay} {" // "}
+            renews {live.billingDisplay.nextBillDateLabel}
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
             {membershipMessage}
@@ -1268,6 +1355,7 @@ function ProfilePage() {
                   onboardingComplete: true,
                 }),
               setPreferenceMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
@@ -1276,12 +1364,15 @@ function ProfilePage() {
             {preferenceMessage}
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
-            {profile.vibes.map((vibe) => (
+            {live.profile.vibes.map((vibe) => (
               <Badge key={vibe} tone="yellow">
                 <Heart className="size-3" />
                 {vibe}
               </Badge>
             ))}
+            {live.profile.vibes.length === 0 ? (
+              <Badge tone="white">No preferences yet</Badge>
+            ) : null}
           </div>
           <div className="mt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">
             <Loader2 className="size-4 animate-spin" />
@@ -1297,6 +1388,7 @@ function ProfilePage() {
 }
 
 function PartnerPortal() {
+  const live = useLiveData();
   const [checkInMessage, setCheckInMessage] = useState(
     "Check-in actions enforce partner ownership on the server.",
   );
@@ -1309,21 +1401,29 @@ function PartnerPortal() {
       >
         <div>
           <Badge tone="yellow">Partner portal</Badge>
-          <h1 className="headline-lg mt-5">Kunsthalle Mitte.</h1>
+          <h1 className="headline-lg mt-5">
+            {live.partner?.name ?? "Partner portal"}.
+          </h1>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <StatPanel
             label="Total guests"
-            value={derivedValues.guestTotal.replace(" guests", "")}
+            value={live.partnerGuestTotal.replace(" guests", "")}
             caption="Across selected event"
           />
           <Panel tone="cream" shadow={false} className="p-5">
             <QrCode className="size-8" />
             <p className="mt-4 unveiled-meta">Venue QR</p>
-            <Button type="button" variant="copied" className="mt-4">
-              <Check />
-              Copied
-            </Button>
+            {live.partner?.venueQrUrl ? (
+              <Button type="button" variant="copied" className="mt-4">
+                <Check />
+                {live.partner.venueQrUrl}
+              </Button>
+            ) : (
+              <Badge tone="white" className="mt-4">
+                Missing token
+              </Badge>
+            )}
           </Panel>
         </div>
       </Panel>
@@ -1336,9 +1436,12 @@ function PartnerPortal() {
           <TextInput placeholder="Name or email" />
         </Field>
         <Field label="Event">
-          <SelectInput defaultValue="Neon Gallery After Hours">
-            <option>Neon Gallery After Hours</option>
-            <option>Chef Counter Preview</option>
+          <SelectInput defaultValue={live.partnerEventOptions[0]?.id ?? ""}>
+            {live.partnerEventOptions.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title}
+              </option>
+            ))}
           </SelectInput>
         </Field>
         <Button
@@ -1357,8 +1460,8 @@ function PartnerPortal() {
         </Button>
       </Panel>
       <TableShell>
-        {partnerGuests.map((guest) => (
-          <TableRow key={guest.email}>
+        {live.partnerGuests.map((guest) => (
+          <TableRow key={guest.bookingId}>
             <div>
               <p className="text-sm font-black uppercase tracking-widest">
                 {guest.name}
@@ -1379,10 +1482,11 @@ function PartnerPortal() {
                 void runServerAction(
                   () =>
                     actions.checkInBooking({
-                      bookingId: "demo-booking",
-                      partnerId: "demo-partner",
+                      bookingId: guest.bookingId,
+                      partnerId: live.partner?.id ?? "",
                     }),
                   setCheckInMessage,
+                  live.refetchActiveSurface,
                 )
               }
             >
@@ -1390,6 +1494,19 @@ function PartnerPortal() {
             </Button>
           </TableRow>
         ))}
+        {live.partnerGuests.length === 0 ? (
+          <StatePanel
+            title={live.isLoading ? "Loading guests" : "No guests"}
+            text={
+              live.isError
+                ? "Live partner data could not be loaded."
+                : "Search and event filters can render an empty guest list state."
+            }
+            state={
+              live.isLoading ? "loading" : live.isError ? "error" : "empty"
+            }
+          />
+        ) : null}
       </TableShell>
       <Panel tone="cream" shadow={false} className="p-4">
         <p className="unveiled-meta">Check-in status</p>
@@ -1397,15 +1514,12 @@ function PartnerPortal() {
           {checkInMessage}
         </p>
       </Panel>
-      <StatePanel
-        title="No guests"
-        text="Search and event filters can render an empty guest list state."
-      />
     </div>
   );
 }
 
 function AdminPanel() {
+  const live = useLiveData();
   const [adminMessage, setAdminMessage] = useState(
     "Admin forms submit through authorized Astro Actions.",
   );
@@ -1417,7 +1531,7 @@ function AdminPanel() {
         <h1 className="headline-lg mt-5">Operations overview.</h1>
       </Panel>
       <div className="grid gap-4 md:grid-cols-3">
-        {derivedValues.dashboardMetrics.map((metric) => (
+        {live.adminDashboardMetrics.map((metric) => (
           <StatPanel key={metric.label} {...metric} />
         ))}
       </div>
@@ -1442,13 +1556,17 @@ function AdminPanel() {
         <Field label="Export partner" className="min-w-64 text-brand-yellow">
           <SelectInput>
             <option>All partners</option>
-            <option>Kunsthalle Mitte</option>
+            {live.adminPartners.map((partner) => (
+              <option key={partner.id} value={partner.id}>
+                {partner.name}
+              </option>
+            ))}
           </SelectInput>
         </Field>
       </Panel>
       <TableShell>
-        {adminEvents.map((event) => (
-          <TableRow key={event.title}>
+        {live.adminEvents.map((event) => (
+          <TableRow key={event.id}>
             <div>
               <p className="text-sm font-black uppercase tracking-widest">
                 {event.title}
@@ -1468,8 +1586,9 @@ function AdminPanel() {
               variant="destructive"
               onClick={() =>
                 void runServerAction(
-                  () => actions.deleteEvent({ eventId: event.title }),
+                  () => actions.deleteEvent({ eventId: event.id }),
                   setAdminMessage,
+                  live.refetchActiveSurface,
                 )
               }
             >
@@ -1477,6 +1596,19 @@ function AdminPanel() {
             </Button>
           </TableRow>
         ))}
+        {live.adminEvents.length === 0 ? (
+          <StatePanel
+            title={live.isLoading ? "Loading events" : "No admin events"}
+            text={
+              live.isError
+                ? "Live admin data could not be loaded."
+                : "Admin event rows will appear after events are created."
+            }
+            state={
+              live.isLoading ? "loading" : live.isError ? "error" : "empty"
+            }
+          />
+        ) : null}
       </TableShell>
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel
@@ -1492,7 +1624,11 @@ function AdminPanel() {
             void runServerAction(
               () =>
                 actions.saveEvent({
-                  partnerId: "demo-partner",
+                  partnerId: String(
+                    formData.get("partnerId") ||
+                      live.adminPartners[0]?.id ||
+                      "",
+                  ),
                   title: String(formData.get("title") || ""),
                   description: String(formData.get("description") || ""),
                   category: "Theater",
@@ -1520,6 +1656,7 @@ function AdminPanel() {
                   },
                 }),
               setAdminMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
@@ -1532,8 +1669,12 @@ function AdminPanel() {
               <TextInput name="title" placeholder="Event title" />
             </Field>
             <Field label="Partner">
-              <SelectInput>
-                <option>Kunsthalle Mitte</option>
+              <SelectInput name="partnerId">
+                {live.adminPartners.map((partner) => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </option>
+                ))}
               </SelectInput>
             </Field>
             <Field label="Date">
@@ -1607,6 +1748,7 @@ function AdminPanel() {
                   logoUrl: "",
                 }),
               setAdminMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
@@ -1628,6 +1770,13 @@ function AdminPanel() {
             <ShellLogo className="mt-4" />
           </Panel>
           <div className="flex flex-wrap gap-2">
+            {live.adminPartners.map((partner) => (
+              <Badge key={partner.id} tone="white">
+                {partner.name}
+                {" // "}
+                {partner.portalLoginLabel}
+              </Badge>
+            ))}
             <Button
               type="button"
               variant="secondary"
@@ -1635,10 +1784,13 @@ function AdminPanel() {
                 void runServerAction(
                   () =>
                     actions.createPartnerPortalAccess({
-                      partnerId: "demo-partner",
-                      email: "partner@example.com",
+                      partnerId: live.adminPartners[0]?.id ?? "",
+                      email:
+                        live.adminPartners[0]?.contactEmail ??
+                        "partner@example.com",
                     }),
                   setAdminMessage,
+                  live.refetchActiveSurface,
                 )
               }
             >
@@ -1651,9 +1803,10 @@ function AdminPanel() {
                 void runServerAction(
                   () =>
                     actions.rotatePartnerVenueToken({
-                      partnerId: "demo-partner",
+                      partnerId: live.adminPartners[0]?.id ?? "",
                     }),
                   setAdminMessage,
+                  live.refetchActiveSurface,
                 )
               }
             >
@@ -1664,8 +1817,12 @@ function AdminPanel() {
               variant="destructive"
               onClick={() =>
                 void runServerAction(
-                  () => actions.deletePartner({ partnerId: "demo-partner" }),
+                  () =>
+                    actions.deletePartner({
+                      partnerId: live.adminPartners[0]?.id ?? "",
+                    }),
                   setAdminMessage,
+                  live.refetchActiveSurface,
                 )
               }
             >
@@ -1694,6 +1851,7 @@ function AdminPanel() {
                   reason: "Admin panel adjustment",
                 }),
               setAdminMessage,
+              live.refetchActiveSurface,
             );
           }}
         >
@@ -1706,108 +1864,185 @@ function AdminPanel() {
             size="sm"
             variant="yellow"
             onClick={() =>
-              void runServerAction(() => actions.listUsers({}), setAdminMessage)
+              void runServerAction(
+                () => actions.listUsers({}),
+                setAdminMessage,
+                live.refetchActiveSurface,
+              )
             }
           >
             Refresh users
           </Button>
-          <Card className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-black uppercase tracking-widest">
-                  Alex Morgan
-                </p>
-                <p className="text-xs font-bold opacity-55">
-                  {adminBillingDisplay.localSubscriptionStatusLabel} {" // "}
-                  {adminBillingDisplay.creditBalance} credits {" // "}
-                  {adminBillingDisplay.providerStatusLabel}
-                </p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
-                  {adminBillingDisplay.providerCustomerId} {" // "}
-                  {adminBillingDisplay.providerSubscriptionId} {" // synced "}
-                  {adminBillingDisplay.lastProviderSyncLabel}
-                </p>
+          {live.adminMembers.map((member) => (
+            <Card key={member.userId} className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-widest">
+                    {member.fullName}
+                  </p>
+                  <p className="text-xs font-bold opacity-55">
+                    {member.subscriptionStatusLabel} {" // "}
+                    {member.credits} credits {" // "}
+                    {member.roleLabel}
+                  </p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                    {member.email} {" // "}
+                    {member.bookingCount} bookings {" // "}
+                    {member.savedCount} saved
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="secondary">
+                    + Credit
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() =>
+                      void runServerAction(
+                        () =>
+                          actions.toggleUserFreeze({
+                            userId: member.userId,
+                            frozen: true,
+                          }),
+                        setAdminMessage,
+                        live.refetchActiveSurface,
+                      )
+                    }
+                  >
+                    Freeze
+                  </Button>
+                  <input name="userId" type="hidden" value={member.userId} />
+                  <input name="creditAdjustment" type="hidden" value="1" />
+                  <Button type="submit" size="sm" variant="muted">
+                    Adjust
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button type="button" size="sm" variant="secondary">
-                  + Credit
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() =>
-                    void runServerAction(
-                      () =>
-                        actions.toggleUserFreeze({
-                          userId: "demo-user",
-                          frozen: true,
-                        }),
-                      setAdminMessage,
-                    )
-                  }
-                >
-                  Freeze
-                </Button>
-                <input name="userId" type="hidden" value="demo-user" />
-                <input name="creditAdjustment" type="hidden" value="1" />
-                <Button type="submit" size="sm" variant="muted">
-                  Adjust
-                </Button>
-              </div>
-            </div>
-            <Divider className="my-4" />
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                void runServerAction(
-                  () =>
-                    actions.createAdminTicket({
-                      userId: "demo-user",
-                      eventId: events[0]?.id ?? "",
-                      ticketQuantity: 1,
-                      consumeCapacity: true,
-                      debitCredits: false,
-                      idempotencyKey: crypto.randomUUID(),
-                    }),
-                  setAdminMessage,
-                );
-              }}
-            >
-              Create ticket
-            </Button>
-            <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-              History, preferences, bookings, and adjustment controls are
-              expandable.
-            </p>
-          </Card>
-          <StatePanel
-            title="Loading"
-            text="Admin member loading states keep the panel shape stable."
-            state="loading"
-          />
+              <Divider className="my-4" />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  void runServerAction(
+                    () =>
+                      actions.createAdminTicket({
+                        userId: member.userId,
+                        eventId: live.adminEvents[0]?.id ?? "",
+                        ticketQuantity: 1,
+                        consumeCapacity: true,
+                        debitCredits: false,
+                        idempotencyKey: crypto.randomUUID(),
+                      }),
+                    setAdminMessage,
+                    live.refetchActiveSurface,
+                  );
+                }}
+              >
+                Create ticket
+              </Button>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                History, preferences, bookings, and adjustment controls are
+                expandable.
+              </p>
+            </Card>
+          ))}
+          {live.adminMembers.length === 0 ? (
+            <StatePanel
+              title={live.isLoading ? "Loading members" : "No members"}
+              text={
+                live.isError
+                  ? "Live member rows could not be loaded."
+                  : "Admin member rows will appear after members sign up."
+              }
+              state={
+                live.isLoading ? "loading" : live.isError ? "error" : "empty"
+              }
+            />
+          ) : null}
         </Panel>
       </div>
     </div>
   );
 }
 
-export function VisualSystemApp({
+function useLiveDataView(initialSurface: InitialSurfaceData | undefined) {
+  const publicInitial =
+    initialSurface?.surface === "public" ? initialSurface : undefined;
+  const memberInitial =
+    initialSurface?.surface === "member" ? initialSurface : undefined;
+  const partnerInitial =
+    initialSurface?.surface === "partner" ? initialSurface : undefined;
+  const adminInitial =
+    initialSurface?.surface === "admin" ? initialSurface : undefined;
+
+  const publicQuery = usePublicDiscoveryQuery(publicInitial?.filters, {
+    initialData: publicInitial?.data,
+    enabled: Boolean(publicInitial),
+  });
+  const memberQuery = useMemberDataQuery(
+    memberInitial?.userId ?? "",
+    memberInitial?.filters,
+    {
+      initialData: memberInitial?.data,
+      enabled: Boolean(memberInitial),
+    },
+  );
+  const partnerQuery = usePartnerDataQuery(partnerInitial?.partnerId ?? "", {
+    initialData: partnerInitial?.data,
+    enabled: Boolean(partnerInitial),
+  });
+  const adminQuery = useAdminDataQuery({
+    initialData: adminInitial?.data,
+    enabled: Boolean(adminInitial),
+  });
+
+  const publicData =
+    memberQuery.data?.discovery ?? publicQuery.data ?? emptyPublicData;
+  const isLoading =
+    publicQuery.isLoading ||
+    memberQuery.isLoading ||
+    partnerQuery.isLoading ||
+    adminQuery.isLoading;
+  const isError =
+    publicQuery.isError ||
+    memberQuery.isError ||
+    partnerQuery.isError ||
+    adminQuery.isError;
+
+  return createLiveDataView({
+    publicData,
+    memberData: memberQuery.data,
+    partnerData: partnerQuery.data,
+    adminData: adminQuery.data,
+    isLoading,
+    isError,
+    refetchActiveSurface: () => {
+      if (initialSurface?.surface === "member") void memberQuery.refetch();
+      else if (initialSurface?.surface === "partner")
+        void partnerQuery.refetch();
+      else if (initialSurface?.surface === "admin") void adminQuery.refetch();
+      else void publicQuery.refetch();
+    },
+  });
+}
+
+function VisualSystemAppContent({
   initialShell,
-  initialDiscovery: _initialDiscovery,
+  initialDiscovery,
   initialView = "landing",
 }: {
   initialShell?: AppShellViewModel;
-  initialDiscovery?: unknown;
+  initialDiscovery?: InitialSurfaceData;
   initialView?: View;
 }) {
+  const live = useLiveDataView(initialDiscovery);
   const [view, setView] = useState<View>(initialView);
-  const savedCount = events.filter((event) => event.saved).length;
   const demoShell = createDemoShellViewModel(view, {
-    savedCount,
-    creditCount: profile.credits,
+    savedCount: live.savedCount,
+    creditCount: live.profile.credits,
   });
   const shell = initialShell ? initialShell : demoShell;
   const pageShell =
@@ -1834,36 +2069,62 @@ export function VisualSystemApp({
   };
 
   return (
-    <AppShell shell={shell} onAction={navigateShell}>
-      <div className="pt-6">
-        {!initialShell ? (
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
-            {shellDemoViews.map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                size="sm"
-                variant={view === item.id ? "active" : "secondary"}
-                onClick={() => setView(item.id as View)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      <PageShell page={pageShell} onAction={navigateShell}>
-        {view === "landing" ? <LandingPage setView={setView} /> : null}
-        {view === "discover" ? <PublicDiscover setView={setView} /> : null}
-        {view === "how" ? <HowItWorks /> : null}
-        {view === "membership" ? <MembershipPage /> : null}
-        {view === "faq" ? <FaqPage setView={setView} /> : null}
-        {view === "member" ? <MemberFeed /> : null}
-        {view === "bookings" ? <BookingsPage /> : null}
-        {view === "profile" ? <ProfilePage /> : null}
-        {view === "partner" ? <PartnerPortal /> : null}
-        {view === "admin" ? <AdminPanel /> : null}
-      </PageShell>
-    </AppShell>
+    <LiveDataContext.Provider value={live}>
+      <AppShell shell={shell} onAction={navigateShell}>
+        <div className="pt-6">
+          {!initialShell ? (
+            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+              {shellDemoViews.map((item) => (
+                <Button
+                  key={item.id}
+                  type="button"
+                  size="sm"
+                  variant={view === item.id ? "active" : "secondary"}
+                  onClick={() => setView(item.id as View)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <PageShell page={pageShell} onAction={navigateShell}>
+          {view === "landing" ? <LandingPage setView={setView} /> : null}
+          {view === "discover" ? <PublicDiscover setView={setView} /> : null}
+          {view === "how" ? <HowItWorks /> : null}
+          {view === "membership" ? <MembershipPage /> : null}
+          {view === "faq" ? <FaqPage setView={setView} /> : null}
+          {view === "member" ? <MemberFeed /> : null}
+          {view === "bookings" ? <BookingsPage /> : null}
+          {view === "profile" ? <ProfilePage /> : null}
+          {view === "partner" ? <PartnerPortal /> : null}
+          {view === "admin" ? <AdminPanel /> : null}
+        </PageShell>
+      </AppShell>
+    </LiveDataContext.Provider>
+  );
+}
+
+export function VisualSystemApp({
+  initialShell,
+  initialDiscovery,
+  initialView = "landing",
+}: {
+  initialShell?: AppShellViewModel;
+  initialDiscovery?: unknown;
+  initialView?: View;
+}) {
+  const initialSurface = isInitialSurfaceData(initialDiscovery)
+    ? initialDiscovery
+    : undefined;
+
+  return (
+    <QueryProvider>
+      <VisualSystemAppContent
+        initialShell={initialShell}
+        initialDiscovery={initialSurface}
+        initialView={initialView}
+      />
+    </QueryProvider>
   );
 }
