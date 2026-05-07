@@ -7,9 +7,14 @@ import {
   events,
   partners,
   savedEvents,
+  subscriptions,
   user,
   userProfiles,
 } from "@/db/schema";
+import type {
+  AdminExportRow,
+  PartnerGuestExportRow,
+} from "@/lib/admin-operations";
 import {
   type DataAccessAdminEventView,
   type DataAccessAdminMemberView,
@@ -67,6 +72,10 @@ export type PartnerData = {
   partner: DataAccessPartnerView;
   eventOptions: Array<{ id: string; title: string; dateLabel: string }>;
   guests: DataAccessGuestView[];
+  guestCount: number;
+  ticketCount: number;
+  exportAvailable: boolean;
+  exportRows: PartnerGuestExportRow[];
 };
 
 export type AdminData = {
@@ -75,10 +84,17 @@ export type AdminData = {
     activePartnerCount: number;
     memberCount: number;
     confirmedBookingCount: number;
+    totalBookings: number;
+    creditsBurned: number;
+    totalGuests: number;
+    recentBookings: AdminExportRow[];
+    exportPartnerOptions: Array<{ id: string; name: string }>;
+    exportAvailable: boolean;
   };
   events: DataAccessAdminEventView[];
   partners: DataAccessAdminPartnerView[];
   members: DataAccessAdminMemberView[];
+  exportRows: AdminExportRow[];
 };
 
 export async function getPublicDiscoveryData(
@@ -228,45 +244,127 @@ export async function getPartnerData(
       dateLabel: event.dateTime.toISOString(),
     })),
     guests: guestRows.map(mapGuestView),
+    guestCount: guestRows.length,
+    ticketCount: guestRows.reduce(
+      (sum, row) => sum + row.booking.ticketsCount,
+      0,
+    ),
+    exportAvailable: guestRows.length > 0,
+    exportRows: guestRows.map((row) => ({
+      bookingId: row.booking.id,
+      userId: row.booking.userId,
+      event: row.event.title,
+      code: row.booking.redemptionInfo,
+      status: row.booking.status,
+      tickets: row.booking.ticketsCount,
+      createdAt: row.booking.createdAt,
+    })),
   };
 }
 
 export async function getAdminData(database: Db = db): Promise<AdminData> {
-  const [eventRows, partnerRows, memberRows, bookingCountRows] =
-    await Promise.all([
-      database
-        .select({ event: events, partner: partners })
-        .from(events)
-        .innerJoin(partners, eq(events.partnerId, partners.id))
-        .orderBy(desc(events.dateTime))
-        .limit(100),
-      database.select().from(partners).orderBy(asc(partners.name)).limit(100),
-      database
-        .select({ profile: userProfiles, user })
-        .from(userProfiles)
-        .innerJoin(user, eq(userProfiles.userId, user.id))
-        .orderBy(asc(user.email))
-        .limit(100),
-      database
-        .select({ value: count() })
-        .from(bookings)
-        .where(eq(bookings.status, "CONFIRMED")),
-    ]);
+  const [
+    eventRows,
+    partnerRows,
+    memberRows,
+    confirmedBookingCountRows,
+    totalBookingCountRows,
+    bookingAggregateRows,
+    recentBookingRows,
+  ] = await Promise.all([
+    database
+      .select({ event: events, partner: partners })
+      .from(events)
+      .innerJoin(partners, eq(events.partnerId, partners.id))
+      .orderBy(desc(events.dateTime))
+      .limit(100),
+    database.select().from(partners).orderBy(asc(partners.name)).limit(100),
+    database
+      .select({
+        profile: userProfiles,
+        user,
+        providerCustomerId: subscriptions.providerCustomerId,
+        providerSubscriptionId: subscriptions.providerSubscriptionId,
+        providerStatus: subscriptions.providerStatus,
+        lastProviderSyncAt: subscriptions.lastProviderSyncAt,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+      })
+      .from(userProfiles)
+      .innerJoin(user, eq(userProfiles.userId, user.id))
+      .leftJoin(subscriptions, eq(subscriptions.userId, user.id))
+      .orderBy(asc(user.email))
+      .limit(100),
+    database
+      .select({ value: count() })
+      .from(bookings)
+      .where(eq(bookings.status, "CONFIRMED")),
+    database.select({ value: count() }).from(bookings),
+    database
+      .select({
+        totalCredits: sql<number>`coalesce(sum(${bookings.totalCredits}), 0)`,
+        totalGuests: sql<number>`coalesce(sum(${bookings.ticketsCount}), 0)`,
+      })
+      .from(bookings),
+    database
+      .select({
+        bookingId: bookings.id,
+        userId: bookings.userId,
+        event: events.title,
+        partner: partners.name,
+        code: bookings.redemptionInfo,
+        status: bookings.status,
+        tickets: bookings.ticketsCount,
+        credits: bookings.totalCredits,
+        createdAt: bookings.createdAt,
+      })
+      .from(bookings)
+      .innerJoin(events, eq(events.id, bookings.eventId))
+      .innerJoin(partners, eq(partners.id, bookings.partnerId))
+      .orderBy(desc(bookings.createdAt))
+      .limit(100),
+  ]);
 
   const eventsView = eventRows.map(mapAdminEventView);
   const partnersView = partnerRows.map(mapAdminPartnerView);
-  const membersView = memberRows.map(mapAdminMemberView);
+  const membersView = memberRows.map((row) =>
+    mapAdminMemberView({
+      profile: row.profile,
+      user: row.user,
+      providerCustomerId: row.providerCustomerId,
+      providerSubscriptionId: row.providerSubscriptionId,
+      providerStatus: row.providerStatus,
+      lastProviderSyncAt: row.lastProviderSyncAt,
+      currentPeriodStart: row.currentPeriodStart,
+      currentPeriodEnd: row.currentPeriodEnd,
+    }),
+  );
+  const recentBookings = recentBookingRows.map((row) => ({
+    ...row,
+    code: row.code ?? null,
+  }));
+  const bookingAggregate = bookingAggregateRows[0];
 
   return {
     dashboard: {
       upcomingEventCount: eventsView.length,
       activePartnerCount: partnersView.length,
       memberCount: membersView.length,
-      confirmedBookingCount: bookingCountRows[0]?.value ?? 0,
+      confirmedBookingCount: confirmedBookingCountRows[0]?.value ?? 0,
+      totalBookings: totalBookingCountRows[0]?.value ?? 0,
+      creditsBurned: Number(bookingAggregate?.totalCredits ?? 0),
+      totalGuests: Number(bookingAggregate?.totalGuests ?? 0),
+      recentBookings,
+      exportPartnerOptions: partnersView.map((partner) => ({
+        id: partner.id,
+        name: partner.name,
+      })),
+      exportAvailable: recentBookings.length > 0,
     },
     events: eventsView,
     partners: partnersView,
     members: membersView,
+    exportRows: recentBookings,
   };
 }
 

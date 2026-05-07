@@ -17,7 +17,15 @@ export type InvalidationScope =
   | { type: "member-profile"; userId: string }
   | { type: "member-preferences"; userId: string }
   | { type: "partner"; partnerId: string }
-  | { type: "admin" };
+  | { type: "partner-guests"; partnerId: string }
+  | { type: "partner-exports"; partnerId: string }
+  | { type: "admin" }
+  | { type: "admin-dashboard" }
+  | { type: "admin-events" }
+  | { type: "admin-partners" }
+  | { type: "admin-members"; userId?: string }
+  | { type: "admin-exports" }
+  | { type: "booking-eligibility"; userId: string };
 
 export function hint(queryKey: QueryKey, exact = false): QueryInvalidationHint {
   return { queryKey, exact };
@@ -43,6 +51,7 @@ export function invalidationHintsForScopes(
         hint(dataQueryKeys.memberProfile(scope.userId)),
         hint(dataQueryKeys.memberWallet(scope.userId)),
         hint(dataQueryKeys.memberPreferences(scope.userId)),
+        hint(dataQueryKeys.bookingEligibility(scope.userId)),
       );
     }
     if (scope.type === "member-bookings") {
@@ -50,6 +59,7 @@ export function invalidationHintsForScopes(
         hint(dataQueryKeys.memberBookings(scope.userId)),
         hint(dataQueryKeys.memberWallet(scope.userId)),
         hint(dataQueryKeys.memberDiscovery(scope.userId)),
+        hint(dataQueryKeys.bookingEligibility(scope.userId)),
       );
     }
     if (scope.type === "member-profile") {
@@ -65,8 +75,18 @@ export function invalidationHintsForScopes(
       hints.push(
         hint(dataQueryKeys.partnerPortal(scope.partnerId)),
         hint(dataQueryKeys.partnerGuests(scope.partnerId)),
+        hint(dataQueryKeys.partnerExports(scope.partnerId)),
         hint(dataQueryKeys.partnerEvents(scope.partnerId)),
       );
+    }
+    if (scope.type === "partner-guests") {
+      hints.push(
+        hint(dataQueryKeys.partnerPortal(scope.partnerId)),
+        hint(dataQueryKeys.partnerGuests(scope.partnerId)),
+      );
+    }
+    if (scope.type === "partner-exports") {
+      hints.push(hint(dataQueryKeys.partnerExports(scope.partnerId)));
     }
     if (scope.type === "admin") {
       hints.push(
@@ -74,7 +94,28 @@ export function invalidationHintsForScopes(
         hint(dataQueryKeys.adminEvents()),
         hint(dataQueryKeys.adminPartners()),
         hint(dataQueryKeys.adminMembers()),
+        hint(dataQueryKeys.adminExports),
       );
+    }
+    if (scope.type === "admin-dashboard") {
+      hints.push(hint(dataQueryKeys.adminDashboard));
+    }
+    if (scope.type === "admin-events") {
+      hints.push(hint(dataQueryKeys.adminEvents()));
+    }
+    if (scope.type === "admin-partners") {
+      hints.push(hint(dataQueryKeys.adminPartners()));
+    }
+    if (scope.type === "admin-members") {
+      hints.push(hint(dataQueryKeys.adminMembers()));
+      if (scope.userId)
+        hints.push(hint(dataQueryKeys.adminMember(scope.userId)));
+    }
+    if (scope.type === "admin-exports") {
+      hints.push(hint(dataQueryKeys.adminExports));
+    }
+    if (scope.type === "booking-eligibility") {
+      hints.push(hint(dataQueryKeys.bookingEligibility(scope.userId)));
     }
   }
 

@@ -66,9 +66,14 @@ describe("initial surface data", () => {
     expect(live.creditLedgerEntries[0]?.reasonLabel).toBe("Booking");
     expect(live.partner?.name).toBe("Venue");
     expect(live.partnerGuests[0]?.name).toBe("Guest One");
+    expect(live.partnerGuests[0]?.eventId).toBe("event-1");
+    expect(live.partnerGuests[0]?.checkInDisabled).toBe(false);
     expect(live.partnerGuestTotal).toBe("2 guests");
     expect(live.adminEvents[0]?.title).toBe("Admin Event");
+    expect(live.adminEvents[0]?.codeStrategyLabel).toBe("Secret code");
     expect(live.adminDashboardMetrics[0]?.value).toBe("4");
+    expect(live.adminDashboardMetrics[1]?.value).toBe("8");
+    expect(live.adminMembers[0]?.billingOverrideActions).toContain("freeze");
   });
 });
 
@@ -102,6 +107,8 @@ function publicData(): PublicDiscoveryData {
         name: "Venue",
         address: "Berlin",
         logoInitial: "V",
+        venueQrTokenStatus: "active",
+        venueQrTokenLabel: "Token active",
       },
     ],
     categories: ["Art"],
@@ -194,11 +201,15 @@ function partnerData(): PartnerData {
       name: "Venue",
       address: "Berlin",
       logoInitial: "V",
+      venueQrTokenStatus: "active",
+      venueQrTokenLabel: "Token active",
     },
     eventOptions: [{ id: "event-1", title: "Live Event", dateLabel: "Soon" }],
     guests: [
       {
         bookingId: "booking-1",
+        eventId: "event-1",
+        partnerId: "partner-1",
         userId: "user-1",
         userShortId: "user-1",
         guestName: "Guest One",
@@ -212,6 +223,20 @@ function partnerData(): PartnerData {
         checkInAvailableLabel: "Check-in available",
       },
     ],
+    guestCount: 1,
+    ticketCount: 2,
+    exportAvailable: true,
+    exportRows: [
+      {
+        bookingId: "booking-1",
+        userId: "user-1",
+        event: "Live Event",
+        code: "LIVE",
+        status: "CONFIRMED",
+        tickets: 2,
+        createdAt: new Date("2026-05-04T18:00:00.000Z"),
+      },
+    ],
   };
 }
 
@@ -222,13 +247,25 @@ function adminData(): AdminData {
       activePartnerCount: 1,
       memberCount: 2,
       confirmedBookingCount: 4,
+      totalBookings: 4,
+      creditsBurned: 8,
+      totalGuests: 5,
+      recentBookings: [],
+      exportPartnerOptions: [{ id: "partner-1", name: "Venue" }],
+      exportAvailable: false,
     },
     events: [
       {
         id: "event-1",
         title: "Admin Event",
+        partnerId: "partner-1",
         partnerName: "Venue",
         dateLabel: "Tomorrow",
+        codeStrategyLabel: "Secret code",
+        ticketAvailabilityLabel: "10 tickets",
+        creditPrice: 2,
+        imageUrl: "https://example.com/event.jpg",
+        exportAvailable: true,
         capacityLabel: "10/12",
         statusLabel: "Open",
       },
@@ -241,7 +278,10 @@ function adminData(): AdminData {
         contactEmail: "partner@example.com",
         logoInitial: "V",
         venueQrTokenLabel: "Token active",
+        venueQrTokenStatus: "active",
+        venueQrUrl: "/venue-check-in/token",
         portalLoginLabel: "partner@example.com",
+        portalUserEmail: "partner@example.com",
       },
     ],
     members: [
@@ -256,8 +296,12 @@ function adminData(): AdminData {
         eventOpenCount: 1,
         savedCount: 1,
         waitlistCount: 0,
+        billingOverrideActions: ["freeze"],
+        preferencesSummary: "3 preferences",
+        historySummary: "1 bookings // 0 waitlist // 1 saved",
       },
     ],
+    exportRows: [],
   };
 }
 

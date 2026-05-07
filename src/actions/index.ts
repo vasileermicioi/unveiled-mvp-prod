@@ -147,7 +147,9 @@ function creditAdjustmentResultToAction(
       queryKeys.authViewer,
       ...dataAccessInvalidationKeys([
         { type: "member", userId: result.userId },
-        { type: "admin" },
+        { type: "admin-dashboard" },
+        { type: "admin-members", userId: result.userId },
+        { type: "booking-eligibility", userId: result.userId },
       ]),
     ],
   });
@@ -507,7 +509,10 @@ export const server = {
             ...dataAccessInvalidationKeys([
               { type: "public-discovery" },
               { type: "partner", partnerId: result.partnerId },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-partners" },
+              { type: "admin-events" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -546,7 +551,9 @@ export const server = {
             queryKeys.partners,
             ...dataAccessInvalidationKeys([
               { type: "public-discovery" },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-events" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -578,7 +585,9 @@ export const server = {
             ...dataAccessInvalidationKeys([
               { type: "public-discovery" },
               { type: "event", eventId: result.eventId },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-events" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -607,7 +616,8 @@ export const server = {
             queryKeys.partner(parsed.data.partnerId),
             ...dataAccessInvalidationKeys([
               { type: "partner", partnerId: parsed.data.partnerId },
-              { type: "admin" },
+              { type: "admin-partners" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -637,7 +647,7 @@ export const server = {
             queryKeys.authViewer,
             ...dataAccessInvalidationKeys([
               { type: "partner", partnerId: parsed.data.partnerId },
-              { type: "admin" },
+              { type: "admin-partners" },
             ]),
           ],
         });
@@ -668,7 +678,10 @@ export const server = {
             ...dataAccessInvalidationKeys([
               { type: "public-discovery" },
               { type: "partner", partnerId: parsed.data.partnerId },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-partners" },
+              { type: "admin-events" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -689,7 +702,7 @@ export const server = {
           data: { members },
           invalidate: [
             queryKeys.adminMembers,
-            ...dataAccessInvalidationKeys([{ type: "admin" }]),
+            ...dataAccessInvalidationKeys([{ type: "admin-members" }]),
           ],
         });
       } catch (error) {
@@ -748,7 +761,9 @@ export const server = {
             queryKeys.authViewer,
             ...dataAccessInvalidationKeys([
               { type: "member", userId: parsed.data.userId },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-members", userId: parsed.data.userId },
+              { type: "booking-eligibility", userId: parsed.data.userId },
             ]),
           ],
         });
@@ -787,7 +802,9 @@ export const server = {
             queryKeys.authViewer,
             ...dataAccessInvalidationKeys([
               { type: "member", userId: parsed.data.userId },
-              { type: "admin" },
+              { type: "admin-dashboard" },
+              { type: "admin-members", userId: parsed.data.userId },
+              { type: "booking-eligibility", userId: parsed.data.userId },
             ]),
           ],
         });
@@ -915,8 +932,10 @@ export const server = {
             queryKeys.bookings,
             queryKeys.checkIns(result.partnerId),
             ...dataAccessInvalidationKeys([
-              { type: "partner", partnerId: result.partnerId },
-              { type: "admin" },
+              { type: "partner-guests", partnerId: result.partnerId },
+              { type: "partner-exports", partnerId: result.partnerId },
+              { type: "admin-dashboard" },
+              { type: "admin-exports" },
             ]),
           ],
         });
@@ -950,7 +969,9 @@ export const server = {
             queryKeys.checkIns(result.partnerId),
             ...dataAccessInvalidationKeys([
               { type: "member-bookings", userId: viewer.user.id },
-              { type: "partner", partnerId: result.partnerId },
+              { type: "booking-eligibility", userId: viewer.user.id },
+              { type: "partner-guests", partnerId: result.partnerId },
+              { type: "partner-exports", partnerId: result.partnerId },
             ]),
           ],
         });
@@ -970,7 +991,12 @@ export const server = {
           return formFailure("You do not have access to this resource.");
         }
         const rows = await getPartnerGuestExportRows(viewer.partnerId);
-        return actionSuccess({ data: { rows } });
+        return actionSuccess({
+          data: { rows },
+          invalidate: dataAccessInvalidationKeys([
+            { type: "partner-exports", partnerId: viewer.partnerId },
+          ]),
+        });
       } catch (error) {
         return safeActionError(error);
       }
@@ -984,7 +1010,10 @@ export const server = {
       try {
         await requireAdmin(context.request.headers);
         const rows = await getAdminExportRows();
-        return actionSuccess({ data: { rows } });
+        return actionSuccess({
+          data: { rows },
+          invalidate: dataAccessInvalidationKeys([{ type: "admin-exports" }]),
+        });
       } catch (error) {
         return safeActionError(error);
       }

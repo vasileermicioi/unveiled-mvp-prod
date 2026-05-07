@@ -119,7 +119,7 @@ async function runServerAction<TData>(
     error?: unknown;
   }>,
   setMessage: (message: string) => void,
-  onSuccess?: () => void,
+  onSuccess?: (data: TData | undefined) => void,
 ) {
   const result = await action();
   if (result.error || !result.data) {
@@ -131,7 +131,35 @@ async function runServerAction<TData>(
     return;
   }
   setMessage(result.data.notice?.message ?? "Saved.");
-  onSuccess?.();
+  onSuccess?.(result.data.data);
+}
+
+function csvEscape(value: unknown) {
+  const text =
+    value instanceof Date ? value.toISOString() : String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCsv(
+  filename: string,
+  rows: Array<Record<string, unknown>>,
+  headers: string[],
+) {
+  if (rows.length === 0) return false;
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers.map((header) => csvEscape(row[header])).join(","),
+    ),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+  return true;
 }
 
 function LandingPage({ setView }: { setView: (view: View) => void }) {
@@ -1587,6 +1615,21 @@ function PartnerPortal() {
   const [checkInMessage, setCheckInMessage] = useState(
     "Check-in actions enforce partner ownership on the server.",
   );
+  const [guestSearch, setGuestSearch] = useState("");
+  const [eventFilter, setEventFilter] = useState("");
+  const filteredGuests = useMemo(() => {
+    const search = guestSearch.trim().toLowerCase();
+    return live.partnerGuests.filter((guest) => {
+      const matchesSearch =
+        !search ||
+        [guest.name, guest.email, guest.eventTitle, guest.exportCode]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesEvent = !eventFilter || guest.eventId === eventFilter;
+      return matchesSearch && matchesEvent;
+    });
+  }, [eventFilter, guestSearch, live.partnerGuests]);
 
   return (
     <div className="space-y-8 py-8">
@@ -1599,6 +1642,9 @@ function PartnerPortal() {
           <h1 className="headline-lg mt-5">
             {live.partner?.name ?? "Partner portal"}.
           </h1>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
+            {live.partner?.address ?? "Partner address unavailable"}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <StatPanel
@@ -1628,10 +1674,18 @@ function PartnerPortal() {
         className="grid gap-4 md:grid-cols-[1fr_1fr_auto]"
       >
         <Field label="Search guests">
-          <TextInput placeholder="Name or email" />
+          <TextInput
+            placeholder="Name, email, event, or code"
+            value={guestSearch}
+            onChange={(event) => setGuestSearch(event.currentTarget.value)}
+          />
         </Field>
         <Field label="Event">
-          <SelectInput defaultValue={live.partnerEventOptions[0]?.id ?? ""}>
+          <SelectInput
+            value={eventFilter}
+            onChange={(event) => setEventFilter(event.currentTarget.value)}
+          >
+            <option value="">All events</option>
             {live.partnerEventOptions.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title}
@@ -1647,6 +1701,24 @@ function PartnerPortal() {
             void runServerAction(
               () => actions.getPartnerBookingExportRows({}),
               setCheckInMessage,
+              (data) => {
+                const downloaded = downloadCsv(
+                  "partner-guests.csv",
+                  data?.rows ?? [],
+                  [
+                    "bookingId",
+                    "userId",
+                    "event",
+                    "code",
+                    "status",
+                    "tickets",
+                    "createdAt",
+                  ],
+                );
+                setCheckInMessage(
+                  downloaded ? "CSV export downloaded." : "No export rows.",
+                );
+              },
             )
           }
         >
@@ -1655,7 +1727,7 @@ function PartnerPortal() {
         </Button>
       </Panel>
       <TableShell>
-        {live.partnerGuests.map((guest) => (
+        {filteredGuests.map((guest) => (
           <TableRow key={guest.bookingId}>
             <div>
               <p className="text-sm font-black uppercase tracking-widest">
@@ -1672,7 +1744,7 @@ function PartnerPortal() {
               variant={
                 guest.checkedInLabel === "Checked in" ? "copied" : "primary"
               }
-              disabled={guest.checkedInLabel === "Disabled"}
+              disabled={guest.checkInDisabled}
               onClick={() =>
                 void runServerAction(
                   () =>
@@ -1689,7 +1761,7 @@ function PartnerPortal() {
             </Button>
           </TableRow>
         ))}
-        {live.partnerGuests.length === 0 ? (
+        {filteredGuests.length === 0 ? (
           <StatePanel
             title={live.isLoading ? "Loading guests" : "No guests"}
             text={
@@ -1742,6 +1814,26 @@ function AdminPanel() {
             void runServerAction(
               () => actions.getAdminExportRows({}),
               setAdminMessage,
+              (data) => {
+                const downloaded = downloadCsv(
+                  "admin-bookings.csv",
+                  data?.rows ?? [],
+                  [
+                    "bookingId",
+                    "userId",
+                    "event",
+                    "partner",
+                    "code",
+                    "status",
+                    "tickets",
+                    "credits",
+                    "createdAt",
+                  ],
+                );
+                setAdminMessage(
+                  downloaded ? "CSV export downloaded." : "No export rows.",
+                );
+              },
             )
           }
         >
@@ -1772,6 +1864,10 @@ function AdminPanel() {
             </div>
             <p className="text-sm font-bold uppercase">{event.dateLabel}</p>
             <p className="text-sm font-bold uppercase">{event.capacityLabel}</p>
+            <p className="text-xs font-black uppercase tracking-widest opacity-55">
+              {event.codeStrategyLabel} {" // "}
+              {event.creditPrice} credits
+            </p>
             <Badge tone={event.statusLabel === "Draft" ? "grey" : "yellow"}>
               {event.statusLabel}
             </Badge>
@@ -1966,63 +2062,71 @@ function AdminPanel() {
           </Panel>
           <div className="flex flex-wrap gap-2">
             {live.adminPartners.map((partner) => (
-              <Badge key={partner.id} tone="white">
-                {partner.name}
-                {" // "}
-                {partner.portalLoginLabel}
-              </Badge>
+              <div
+                key={partner.id}
+                className="flex flex-wrap items-center gap-2 border-b-2 border-brand-dark/20 pb-2"
+              >
+                <Badge tone="white">
+                  {partner.name}
+                  {" // "}
+                  {partner.portalLoginLabel}
+                  {" // "}
+                  {partner.venueQrTokenLabel}
+                </Badge>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    void runServerAction(
+                      () =>
+                        actions.createPartnerPortalAccess({
+                          partnerId: partner.id,
+                          email: partner.contactEmail,
+                        }),
+                      setAdminMessage,
+                      live.refetchActiveSurface,
+                    )
+                  }
+                >
+                  <ExternalLink /> Portal
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    void runServerAction(
+                      () =>
+                        actions.rotatePartnerVenueToken({
+                          partnerId: partner.id,
+                        }),
+                      setAdminMessage,
+                      live.refetchActiveSurface,
+                    )
+                  }
+                >
+                  <QrCode /> QR
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={() =>
+                    void runServerAction(
+                      () =>
+                        actions.deletePartner({
+                          partnerId: partner.id,
+                        }),
+                      setAdminMessage,
+                      live.refetchActiveSurface,
+                    )
+                  }
+                >
+                  Delete
+                </Button>
+              </div>
             ))}
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                void runServerAction(
-                  () =>
-                    actions.createPartnerPortalAccess({
-                      partnerId: live.adminPartners[0]?.id ?? "",
-                      email:
-                        live.adminPartners[0]?.contactEmail ??
-                        "partner@example.com",
-                    }),
-                  setAdminMessage,
-                  live.refetchActiveSurface,
-                )
-              }
-            >
-              <ExternalLink /> Portal
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                void runServerAction(
-                  () =>
-                    actions.rotatePartnerVenueToken({
-                      partnerId: live.adminPartners[0]?.id ?? "",
-                    }),
-                  setAdminMessage,
-                  live.refetchActiveSurface,
-                )
-              }
-            >
-              <QrCode /> QR
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() =>
-                void runServerAction(
-                  () =>
-                    actions.deletePartner({
-                      partnerId: live.adminPartners[0]?.id ?? "",
-                    }),
-                  setAdminMessage,
-                  live.refetchActiveSurface,
-                )
-              }
-            >
-              Delete
-            </Button>
             <Button type="submit" variant="primary">
               Save
             </Button>
@@ -2083,11 +2187,34 @@ function AdminPanel() {
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
                     {member.email} {" // "}
                     {member.bookingCount} bookings {" // "}
-                    {member.savedCount} saved
+                    {member.savedCount} saved {" // "}
+                    {member.waitlistCount} waitlist
+                  </p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                    {member.providerStatus ?? "No provider"} {" // "}
+                    {member.currentPeriodLabel} {" // "}
+                    {member.historySummary}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" size="sm" variant="secondary">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      void runServerAction(
+                        () =>
+                          actions.adjustMemberCredits({
+                            userId: member.userId,
+                            amount: 1,
+                            reason: "Admin panel adjustment",
+                            idempotencyKey: crypto.randomUUID(),
+                          }),
+                        setAdminMessage,
+                        live.refetchActiveSurface,
+                      )
+                    }
+                  >
                     + Credit
                   </Button>
                   <Button
@@ -2099,19 +2226,17 @@ function AdminPanel() {
                         () =>
                           actions.toggleUserFreeze({
                             userId: member.userId,
-                            frozen: true,
+                            frozen:
+                              member.billingOverrideActions.includes("freeze"),
                           }),
                         setAdminMessage,
                         live.refetchActiveSurface,
                       )
                     }
                   >
-                    Freeze
-                  </Button>
-                  <input name="userId" type="hidden" value={member.userId} />
-                  <input name="creditAdjustment" type="hidden" value="1" />
-                  <Button type="submit" size="sm" variant="muted">
-                    Adjust
+                    {member.billingOverrideActions.includes("freeze")
+                      ? "Freeze"
+                      : "Unfreeze"}
                   </Button>
                 </div>
               </div>

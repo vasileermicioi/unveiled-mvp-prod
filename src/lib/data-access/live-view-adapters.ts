@@ -53,6 +53,7 @@ export type LiveDataView = {
   partnerEventOptions: PartnerData["eventOptions"];
   partnerGuests: Array<{
     bookingId: string;
+    eventId: string;
     partnerId?: string;
     name: string;
     email: string;
@@ -60,6 +61,8 @@ export type LiveDataView = {
     tickets: number;
     statusLabel: string;
     checkedInLabel: string;
+    checkInDisabled: boolean;
+    exportCode: string;
   }>;
   partnerGuestTotal: string;
   adminDashboardMetrics: Array<{
@@ -168,6 +171,8 @@ export function createLiveDataView(input: {
   const guests =
     input.partnerData?.guests.map((guest) => ({
       bookingId: guest.bookingId,
+      eventId: guest.eventId,
+      partnerId: guest.partnerId,
       name: guest.guestName,
       email: guest.guestEmail,
       eventTitle: guest.eventTitle,
@@ -177,8 +182,14 @@ export function createLiveDataView(input: {
         guest.checkedInLabel === "Not checked in"
           ? guest.checkInAvailableLabel
           : "Checked in",
+      checkInDisabled:
+        guest.checkedInLabel !== "Not checked in" ||
+        guest.checkInAvailableLabel !== "Check-in available",
+      exportCode: guest.redemptionCode ?? "",
     })) ?? [];
-  const guestCount = guests.reduce((sum, guest) => sum + guest.tickets, 0);
+  const guestCount =
+    input.partnerData?.ticketCount ??
+    guests.reduce((sum, guest) => sum + guest.tickets, 0);
 
   return {
     events,
@@ -240,18 +251,23 @@ export function createLiveDataView(input: {
     adminDashboardMetrics: [
       {
         label: "Bookings",
-        value: `${input.adminData?.dashboard.confirmedBookingCount ?? 0}`,
-        caption: "Confirmed access",
+        value: `${input.adminData?.dashboard.totalBookings ?? input.adminData?.dashboard.confirmedBookingCount ?? 0}`,
+        caption: `${input.adminData?.dashboard.confirmedBookingCount ?? 0} confirmed`,
       },
       {
-        label: "Members",
-        value: `${input.adminData?.dashboard.memberCount ?? 0}`,
-        caption: "Active accounts",
+        label: "Credits burned",
+        value: `${input.adminData?.dashboard.creditsBurned ?? 0}`,
+        caption: "Across bookings",
       },
       {
         label: "Partners",
         value: `${input.adminData?.dashboard.activePartnerCount ?? 0}`,
         caption: "Active venues",
+      },
+      {
+        label: "Guests",
+        value: `${input.adminData?.dashboard.totalGuests ?? 0}`,
+        caption: `${input.adminData?.dashboard.memberCount ?? 0} members`,
       },
     ],
     adminEvents: input.adminData?.events ?? [],

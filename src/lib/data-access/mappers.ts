@@ -48,6 +48,8 @@ export type DataAccessPartnerView = {
   logoUrl?: string | null;
   logoInitial: string;
   venueQrUrl?: string;
+  venueQrTokenStatus: "active" | "missing";
+  venueQrTokenLabel: string;
   portalUserEmail?: string | null;
 };
 
@@ -113,6 +115,8 @@ export type DataAccessPreferencesView = {
 
 export type DataAccessGuestView = {
   bookingId: string;
+  eventId: string;
+  partnerId: string;
   userId: string;
   userShortId: string;
   guestName: string;
@@ -129,8 +133,14 @@ export type DataAccessGuestView = {
 export type DataAccessAdminEventView = {
   id: string;
   title: string;
+  partnerId: string;
   partnerName: string;
   dateLabel: string;
+  codeStrategyLabel: string;
+  ticketAvailabilityLabel: string;
+  creditPrice: number;
+  imageUrl: string;
+  exportAvailable: boolean;
   capacityLabel: string;
   statusLabel: string;
 };
@@ -143,7 +153,11 @@ export type DataAccessAdminPartnerView = {
   logoUrl?: string | null;
   logoInitial: string;
   venueQrTokenLabel: string;
+  venueQrTokenStatus: "active" | "missing";
+  venueQrUrl?: string;
   portalLoginLabel: string;
+  portalUserEmail?: string | null;
+  portalUserId?: string | null;
 };
 
 export type DataAccessAdminMemberView = {
@@ -157,6 +171,14 @@ export type DataAccessAdminMemberView = {
   eventOpenCount: number;
   savedCount: number;
   waitlistCount: number;
+  providerCustomerId?: string | null;
+  providerSubscriptionId?: string | null;
+  providerStatus?: string | null;
+  lastProviderSyncLabel?: string;
+  currentPeriodLabel?: string;
+  billingOverrideActions: Array<"freeze" | "unfreeze">;
+  preferencesSummary: string;
+  historySummary: string;
 };
 
 export function formatDateLabel(value: Date | string | null | undefined) {
@@ -223,6 +245,8 @@ export function mapPartnerView(partner: PartnerRow): DataAccessPartnerView {
     venueQrUrl: partner.venueCheckInToken
       ? `/venue-check-in/${partner.venueCheckInToken}`
       : undefined,
+    venueQrTokenStatus: partner.venueCheckInToken ? "active" : "missing",
+    venueQrTokenLabel: partner.venueCheckInToken ? "Token active" : "Missing",
     portalUserEmail: partner.portalUserEmail,
   };
 }
@@ -322,6 +346,8 @@ export function mapGuestView(input: {
 }): DataAccessGuestView {
   return {
     bookingId: input.booking.id,
+    eventId: input.booking.eventId,
+    partnerId: input.booking.partnerId,
     userId: input.booking.userId,
     userShortId: input.booking.userId.slice(0, 8),
     guestName: input.user.name,
@@ -346,8 +372,22 @@ export function mapAdminEventView(input: {
   return {
     id: input.event.id,
     title: input.event.title,
+    partnerId: input.event.partnerId,
     partnerName: input.partner?.name ?? "Partner",
     dateLabel: formatDateLabel(input.event.dateTime),
+    codeStrategyLabel:
+      input.event.ticketType === "VOUCHER"
+        ? "Voucher"
+        : input.event.secretCodeMode
+          ? labelize(input.event.secretCodeMode)
+          : "Secret code",
+    ticketAvailabilityLabel:
+      input.event.remainingCapacity <= 0
+        ? "Waitlist"
+        : `${input.event.remainingCapacity} tickets`,
+    creditPrice: input.event.creditPrice,
+    imageUrl: input.event.imageUrl,
+    exportAvailable: true,
     capacityLabel: `${input.event.remainingCapacity}/${input.event.totalCapacity}`,
     statusLabel: input.event.remainingCapacity <= 0 ? "Sold out" : "Open",
   };
@@ -364,14 +404,39 @@ export function mapAdminPartnerView(
     logoUrl: partner.logoUrl,
     logoInitial: partner.name.trim().slice(0, 1).toUpperCase() || "U",
     venueQrTokenLabel: partner.venueCheckInToken ? "Token active" : "Missing",
+    venueQrTokenStatus: partner.venueCheckInToken ? "active" : "missing",
+    venueQrUrl: partner.venueCheckInToken
+      ? `/venue-check-in/${partner.venueCheckInToken}`
+      : undefined,
     portalLoginLabel: partner.portalUserEmail ?? "Not created",
+    portalUserEmail: partner.portalUserEmail,
+    portalUserId: partner.portalUserId,
   };
 }
 
 export function mapAdminMemberView(input: {
   profile: UserProfileRow;
   user?: Pick<UserRow, "name" | "email"> | null;
+  providerCustomerId?: string | null;
+  providerSubscriptionId?: string | null;
+  providerStatus?: string | null;
+  lastProviderSyncAt?: Date | null;
+  currentPeriodStart?: Date | null;
+  currentPeriodEnd?: Date | null;
 }): DataAccessAdminMemberView {
+  const billingOverrideActions =
+    input.profile.subscriptionStatus === "ADMIN_FROZEN" ||
+    input.profile.subscriptionStatus === "UNPAID"
+      ? (["unfreeze"] as const)
+      : (["freeze"] as const);
+  const preferenceCount =
+    input.profile.interests.length +
+    input.profile.moods.length +
+    input.profile.districts.length +
+    input.profile.timing.length +
+    input.profile.preferredDays.length +
+    input.profile.preferredLanguages.length;
+
   return {
     userId: input.profile.userId,
     fullName:
@@ -388,6 +453,19 @@ export function mapAdminMemberView(input: {
     eventOpenCount: input.profile.eventOpenCount,
     savedCount: input.profile.savedCount,
     waitlistCount: input.profile.waitlistCount,
+    providerCustomerId: input.providerCustomerId,
+    providerSubscriptionId: input.providerSubscriptionId,
+    providerStatus: input.providerStatus,
+    lastProviderSyncLabel: input.lastProviderSyncAt
+      ? formatDateLabel(input.lastProviderSyncAt)
+      : "Not synced",
+    currentPeriodLabel:
+      input.currentPeriodStart || input.currentPeriodEnd
+        ? `${formatDateLabel(input.currentPeriodStart)} - ${formatDateLabel(input.currentPeriodEnd)}`
+        : "No active period",
+    billingOverrideActions: [...billingOverrideActions],
+    preferencesSummary: `${preferenceCount} preferences`,
+    historySummary: `${input.profile.bookingCount} bookings // ${input.profile.waitlistCount} waitlist // ${input.profile.savedCount} saved`,
   };
 }
 

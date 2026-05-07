@@ -68,6 +68,46 @@ describe("data access query contracts", () => {
     expect(keys).toContainEqual(dataQueryKeys.memberBookings("user-1"));
     expect(keys.filter((key) => key[1] === "public")).toHaveLength(1);
   });
+
+  test("exposes precise operational query keys", () => {
+    expect(dataQueryKeys.partnerExports("partner-1")).toEqual([
+      "data-access",
+      "partner",
+      "partner-1",
+      "exports",
+    ]);
+    expect(dataQueryKeys.adminMember("user-1")).toEqual([
+      "data-access",
+      "admin",
+      "members",
+      "user-1",
+    ]);
+    expect(dataQueryKeys.bookingEligibility("user-1")).toEqual([
+      "data-access",
+      "member",
+      "user-1",
+      "booking-eligibility",
+    ]);
+  });
+
+  test("targets operational invalidation scopes without broadening ownership", () => {
+    const keys = toQueryKeys(
+      invalidationHintsForScopes([
+        { type: "partner-guests", partnerId: "partner-1" },
+        { type: "partner-exports", partnerId: "partner-1" },
+        { type: "admin-members", userId: "user-1" },
+        { type: "booking-eligibility", userId: "user-1" },
+      ]),
+    );
+
+    expect(keys).toContainEqual(dataQueryKeys.partnerPortal("partner-1"));
+    expect(keys).toContainEqual(dataQueryKeys.partnerGuests("partner-1"));
+    expect(keys).toContainEqual(dataQueryKeys.partnerExports("partner-1"));
+    expect(keys).toContainEqual(dataQueryKeys.adminMembers());
+    expect(keys).toContainEqual(dataQueryKeys.adminMember("user-1"));
+    expect(keys).toContainEqual(dataQueryKeys.bookingEligibility("user-1"));
+    expect(keys).not.toContainEqual(dataQueryKeys.partnerPortal("partner-2"));
+  });
 });
 
 describe("data access mappers", () => {

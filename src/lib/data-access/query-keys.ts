@@ -78,6 +78,8 @@ export const dataQueryKeys = {
     ["data-access", "member", userId, "preferences"] as const,
   partnerGuests: (partnerId: string) =>
     ["data-access", "partner", partnerId, "guests"] as const,
+  partnerExports: (partnerId: string) =>
+    ["data-access", "partner", partnerId, "exports"] as const,
   partnerEvents: (partnerId: string) =>
     ["data-access", "partner", partnerId, "events"] as const,
   partnerPortal: (partnerId: string) =>
@@ -99,6 +101,11 @@ export const dataQueryKeys = {
       "members",
       normalizeAdminFilters(filters),
     ] as const,
+  adminMember: (userId: string) =>
+    ["data-access", "admin", "members", userId] as const,
+  adminExports: ["data-access", "admin", "exports"] as const,
+  bookingEligibility: (userId: string) =>
+    ["data-access", "member", userId, "booking-eligibility"] as const,
 };
 
 export const queryStaleTimes = {

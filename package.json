@@ -19,6 +19,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run scripts/seed-domain-data.ts",
+    "db:seed:operations-smoke": "bun scripts/seed-operations-smoke.ts",
     "db:studio": "drizzle-kit studio",
     "jobs:daily-partner-codes": "bun run scripts/run-daily-partner-codes.ts"
   },
