@@ -47,7 +47,12 @@ export type PublicDiscoveryData = {
 };
 
 export type MemberData = {
-  discovery: PublicDiscoveryData & { savedEventIds: string[] };
+  discovery: PublicDiscoveryData & {
+    savedEventIds: string[];
+    activeRangeLabel?: string;
+    resultCount?: number;
+    activeFilterCount?: number;
+  };
   savedEvents: DataAccessEventView[];
   bookings: DataAccessBookingView[];
   profile: DataAccessProfileView;
@@ -115,9 +120,11 @@ export async function getMemberData(
   filters: DiscoveryFilters = {},
   database: Db = db,
 ): Promise<MemberData> {
+  const savedOnly = filters.savedOnly === "true";
+  const publicFilters = { ...filters, savedOnly: undefined };
   const [publicData, profileData, savedRows, bookingRows, ledgerRows] =
     await Promise.all([
-      getPublicDiscoveryData(filters, database),
+      getPublicDiscoveryData(publicFilters, database),
       getProfileData(userId, database),
       database.select().from(savedEvents).where(eq(savedEvents.userId, userId)),
       getBookingRowsForUser(userId, database),
@@ -131,19 +138,30 @@ export async function getMemberData(
 
   const savedEventIds = savedRows.map((row) => row.eventId);
   const savedSet = new Set(savedEventIds);
+  const bookingAvailable: "available" | "frozen" =
+    profileData.profile.subscriptionStatus === "ACTIVE"
+      ? "available"
+      : "frozen";
+  const filteredEvents = publicData.featuredEvents
+    .map((event) => ({
+      ...event,
+      saved: savedSet.has(event.id),
+      bookingAvailabilityState: bookingAvailable,
+      membershipCta:
+        bookingAvailable === "frozen" ? "Update membership" : undefined,
+    }))
+    .filter((event) => !savedOnly || event.saved);
 
   return {
     discovery: {
       ...publicData,
       savedEventIds,
-      featuredEvents: publicData.featuredEvents.map((event) => ({
-        ...event,
-        saved: savedSet.has(event.id),
-      })),
+      featuredEvents: filteredEvents,
+      activeRangeLabel: activeRangeLabel(filters),
+      resultCount: filteredEvents.length,
+      activeFilterCount: activeFilterCount(filters),
     },
-    savedEvents: publicData.featuredEvents.filter((event) =>
-      savedSet.has(event.id),
-    ),
+    savedEvents: filteredEvents.filter((event) => event.saved),
     bookings: bookingRows.map(mapBookingView),
     profile: profileData.profile,
     wallet: {
@@ -152,6 +170,24 @@ export async function getMemberData(
     },
     preferences: profileData.preferences,
   };
+}
+
+function activeFilterCount(filters: DiscoveryFilters) {
+  return [
+    filters.category,
+    filters.partnerId,
+    filters.startDate,
+    filters.endDate,
+    filters.savedOnly === "true" ? "saved" : undefined,
+  ].filter(Boolean).length;
+}
+
+function activeRangeLabel(filters: DiscoveryFilters) {
+  if (filters.startDate && filters.endDate)
+    return `${filters.startDate} - ${filters.endDate}`;
+  if (filters.startDate) return `From ${filters.startDate}`;
+  if (filters.endDate) return `Until ${filters.endDate}`;
+  return "Upcoming";
 }
 
 export async function getPartnerData(

@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Viewer } from "@/lib/auth-profile";
+import type { AuthenticatedViewer, Viewer } from "@/lib/auth-profile";
 
 import {
   productRoutes,
+  resolveMemberOnboardingRoute,
   resolveRouteOwnership,
   routePathFor,
 } from "./product-routes";
@@ -58,7 +59,38 @@ describe("product route ownership", () => {
 
   test("route paths expose stable navigation targets", () => {
     expect(routePathFor("member")).toBe("/app");
+    expect(routePathFor("onboarding")).toBe("/onboarding");
     expect(routePathFor("how")).toBe("/how-it-works");
+  });
+
+  test("incomplete members are routed through onboarding before member surfaces", () => {
+    const viewer = {
+      ...authenticatedViewer("USER", "member", null),
+      onboardingComplete: false,
+    };
+
+    expect(resolveMemberOnboardingRoute(viewer, productRoutes.member)).toEqual({
+      ok: false,
+      redirectTo: "/onboarding",
+      status: 302,
+    });
+    expect(resolveMemberOnboardingRoute(viewer, productRoutes.saved)).toEqual({
+      ok: false,
+      redirectTo: "/onboarding",
+      status: 302,
+    });
+  });
+
+  test("completed members are redirected away from onboarding", () => {
+    const viewer = authenticatedViewer("USER", "member", null);
+
+    expect(
+      resolveMemberOnboardingRoute(viewer, productRoutes.onboarding),
+    ).toEqual({
+      ok: false,
+      redirectTo: "/app",
+      status: 302,
+    });
   });
 });
 
@@ -82,7 +114,7 @@ function authenticatedViewer(
   role: "USER" | "ADMIN" | "PARTNER",
   viewerContext: "member" | "admin" | "partner",
   partnerId: string | null,
-): Viewer {
+): AuthenticatedViewer {
   return {
     kind: "authenticated",
     viewerContext,

@@ -57,6 +57,9 @@ describe("initial surface data", () => {
     });
 
     expect(live.events).toHaveLength(1);
+    expect(live.events[0]?.bookingAvailabilityState).toBe("frozen");
+    expect(live.activeRangeLabel).toBe("Upcoming");
+    expect(live.activeFilterCount).toBe(1);
     expect(live.publicStats[0]?.value).toBe("1");
     expect(live.profile.email).toBe("member@example.com");
     expect(live.bookings[0]?.eventTitle).toBe("Live Booking");
@@ -90,6 +93,7 @@ function publicData(): PublicDiscoveryData {
         saved: true,
         ctaLabel: "Book now",
         mapLabel: "Mitte Art",
+        bookingAvailabilityState: "frozen",
       },
     ],
     activePartners: [
@@ -112,7 +116,13 @@ function publicData(): PublicDiscoveryData {
 
 function memberData(): MemberData {
   return {
-    discovery: { ...publicData(), savedEventIds: [] },
+    discovery: {
+      ...publicData(),
+      savedEventIds: [],
+      activeRangeLabel: "Upcoming",
+      resultCount: 1,
+      activeFilterCount: 1,
+    },
     savedEvents: [],
     bookings: [
       {
@@ -146,6 +156,9 @@ function memberData(): MemberData {
       paymentMethod: "Not set",
       language: "DE",
       onboardingComplete: false,
+      subscriptionStatus: "INACTIVE",
+      profileComplete: true,
+      newsletterOptIn: false,
     },
     wallet: {
       credits: 8,

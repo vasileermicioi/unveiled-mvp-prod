@@ -67,6 +67,7 @@ import {
   emptyPublicData,
   type LiveDataView,
 } from "@/lib/data-access/live-view-adapters";
+import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import {
   type InitialSurfaceData,
   isInitialSurfaceData,
@@ -89,6 +90,7 @@ type View = Extract<
   | "membership"
   | "faq"
   | "member"
+  | "onboarding"
   | "bookings"
   | "profile"
   | "partner"
@@ -305,10 +307,12 @@ function EventCard({
   event,
   compact = false,
   onOpen,
+  onSave,
 }: {
   event: EventCardView;
   compact?: boolean;
   onOpen: (event: EventCardView) => void;
+  onSave?: (event: EventCardView) => void;
 }) {
   return (
     <Card interactive className="group flex h-full flex-col overflow-hidden">
@@ -363,6 +367,7 @@ function EventCard({
               variant={event.saved ? "active" : "outline"}
               size="icon-sm"
               aria-label={event.saved ? "Saved" : "Save"}
+              onClick={() => onSave?.(event)}
             >
               <Bookmark fill={event.saved ? "currentColor" : "none"} />
             </Button>
@@ -565,7 +570,87 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
   );
 }
 
+function OnboardingPage() {
+  const live = useLiveData();
+  const [message, setMessage] = useState(
+    "Choose a few preferences to personalize your feed.",
+  );
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit(onboardingComplete: boolean) {
+    setSubmitting(true);
+    await runServerAction(
+      () =>
+        actions.saveOnboarding({
+          ageGroup: "26-35",
+          interests: ["Theater", "Kino"],
+          moods: ["Leicht"],
+          districts: ["Mitte"],
+          maxDistance: 10,
+          timing: ["After Work"],
+          preferredDays: ["Fr", "Sa"],
+          preferredLanguages: ["DE"],
+          accessibility: false,
+          onboardingComplete,
+        }),
+      setMessage,
+      () => {
+        live.refetchActiveSurface();
+        window.location.assign("/app");
+      },
+    );
+    setSubmitting(false);
+  }
+
+  return (
+    <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <Panel tone="white" className="space-y-6">
+        <Badge tone="yellow">Onboarding</Badge>
+        <h1 className="headline-lg">Make the feed yours.</h1>
+        <p className="text-sm font-bold uppercase tracking-widest opacity-55">
+          {message}
+        </p>
+      </Panel>
+      <Panel tone="dark" className="space-y-6">
+        <p className="unveiled-meta opacity-55">Preference preview</p>
+        <div className="flex flex-wrap gap-2">
+          {["Theater", "Kino", "Mitte", "After Work", "Fr", "Sa"].map(
+            (value) => (
+              <Badge key={value} tone="yellow">
+                <Heart className="size-3" />
+                {value}
+              </Badge>
+            ),
+          )}
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="yellow"
+            loading={submitting}
+            onClick={() => void submit(true)}
+          >
+            Save preferences
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={submitting}
+            onClick={() => void submit(true)}
+          >
+            Skip for now
+          </Button>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 function MembershipPage() {
+  const live = useLiveData();
+  const [message, setMessage] = useState(
+    "Choose a payment method to start checkout.",
+  );
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
   >();
@@ -582,6 +667,15 @@ function MembershipPage() {
             drops.
           </p>
         </div>
+        <Badge
+          tone={
+            live.billingDisplay.subscriptionStatusLabel === "Active"
+              ? "success"
+              : "yellow"
+          }
+        >
+          {live.billingDisplay.subscriptionStatusLabel}
+        </Badge>
         <Divider />
         <div className="grid gap-3">
           {[
@@ -632,21 +726,46 @@ function MembershipPage() {
           ))}
         </div>
         <Field label="Promo code">
-          <TextInput placeholder="Optional" />
+          <TextInput name="promoCode" placeholder="Optional" />
         </Field>
-        <Button type="button" className="w-full">
+        <Button
+          type="button"
+          className="w-full"
+          onClick={() =>
+            void runServerAction(
+              () =>
+                actions.updateMembership({
+                  paymentMethod: selectedPaymentMethod,
+                  promoCode: "",
+                  isFrozen: false,
+                  isActive:
+                    live.billingDisplay.subscriptionStatusLabel === "Active",
+                }),
+              setMessage,
+              live.refetchActiveSurface,
+            )
+          }
+        >
           Continue to checkout
         </Button>
         <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-          Guaranteed support and FAQ access remain visible before checkout.
+          {message}
         </p>
       </Panel>
     </div>
   );
 }
 
-function DiscoveryFilters() {
+function DiscoveryFilterPanel() {
   const live = useLiveData();
+  const [filters, setFilters] = useState<DiscoveryFilters>(
+    live.discoveryFilters,
+  );
+  const updateFilter = (patch: DiscoveryFilters) => {
+    const next = { ...filters, ...patch };
+    setFilters(next);
+    live.setDiscoveryFilters?.(next);
+  };
 
   return (
     <Panel
@@ -655,13 +774,24 @@ function DiscoveryFilters() {
       className="grid gap-4 p-4 md:grid-cols-4"
     >
       <Field label="Start date">
-        <TextInput type="date" />
+        <TextInput
+          type="date"
+          value={filters.startDate ?? ""}
+          onChange={(event) => updateFilter({ startDate: event.target.value })}
+        />
       </Field>
       <Field label="End date">
-        <TextInput type="date" />
+        <TextInput
+          type="date"
+          value={filters.endDate ?? ""}
+          onChange={(event) => updateFilter({ endDate: event.target.value })}
+        />
       </Field>
       <Field label="Category">
-        <SelectInput defaultValue="">
+        <SelectInput
+          value={filters.category ?? ""}
+          onChange={(event) => updateFilter({ category: event.target.value })}
+        >
           <option value="">All categories</option>
           {live.publicCategories.map((category) => (
             <option key={category}>{category}</option>
@@ -669,7 +799,10 @@ function DiscoveryFilters() {
         </SelectInput>
       </Field>
       <Field label="Partner">
-        <SelectInput defaultValue="">
+        <SelectInput
+          value={filters.partnerId ?? ""}
+          onChange={(event) => updateFilter({ partnerId: event.target.value })}
+        >
           <option value="">All partners</option>
           {live.publicPartnerOptions.map((partner) => (
             <option key={partner.id} value={partner.id}>
@@ -701,6 +834,7 @@ function BookingModal({
   const [submitting, setSubmitting] = useState(false);
   const total = count * event.creditPrice;
   const success = result?.state === "confirmed" || result?.state === "waitlist";
+  const membershipBlocked = event.bookingAvailabilityState === "frozen";
 
   return (
     <ModalShell
@@ -849,8 +983,17 @@ function BookingModal({
               type="button"
               variant="yellow"
               className="w-full"
-              disabled={submitting}
+              disabled={submitting || membershipBlocked}
               onClick={async () => {
+                if (membershipBlocked) {
+                  setResult({
+                    state: "failure",
+                    message:
+                      event.membershipCta ??
+                      "An active membership is required.",
+                  });
+                  return;
+                }
                 setSubmitting(true);
                 const response =
                   event.remainingCapacity === 0
@@ -929,8 +1072,13 @@ function MemberFeed() {
     mapOpen,
     visibleResultCount: visible.length,
     resultCountLabel: live.visibleEventCountLabel,
-    activeRangeLabel: derivedValues.activeRangeLabel,
+    activeRangeLabel: live.activeRangeLabel,
+    activeFilterCount: live.activeFilterCount,
   };
+  const gateBlocked = visible.some(
+    (event) => event.bookingAvailabilityState === "frozen",
+  );
+  const [feedMessage, setFeedMessage] = useState("");
 
   return (
     <div className="space-y-6">
@@ -938,9 +1086,24 @@ function MemberFeed() {
         <Badge tone="yellow">Member feed</Badge>
         <h1 className="headline-lg mt-5">Today in Berlin.</h1>
       </Panel>
+      {gateBlocked ? (
+        <Panel tone="cream" shadow={false} className="p-4">
+          <p className="unveiled-meta">Membership gate</p>
+          <p className="mt-2 text-sm font-bold uppercase tracking-widest">
+            Update billing to book or join waitlists.
+          </p>
+        </Panel>
+      ) : null}
+      {feedMessage ? (
+        <Panel tone="white" shadow={false} className="p-4">
+          <p className="text-sm font-bold uppercase tracking-widest">
+            {feedMessage}
+          </p>
+        </Panel>
+      ) : null}
       <DiscoveryShell
         discovery={discovery}
-        filterPanel={<DiscoveryFilters />}
+        filterPanel={<DiscoveryFilterPanel />}
         mapPanel={
           <Panel tone="cream" shadow={false} className="min-h-72 p-0">
             <div className="grid h-full min-h-72 place-items-center border-[12px] border-brand-cream bg-[linear-gradient(135deg,#feffe2_25%,#f5f5f5_25%,#f5f5f5_50%,#feffe2_50%,#feffe2_75%,#f5f5f5_75%)] bg-[length:36px_36px]">
@@ -968,7 +1131,25 @@ function MemberFeed() {
       >
         <div className="grid gap-5 lg:grid-cols-3">
           {visible.map((event) => (
-            <EventCard key={event.id} event={event} onOpen={setSelected} />
+            <EventCard
+              key={event.id}
+              event={event}
+              onOpen={setSelected}
+              onSave={(selectedEvent) =>
+                void runServerAction(
+                  () =>
+                    selectedEvent.saved
+                      ? actions.unsaveMemberEvent({
+                          eventId: selectedEvent.id,
+                        })
+                      : actions.saveMemberEvent({
+                          eventId: selectedEvent.id,
+                        }),
+                  setFeedMessage,
+                  live.refetchActiveSurface,
+                )
+              }
+            />
           ))}
           {visible.length === 0 ? (
             <StatePanel
@@ -1184,7 +1365,7 @@ function ProfilePage() {
                 actions.updateProfile({
                   firstName: String(formData.get("firstName") || ""),
                   lastName: String(formData.get("lastName") || ""),
-                  language: "DE",
+                  language: String(formData.get("language") || "DE"),
                   billingAddress: String(formData.get("billingAddress") || ""),
                   newsletterOptIn: formData.get("newsletterOptIn") === "on",
                 }),
@@ -1198,27 +1379,41 @@ function ProfilePage() {
             {profileMessage}
           </p>
           <Field label="Name" className="mt-5">
-            <TextInput
-              name="firstName"
-              defaultValue={live.profile.name.split(" ")[0] ?? ""}
-            />
+            <TextInput name="firstName" defaultValue={live.profile.firstName} />
           </Field>
           <Field label="Last name" className="mt-4">
-            <TextInput
-              name="lastName"
-              defaultValue={live.profile.name.split(" ").slice(1).join(" ")}
-            />
+            <TextInput name="lastName" defaultValue={live.profile.lastName} />
           </Field>
           <Field label="Email" className="mt-4">
             <TextInput defaultValue={live.profile.email} disabled />
           </Field>
           <Field label="Billing address" className="mt-4">
-            <TextInput name="billingAddress" placeholder="Berlin" />
+            <TextInput
+              name="billingAddress"
+              defaultValue={live.profile.billingAddress}
+              placeholder="Berlin"
+            />
+          </Field>
+          <Field label="Language" className="mt-4">
+            <SelectInput name="language" defaultValue={live.profile.language}>
+              <option value="DE">DE</option>
+              <option value="EN">EN</option>
+            </SelectInput>
           </Field>
           <label className="mt-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
-            <input name="newsletterOptIn" type="checkbox" />
+            <input
+              name="newsletterOptIn"
+              type="checkbox"
+              defaultChecked={live.profile.newsletterOptIn}
+            />
             Newsletter
           </label>
+          <a
+            className="mt-4 block text-[10px] font-black uppercase tracking-widest underline"
+            href="/api/account/password-recovery"
+          >
+            Password recovery
+          </a>
           <Button type="submit" className="mt-5" variant="secondary">
             Save profile
           </Button>
@@ -1968,7 +2163,11 @@ function AdminPanel() {
   );
 }
 
-function useLiveDataView(initialSurface: InitialSurfaceData | undefined) {
+function useLiveDataView(
+  initialSurface: InitialSurfaceData | undefined,
+  discoveryFilters: DiscoveryFilters,
+  setDiscoveryFilters: (filters: DiscoveryFilters) => void,
+) {
   const publicInitial =
     initialSurface?.surface === "public" ? initialSurface : undefined;
   const memberInitial =
@@ -1984,7 +2183,7 @@ function useLiveDataView(initialSurface: InitialSurfaceData | undefined) {
   });
   const memberQuery = useMemberDataQuery(
     memberInitial?.userId ?? "",
-    memberInitial?.filters,
+    discoveryFilters,
     {
       initialData: memberInitial?.data,
       enabled: Boolean(memberInitial),
@@ -2026,6 +2225,8 @@ function useLiveDataView(initialSurface: InitialSurfaceData | undefined) {
       else if (initialSurface?.surface === "admin") void adminQuery.refetch();
       else void publicQuery.refetch();
     },
+    setDiscoveryFilters,
+    discoveryFilters,
   });
 }
 
@@ -2038,13 +2239,38 @@ function VisualSystemAppContent({
   initialDiscovery?: InitialSurfaceData;
   initialView?: View;
 }) {
-  const live = useLiveDataView(initialDiscovery);
+  const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(
+    initialDiscovery?.surface === "member"
+      ? (initialDiscovery.filters ?? {})
+      : {},
+  );
+  const live = useLiveDataView(
+    initialDiscovery,
+    discoveryFilters,
+    setDiscoveryFilters,
+  );
   const [view, setView] = useState<View>(initialView);
   const demoShell = createDemoShellViewModel(view, {
     savedCount: live.savedCount,
     creditCount: live.profile.credits,
   });
-  const shell = initialShell ? initialShell : demoShell;
+  const shell = initialShell
+    ? {
+        ...initialShell,
+        language: {
+          ...initialShell.language,
+          selected: live.profile.language ?? initialShell.language.selected,
+        },
+        savedCount: live.savedCount,
+        creditCount:
+          initialShell.viewerContext === "member"
+            ? live.profile.credits
+            : initialShell.creditCount,
+        navItems: initialShell.navItems.map((item) =>
+          item.itemId === "saved" ? { ...item, count: live.savedCount } : item,
+        ),
+      }
+    : demoShell;
   const pageShell =
     view === "member"
       ? demoPageShells.member
@@ -2056,6 +2282,20 @@ function VisualSystemAppContent({
             ? demoPageShells.public
             : undefined;
   const navigateShell = async (actionId: string) => {
+    if (actionId.startsWith("language:")) {
+      const language = actionId.slice("language:".length);
+      if (language === "DE" || language === "EN") {
+        await actions.updateProfile({
+          firstName: live.profile.firstName,
+          lastName: live.profile.lastName,
+          language,
+          billingAddress: live.profile.billingAddress,
+          newsletterOptIn: live.profile.newsletterOptIn,
+        });
+        live.refetchActiveSurface();
+      }
+      return;
+    }
     const target = shellDemoViews.find((item) => item.id === actionId);
     if (target) setView(target.id as View);
     if (actionId === "membership") window.location.assign("/membership");
@@ -2092,6 +2332,7 @@ function VisualSystemAppContent({
           {view === "landing" ? <LandingPage setView={setView} /> : null}
           {view === "discover" ? <PublicDiscover setView={setView} /> : null}
           {view === "how" ? <HowItWorks /> : null}
+          {view === "onboarding" ? <OnboardingPage /> : null}
           {view === "membership" ? <MembershipPage /> : null}
           {view === "faq" ? <FaqPage setView={setView} /> : null}
           {view === "member" ? <MemberFeed /> : null}

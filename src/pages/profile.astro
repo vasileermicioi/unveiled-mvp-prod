@@ -5,10 +5,13 @@ import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadMemberData } from "@/lib/data-access/loaders";
 import { createMemberInitialSurfaceData } from "@/lib/data-access/surface-data";
-import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
+import {
+  productRoutes,
+  resolveMemberOnboardingRoute,
+} from "@/lib/product-routes";
 
 const viewer = await getViewer(Astro.request);
-const ownership = resolveRouteOwnership(viewer, productRoutes.profile);
+const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.profile);
 if (!ownership.ok)
   return Astro.redirect(ownership.redirectTo, ownership.status);
 

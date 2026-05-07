@@ -20,6 +20,7 @@ export const productRoutes = {
   membership: { id: "membership", path: "/membership", owner: "public" },
   faq: { id: "faq", path: "/faq", owner: "public" },
   member: { id: "member", path: "/app", owner: "member" },
+  onboarding: { id: "onboarding", path: "/onboarding", owner: "member" },
   saved: { id: "saved", path: "/saved", owner: "member" },
   bookings: { id: "bookings", path: "/bookings", owner: "member" },
   profile: { id: "profile", path: "/profile", owner: "member" },
@@ -55,6 +56,30 @@ export function resolveRouteOwnership(
   }
 
   return { ok: true, viewer, route };
+}
+
+export function resolveMemberOnboardingRoute(
+  viewer: Viewer,
+  route: ProductRouteDefinition,
+): RouteOwnershipOutcome {
+  const ownership = resolveRouteOwnership(viewer, route);
+  if (!ownership.ok) return ownership;
+
+  if (
+    ownership.viewer.kind === "authenticated" &&
+    ownership.viewer.role === "USER"
+  ) {
+    const onboardingPath = routePathFor("onboarding");
+    const memberPath = routePathFor("member");
+    if (!ownership.viewer.onboardingComplete && route.path !== onboardingPath) {
+      return { ok: false, redirectTo: onboardingPath, status: 302 };
+    }
+    if (ownership.viewer.onboardingComplete && route.path === onboardingPath) {
+      return { ok: false, redirectTo: memberPath, status: 302 };
+    }
+  }
+
+  return ownership;
 }
 
 function redirectForAuthenticatedViewer(

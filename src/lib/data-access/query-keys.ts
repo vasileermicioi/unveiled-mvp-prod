@@ -5,11 +5,18 @@ export type DiscoveryFilters = {
   partnerId?: string;
   startDate?: string;
   endDate?: string;
+  savedOnly?: string;
 };
 
 export type AdminFilters = {
   search?: string;
   status?: string;
+};
+
+export type NormalizedDiscoveryFilters = Required<
+  Omit<DiscoveryFilters, "savedOnly">
+> & {
+  savedOnly?: string;
 };
 
 function cleanFilterValue(value: string | undefined) {
@@ -19,13 +26,17 @@ function cleanFilterValue(value: string | undefined) {
 
 export function normalizeDiscoveryFilters(
   filters: DiscoveryFilters = {},
-): Required<DiscoveryFilters> {
-  return {
+): NormalizedDiscoveryFilters {
+  const normalized: NormalizedDiscoveryFilters = {
     category: cleanFilterValue(filters.category) ?? "all",
     partnerId: cleanFilterValue(filters.partnerId) ?? "all",
     startDate: cleanFilterValue(filters.startDate) ?? "any",
     endDate: cleanFilterValue(filters.endDate) ?? "any",
   };
+  if (cleanFilterValue(filters.savedOnly)) {
+    normalized.savedOnly = cleanFilterValue(filters.savedOnly);
+  }
+  return normalized;
 }
 
 export function normalizeAdminFilters(

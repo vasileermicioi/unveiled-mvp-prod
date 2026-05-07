@@ -36,6 +36,8 @@ export type DataAccessEventView = {
   saved: boolean;
   ctaLabel: string;
   mapLabel: string;
+  bookingAvailabilityState?: "available" | "frozen";
+  membershipCta?: string;
 };
 
 export type DataAccessPartnerView = {
@@ -92,6 +94,9 @@ export type DataAccessProfileView = {
   paymentMethod: string;
   language: "DE" | "EN";
   onboardingComplete: boolean;
+  subscriptionStatus?: string;
+  profileComplete?: boolean;
+  newsletterOptIn?: boolean;
 };
 
 export type DataAccessPreferencesView = {
@@ -171,6 +176,8 @@ export function mapEventView(input: {
   event: EventRow;
   partner?: Pick<PartnerRow, "id" | "name"> | null;
   saved?: boolean;
+  bookingAvailabilityState?: "available" | "frozen";
+  membershipCta?: string;
 }): DataAccessEventView {
   const ticketType =
     input.event.remainingCapacity <= 0
@@ -200,6 +207,8 @@ export function mapEventView(input: {
     saved: input.saved ?? false,
     ctaLabel: input.event.remainingCapacity <= 0 ? "Join waitlist" : "Book now",
     mapLabel: `${input.event.neighborhood} ${input.event.category}`,
+    bookingAvailabilityState: input.bookingAvailabilityState ?? "available",
+    membershipCta: input.membershipCta,
   };
 }
 
@@ -284,6 +293,9 @@ export function mapProfileView(input: {
       : "Not set",
     language: input.profile.language,
     onboardingComplete: input.profile.onboardingComplete,
+    subscriptionStatus: input.profile.subscriptionStatus,
+    profileComplete: Boolean(input.profile.firstName && input.profile.lastName),
+    newsletterOptIn: input.profile.newsletterOptIn,
   };
 }
 

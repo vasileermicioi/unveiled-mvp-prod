@@ -1,3 +1,4 @@
+import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import type {
   AdminData,
   MemberData,
@@ -12,10 +13,16 @@ import type {
 export type LiveProfileView = {
   name: string;
   email: string;
+  firstName: string;
+  lastName: string;
   membershipStatus: string;
   credits: number;
   monthlyCredits: number;
   vibes: string[];
+  language: "DE" | "EN";
+  billingAddress: string;
+  newsletterOptIn: boolean;
+  onboardingComplete: boolean;
 };
 
 export type LiveBillingView = {
@@ -33,6 +40,9 @@ export type LiveDataView = {
   publicPartners: PublicDiscoveryData["activePartners"];
   publicStats: Array<{ label: string; value: string; caption: string }>;
   visibleEventCountLabel: string;
+  activeRangeLabel: string;
+  activeFilterCount: number;
+  discoveryFilters: DiscoveryFilters;
   savedCount: number;
   bookings: MemberData["bookings"];
   creditLedgerEntries: MemberData["wallet"]["ledger"];
@@ -63,6 +73,7 @@ export type LiveDataView = {
   isLoading: boolean;
   isError: boolean;
   refetchActiveSurface: () => void;
+  setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
 };
 
 export const emptyPublicData: PublicDiscoveryData = {
@@ -88,6 +99,9 @@ export const emptyLiveDataView: LiveDataView = {
     { label: "Credits included", value: "10", caption: "Every month" },
   ],
   visibleEventCountLabel: "0 visible events",
+  activeRangeLabel: "Upcoming",
+  activeFilterCount: 0,
+  discoveryFilters: {},
   savedCount: 0,
   bookings: [],
   creditLedgerEntries: [],
@@ -95,10 +109,16 @@ export const emptyLiveDataView: LiveDataView = {
   profile: {
     name: "Member",
     email: "",
+    firstName: "",
+    lastName: "",
     membershipStatus: "Inactive",
     credits: 0,
     monthlyCredits: 10,
     vibes: [],
+    language: "DE",
+    billingAddress: "",
+    newsletterOptIn: false,
+    onboardingComplete: false,
   },
   billingDisplay: {
     planLabel: "Basic Berlin",
@@ -132,6 +152,8 @@ export function createLiveDataView(input: {
   isLoading: boolean;
   isError: boolean;
   refetchActiveSurface: () => void;
+  setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
+  discoveryFilters?: DiscoveryFilters;
 }): LiveDataView {
   const memberProfile = input.memberData?.profile;
   const preferences = input.memberData?.preferences;
@@ -177,6 +199,10 @@ export function createLiveDataView(input: {
       { label: "Credits included", value: "10", caption: "Every month" },
     ],
     visibleEventCountLabel: `${events.length} visible events`,
+    activeRangeLabel:
+      input.memberData?.discovery.activeRangeLabel ?? "Upcoming",
+    activeFilterCount: input.memberData?.discovery.activeFilterCount ?? 0,
+    discoveryFilters: input.discoveryFilters ?? {},
     savedCount:
       input.memberData?.discovery.savedEventIds.length ??
       events.filter((event) => event.saved).length,
@@ -186,10 +212,19 @@ export function createLiveDataView(input: {
     profile: {
       name: memberProfile?.fullName ?? "Member",
       email: memberProfile?.email ?? "",
+      firstName: memberProfile?.firstName ?? "",
+      lastName: memberProfile?.lastName ?? "",
       membershipStatus: memberProfile?.statusBadgeLabel ?? "Inactive",
       credits,
       monthlyCredits: 10,
       vibes,
+      language: memberProfile?.language ?? "DE",
+      billingAddress:
+        memberProfile?.billingAddress === "Not set"
+          ? ""
+          : (memberProfile?.billingAddress ?? ""),
+      newsletterOptIn: memberProfile?.newsletterOptIn ?? false,
+      onboardingComplete: memberProfile?.onboardingComplete ?? false,
     },
     billingDisplay: {
       planLabel: memberProfile?.currentPlanLabel ?? "Basic Berlin",
@@ -225,5 +260,6 @@ export function createLiveDataView(input: {
     isLoading: input.isLoading,
     isError: input.isError,
     refetchActiveSurface: input.refetchActiveSurface,
+    setDiscoveryFilters: input.setDiscoveryFilters,
   };
 }

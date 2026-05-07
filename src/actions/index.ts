@@ -1,9 +1,9 @@
 import { type ActionAPIContext, defineAction } from "astro:actions";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { creditLedgerEntries, userProfiles } from "@/db/schema";
+import { creditLedgerEntries, savedEvents, userProfiles } from "@/db/schema";
 import {
   checkInBookingOperation,
   checkInWithVenueQrOperation,
@@ -26,7 +26,12 @@ import {
   requestPasswordRecovery,
   signUpWithEmail,
 } from "@/lib/auth-account-actions";
-import { AuthAccessError, requireAdmin, requireUser } from "@/lib/auth-profile";
+import {
+  AuthAccessError,
+  requireAdmin,
+  requireMember,
+  requireUser,
+} from "@/lib/auth-profile";
 import {
   adjustUserCredits,
   type BookingTransactionResult,
@@ -66,6 +71,7 @@ import {
   passwordRecoverySchema,
   preferenceSchema,
   profileSchema,
+  savedEventActionSchema,
   signupSchema,
   venueQrCheckInSchema,
   waitlistActionSchema,
@@ -246,7 +252,7 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         await db
           .update(userProfiles)
           .set({
@@ -286,7 +292,7 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         await db
           .update(userProfiles)
           .set({
@@ -321,7 +327,7 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         await db
           .update(userProfiles)
           .set({
@@ -350,6 +356,102 @@ export const server = {
     },
   }),
 
+  saveMemberEvent: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(savedEventActionSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await requireMember(context.request.headers);
+        const inserted = await db
+          .insert(savedEvents)
+          .values({
+            userId: viewer.user.id,
+            eventId: parsed.data.eventId,
+          })
+          .onConflictDoNothing()
+          .returning({ eventId: savedEvents.eventId });
+
+        if (inserted.length > 0) {
+          await db
+            .update(userProfiles)
+            .set({
+              savedCount: sql`${userProfiles.savedCount} + 1`,
+              lastSavedEventId: parsed.data.eventId,
+              updatedAt: new Date(),
+            })
+            .where(eq(userProfiles.userId, viewer.user.id));
+        }
+
+        return actionSuccess({
+          notice: { type: "success", message: "Event saved." },
+          invalidate: [
+            queryKeys.authViewer,
+            queryKeys.events,
+            queryKeys.event(parsed.data.eventId),
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "member", userId: viewer.user.id },
+              { type: "event", eventId: parsed.data.eventId },
+            ]),
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  unsaveMemberEvent: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(savedEventActionSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await requireMember(context.request.headers);
+        const deleted = await db
+          .delete(savedEvents)
+          .where(
+            and(
+              eq(savedEvents.userId, viewer.user.id),
+              eq(savedEvents.eventId, parsed.data.eventId),
+            ),
+          )
+          .returning({ eventId: savedEvents.eventId });
+
+        if (deleted.length > 0) {
+          await db
+            .update(userProfiles)
+            .set({
+              unsavedCount: sql`${userProfiles.unsavedCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(userProfiles.userId, viewer.user.id));
+        }
+
+        return actionSuccess({
+          notice: { type: "success", message: "Event removed." },
+          invalidate: [
+            queryKeys.authViewer,
+            queryKeys.events,
+            queryKeys.event(parsed.data.eventId),
+            ...dataAccessInvalidationKeys([
+              { type: "public-discovery" },
+              { type: "member", userId: viewer.user.id },
+              { type: "event", eventId: parsed.data.eventId },
+            ]),
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
   updateMembership: defineAction({
     accept: "json",
     input: jsonInputSchema,
@@ -358,7 +460,7 @@ export const server = {
       if (!parsed.success) return validationFailure(parsed.error);
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         const checkout = await initializeBasicBerlinCheckout({
           userId: viewer.user.id,
           email: viewer.user.email,
@@ -703,7 +805,7 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         return bookingResultToAction(
           await bookMemberEvent({
             userId: viewer.user.id,
@@ -726,7 +828,7 @@ export const server = {
       if (!parsed.ok) return parsed;
 
       try {
-        const viewer = await requireUser(context.request.headers);
+        const viewer = await requireMember(context.request.headers);
         return bookingResultToAction(
           await joinEventWaitlist({
             userId: viewer.user.id,

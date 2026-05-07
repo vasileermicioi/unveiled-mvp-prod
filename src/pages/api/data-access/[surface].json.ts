@@ -69,5 +69,6 @@ function filtersFromUrl(url: string) {
     partnerId: search.get("partnerId") ?? undefined,
     startDate: search.get("startDate") ?? undefined,
     endDate: search.get("endDate") ?? undefined,
+    savedOnly: search.get("savedOnly") ?? undefined,
   };
 }

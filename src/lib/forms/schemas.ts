@@ -406,6 +406,11 @@ export const waitlistActionSchema = z.object({
 });
 export type WaitlistActionInput = z.infer<typeof waitlistActionSchema>;
 
+export const savedEventActionSchema = z.object({
+  eventId: requiredString("Event is required.", 120),
+});
+export type SavedEventActionInput = z.infer<typeof savedEventActionSchema>;
+
 export const adminTicketSchema = z.object({
   userId: requiredString("Member is required.", 120),
   eventId: requiredString("Event is required.", 120),

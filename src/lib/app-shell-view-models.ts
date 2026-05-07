@@ -9,6 +9,7 @@ export type ShellNavItemId =
   | "membership"
   | "faq"
   | "member"
+  | "onboarding"
   | "saved"
   | "bookings"
   | "profile"

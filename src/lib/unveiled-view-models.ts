@@ -15,6 +15,8 @@ export type EventCardView = {
   saved: boolean;
   ctaLabel: string;
   mapLabel: string;
+  bookingAvailabilityState?: "available" | "frozen";
+  membershipCta?: string;
 };
 
 export type BookingCardView = {

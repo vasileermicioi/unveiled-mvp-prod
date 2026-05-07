@@ -37,6 +37,24 @@ describe("data access query contracts", () => {
     ]);
   });
 
+  test("saved-only discovery filters produce a distinct member query key", () => {
+    expect(normalizeDiscoveryFilters({ savedOnly: "true" })).toEqual({
+      category: "all",
+      partnerId: "all",
+      startDate: "any",
+      endDate: "any",
+      savedOnly: "true",
+    });
+
+    expect(
+      dataQueryKeys.memberDiscovery("user-1", { savedOnly: "true" }),
+    ).toContainEqual(
+      expect.objectContaining({
+        savedOnly: "true",
+      }),
+    );
+  });
+
   test("deduplicates invalidation hints and exposes query keys for actions", () => {
     const keys = toQueryKeys(
       invalidationHintsForScopes([

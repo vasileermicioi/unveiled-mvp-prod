@@ -5,20 +5,32 @@ import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadMemberData } from "@/lib/data-access/loaders";
 import { createMemberInitialSurfaceData } from "@/lib/data-access/surface-data";
-import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
+import {
+  productRoutes,
+  resolveMemberOnboardingRoute,
+} from "@/lib/product-routes";
 
 const viewer = await getViewer(Astro.request);
-const ownership = resolveRouteOwnership(viewer, productRoutes.saved);
+const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.saved);
 if (!ownership.ok)
   return Astro.redirect(ownership.redirectTo, ownership.status);
 
+const search = new URL(Astro.request.url).searchParams;
+const filters = {
+  category: search.get("category") ?? undefined,
+  partnerId: search.get("partnerId") ?? undefined,
+  startDate: search.get("startDate") ?? undefined,
+  endDate: search.get("endDate") ?? undefined,
+  savedOnly: "true",
+};
 const initialShell = createShellFromViewer(
   ownership.viewer,
   ownership.route.id,
 );
 const initialDiscovery = createMemberInitialSurfaceData(
   ownership.viewer,
-  await loadMemberData(ownership.viewer),
+  await loadMemberData(ownership.viewer, filters),
+  filters,
 );
 ---
 
