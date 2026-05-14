@@ -74,7 +74,7 @@ import {
 } from "@/lib/data-access/surface-data";
 import { formFailure } from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
-import { loginSchema, signupSchema } from "@/lib/forms/schemas";
+import { loginSchema, passwordRecoverySchema, signupSchema } from "@/lib/forms/schemas";
 import {
   derivedValues,
   type EventCardView,
@@ -99,7 +99,7 @@ type View = Extract<
 
 type AuthLandingValues = {
   email: string;
-  password: string;
+  password?: string;
   firstName?: string;
   lastName?: string;
   callbackURL?: string;
@@ -162,21 +162,33 @@ function downloadCsv(
   return true;
 }
 
-function LandingPage({ setView }: { setView: (view: View) => void }) {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+function LandingPage({ 
+  setView, 
+  callbackURL = "/" 
+}: { 
+  setView: (view: View) => void;
+  callbackURL?: string;
+}) {
+  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
   const [formMessage, setFormMessage] = useState(
     "Use your member email to continue.",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const activeSchema = mode === "login" ? loginSchema : signupSchema;
+  const [isSuccess, setIsSuccess] = useState(false);
+  
+  const activeSchema = 
+    mode === "login" ? loginSchema : 
+    mode === "signup" ? signupSchema : 
+    passwordRecoverySchema;
+
   const form = useForm<AuthLandingValues>({
-    resolver: zodResolver(activeSchema),
+    resolver: zodResolver(activeSchema) as any,
     defaultValues: {
       email: "",
       password: "",
       firstName: "",
       lastName: "",
-      callbackURL: "/",
+      callbackURL: callbackURL || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("callbackURL") || "/" : "/"),
     },
   });
 
@@ -187,7 +199,9 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
     const result =
       mode === "login"
         ? await actions.login(values)
-        : await actions.signup(values);
+        : mode === "signup"
+          ? await actions.signup(values)
+          : await actions.passwordRecovery(values);
 
     const actionResult = result.error
       ? formFailure("The request could not be completed.")
@@ -200,8 +214,13 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
     });
 
     setIsSubmitting(false);
-    if (actionResult.ok && actionResult.data?.nextPath) {
-      window.location.assign(actionResult.data.nextPath);
+    
+    if (actionResult.ok) {
+      if (mode === "recovery") {
+        setIsSuccess(true);
+      } else if (actionResult.data?.nextPath) {
+        window.location.assign(actionResult.data.nextPath);
+      }
     }
   }
 
@@ -254,7 +273,7 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
               "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
               mode === "login" && "bg-brand-dark text-white",
             )}
-            onClick={() => setMode("login")}
+            onClick={() => { setMode("login"); setIsSuccess(false); }}
             type="button"
           >
             Login
@@ -264,7 +283,7 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
               "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
               mode === "signup" && "bg-brand-dark text-white",
             )}
-            onClick={() => setMode("signup")}
+            onClick={() => { setMode("signup"); setIsSuccess(false); }}
             type="button"
           >
             Register
@@ -272,10 +291,10 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
         </div>
         <div>
           <p className="headline-md">
-            {mode === "login" ? "Welcome back" : "Create access"}
+            {mode === "login" ? "Welcome back" : mode === "signup" ? "Create access" : "Reset password"}
           </p>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
-            Visible validation and notice panels match the legacy auth surface.
+            {mode === "recovery" ? "Enter your email to receive recovery instructions." : "Visible validation and notice panels match the legacy auth surface."}
           </p>
         </div>
         <Panel tone="cream" shadow={false} className="p-4">
@@ -284,48 +303,80 @@ function LandingPage({ setView }: { setView: (view: View) => void }) {
             {formMessage || "Use your member email to continue."}
           </p>
         </Panel>
-        <form className="grid gap-4" onSubmit={form.handleSubmit(submitAuth)}>
-          {mode === "signup" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+        {isSuccess ? (
+          <StatePanel
+            state="success"
+            title="Check your email"
+            text="If an account exists for that email, recovery instructions have been sent."
+            action={
+              <Button type="button" variant="secondary" onClick={() => { setMode("login"); setIsSuccess(false); }}>
+                Back to login
+              </Button>
+            }
+          />
+        ) : (
+          <form className="grid gap-4" onSubmit={form.handleSubmit(submitAuth)}>
+            {mode === "signup" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="First name"
+                  error={form.formState.errors.firstName?.message}
+                >
+                  <TextInput placeholder="Alex" {...form.register("firstName")} />
+                </Field>
+                <Field
+                  label="Last name"
+                  error={form.formState.errors.lastName?.message}
+                >
+                  <TextInput
+                    placeholder="Morgan"
+                    {...form.register("lastName")}
+                  />
+                </Field>
+              </div>
+            ) : null}
+            <Field label="Email" error={form.formState.errors.email?.message}>
+              <TextInput
+                type="email"
+                placeholder="you@example.com"
+                {...form.register("email")}
+              />
+            </Field>
+            {mode !== "recovery" ? (
               <Field
-                label="First name"
-                error={form.formState.errors.firstName?.message}
-              >
-                <TextInput placeholder="Alex" {...form.register("firstName")} />
-              </Field>
-              <Field
-                label="Last name"
-                error={form.formState.errors.lastName?.message}
+                label="Password"
+                error={form.formState.errors.password?.message}
+                helper={formContracts.landing.visibleMessages[1]}
               >
                 <TextInput
-                  placeholder="Morgan"
-                  {...form.register("lastName")}
+                  type="password"
+                  placeholder="••••••••"
+                  {...form.register("password")}
                 />
               </Field>
-            </div>
-          ) : null}
-          <Field label="Email" error={form.formState.errors.email?.message}>
-            <TextInput
-              type="email"
-              placeholder="you@example.com"
-              {...form.register("email")}
-            />
-          </Field>
-          <Field
-            label="Password"
-            error={form.formState.errors.password?.message}
-            helper={formContracts.landing.visibleMessages[1]}
-          >
-            <TextInput
-              type="password"
-              placeholder="••••••••"
-              {...form.register("password")}
-            />
-          </Field>
-          <Button type="submit" className="w-full" loading={isSubmitting}>
-            {mode === "login" ? "Login" : "Start membership"}
-          </Button>
-        </form>
+            ) : null}
+            <Button type="submit" className="w-full" loading={isSubmitting}>
+              {mode === "login" ? "Login" : mode === "signup" ? "Start membership" : "Send reset link"}
+            </Button>
+            {mode === "login" ? (
+              <button
+                type="button"
+                className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
+                onClick={() => setMode("recovery")}
+              >
+                Forgot password?
+              </button>
+            ) : mode === "recovery" ? (
+              <button
+                type="button"
+                className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
+                onClick={() => setMode("login")}
+              >
+                Back to login
+              </button>
+            ) : null}
+          </form>
+        )}
       </Panel>
     </div>
   );
@@ -351,7 +402,7 @@ function EventCard({
         )}
       >
         <img
-          src={event.imageUrl}
+          src={event.imageUrl || undefined}
           alt={event.title}
           className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:scale-110 group-hover:grayscale-0"
         />
@@ -2359,10 +2410,12 @@ function VisualSystemAppContent({
   initialShell,
   initialDiscovery,
   initialView = "landing",
+  callbackURL = "/",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: InitialSurfaceData;
   initialView?: View;
+  callbackURL?: string;
 }) {
   const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(
     initialDiscovery?.surface === "member"
@@ -2454,7 +2507,7 @@ function VisualSystemAppContent({
           ) : null}
         </div>
         <PageShell page={pageShell} onAction={navigateShell}>
-          {view === "landing" ? <LandingPage setView={setView} /> : null}
+          {view === "landing" ? <LandingPage setView={setView} callbackURL={callbackURL} /> : null}
           {view === "discover" ? <PublicDiscover setView={setView} /> : null}
           {view === "how" ? <HowItWorks /> : null}
           {view === "onboarding" ? <OnboardingPage /> : null}
@@ -2475,10 +2528,12 @@ export function VisualSystemApp({
   initialShell,
   initialDiscovery,
   initialView = "landing",
+  callbackURL = "/",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: unknown;
   initialView?: View;
+  callbackURL?: string;
 }) {
   const initialSurface = isInitialSurfaceData(initialDiscovery)
     ? initialDiscovery
@@ -2490,6 +2545,7 @@ export function VisualSystemApp({
         initialShell={initialShell}
         initialDiscovery={initialSurface}
         initialView={initialView}
+        callbackURL={callbackURL}
       />
     </QueryProvider>
   );

@@ -28,7 +28,7 @@ const isGuest = viewer.kind === "guest";
         isGuest ? (
           <a
             class="mt-6 inline-flex border-4 border-brand-dark bg-brand-yellow px-5 py-3 font-black text-sm uppercase tracking-widest text-brand-dark"
-            href={`/?venueCheckInPartner=${encodeURIComponent(partnerId ?? "")}&venueToken=${encodeURIComponent(token)}`}
+            href={`/?callbackURL=${encodeURIComponent(`/venue-check-in/${partnerId}?token=${token}`)}`}
           >
             Continue to sign in
           </a>

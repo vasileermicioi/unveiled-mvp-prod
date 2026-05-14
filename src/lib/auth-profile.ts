@@ -207,10 +207,14 @@ export async function getViewer(
   });
 
   if (!session) {
+    const cookies = getHeaders(input).get("cookie");
+    const langMatch = cookies?.match(/unveiled_lang=(DE|EN)/);
+    const language = (langMatch?.[1] as DomainLanguage) ?? options.guestLanguage ?? defaultProfileValues.language;
+
     return {
       kind: "guest",
       viewerContext: "guest",
-      language: options.guestLanguage ?? defaultProfileValues.language,
+      language,
     };
   }
 
@@ -257,6 +261,31 @@ export async function getViewer(
     showProfile: role === "USER",
     showLogout: true,
   };
+}
+
+export function getAuthRedirectPath(
+  viewer: AuthenticatedViewer,
+  callbackURL?: string | null,
+) {
+  // 1. Context-aware continuation (e.g., venue QR check-in)
+  if (
+    callbackURL &&
+    !callbackURL.startsWith("/login") &&
+    !callbackURL.startsWith("/signup") &&
+    callbackURL !== "/"
+  ) {
+    return callbackURL;
+  }
+
+  // 2. Onboarding enforcement for members
+  if (viewer.role === "USER" && !viewer.onboardingComplete) {
+    return "/onboarding";
+  }
+
+  // 3. Role-based product surface
+  if (viewer.role === "ADMIN") return "/admin";
+  if (viewer.role === "PARTNER") return "/partner";
+  return "/app";
 }
 
 async function resolveViewer(input: Viewer | Request | Headers) {

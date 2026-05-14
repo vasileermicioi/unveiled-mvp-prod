@@ -26,5 +26,11 @@ const initialDiscovery = createMemberInitialSurfaceData(
 ---
 
 <BaseLayout title="Bookings | Unveiled">
-  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="bookings" />
+  <VisualSystemApp
+    client:load
+    initialShell={initialShell}
+    initialDiscovery={initialDiscovery}
+    initialView="bookings"
+    callbackURL={Astro.url.searchParams.get("callbackURL") ?? "/"}
+  />
 </BaseLayout>

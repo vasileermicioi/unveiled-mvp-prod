@@ -28,6 +28,8 @@ import {
 } from "@/lib/auth-account-actions";
 import {
   AuthAccessError,
+  getAuthRedirectPath as resolveRedirectPath,
+  getViewer,
   requireAdmin,
   requireMember,
   requireUser,
@@ -177,10 +179,10 @@ function applySetCookieHeaders(
   }
 }
 
-function authResultToFormAction(
+async function authResultToFormAction(
   result: AuthActionResult,
   context: ActionContext,
-): FormActionResult<{ nextPath?: string; userId?: string }> {
+): Promise<FormActionResult<{ nextPath?: string; userId?: string }>> {
   applySetCookieHeaders(result.headers, context);
 
   if (!result.ok) {
@@ -189,9 +191,15 @@ function authResultToFormAction(
     );
   }
 
+  const viewer = await getViewer(result.headers);
+  const nextPath =
+    viewer.kind === "authenticated"
+      ? resolveRedirectPath(viewer, result.nextPath)
+      : result.nextPath;
+
   return actionSuccess({
     data: {
-      nextPath: result.nextPath,
+      nextPath,
       userId: result.userId,
     },
     notice: {
@@ -283,6 +291,34 @@ export const server = {
       } catch (error) {
         return safeActionError(error);
       }
+    },
+  }),
+
+  setLanguage: defineAction({
+    accept: "json",
+    input: z.object({ language: z.enum(["DE", "EN"]) }),
+    handler: async (input, context) => {
+      context.cookies.set("unveiled_lang", input.language, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+
+      try {
+        const viewer = await getViewer(context.request.headers);
+        if (viewer.kind === "authenticated") {
+          await db
+            .update(userProfiles)
+            .set({ language: input.language, updatedAt: new Date() })
+            .where(eq(userProfiles.userId, viewer.user.id));
+        }
+      } catch {
+        // Ignore errors for guests or missing profiles
+      }
+
+      return actionSuccess({
+        notice: { type: "success", message: "Language updated." },
+        invalidate: [queryKeys.authViewer],
+      });
     },
   }),
 

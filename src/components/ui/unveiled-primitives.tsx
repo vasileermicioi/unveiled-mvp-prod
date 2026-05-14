@@ -183,12 +183,12 @@ export function StatePanel({
 }: {
   title: string;
   text: string;
-  state?: "empty" | "loading" | "error";
+  state?: "empty" | "loading" | "error" | "success";
   action?: React.ReactNode;
 }) {
   return (
     <Panel
-      tone={state === "error" ? "white" : "cream"}
+      tone={state === "error" ? "white" : state === "success" ? "yellow" : "cream"}
       className="grid min-h-44 place-items-center text-center"
       shadow={false}
     >

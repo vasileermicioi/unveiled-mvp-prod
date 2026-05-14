@@ -76,7 +76,7 @@ export function ShellLogo({
 }) {
   return (
     <img
-      src={`/logos/unveiled-logo-${variant}.svg`}
+      src={variant ? `/logos/unveiled-logo-${variant}.svg` : undefined}
       alt="Unveiled"
       className={cn("h-7 w-auto md:h-9", className)}
     />

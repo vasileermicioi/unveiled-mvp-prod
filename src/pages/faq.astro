@@ -22,5 +22,11 @@ const initialDiscovery = createPublicInitialSurfaceData(
 ---
 
 <BaseLayout title="FAQ | Unveiled">
-  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="faq" />
+  <VisualSystemApp
+    client:load
+    initialShell={initialShell}
+    initialDiscovery={initialDiscovery}
+    initialView="faq"
+    callbackURL={Astro.url.searchParams.get("callbackURL") ?? "/"}
+  />
 </BaseLayout>

@@ -5,7 +5,11 @@ import type {
   PasswordRecoveryInput,
   SignupInput,
 } from "@/lib/auth-forms";
-import { createDefaultUserProfile } from "@/lib/auth-profile";
+import {
+  createDefaultUserProfile,
+  getAuthRedirectPath,
+  getViewer,
+} from "@/lib/auth-profile";
 import type { RuntimeEnv } from "@/lib/env";
 
 export type AuthActionSuccess = {
@@ -72,12 +76,18 @@ export async function signUpWithEmail(
       lastName: input.lastName,
     });
 
+    const viewer = await getViewer(result.headers);
+    const nextPath =
+      viewer.kind === "authenticated"
+        ? getAuthRedirectPath(viewer, input.callbackURL)
+        : input.callbackURL;
+
     return {
       ok: true,
       headers: result.headers,
       userId: result.response.user.id,
-      nextPath: input.callbackURL,
-      state: successState("Account created.", input.callbackURL),
+      nextPath,
+      state: successState("Account created.", nextPath),
     };
   } catch {
     return safeErrorState("Unable to create an account with those details.");
@@ -99,15 +109,18 @@ export async function loginWithEmail(
       returnHeaders: true,
     });
 
+    const viewer = await getViewer(result.headers);
+    const nextPath =
+      viewer.kind === "authenticated"
+        ? getAuthRedirectPath(viewer, input.callbackURL)
+        : input.callbackURL ?? result.response.url;
+
     return {
       ok: true,
       headers: result.headers,
       userId: result.response.user.id,
-      nextPath: input.callbackURL ?? result.response.url,
-      state: successState(
-        "Logged in.",
-        input.callbackURL ?? result.response.url,
-      ),
+      nextPath,
+      state: successState("Logged in.", nextPath),
     };
   } catch {
     return safeErrorState("Email or password is incorrect.");

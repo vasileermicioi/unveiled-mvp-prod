@@ -11,6 +11,7 @@ const initialShell = createShellFromViewer(viewer, "landing");
 const initialDiscovery = createPublicInitialSurfaceData(
   await loadPublicDiscoveryData(),
 );
+const callbackURL = Astro.url.searchParams.get("callbackURL") ?? "/";
 ---
 
 <BaseLayout title="Unveiled">
@@ -18,5 +19,6 @@ const initialDiscovery = createPublicInitialSurfaceData(
     client:load
     initialShell={initialShell}
     initialDiscovery={initialDiscovery}
+    callbackURL={callbackURL}
   />
 </BaseLayout>
