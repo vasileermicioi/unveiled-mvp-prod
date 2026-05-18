@@ -15,10 +15,19 @@ export function getCloudflareEnv(locals?: unknown): RuntimeEnv {
 }
 
 export function getRuntimeEnv(env: RuntimeEnv = {}): RuntimeEnv {
-  return {
+  const runtimeEnv = {
     ...process.env,
     ...env,
   };
+
+  if (
+    runtimeEnv.PARITY_TEST_MODE === "1" &&
+    runtimeEnv.PARITY_TEST_DATABASE_URL
+  ) {
+    runtimeEnv.DATABASE_URL = runtimeEnv.PARITY_TEST_DATABASE_URL;
+  }
+
+  return runtimeEnv;
 }
 
 export function getRequiredEnv(key: string, env: RuntimeEnv = {}): string {

@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin-operations";
 import {
   type AuthActionResult,
+  headersWithSetCookieAsCookie,
   loginWithEmail,
   logout,
   requestPasswordRecovery,
@@ -28,11 +29,11 @@ import {
 } from "@/lib/auth-account-actions";
 import {
   AuthAccessError,
-  getAuthRedirectPath as resolveRedirectPath,
   getViewer,
   requireAdmin,
   requireMember,
   requireUser,
+  getAuthRedirectPath as resolveRedirectPath,
 } from "@/lib/auth-profile";
 import {
   adjustUserCredits,
@@ -191,7 +192,11 @@ async function authResultToFormAction(
     );
   }
 
-  const viewer = await getViewer(result.headers);
+  const viewer = await getViewer(
+    result.headers
+      ? headersWithSetCookieAsCookie(result.headers)
+      : new Headers(),
+  );
   const nextPath =
     viewer.kind === "authenticated"
       ? resolveRedirectPath(viewer, result.nextPath)

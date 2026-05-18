@@ -54,6 +54,29 @@ function getName(input: SignupInput) {
   return `${input.firstName} ${input.lastName}`.trim();
 }
 
+function getSetCookieValues(headers: Headers | undefined) {
+  if (!headers) return [];
+
+  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] })
+    .getSetCookie;
+  const values = getSetCookie ? getSetCookie.call(headers) : [];
+  const fallback = headers.get("set-cookie");
+
+  return values.length ? values : fallback ? [fallback] : [];
+}
+
+export function headersWithSetCookieAsCookie(headers: Headers) {
+  const requestHeaders = new Headers(headers);
+  const cookie = getSetCookieValues(headers)
+    .map((value) => value.split(";")[0]?.trim())
+    .filter(Boolean)
+    .join("; ");
+
+  if (cookie) requestHeaders.set("cookie", cookie);
+
+  return requestHeaders;
+}
+
 export async function signUpWithEmail(
   input: SignupInput,
   env?: RuntimeEnv,
@@ -76,7 +99,9 @@ export async function signUpWithEmail(
       lastName: input.lastName,
     });
 
-    const viewer = await getViewer(result.headers);
+    const viewer = await getViewer(
+      headersWithSetCookieAsCookie(result.headers),
+    );
     const nextPath =
       viewer.kind === "authenticated"
         ? getAuthRedirectPath(viewer, input.callbackURL)
@@ -109,11 +134,13 @@ export async function loginWithEmail(
       returnHeaders: true,
     });
 
-    const viewer = await getViewer(result.headers);
+    const viewer = await getViewer(
+      headersWithSetCookieAsCookie(result.headers),
+    );
     const nextPath =
       viewer.kind === "authenticated"
         ? getAuthRedirectPath(viewer, input.callbackURL)
-        : input.callbackURL ?? result.response.url;
+        : (input.callbackURL ?? result.response.url);
 
     return {
       ok: true,

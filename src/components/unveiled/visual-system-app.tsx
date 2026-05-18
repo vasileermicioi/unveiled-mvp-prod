@@ -72,9 +72,13 @@ import {
   type InitialSurfaceData,
   isInitialSurfaceData,
 } from "@/lib/data-access/surface-data";
-import { formFailure } from "@/lib/forms/action-result";
+import { actionSuccess, formFailure } from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
-import { loginSchema, passwordRecoverySchema, signupSchema } from "@/lib/forms/schemas";
+import {
+  loginSchema,
+  passwordRecoverySchema,
+  signupSchema,
+} from "@/lib/forms/schemas";
 import {
   derivedValues,
   type EventCardView,
@@ -103,6 +107,35 @@ type AuthLandingValues = {
   firstName?: string;
   lastName?: string;
   callbackURL?: string;
+};
+
+type AuthEndpointResult = {
+  ok: boolean;
+  state?: {
+    message?: string;
+  };
+  nextPath?: string;
+};
+
+const onboardingPreferenceOptions = {
+  interests: ["Theater", "Kino"],
+  districts: ["Mitte"],
+  timing: ["After Work"],
+  preferredDays: ["Fr", "Sa"],
+} as const;
+
+type OnboardingPreferenceGroup = keyof typeof onboardingPreferenceOptions;
+type OnboardingPreferenceSelections = {
+  [Key in OnboardingPreferenceGroup]: Array<
+    (typeof onboardingPreferenceOptions)[Key][number]
+  >;
+};
+
+const defaultOnboardingPreferences: OnboardingPreferenceSelections = {
+  interests: ["Theater", "Kino"],
+  districts: ["Mitte"],
+  timing: ["After Work"],
+  preferredDays: ["Fr", "Sa"],
 };
 
 const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
@@ -162,10 +195,10 @@ function downloadCsv(
   return true;
 }
 
-function LandingPage({ 
-  setView, 
-  callbackURL = "/" 
-}: { 
+function LandingPage({
+  setView,
+  callbackURL = "/",
+}: {
   setView: (view: View) => void;
   callbackURL?: string;
 }) {
@@ -175,11 +208,13 @@ function LandingPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  
-  const activeSchema = 
-    mode === "login" ? loginSchema : 
-    mode === "signup" ? signupSchema : 
-    passwordRecoverySchema;
+
+  const activeSchema =
+    mode === "login"
+      ? loginSchema
+      : mode === "signup"
+        ? signupSchema
+        : passwordRecoverySchema;
 
   const form = useForm<AuthLandingValues>({
     resolver: zodResolver(activeSchema) as any,
@@ -188,7 +223,12 @@ function LandingPage({
       password: "",
       firstName: "",
       lastName: "",
-      callbackURL: callbackURL || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("callbackURL") || "/" : "/"),
+      callbackURL:
+        callbackURL ||
+        (typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("callbackURL") ||
+            "/"
+          : "/"),
     },
   });
 
@@ -196,16 +236,37 @@ function LandingPage({
     setIsSubmitting(true);
     setFormMessage("");
 
-    const result =
+    const endpoint =
       mode === "login"
-        ? await actions.login(values)
+        ? "/api/account/login"
         : mode === "signup"
-          ? await actions.signup(values)
-          : await actions.passwordRecovery(values);
+          ? "/api/account/signup"
+          : "/api/account/password-recovery";
 
-    const actionResult = result.error
-      ? formFailure("The request could not be completed.")
-      : result.data;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+    const payload = (await response
+      .json()
+      .catch(() => null)) as AuthEndpointResult | null;
+
+    const actionResult =
+      response.ok && payload?.ok
+        ? actionSuccess({
+            data: { nextPath: payload.nextPath },
+            notice: {
+              type: "success",
+              message: payload.state?.message ?? "Done.",
+            },
+          })
+        : formFailure(
+            payload?.state?.message ?? "The request could not be completed.",
+          );
 
     await applyFormActionResult(actionResult, {
       form,
@@ -214,7 +275,7 @@ function LandingPage({
     });
 
     setIsSubmitting(false);
-    
+
     if (actionResult.ok) {
       if (mode === "recovery") {
         setIsSuccess(true);
@@ -273,7 +334,10 @@ function LandingPage({
               "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
               mode === "login" && "bg-brand-dark text-white",
             )}
-            onClick={() => { setMode("login"); setIsSuccess(false); }}
+            onClick={() => {
+              setMode("login");
+              setIsSuccess(false);
+            }}
             type="button"
           >
             Login
@@ -283,7 +347,10 @@ function LandingPage({
               "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
               mode === "signup" && "bg-brand-dark text-white",
             )}
-            onClick={() => { setMode("signup"); setIsSuccess(false); }}
+            onClick={() => {
+              setMode("signup");
+              setIsSuccess(false);
+            }}
             type="button"
           >
             Register
@@ -291,10 +358,16 @@ function LandingPage({
         </div>
         <div>
           <p className="headline-md">
-            {mode === "login" ? "Welcome back" : mode === "signup" ? "Create access" : "Reset password"}
+            {mode === "login"
+              ? "Welcome back"
+              : mode === "signup"
+                ? "Create access"
+                : "Reset password"}
           </p>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
-            {mode === "recovery" ? "Enter your email to receive recovery instructions." : "Visible validation and notice panels match the legacy auth surface."}
+            {mode === "recovery"
+              ? "Enter your email to receive recovery instructions."
+              : "Visible validation and notice panels match the legacy auth surface."}
           </p>
         </div>
         <Panel tone="cream" shadow={false} className="p-4">
@@ -309,7 +382,14 @@ function LandingPage({
             title="Check your email"
             text="If an account exists for that email, recovery instructions have been sent."
             action={
-              <Button type="button" variant="secondary" onClick={() => { setMode("login"); setIsSuccess(false); }}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setMode("login");
+                  setIsSuccess(false);
+                }}
+              >
                 Back to login
               </Button>
             }
@@ -322,7 +402,10 @@ function LandingPage({
                   label="First name"
                   error={form.formState.errors.firstName?.message}
                 >
-                  <TextInput placeholder="Alex" {...form.register("firstName")} />
+                  <TextInput
+                    placeholder="Alex"
+                    {...form.register("firstName")}
+                  />
                 </Field>
                 <Field
                   label="Last name"
@@ -356,7 +439,11 @@ function LandingPage({
               </Field>
             ) : null}
             <Button type="submit" className="w-full" loading={isSubmitting}>
-              {mode === "login" ? "Login" : mode === "signup" ? "Start membership" : "Send reset link"}
+              {mode === "login"
+                ? "Login"
+                : mode === "signup"
+                  ? "Start membership"
+                  : "Send reset link"}
             </Button>
             {mode === "login" ? (
               <button
@@ -655,6 +742,25 @@ function OnboardingPage() {
     "Choose a few preferences to personalize your feed.",
   );
   const [submitting, setSubmitting] = useState(false);
+  const [preferences, setPreferences] =
+    useState<OnboardingPreferenceSelections>(defaultOnboardingPreferences);
+
+  function togglePreference<Group extends OnboardingPreferenceGroup>(
+    group: Group,
+    value: (typeof onboardingPreferenceOptions)[Group][number],
+  ) {
+    setPreferences((current) => {
+      const selected = current[group];
+      const nextValues = selected.includes(value)
+        ? selected.filter((entry) => entry !== value)
+        : [...selected, value];
+
+      return {
+        ...current,
+        [group]: nextValues,
+      };
+    });
+  }
 
   async function submit(onboardingComplete: boolean) {
     setSubmitting(true);
@@ -662,12 +768,12 @@ function OnboardingPage() {
       () =>
         actions.saveOnboarding({
           ageGroup: "26-35",
-          interests: ["Theater", "Kino"],
+          interests: preferences.interests,
           moods: ["Leicht"],
-          districts: ["Mitte"],
+          districts: preferences.districts,
           maxDistance: 10,
-          timing: ["After Work"],
-          preferredDays: ["Fr", "Sa"],
+          timing: preferences.timing,
+          preferredDays: preferences.preferredDays,
           preferredLanguages: ["DE"],
           accessibility: false,
           onboardingComplete,
@@ -693,13 +799,37 @@ function OnboardingPage() {
       <Panel tone="dark" className="space-y-6">
         <p className="unveiled-meta opacity-55">Preference preview</p>
         <div className="flex flex-wrap gap-2">
-          {["Theater", "Kino", "Mitte", "After Work", "Fr", "Sa"].map(
-            (value) => (
-              <Badge key={value} tone="yellow">
-                <Heart className="size-3" />
-                {value}
-              </Badge>
-            ),
+          {(
+            ["interests", "districts", "timing", "preferredDays"] as const
+          ).flatMap((group) =>
+            onboardingPreferenceOptions[group].map((value) => {
+              const selected = (
+                preferences[group] as readonly string[]
+              ).includes(value);
+
+              return (
+                <button
+                  key={`${group}-${value}`}
+                  type="button"
+                  aria-pressed={selected}
+                  className={cn(
+                    "inline-flex items-center gap-1 border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                    selected
+                      ? "bg-brand-yellow text-brand-dark"
+                      : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                  )}
+                  onClick={() => togglePreference(group, value)}
+                >
+                  <Heart
+                    className={cn(
+                      "size-3",
+                      selected ? "fill-brand-dark" : "fill-transparent",
+                    )}
+                  />
+                  {value}
+                </button>
+              );
+            }),
           )}
         </div>
         <div className="flex flex-wrap gap-3">
@@ -2449,9 +2579,17 @@ function VisualSystemAppContent({
         ),
       }
     : demoShell;
+  const memberPageShell =
+    initialShell &&
+    view === "member" &&
+    ["Admin Frozen", "Unpaid"].includes(
+      live.billingDisplay.subscriptionStatusLabel,
+    )
+      ? demoPageShells.member
+      : undefined;
   const pageShell =
     view === "member"
-      ? demoPageShells.member
+      ? memberPageShell
       : view === "partner"
         ? demoPageShells.partner
         : view === "admin"
@@ -2507,7 +2645,9 @@ function VisualSystemAppContent({
           ) : null}
         </div>
         <PageShell page={pageShell} onAction={navigateShell}>
-          {view === "landing" ? <LandingPage setView={setView} callbackURL={callbackURL} /> : null}
+          {view === "landing" ? (
+            <LandingPage setView={setView} callbackURL={callbackURL} />
+          ) : null}
           {view === "discover" ? <PublicDiscover setView={setView} /> : null}
           {view === "how" ? <HowItWorks /> : null}
           {view === "onboarding" ? <OnboardingPage /> : null}
