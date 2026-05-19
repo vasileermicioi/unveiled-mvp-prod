@@ -58,6 +58,8 @@ describe("initial surface data", () => {
 
     expect(live.events).toHaveLength(1);
     expect(live.events[0]?.bookingAvailabilityState).toBe("frozen");
+    expect(live.events[0]?.mapReady).toBe(true);
+    expect(live.events[0]?.lat).toBe(52.5195);
     expect(live.activeRangeLabel).toBe("Upcoming");
     expect(live.activeFilterCount).toBe(1);
     expect(live.publicStats[0]?.value).toBe("1");
@@ -98,6 +100,9 @@ function publicData(): PublicDiscoveryData {
         saved: true,
         ctaLabel: "Book now",
         mapLabel: "Mitte Art",
+        lat: 52.5195,
+        lng: 13.3922,
+        mapReady: true,
         bookingAvailabilityState: "frozen",
       },
     ],

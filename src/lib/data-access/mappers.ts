@@ -36,6 +36,9 @@ export type DataAccessEventView = {
   saved: boolean;
   ctaLabel: string;
   mapLabel: string;
+  lat?: number | null;
+  lng?: number | null;
+  mapReady?: boolean;
   bookingAvailabilityState?: "available" | "frozen";
   membershipCta?: string;
 };
@@ -229,6 +232,11 @@ export function mapEventView(input: {
     saved: input.saved ?? false,
     ctaLabel: input.event.remainingCapacity <= 0 ? "Join waitlist" : "Book now",
     mapLabel: `${input.event.neighborhood} ${input.event.category}`,
+    lat: input.event.lat ?? undefined,
+    lng: input.event.lng ?? undefined,
+    mapReady:
+      typeof input.event.lat === "number" &&
+      typeof input.event.lng === "number",
     bookingAvailabilityState: input.bookingAvailabilityState ?? "available",
     membershipCta: input.membershipCta,
   };

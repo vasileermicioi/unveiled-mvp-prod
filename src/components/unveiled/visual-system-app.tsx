@@ -20,8 +20,8 @@ import {
   Plus,
   QrCode,
 } from "lucide-react";
-import { createContext, useContext, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
 
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ import {
   PageShell,
   ShellLogo,
 } from "@/components/unveiled/app-shell";
+import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import {
   type AppShellViewModel,
   createDemoShellViewModel,
@@ -72,6 +73,7 @@ import {
   type InitialSurfaceData,
   isInitialSurfaceData,
 } from "@/lib/data-access/surface-data";
+import { readDiscoveryMapProviderConfig } from "@/lib/discovery-map";
 import { actionSuccess, formFailure } from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
 import {
@@ -217,7 +219,7 @@ function LandingPage({
         : passwordRecoverySchema;
 
   const form = useForm<AuthLandingValues>({
-    resolver: zodResolver(activeSchema) as any,
+    resolver: zodResolver(activeSchema) as Resolver<AuthLandingValues>,
     defaultValues: {
       email: "",
       password: "",
@@ -552,111 +554,156 @@ function EventCard({
   );
 }
 
-function PublicDiscover({ setView }: { setView: (view: View) => void }) {
+function PublicDiscover({
+  setView,
+  onOpenEvent,
+}: {
+  setView: (view: View) => void;
+  onOpenEvent: (event: EventCardView) => void;
+}) {
   const live = useLiveData();
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [mapOpen, setMapOpen] = useState(false);
+  const mapProvider = readDiscoveryMapProviderConfig(
+    import.meta.env as { PUBLIC_GOOGLE_MAPS_API_KEY?: string },
+  );
+  const visible = live.events;
+  const discovery = {
+    ...demoDiscoveryShell,
+    filtersOpen,
+    mapOpen,
+    visibleResultCount: visible.length,
+    resultCountLabel: live.visibleEventCountLabel,
+    activeRangeLabel: live.activeRangeLabel,
+    activeFilterCount: live.activeFilterCount,
+    filterToggleLabel: "Refine results",
+    mapToggleLabel: "Explore map",
+    emptyState: {
+      state: live.isLoading ? "loading" : live.isError ? "error" : "empty",
+      title: "Nothing public yet",
+      message: live.isLoading
+        ? "Live event data is loading."
+        : live.isError
+          ? "Live event data could not be loaded."
+          : "No upcoming events are available.",
+      retryAction: {
+        id: "reset-filters",
+        label: "Reset filters",
+      },
+    },
+  } as const;
 
   return (
-    <div className="space-y-10 py-8">
-      <Panel
-        tone="white"
-        className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
-      >
-        <div>
-          <Badge tone="yellow">What's included</Badge>
-          <h1 className="headline-lg mt-5">This week inside Unveiled.</h1>
-          <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
-            A public preview with stat cards, featured events, category cards,
-            partner cards, and the same no-results support behavior as the
-            legacy access page.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {live.publicStats.map((stat) => (
-            <StatPanel key={stat.label} {...stat} />
-          ))}
-        </div>
-      </Panel>
-
-      <section className="grid gap-5 md:grid-cols-3">
-        {live.publicCategories.map((category) => (
-          <Card key={category} interactive className="bg-brand-cream p-6">
-            <p className="headline-md">{category}</p>
-            <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-              Curated drops, partner capacity, and credit pricing stay visible.
+    <DiscoveryShell
+      discovery={discovery}
+      filterPanel={<DiscoveryFilterPanel />}
+      mapPanel={
+        <DiscoveryMapPanel
+          events={visible}
+          surface="public"
+          providerKey={mapProvider.key}
+          actionLabel="View event"
+          onOpenEvent={(event) => {
+            onOpenEvent(event);
+            setView("member");
+          }}
+          onRetry={live.refetchActiveSurface}
+        />
+      }
+      onAction={(actionId) => {
+        if (actionId === "toggle-filters") {
+          setFiltersOpen((open) => !open);
+          setMapOpen(false);
+        }
+        if (actionId === "toggle-map") {
+          setMapOpen((open) => !open);
+          setFiltersOpen(false);
+        }
+        if (actionId === "reset-filters") {
+          live.setDiscoveryFilters?.({});
+          live.refetchActiveSurface();
+        }
+      }}
+    >
+      <div className="space-y-10 py-8">
+        <Panel
+          tone="white"
+          className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
+        >
+          <div>
+            <Badge tone="yellow">What's included</Badge>
+            <h1 className="headline-lg mt-5">This week inside Unveiled.</h1>
+            <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
+              A public preview with stat cards, featured events, category cards,
+              partner cards, and the same no-results support behavior as the
+              legacy access page.
             </p>
-          </Card>
-        ))}
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-3">
-        {live.events.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            compact
-            onOpen={() => setView("member")}
-          />
-        ))}
-        {live.events.length === 0 ? (
-          <StatePanel
-            title="Nothing public yet"
-            text={
-              live.isLoading
-                ? "Live event data is loading."
-                : live.isError
-                  ? "Live event data could not be loaded."
-                  : "No upcoming events are available."
-            }
-            state={
-              live.isLoading ? "loading" : live.isError ? "error" : "empty"
-            }
-            action={
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={live.refetchActiveSurface}
-              >
-                Reset filters
-              </Button>
-            }
-          />
-        ) : null}
-      </section>
-
-      <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
-        <Panel tone="dark">
-          <p className="unveiled-meta opacity-60">Missing venue</p>
-          <p className="headline-md mt-4">Want a partner added?</p>
-          <Button type="button" variant="yellow" className="mt-6">
-            Tell support
-            <Mail />
-          </Button>
-        </Panel>
-        <Panel tone="white">
-          <p className="unveiled-meta opacity-60">Active partners</p>
-          <div className="mt-4 grid gap-3">
-            {live.publicPartners.map((partner) => (
-              <div
-                key={partner.id}
-                className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
-              >
-                <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
-                  {partner.logoInitial}
-                </span>
-                <span>
-                  <span className="block text-xs font-black uppercase tracking-widest">
-                    {partner.name}
-                  </span>
-                  <span className="block text-xs font-bold opacity-55">
-                    {partner.address}
-                  </span>
-                </span>
-              </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {live.publicStats.map((stat) => (
+              <StatPanel key={stat.label} {...stat} />
             ))}
           </div>
         </Panel>
-      </section>
-    </div>
+
+        <section className="grid gap-5 md:grid-cols-3">
+          {live.publicCategories.map((category) => (
+            <Card key={category} interactive className="bg-brand-cream p-6">
+              <p className="headline-md">{category}</p>
+              <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
+                Curated drops, partner capacity, and credit pricing stay
+                visible.
+              </p>
+            </Card>
+          ))}
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-3">
+          {live.events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              compact
+              onOpen={() => setView("member")}
+            />
+          ))}
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
+          <Panel tone="dark">
+            <p className="unveiled-meta opacity-60">Missing venue</p>
+            <p className="headline-md mt-4">Want a partner added?</p>
+            <Button type="button" variant="yellow" className="mt-6">
+              Tell support
+              <Mail />
+            </Button>
+          </Panel>
+          <Panel tone="white">
+            <p className="unveiled-meta opacity-60">Active partners</p>
+            <div className="mt-4 grid gap-3">
+              {live.publicPartners.map((partner) => (
+                <div
+                  key={partner.id}
+                  className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
+                >
+                  <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
+                    {partner.logoInitial}
+                  </span>
+                  <span>
+                    <span className="block text-xs font-black uppercase tracking-widest">
+                      {partner.name}
+                    </span>
+                    <span className="block text-xs font-bold opacity-55">
+                      {partner.address}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </section>
+      </div>
+    </DiscoveryShell>
   );
 }
 
@@ -1269,12 +1316,24 @@ function BookingModal({
   );
 }
 
-function MemberFeed() {
+function MemberFeed({
+  selectedEvent,
+  setSelectedEvent,
+  bookingEvent,
+  setBookingEvent,
+}: {
+  selectedEvent: EventCardView | null;
+  setSelectedEvent: (event: EventCardView | null) => void;
+  bookingEvent: EventCardView | null;
+  setBookingEvent: (event: EventCardView | null) => void;
+}) {
   const live = useLiveData();
-  const [selected, setSelected] = useState<EventCardView | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
   const visible = useMemo(() => live.events, [live.events]);
+  const mapProvider = readDiscoveryMapProviderConfig(
+    import.meta.env as { PUBLIC_GOOGLE_MAPS_API_KEY?: string },
+  );
   const discovery = {
     ...demoDiscoveryShell,
     filtersOpen,
@@ -1283,11 +1342,30 @@ function MemberFeed() {
     resultCountLabel: live.visibleEventCountLabel,
     activeRangeLabel: live.activeRangeLabel,
     activeFilterCount: live.activeFilterCount,
-  };
+    filterToggleLabel: "Refine results",
+    mapToggleLabel: "Explore map",
+    emptyState: {
+      state: live.isLoading ? "loading" : live.isError ? "error" : "empty",
+      title: live.isLoading ? "Loading events" : "No matching events",
+      message: live.isError
+        ? "Live event data could not be loaded."
+        : "No live events match the current filters.",
+      retryAction: {
+        id: "reset-all",
+        label: "Reset all",
+      },
+    },
+  } as const;
   const gateBlocked = visible.some(
     (event) => event.bookingAvailabilityState === "frozen",
   );
   const [feedMessage, setFeedMessage] = useState("");
+
+  useEffect(() => {
+    if (selectedEvent && !mapOpen) {
+      setMapOpen(true);
+    }
+  }, [mapOpen, selectedEvent]);
 
   return (
     <div className="space-y-6">
@@ -1314,18 +1392,18 @@ function MemberFeed() {
         discovery={discovery}
         filterPanel={<DiscoveryFilterPanel />}
         mapPanel={
-          <Panel tone="cream" shadow={false} className="min-h-72 p-0">
-            <div className="grid h-full min-h-72 place-items-center border-[12px] border-brand-cream bg-[linear-gradient(135deg,#feffe2_25%,#f5f5f5_25%,#f5f5f5_50%,#feffe2_50%,#feffe2_75%,#f5f5f5_75%)] bg-[length:36px_36px]">
-              <div className="border-4 border-brand-dark bg-white p-5 text-center unveiled-shadow">
-                <MapPin className="mx-auto mb-3 size-8" />
-                <p className="unveiled-meta">Map markers</p>
-                <p className="mt-2 text-sm font-bold">
-                  {visible.map((event) => event.mapLabel).join(" // ") ||
-                    "No live event markers"}
-                </p>
-              </div>
-            </div>
-          </Panel>
+          <DiscoveryMapPanel
+            events={visible}
+            surface="member"
+            providerKey={mapProvider.key}
+            actionLabel="Continue to booking"
+            selectedMarkerIdOverride={selectedEvent?.id ?? null}
+            onOpenEvent={(event) => {
+              setSelectedEvent(event);
+              setBookingEvent(event);
+            }}
+            onRetry={live.refetchActiveSurface}
+          />
         }
         onAction={(actionId) => {
           if (actionId === "toggle-filters") {
@@ -1336,6 +1414,10 @@ function MemberFeed() {
             setMapOpen((open) => !open);
             setFiltersOpen(false);
           }
+          if (actionId === "reset-all") {
+            live.setDiscoveryFilters?.({});
+            live.refetchActiveSurface();
+          }
         }}
       >
         <div className="grid gap-5 lg:grid-cols-3">
@@ -1343,7 +1425,10 @@ function MemberFeed() {
             <EventCard
               key={event.id}
               event={event}
-              onOpen={setSelected}
+              onOpen={(event) => {
+                setSelectedEvent(event);
+                setBookingEvent(event);
+              }}
               onSave={(selectedEvent) =>
                 void runServerAction(
                   () =>
@@ -1384,8 +1469,11 @@ function MemberFeed() {
           ) : null}
         </div>
       </DiscoveryShell>
-      {selected ? (
-        <BookingModal event={selected} onClose={() => setSelected(null)} />
+      {bookingEvent ? (
+        <BookingModal
+          event={bookingEvent}
+          onClose={() => setBookingEvent(null)}
+        />
       ) : null}
     </div>
   );
@@ -2483,7 +2571,7 @@ function useLiveDataView(
   const adminInitial =
     initialSurface?.surface === "admin" ? initialSurface : undefined;
 
-  const publicQuery = usePublicDiscoveryQuery(publicInitial?.filters, {
+  const publicQuery = usePublicDiscoveryQuery(discoveryFilters, {
     initialData: publicInitial?.data,
     enabled: Boolean(publicInitial),
   });
@@ -2548,10 +2636,14 @@ function VisualSystemAppContent({
   callbackURL?: string;
 }) {
   const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(
-    initialDiscovery?.surface === "member"
+    initialDiscovery && "filters" in initialDiscovery
       ? (initialDiscovery.filters ?? {})
       : {},
   );
+  const [selectedEvent, setSelectedEvent] = useState<EventCardView | null>(
+    null,
+  );
+  const [bookingEvent, setBookingEvent] = useState<EventCardView | null>(null);
   const live = useLiveDataView(
     initialDiscovery,
     discoveryFilters,
@@ -2648,12 +2740,27 @@ function VisualSystemAppContent({
           {view === "landing" ? (
             <LandingPage setView={setView} callbackURL={callbackURL} />
           ) : null}
-          {view === "discover" ? <PublicDiscover setView={setView} /> : null}
+          {view === "discover" ? (
+            <PublicDiscover
+              setView={setView}
+              onOpenEvent={(event) => {
+                setSelectedEvent(event);
+                setBookingEvent(event);
+              }}
+            />
+          ) : null}
           {view === "how" ? <HowItWorks /> : null}
           {view === "onboarding" ? <OnboardingPage /> : null}
           {view === "membership" ? <MembershipPage /> : null}
           {view === "faq" ? <FaqPage setView={setView} /> : null}
-          {view === "member" ? <MemberFeed /> : null}
+          {view === "member" ? (
+            <MemberFeed
+              selectedEvent={selectedEvent}
+              setSelectedEvent={setSelectedEvent}
+              bookingEvent={bookingEvent}
+              setBookingEvent={setBookingEvent}
+            />
+          ) : null}
           {view === "bookings" ? <BookingsPage /> : null}
           {view === "profile" ? <ProfilePage /> : null}
           {view === "partner" ? <PartnerPortal /> : null}

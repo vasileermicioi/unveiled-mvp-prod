@@ -121,7 +121,7 @@ Modal UI SHALL visually take over the screen for booking and redemption states.
 ### Requirement: Map Component
 This requirement SHALL use legacy reference path: `_old_app/components/EventMap.tsx`.
 
-Map UI SHALL preserve the visible map panel, marker, loading, and error behavior.
+Map UI SHALL preserve the visible map panel, marker, loading, error, and fallback behavior while supporting event selection handoff.
 
 #### Scenario: Visible elements render
 - **WHEN** map is open
@@ -136,11 +136,13 @@ Map UI SHALL preserve the visible map panel, marker, loading, and error behavior
 
 #### Scenario: User interactions render
 - **WHEN** a marker is selected
-- **THEN** an info window shows category, neighborhood, title, formatted time, and Open Event action
+- **THEN** an info window shows category, neighborhood, title, formatted time, and an action to open the event details view or booking modal
+- **WHEN** the provider is unavailable or a marker cannot be resolved
+- **THEN** the map shows a safe visible fallback state without blocking the surrounding event list
 
 #### Scenario: Data requirements are met
 - **WHEN** map renders
-- **THEN** required display data is event latitude, longitude, category, neighborhood, title, formatted time, and selected marker state
+- **THEN** required display data is event latitude, longitude, category, neighborhood, title, formatted time, selected marker state, and action target
 
 ### Requirement: Empty, Loading, And Error States
 This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/BookingsView.tsx`, `_old_app/components/PartnerPortal.tsx`, `_old_app/components/AdminPanel.tsx`.

@@ -31,6 +31,12 @@ test.describe("public and member route parity", () => {
     await expect(
       discoverPage.getByRole("button", { name: "Book now" }).first(),
     ).toBeVisible();
+    await discoverPage.getByRole("button", { name: "Explore map" }).click();
+    await expect(discoverPage.getByText("Loading map")).toBeVisible();
+    await expect(
+      discoverPage.getByText("Mitte Art", { exact: true }).first(),
+    ).toBeVisible({ timeout: 5000 });
+    await expect(discoverPage.getByLabel("Start date")).toHaveCount(0);
     await expectNoDemoOnlyLabels(discoverPage);
     await discoverPage.close();
 
@@ -72,6 +78,13 @@ test.describe("public and member route parity", () => {
     await expect(
       page.getByRole("heading", { name: "Parity Secret Access" }),
     ).toBeVisible();
+    await page.getByRole("button", { name: "Explore map" }).click();
+    await expect(page.getByText("Loading map")).toBeVisible();
+    await expect(
+      page.getByText("Mitte Art", { exact: true }).first(),
+    ).toBeVisible({
+      timeout: 5000,
+    });
 
     await page.goto("/saved");
     await expect(

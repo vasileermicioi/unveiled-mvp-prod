@@ -50,6 +50,7 @@ writeFileSync(
     `PUBLIC_APP_URL=${dotenvValue(baseURL)}`,
     `BETTER_AUTH_URL=${dotenvValue(betterAuthUrl)}`,
     `PUBLIC_BETTER_AUTH_URL=${dotenvValue(betterAuthUrl)}`,
+    `PUBLIC_GOOGLE_MAPS_API_KEY=${dotenvValue("parity-map-key")}`,
     "",
   ].join("\n"),
 );
@@ -65,6 +66,7 @@ const child = Bun.spawn(
       PUBLIC_APP_URL: baseURL,
       BETTER_AUTH_URL: betterAuthUrl,
       PUBLIC_BETTER_AUTH_URL: betterAuthUrl,
+      PUBLIC_GOOGLE_MAPS_API_KEY: "parity-map-key",
     },
     stderr: "inherit",
     stdout: "inherit",

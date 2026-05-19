@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
+import { useEffect } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge, Panel, StatePanel } from "@/components/ui/unveiled-primitives";
@@ -554,6 +555,18 @@ export function ModalShell({
   children: ReactNode;
   onAction?: ShellActionHandler;
 }) {
+  useEffect(() => {
+    if (!modal.open) return;
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, [modal.open]);
+
   if (!modal.open) return null;
 
   return (

@@ -165,6 +165,8 @@ async function upsertEvent(
       | null;
     promoCode?: string | null;
     eventWebsiteUrl?: string | null;
+    lat?: number | null;
+    lng?: number | null;
   },
 ) {
   await database
@@ -182,6 +184,8 @@ async function upsertEvent(
       weekday: input.dateTime.getDay(),
       address: "Parity Strasse 1, Berlin",
       neighborhood: "Mitte",
+      lat: input.lat ?? 52.5195,
+      lng: input.lng ?? 13.3922,
       imageUrl: "https://images.example.test/parity-event.jpg",
       tags: ["Parity"],
       creditPrice: input.creditPrice,
@@ -447,6 +451,7 @@ export async function resetParityWorld(database: Db = createParityDb()) {
     .delete(waitlistEntries)
     .where(inArray(waitlistEntries.userId, userIds));
   await database.delete(bookings).where(inArray(bookings.userId, userIds));
+  await database.delete(bookings).where(inArray(bookings.eventId, eventIds));
   await database
     .delete(subscriptions)
     .where(inArray(subscriptions.userId, userIds));
@@ -598,6 +603,8 @@ export async function seedParityWorld(
       ticketType: "SECRET_CODE",
       secretCodeMode: "MANUAL",
       secretCode: "PARITY-PUBLIC",
+      lat: 52.5208,
+      lng: 13.3924,
     }),
     upsertEvent(database, {
       id: parityFixtureIds.events.secret,
@@ -613,6 +620,8 @@ export async function seedParityWorld(
       ticketType: "SECRET_CODE",
       secretCodeMode: "MANUAL",
       secretCode: "PARITY-SECRET",
+      lat: 52.5191,
+      lng: 13.4013,
     }),
     upsertEvent(database, {
       id: parityFixtureIds.events.voucher,
@@ -628,6 +637,8 @@ export async function seedParityWorld(
       ticketType: "VOUCHER",
       promoCode: "PARITY-VOUCHER",
       eventWebsiteUrl: "https://partner.example.test/redeem/parity-voucher",
+      lat: 52.4987,
+      lng: 13.4184,
     }),
     upsertEvent(database, {
       id: parityFixtureIds.events.soldOut,
@@ -643,6 +654,8 @@ export async function seedParityWorld(
       ticketType: "SECRET_CODE",
       secretCodeMode: "MANUAL",
       secretCode: "PARITY-SOLDOUT",
+      lat: 52.5337,
+      lng: 13.4557,
     }),
     upsertEvent(database, {
       id: parityFixtureIds.events.checkIn,
@@ -658,6 +671,8 @@ export async function seedParityWorld(
       ticketType: "SECRET_CODE",
       secretCodeMode: "MANUAL",
       secretCode: "PARITY-CHECKIN",
+      lat: 52.4859,
+      lng: 13.4376,
     }),
   ]);
 

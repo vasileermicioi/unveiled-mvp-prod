@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import {
   loadAdminData,
@@ -12,6 +12,7 @@ import {
   createParityViewer,
   parityFixtureEmails,
   parityFixtureIds,
+  type ParitySeedSummary,
 } from "@/lib/testing/parity-fixtures";
 import {
   createParityDb,
@@ -22,6 +23,7 @@ import {
 const parityEnabled = Boolean(process.env.PARITY_TEST_DATABASE_URL);
 const parityTest = parityEnabled ? test : test.skip;
 const database = parityEnabled ? createParityDb() : null;
+let seedSummary: ParitySeedSummary | null = null;
 
 function getDatabase() {
   if (!database) {
@@ -31,16 +33,16 @@ function getDatabase() {
 }
 
 describe("parity data-access regression", () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     if (!database) return;
     await resetParityWorld(database);
-    await seedParityWorld(database);
-  });
+    seedSummary = await seedParityWorld(database);
+  }, 30_000);
 
   afterAll(async () => {
     if (!database) return;
     await resetParityWorld(database);
-  });
+  }, 30_000);
 
   parityTest(
     "loads seeded public, member, partner, and admin surfaces without demo labels",
@@ -49,7 +51,7 @@ describe("parity data-access regression", () => {
       const publicData = await loadPublicDiscoveryData({}, testDb);
       const memberData = await loadMemberData(
         createParityViewer({
-          userId: parityFixtureIds.users.activeMember,
+          userId: seedSummary?.users.activeMember.id ?? "",
           email: parityFixtureEmails.activeMember,
           role: "USER",
         }),
@@ -58,7 +60,7 @@ describe("parity data-access regression", () => {
       );
       const partnerData = await loadCurrentPartnerData(
         createParityViewer({
-          userId: parityFixtureIds.users.partner,
+          userId: seedSummary?.users.partner.id ?? "",
           email: parityFixtureEmails.partner,
           role: "PARTNER",
           partnerId: parityFixtureIds.partner,
@@ -67,7 +69,7 @@ describe("parity data-access regression", () => {
       );
       const adminData = await loadAdminData(
         createParityViewer({
-          userId: parityFixtureIds.users.admin,
+          userId: seedSummary?.users.admin.id ?? "",
           email: parityFixtureEmails.admin,
           role: "ADMIN",
         }),
@@ -123,7 +125,7 @@ describe("parity data-access regression", () => {
     const error = await captureError(() =>
       loadPartnerData(
         createParityViewer({
-          userId: parityFixtureIds.users.partner,
+          userId: seedSummary?.users.partner.id ?? "",
           email: parityFixtureEmails.partner,
           role: "PARTNER",
           partnerId: parityFixtureIds.partner,

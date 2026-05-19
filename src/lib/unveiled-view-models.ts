@@ -15,6 +15,9 @@ export type EventCardView = {
   saved: boolean;
   ctaLabel: string;
   mapLabel: string;
+  lat?: number | null;
+  lng?: number | null;
+  mapReady?: boolean;
   bookingAvailabilityState?: "available" | "frozen";
   membershipCta?: string;
 };
@@ -140,6 +143,9 @@ export const events: EventCardView[] = [
     saved: true,
     ctaLabel: "Book now",
     mapLabel: "Mitte gallery cluster",
+    lat: 52.5195,
+    lng: 13.3922,
+    mapReady: true,
   },
   {
     id: "listening-room",
@@ -160,6 +166,9 @@ export const events: EventCardView[] = [
     saved: false,
     ctaLabel: "Join waitlist",
     mapLabel: "Wedding sound room",
+    lat: 52.5487,
+    lng: 13.3695,
+    mapReady: true,
   },
   {
     id: "chef-counter",
@@ -180,6 +189,9 @@ export const events: EventCardView[] = [
     saved: false,
     ctaLabel: "Unlock event",
     mapLabel: "Kreuzberg table",
+    lat: 52.4975,
+    lng: 13.4227,
+    mapReady: true,
   },
 ];
 
