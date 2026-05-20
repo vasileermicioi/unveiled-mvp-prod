@@ -1,3 +1,13 @@
+export type CalendarEventMetadata = {
+  eventId: string;
+  title: string;
+  description: string;
+  partnerName: string;
+  address: string;
+  startDateTime: string;
+  url?: string;
+};
+
 export type EventCardView = {
   id: string;
   title: string;
@@ -20,6 +30,7 @@ export type EventCardView = {
   mapReady?: boolean;
   bookingAvailabilityState?: "available" | "frozen";
   membershipCta?: string;
+  calendarMetadata?: CalendarEventMetadata;
 };
 
 export type BookingCardView = {
@@ -36,6 +47,7 @@ export type BookingCardView = {
   redemptionUrl?: string;
   checkedInLabel: string;
   copied: boolean;
+  calendarMetadata?: CalendarEventMetadata;
 };
 
 export type WaitlistCardView = {

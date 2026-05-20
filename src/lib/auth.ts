@@ -7,9 +7,10 @@ import { getRuntimeEnv, type RuntimeEnv } from "@/lib/env";
 
 export function createAuth(env?: RuntimeEnv) {
   const runtimeEnv = getRuntimeEnv(env);
+  const authDatabaseEnv = { ...runtimeEnv, DATABASE_DRIVER: "neon-http" };
 
   return betterAuth({
-    database: drizzleAdapter(createDb(runtimeEnv), {
+    database: drizzleAdapter(createDb(authDatabaseEnv), {
       provider: "pg",
       schema,
     }),

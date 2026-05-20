@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { postgresClient } from "@/db/client";
 import { createParityDb, seedParityWorld } from "@/lib/testing/parity-seed";
 
 async function run() {
@@ -24,7 +25,11 @@ async function run() {
   );
 }
 
-void run().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+void run()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await postgresClient.end();
+  });

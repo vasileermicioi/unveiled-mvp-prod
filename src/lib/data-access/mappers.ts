@@ -9,6 +9,7 @@ import type {
   userProfiles,
   waitlistEntries,
 } from "@/db/schema";
+import type { CalendarEventMetadata } from "@/lib/unveiled-view-models";
 
 export type EventRow = InferSelectModel<typeof events>;
 export type PartnerRow = InferSelectModel<typeof partners>;
@@ -41,6 +42,7 @@ export type DataAccessEventView = {
   mapReady?: boolean;
   bookingAvailabilityState?: "available" | "frozen";
   membershipCta?: string;
+  calendarMetadata?: CalendarEventMetadata;
 };
 
 export type DataAccessPartnerView = {
@@ -72,6 +74,7 @@ export type DataAccessBookingView = {
   redemptionUrl?: string;
   checkedInLabel: string;
   copied: false;
+  calendarMetadata?: CalendarEventMetadata;
 };
 
 export type DataAccessLedgerView = {
@@ -197,6 +200,37 @@ export function formatDateLabel(value: Date | string | null | undefined) {
   }).format(date);
 }
 
+export function mapCalendarMetadata(input: {
+  event: Pick<
+    EventRow,
+    "id" | "title" | "description" | "address" | "dateTime" | "eventWebsiteUrl"
+  >;
+  partnerName: string;
+}): CalendarEventMetadata | undefined {
+  const start =
+    input.event.dateTime instanceof Date
+      ? input.event.dateTime
+      : new Date(input.event.dateTime);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    !input.event.title.trim() ||
+    !input.event.address.trim()
+  ) {
+    return undefined;
+  }
+
+  return {
+    eventId: input.event.id,
+    title: input.event.title,
+    description: input.event.description,
+    partnerName: input.partnerName,
+    address: input.event.address,
+    startDateTime: start.toISOString(),
+    url: input.event.eventWebsiteUrl ?? undefined,
+  };
+}
+
 export function mapEventView(input: {
   event: EventRow;
   partner?: Pick<PartnerRow, "id" | "name"> | null;
@@ -210,11 +244,12 @@ export function mapEventView(input: {
       : input.event.ticketType === "VOUCHER"
         ? "Voucher"
         : "Secret code";
+  const partnerName = input.partner?.name ?? "Partner";
 
   return {
     id: input.event.id,
     title: input.event.title,
-    partnerName: input.partner?.name ?? "Partner",
+    partnerName,
     partnerId: input.partner?.id ?? input.event.partnerId,
     category: input.event.category,
     dateLabel: formatDateLabel(input.event.dateTime),
@@ -239,6 +274,10 @@ export function mapEventView(input: {
       typeof input.event.lng === "number",
     bookingAvailabilityState: input.bookingAvailabilityState ?? "available",
     membershipCta: input.membershipCta,
+    calendarMetadata: mapCalendarMetadata({
+      event: input.event,
+      partnerName,
+    }),
   };
 }
 
@@ -282,6 +321,10 @@ export function mapBookingView(input: {
       ? `Checked in ${formatDateLabel(input.booking.checkedInAt)}`
       : "Not checked in",
     copied: false,
+    calendarMetadata: mapCalendarMetadata({
+      event: input.event,
+      partnerName: input.partner.name,
+    }),
   };
 }
 

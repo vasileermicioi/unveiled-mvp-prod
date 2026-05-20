@@ -2,8 +2,10 @@ import { expect, test } from "@playwright/test";
 
 import {
   expectNoDemoOnlyLabels,
+  login,
   loginWithForm,
   parityFixtureEmails,
+  parityFixtureIds,
 } from "./helpers";
 
 test.describe("public and member route parity", () => {
@@ -101,5 +103,41 @@ test.describe("public and member route parity", () => {
       page.getByText(parityFixtureEmails.activeMember),
     ).toBeVisible();
     await expectNoDemoOnlyLabels(page);
+  });
+
+  test("confirmed booking success exposes calendar download", async ({
+    page,
+  }) => {
+    await login(page, parityFixtureEmails.activeMember, "/app");
+    await expect(page).toHaveURL(/\/app$/);
+
+    const eventCard = page.getByTestId(
+      `event-card-${parityFixtureIds.events.secret}`,
+    );
+    await expect(
+      eventCard.getByRole("heading", {
+        name: "Parity Secret Access",
+      }),
+    ).toBeVisible();
+    await eventCard.getByRole("button", { name: "Book now" }).click();
+
+    await expect(
+      page.locator("h2").filter({ hasText: "Parity Secret Access" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm access" }).click();
+
+    await expect(page.getByText("Booking success")).toBeVisible();
+    await expect(
+      page.getByText("PARITY-SECRET", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("Save the date")).toBeVisible();
+    await expect(page.getByText("Sync to life")).toBeVisible();
+
+    const download = page.waitForEvent("download");
+    await page.getByTestId("booking-calendar-download").click();
+    const calendarFile = await download;
+    expect(calendarFile.suggestedFilename()).toBe(
+      "unveiled-parity-secret-access.ics",
+    );
   });
 });

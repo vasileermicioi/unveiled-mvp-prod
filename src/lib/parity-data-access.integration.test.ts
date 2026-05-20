@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
+import { postgresClient } from "@/db/client";
 import {
   loadAdminData,
   loadCurrentPartnerData,
@@ -10,9 +10,9 @@ import {
 import {
   assertNoDemoFixtureLabels,
   createParityViewer,
+  type ParitySeedSummary,
   parityFixtureEmails,
   parityFixtureIds,
-  type ParitySeedSummary,
 } from "@/lib/testing/parity-fixtures";
 import {
   createParityDb,
@@ -42,6 +42,7 @@ describe("parity data-access regression", () => {
   afterAll(async () => {
     if (!database) return;
     await resetParityWorld(database);
+    await postgresClient.end();
   }, 30_000);
 
   parityTest(

@@ -1,10 +1,13 @@
 import { defineMiddleware } from "astro:middleware";
 import { getViewer } from "@/lib/auth-profile";
-import { routeForPath, resolveMemberOnboardingRoute } from "@/lib/product-routes";
+import {
+  resolveMemberOnboardingRoute,
+  routeForPath,
+} from "@/lib/product-routes";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, redirect } = context;
-  
+
   // Skip middleware for API routes and static assets
   if (url.pathname.startsWith("/api") || url.pathname.includes(".")) {
     return next();
@@ -22,7 +25,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!outcome.ok) {
       return redirect(outcome.redirectTo, outcome.status);
     }
-  } catch (error) {
+  } catch (_error) {
     // If there's an auth error (like profile_missing), redirect to landing
     return redirect("/", 302);
   }

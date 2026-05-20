@@ -209,7 +209,10 @@ export async function getViewer(
   if (!session) {
     const cookies = getHeaders(input).get("cookie");
     const langMatch = cookies?.match(/unveiled_lang=(DE|EN)/);
-    const language = (langMatch?.[1] as DomainLanguage) ?? options.guestLanguage ?? defaultProfileValues.language;
+    const language =
+      (langMatch?.[1] as DomainLanguage) ??
+      options.guestLanguage ??
+      defaultProfileValues.language;
 
     return {
       kind: "guest",

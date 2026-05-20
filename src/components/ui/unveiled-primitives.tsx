@@ -188,7 +188,9 @@ export function StatePanel({
 }) {
   return (
     <Panel
-      tone={state === "error" ? "white" : state === "success" ? "yellow" : "cream"}
+      tone={
+        state === "error" ? "white" : state === "success" ? "yellow" : "cream"
+      }
       className="grid min-h-44 place-items-center text-center"
       shadow={false}
     >

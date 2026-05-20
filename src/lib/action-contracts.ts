@@ -12,8 +12,8 @@ import {
 import type { QueryInvalidationKey } from "@/lib/forms/action-result";
 import {
   actionSuccess,
-  formFailure,
   type FormActionResult,
+  formFailure,
 } from "@/lib/forms/action-result";
 import { queryKeys } from "@/lib/forms/query-keys";
 

@@ -57,6 +57,10 @@ import {
   shellDemoViews,
 } from "@/lib/app-shell-view-models";
 import {
+  downloadCalendarFile,
+  isBookingCalendarActionAvailable,
+} from "@/lib/calendar";
+import {
   useAdminDataQuery,
   useMemberDataQuery,
   usePartnerDataQuery,
@@ -483,7 +487,11 @@ function EventCard({
   onSave?: (event: EventCardView) => void;
 }) {
   return (
-    <Card interactive className="group flex h-full flex-col overflow-hidden">
+    <Card
+      interactive
+      className="group flex h-full flex-col overflow-hidden"
+      data-testid={`event-card-${event.id}`}
+    >
       <div
         className={cn(
           "relative overflow-hidden border-b-4 border-brand-dark",
@@ -1091,6 +1099,11 @@ function BookingModal({
   const total = count * event.creditPrice;
   const success = result?.state === "confirmed" || result?.state === "waitlist";
   const membershipBlocked = event.bookingAvailabilityState === "frozen";
+  const calendarMetadata = event.calendarMetadata;
+  const calendarAvailable = isBookingCalendarActionAvailable(
+    result?.state,
+    calendarMetadata,
+  );
 
   return (
     <ModalShell
@@ -1153,19 +1166,26 @@ function BookingModal({
                   </p>
                 </Panel>
               )}
-              <Panel
-                tone="dark"
-                className="flex flex-col justify-between gap-8"
-              >
-                <div>
-                  <p className="unveiled-meta opacity-55">Save the date</p>
-                  <p className="headline-md mt-5">Mark the moment</p>
-                </div>
-                <Button type="button" variant="yellow">
-                  <Calendar />
-                  Sync to life
-                </Button>
-              </Panel>
+              {calendarAvailable && calendarMetadata ? (
+                <Panel
+                  tone="dark"
+                  className="flex flex-col justify-between gap-8"
+                >
+                  <div>
+                    <p className="unveiled-meta opacity-55">Save the date</p>
+                    <p className="headline-md mt-5">Mark the moment</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="yellow"
+                    data-testid="booking-calendar-download"
+                    onClick={() => downloadCalendarFile(calendarMetadata)}
+                  >
+                    <Calendar />
+                    Sync to life
+                  </Button>
+                </Panel>
+              ) : null}
             </div>
             <Button type="button" variant="link" onClick={onClose}>
               Return to feed
@@ -1241,6 +1261,8 @@ function BookingModal({
               className="w-full"
               disabled={submitting || membershipBlocked}
               onClick={async () => {
+                setResult(null);
+                setCopied(false);
                 if (membershipBlocked) {
                   setResult({
                     state: "failure",
@@ -1471,6 +1493,7 @@ function MemberFeed({
       </DiscoveryShell>
       {bookingEvent ? (
         <BookingModal
+          key={bookingEvent.id}
           event={bookingEvent}
           onClose={() => setBookingEvent(null)}
         />

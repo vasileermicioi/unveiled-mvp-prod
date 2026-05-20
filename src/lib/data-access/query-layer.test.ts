@@ -6,7 +6,10 @@ import type { Viewer } from "@/lib/auth-profile";
 import { invalidationHintsForScopes, toQueryKeys } from "./invalidation";
 import { loadAdminData, loadMemberData, loadPartnerData } from "./loaders";
 import {
+  type BookingRow,
   type EventRow,
+  mapBookingView,
+  mapCalendarMetadata,
   mapEventView,
   mapPartnerView,
   mapProfileView,
@@ -124,6 +127,47 @@ describe("data access mappers", () => {
     expect(view.ticketType).toBe("Waitlist");
     expect(view.ctaLabel).toBe("Join waitlist");
     expect(view.capacityLabel).toBe("Waitlist");
+    expect(view.calendarMetadata).toMatchObject({
+      eventId: "event-1",
+      title: "Neon Gallery",
+      description: "After hours",
+      partnerName: partner.name,
+      address: "Auguststrasse 24",
+      startDateTime: "2026-06-01T18:00:00.000Z",
+    });
+  });
+
+  test("maps booking rows with raw calendar metadata", () => {
+    const partner = partnerRow();
+    const view = mapBookingView({
+      booking: bookingRow(),
+      event: eventRow(),
+      partner,
+    });
+
+    expect(view.dateLabel).toContain("Jun");
+    expect(view.calendarMetadata).toMatchObject({
+      eventId: "event-1",
+      title: "Neon Gallery",
+      partnerName: partner.name,
+      startDateTime: "2026-06-01T18:00:00.000Z",
+    });
+  });
+
+  test("omits calendar metadata for unusable event dates", () => {
+    expect(
+      mapCalendarMetadata({
+        event: eventRow({ dateTime: new Date("invalid") }),
+        partnerName: "Kunsthalle Mitte",
+      }),
+    ).toBeUndefined();
+
+    expect(
+      mapEventView({
+        event: eventRow({ address: " " }),
+        partner: partnerRow(),
+      }).calendarMetadata,
+    ).toBeUndefined();
   });
 
   test("maps partner and profile rows without persistence-only fields", () => {
@@ -265,6 +309,27 @@ function eventRow(overrides: Partial<EventRow> = {}): EventRow {
     barrierFree: false,
     languages: ["EN"],
     targetAgeGroups: [],
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+function bookingRow(overrides: Partial<BookingRow> = {}): BookingRow {
+  return {
+    id: "booking-1",
+    userId: "user-1",
+    eventId: "event-1",
+    partnerId: "partner-1",
+    ticketsCount: 2,
+    totalCredits: 4,
+    status: "CONFIRMED",
+    redemptionType: "SECRET_CODE",
+    redemptionInfo: "UNVEILED",
+    redemptionUrl: null,
+    idempotencyKey: "booking-key",
+    adminActorId: null,
+    checkedInAt: null,
     createdAt: new Date("2026-01-01T00:00:00Z"),
     updatedAt: new Date("2026-01-01T00:00:00Z"),
     ...overrides,
