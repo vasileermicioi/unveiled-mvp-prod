@@ -29,7 +29,9 @@ test.describe("partner, admin, and venue parity", () => {
   }) => {
     await login(page, parityFixtureEmails.admin, "/admin");
     await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("Operations overview.")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Operations overview." }).first(),
+    ).toBeVisible();
     await expect(
       page.getByText("Parity Public Opening", { exact: true }).first(),
     ).toBeVisible();
@@ -41,6 +43,17 @@ test.describe("partner, admin, and venue parity", () => {
     ).toBeVisible();
     await expect(
       page.getByText(parityFixtureEmails.frozenMember).first(),
+    ).toBeVisible();
+    await expect(page.getByTestId("admin-event-image-upload")).toHaveAttribute(
+      "accept",
+      "image/jpeg,image/png,image/webp,image/gif",
+    );
+    await expect(page.getByTestId("admin-partner-logo-upload")).toHaveAttribute(
+      "accept",
+      "image/jpeg,image/png,image/webp,image/gif",
+    );
+    await expect(
+      page.getByPlaceholder("https://assets.example.com/image.jpg").first(),
     ).toBeVisible();
 
     await page.goto("/partner");

@@ -10,9 +10,17 @@ type R2Bucket = {
   ): Promise<unknown>;
 };
 
-type AssetRuntimeEnv = Record<string, string | R2Bucket | undefined>;
+export type AssetRuntimeEnv = Record<string, string | R2Bucket | undefined>;
 
 export type AssetKind = "event" | "partner";
+
+export const ADMIN_ASSET_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+export const ADMIN_ASSET_UPLOAD_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
 
 export type UploadAssetInput = {
   viewer: Viewer;
@@ -29,6 +37,17 @@ export type StoredAsset = {
   url: string;
   contentType: string;
 };
+
+export type UploadAssetFile = {
+  name: string;
+  type: string;
+  size: number;
+  arrayBuffer(): Promise<ArrayBuffer>;
+};
+
+export type AssetUploadValidationResult =
+  | { ok: true }
+  | { ok: false; message: string; field: "file" };
 
 function assertAdmin(viewer: Viewer) {
   if (viewer.kind !== "authenticated" || viewer.role !== "ADMIN") {
@@ -61,6 +80,51 @@ export function getAssetDisplayUrl(key: string, env?: RuntimeEnv) {
   return `${baseUrl}/${key}`;
 }
 
+export function validateAdminAssetUploadFile(input: {
+  filename?: string;
+  contentType?: string;
+  size?: number;
+}): AssetUploadValidationResult {
+  if (!input.filename?.trim()) {
+    return {
+      ok: false,
+      field: "file",
+      message: "Choose an image file with a filename.",
+    };
+  }
+
+  if (
+    !input.contentType ||
+    !ADMIN_ASSET_UPLOAD_CONTENT_TYPES.includes(
+      input.contentType as (typeof ADMIN_ASSET_UPLOAD_CONTENT_TYPES)[number],
+    )
+  ) {
+    return {
+      ok: false,
+      field: "file",
+      message: "Upload a JPG, PNG, WebP, or GIF image.",
+    };
+  }
+
+  if (!input.size || input.size <= 0) {
+    return {
+      ok: false,
+      field: "file",
+      message: "Choose a non-empty image file.",
+    };
+  }
+
+  if (input.size > ADMIN_ASSET_UPLOAD_MAX_BYTES) {
+    return {
+      ok: false,
+      field: "file",
+      message: "Image uploads must be 5 MB or smaller.",
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function uploadAdminAsset(
   input: UploadAssetInput,
 ): Promise<StoredAsset> {
@@ -85,6 +149,40 @@ export async function uploadAdminAsset(
     key,
     url: getAssetDisplayUrl(key, runtimeEnv as RuntimeEnv),
     contentType: input.contentType,
+  };
+}
+
+export async function uploadAdminAssetFile(input: {
+  viewer: Viewer;
+  env?: AssetRuntimeEnv;
+  kind: AssetKind;
+  ownerId: string;
+  file: UploadAssetFile;
+}): Promise<StoredAsset & { filename: string; kind: AssetKind }> {
+  const validation = validateAdminAssetUploadFile({
+    filename: input.file.name,
+    contentType: input.file.type,
+    size: input.file.size,
+  });
+
+  if (!validation.ok) {
+    throw new Error(validation.message);
+  }
+
+  const asset = await uploadAdminAsset({
+    viewer: input.viewer,
+    env: input.env,
+    kind: input.kind,
+    ownerId: input.ownerId,
+    filename: input.file.name,
+    contentType: input.file.type,
+    data: await input.file.arrayBuffer(),
+  });
+
+  return {
+    ...asset,
+    filename: input.file.name,
+    kind: input.kind,
   };
 }
 

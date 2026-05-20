@@ -19,6 +19,7 @@ import {
   Minus,
   Plus,
   QrCode,
+  Upload as UploadIcon,
 } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
@@ -44,7 +45,6 @@ import {
   DiscoveryShell,
   ModalShell,
   PageShell,
-  ShellLogo,
 } from "@/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import {
@@ -137,6 +137,24 @@ type OnboardingPreferenceSelections = {
   >;
 };
 
+type AdminAssetUploadKind = "event" | "partner";
+type AdminAssetUploadResponse =
+  | {
+      ok: true;
+      data: {
+        kind: AdminAssetUploadKind;
+        key: string;
+        url: string;
+        contentType: string;
+        filename: string;
+      };
+    }
+  | {
+      ok: false;
+      formError?: string;
+      fieldErrors?: Record<string, string>;
+    };
+
 const defaultOnboardingPreferences: OnboardingPreferenceSelections = {
   interests: ["Theater", "Kino"],
   districts: ["Mitte"],
@@ -199,6 +217,156 @@ function downloadCsv(
   link.click();
   URL.revokeObjectURL(url);
   return true;
+}
+
+function scrollToAdminEventForm() {
+  const form = document.getElementById("admin-event-form");
+  form?.scrollIntoView({ behavior: "smooth", block: "start" });
+  form
+    ?.querySelector<HTMLInputElement>('input[name="title"]')
+    ?.focus({ preventScroll: true });
+}
+
+function AdminAssetUploadField({
+  kind,
+  label,
+  ownerId,
+  value,
+  onUrlChange,
+  testId,
+  className,
+}: {
+  kind: AdminAssetUploadKind;
+  label: string;
+  ownerId: string;
+  value: string;
+  onUrlChange: (url: string) => void;
+  testId: string;
+  className?: string;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [message, setMessage] = useState("Ready");
+  const [uploading, setUploading] = useState(false);
+  const [uploadUnavailable, setUploadUnavailable] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function uploadFile(file: File) {
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl((current) => {
+      if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+      return objectUrl;
+    });
+    setMessage("Uploading");
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.set("kind", kind);
+    formData.set("ownerId", ownerId);
+    formData.set("file", file);
+
+    try {
+      const response = await fetch("/api/admin/assets/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as AdminAssetUploadResponse;
+
+      if (!payload.ok) {
+        setPreviewUrl((current) => {
+          if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+          return null;
+        });
+        setUploadUnavailable(response.status === 503);
+        setMessage(
+          payload.formError ??
+            payload.fieldErrors?.file ??
+            "The upload could not be completed.",
+        );
+        return;
+      }
+
+      onUrlChange(payload.data.url);
+      setUploadUnavailable(false);
+      setPreviewUrl(payload.data.url);
+      setMessage(`Uploaded ${payload.data.filename}`);
+    } catch {
+      setPreviewUrl((current) => {
+        if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+        return null;
+      });
+      setMessage("The upload could not be completed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const visiblePreview = previewUrl ?? value;
+
+  return (
+    <Panel
+      tone="cream"
+      shadow={false}
+      className={cn("space-y-4 p-4", className)}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="unveiled-meta">{label}</p>
+          <p className="mt-2 text-xs font-bold uppercase tracking-widest opacity-60">
+            {uploadUnavailable
+              ? "Upload unavailable; HTTPS URL fallback active."
+              : message}
+          </p>
+        </div>
+        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-brand-yellow px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-brand-dark transition-all hover:bg-white hover:shadow-[4px_4px_0_0_#202621]">
+          <UploadIcon />
+          {uploading ? "Uploading" : "Upload"}
+          <input
+            data-testid={testId}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              if (file) void uploadFile(file);
+            }}
+          />
+        </label>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
+        <div className="grid aspect-video place-items-center overflow-hidden border-4 border-brand-dark bg-brand-grey">
+          {visiblePreview ? (
+            <img
+              src={visiblePreview}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-55">
+              Preview
+            </span>
+          )}
+        </div>
+        <Field label="Asset URL">
+          <TextInput
+            name={kind === "event" ? "imageUrl" : "logoUrl"}
+            type="url"
+            pattern="https://.*"
+            title="Use a HTTPS asset URL."
+            value={value}
+            placeholder="https://assets.example.com/image.jpg"
+            onChange={(event) => onUrlChange(event.currentTarget.value)}
+          />
+        </Field>
+      </div>
+    </Panel>
+  );
 }
 
 function LandingPage({
@@ -2082,6 +2250,10 @@ function AdminPanel() {
   const [adminMessage, setAdminMessage] = useState(
     "Admin forms submit through authorized Astro Actions.",
   );
+  const [eventImageUrl, setEventImageUrl] = useState("");
+  const [partnerLogoUrl, setPartnerLogoUrl] = useState("");
+  const [eventSubmitting, setEventSubmitting] = useState(false);
+  const [partnerSubmitting, setPartnerSubmitting] = useState(false);
 
   return (
     <div className="space-y-8 py-8">
@@ -2095,7 +2267,7 @@ function AdminPanel() {
         ))}
       </div>
       <Panel tone="dark" className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="yellow">
+        <Button type="button" variant="yellow" onClick={scrollToAdminEventForm}>
           New event
           <Plus />
         </Button>
@@ -2195,16 +2367,23 @@ function AdminPanel() {
       </TableShell>
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel
+          id="admin-event-form"
           tone="white"
           shadow={false}
-          className="space-y-4"
+          className="scroll-mt-24 space-y-5"
           as="form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            const formData = new FormData(
-              event.currentTarget as HTMLFormElement,
-            );
-            void runServerAction(
+            if (eventSubmitting) return;
+            const form = event.currentTarget as HTMLFormElement;
+            if (!form.reportValidity()) {
+              setAdminMessage("Check the highlighted fields.");
+              return;
+            }
+            const formData = new FormData(form);
+            setEventSubmitting(true);
+            setAdminMessage("Publishing event...");
+            await runServerAction(
               () =>
                 actions.saveEvent({
                   partnerId: String(
@@ -2222,7 +2401,7 @@ function AdminPanel() {
                   weekday: 1,
                   address: "Berlin",
                   neighborhood: "Mitte",
-                  imageUrl: "",
+                  imageUrl: String(formData.get("imageUrl") || ""),
                   tags: [],
                   creditPrice: Number(formData.get("credits") || 0),
                   totalCapacity: Number(formData.get("capacity") || 1),
@@ -2233,14 +2412,20 @@ function AdminPanel() {
                   languages: ["DE"],
                   targetAgeGroups: ["26-35"],
                   series: {
-                    enabled: true,
-                    count: 3,
+                    enabled: false,
+                    count: 1,
                     intervalDays: 7,
+                    slotIsoDateTimes: [],
                   },
                 }),
               setAdminMessage,
-              live.refetchActiveSurface,
+              () => {
+                form.reset();
+                setEventImageUrl("");
+                live.refetchActiveSurface();
+              },
             );
+            setEventSubmitting(false);
           }}
         >
           <p className="headline-md">Event form</p>
@@ -2248,11 +2433,11 @@ function AdminPanel() {
             {adminMessage}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Title" error={formContracts.event.visibleMessages[0]}>
-              <TextInput name="title" placeholder="Event title" />
+            <Field label="Title">
+              <TextInput name="title" placeholder="Event title" required />
             </Field>
             <Field label="Partner">
-              <SelectInput name="partnerId">
+              <SelectInput name="partnerId" required>
                 {live.adminPartners.map((partner) => (
                   <option key={partner.id} value={partner.id}>
                     {partner.name}
@@ -2261,19 +2446,38 @@ function AdminPanel() {
               </SelectInput>
             </Field>
             <Field label="Date">
-              <TextInput name="date" type="date" defaultValue="2026-05-04" />
+              <TextInput
+                name="date"
+                type="date"
+                defaultValue="2026-05-04"
+                required
+              />
             </Field>
             <Field label="Time">
-              <TextInput name="time" type="time" defaultValue="19:00" />
+              <TextInput
+                name="time"
+                type="time"
+                defaultValue="19:00"
+                required
+              />
             </Field>
             <Field label="Credits">
-              <TextInput name="credits" type="number" defaultValue={2} />
+              <TextInput
+                name="credits"
+                type="number"
+                min={0}
+                defaultValue={2}
+                required
+              />
             </Field>
-            <Field
-              label="Capacity"
-              error={formContracts.event.visibleMessages[1]}
-            >
-              <TextInput name="capacity" type="number" defaultValue={1} />
+            <Field label="Capacity">
+              <TextInput
+                name="capacity"
+                type="number"
+                min={1}
+                defaultValue={1}
+                required
+              />
             </Field>
           </div>
           <Field label="Optional info">
@@ -2282,11 +2486,20 @@ function AdminPanel() {
               placeholder="Door notes, redemption details, image alt text"
             />
           </Field>
-          <Panel tone="cream" shadow={false} className="p-4">
-            <p className="unveiled-meta">Image preview</p>
-            <div className="mt-3 h-36 border-4 border-brand-dark bg-brand-grey" />
-          </Panel>
-          <Button type="submit">Publish event</Button>
+          <AdminAssetUploadField
+            kind="event"
+            label="Event image"
+            ownerId="event-draft"
+            value={eventImageUrl}
+            onUrlChange={setEventImageUrl}
+            testId="admin-event-image-upload"
+            className="sm:col-span-2"
+          />
+          <div className="flex justify-end">
+            <Button type="submit" loading={eventSubmitting}>
+              Publish event
+            </Button>
+          </div>
         </Panel>
         <Panel tone="cream" shadow={false} className="space-y-5">
           <p className="headline-md">Series builder</p>
@@ -2315,48 +2528,67 @@ function AdminPanel() {
         <Panel
           tone="white"
           shadow={false}
-          className="space-y-4"
+          className="space-y-5"
           as="form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            const formData = new FormData(
-              event.currentTarget as HTMLFormElement,
-            );
-            void runServerAction(
+            if (partnerSubmitting) return;
+            const form = event.currentTarget as HTMLFormElement;
+            if (!form.reportValidity()) {
+              setAdminMessage("Check the highlighted fields.");
+              return;
+            }
+            const formData = new FormData(form);
+            setPartnerSubmitting(true);
+            setAdminMessage("Saving partner...");
+            await runServerAction(
               () =>
                 actions.savePartner({
                   name: String(formData.get("name") || ""),
                   contactEmail: String(formData.get("contactEmail") || ""),
                   address: String(formData.get("address") || "Berlin"),
-                  logoUrl: "",
+                  logoUrl: String(formData.get("logoUrl") || ""),
                 }),
               setAdminMessage,
-              live.refetchActiveSurface,
+              () => {
+                form.reset();
+                setPartnerLogoUrl("");
+                live.refetchActiveSurface();
+              },
             );
+            setPartnerSubmitting(false);
           }}
         >
           <p className="headline-md">Partners</p>
-          <Field
-            label="Venue name"
-            error={formContracts.partner.visibleMessages[0]}
-          >
-            <TextInput name="name" placeholder="Venue name" />
-          </Field>
-          <Field label="Contact email">
-            <TextInput name="contactEmail" placeholder="partner@example.com" />
-          </Field>
-          <Field label="Address">
-            <TextInput name="address" placeholder="Berlin" />
-          </Field>
-          <Panel tone="cream" shadow={false} className="p-4">
-            <p className="unveiled-meta">Logo preview</p>
-            <ShellLogo className="mt-4" />
-          </Panel>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Venue name">
+              <TextInput name="name" placeholder="Venue name" required />
+            </Field>
+            <Field label="Contact email">
+              <TextInput
+                name="contactEmail"
+                type="email"
+                placeholder="partner@example.com"
+                required
+              />
+            </Field>
+            <Field label="Address" className="sm:col-span-2">
+              <TextInput name="address" placeholder="Berlin" required />
+            </Field>
+          </div>
+          <AdminAssetUploadField
+            kind="partner"
+            label="Partner logo"
+            ownerId="partner-draft"
+            value={partnerLogoUrl}
+            onUrlChange={setPartnerLogoUrl}
+            testId="admin-partner-logo-upload"
+          />
+          <div className="grid gap-3">
             {live.adminPartners.map((partner) => (
               <div
                 key={partner.id}
-                className="flex flex-wrap items-center gap-2 border-b-2 border-brand-dark/20 pb-2"
+                className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand-dark/20 pb-3"
               >
                 <Badge tone="white">
                   {partner.name}
@@ -2365,61 +2597,65 @@ function AdminPanel() {
                   {" // "}
                   {partner.venueQrTokenLabel}
                 </Badge>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    void runServerAction(
-                      () =>
-                        actions.createPartnerPortalAccess({
-                          partnerId: partner.id,
-                          email: partner.contactEmail,
-                        }),
-                      setAdminMessage,
-                      live.refetchActiveSurface,
-                    )
-                  }
-                >
-                  <ExternalLink /> Portal
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    void runServerAction(
-                      () =>
-                        actions.rotatePartnerVenueToken({
-                          partnerId: partner.id,
-                        }),
-                      setAdminMessage,
-                      live.refetchActiveSurface,
-                    )
-                  }
-                >
-                  <QrCode /> QR
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() =>
-                    void runServerAction(
-                      () =>
-                        actions.deletePartner({
-                          partnerId: partner.id,
-                        }),
-                      setAdminMessage,
-                      live.refetchActiveSurface,
-                    )
-                  }
-                >
-                  Delete
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      void runServerAction(
+                        () =>
+                          actions.createPartnerPortalAccess({
+                            partnerId: partner.id,
+                            email: partner.contactEmail,
+                          }),
+                        setAdminMessage,
+                        live.refetchActiveSurface,
+                      )
+                    }
+                  >
+                    <ExternalLink /> Portal
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      void runServerAction(
+                        () =>
+                          actions.rotatePartnerVenueToken({
+                            partnerId: partner.id,
+                          }),
+                        setAdminMessage,
+                        live.refetchActiveSurface,
+                      )
+                    }
+                  >
+                    <QrCode /> QR
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() =>
+                      void runServerAction(
+                        () =>
+                          actions.deletePartner({
+                            partnerId: partner.id,
+                          }),
+                        setAdminMessage,
+                        live.refetchActiveSurface,
+                      )
+                    }
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
-            <Button type="submit" variant="primary">
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" variant="primary" loading={partnerSubmitting}>
               Save
             </Button>
           </div>
@@ -2713,6 +2949,11 @@ function VisualSystemAppContent({
             ? demoPageShells.public
             : undefined;
   const navigateShell = async (actionId: string) => {
+    if (actionId === "new-event") {
+      scrollToAdminEventForm();
+      return;
+    }
+
     if (actionId.startsWith("language:")) {
       const language = actionId.slice("language:".length);
       if (language === "DE" || language === "EN") {

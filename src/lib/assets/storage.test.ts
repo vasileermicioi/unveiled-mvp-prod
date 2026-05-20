@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { uploadAdminAsset, validateRemoteAssetUrl } from "@/lib/assets/storage";
+import {
+  ADMIN_ASSET_UPLOAD_MAX_BYTES,
+  uploadAdminAsset,
+  uploadAdminAssetFile,
+  validateAdminAssetUploadFile,
+  validateRemoteAssetUrl,
+} from "@/lib/assets/storage";
 import type { Viewer } from "@/lib/auth-profile";
 
 function viewer(role: "ADMIN" | "USER"): Viewer {
@@ -30,6 +36,40 @@ function viewer(role: "ADMIN" | "USER"): Viewer {
 }
 
 describe("asset storage", () => {
+  test("validates admin upload file metadata", () => {
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "",
+        contentType: "image/png",
+        size: 100,
+      }),
+    ).toMatchObject({ ok: false, field: "file" });
+
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "image.txt",
+        contentType: "text/plain",
+        size: 100,
+      }),
+    ).toMatchObject({ ok: false, field: "file" });
+
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "large.png",
+        contentType: "image/png",
+        size: ADMIN_ASSET_UPLOAD_MAX_BYTES + 1,
+      }),
+    ).toMatchObject({ ok: false, field: "file" });
+
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "image.webp",
+        contentType: "image/webp",
+        size: 100,
+      }),
+    ).toEqual({ ok: true });
+  });
+
   test("rejects non-admin writes before storage changes", async () => {
     let writes = 0;
 
@@ -55,6 +95,35 @@ describe("asset storage", () => {
     expect(writes).toBe(0);
   });
 
+  test("rejects invalid upload files before storage changes", async () => {
+    let writes = 0;
+    const currentUrl = "https://assets.example.com/existing.png";
+
+    expect(
+      uploadAdminAssetFile({
+        viewer: viewer("ADMIN"),
+        env: {
+          PUBLIC_ASSET_BASE_URL: "https://assets.example.com",
+          ASSETS_BUCKET: {
+            async put() {
+              writes += 1;
+            },
+          },
+        },
+        kind: "event",
+        ownerId: "event_1",
+        file: uploadFile({
+          name: "bad.txt",
+          type: "text/plain",
+          size: 100,
+        }),
+      }),
+    ).rejects.toThrow("Upload a JPG");
+
+    expect(writes).toBe(0);
+    expect(currentUrl).toBe("https://assets.example.com/existing.png");
+  });
+
   test("returns display metadata for admin uploads", async () => {
     const result = await uploadAdminAsset({
       viewer: viewer("ADMIN"),
@@ -76,6 +145,32 @@ describe("asset storage", () => {
     expect(result.contentType).toBe("image/png");
   });
 
+  test("returns upload file metadata for admin forms", async () => {
+    const result = await uploadAdminAssetFile({
+      viewer: viewer("ADMIN"),
+      env: {
+        PUBLIC_ASSET_BASE_URL: "https://assets.example.com/",
+        ASSETS_BUCKET: {
+          async put() {},
+        },
+      },
+      kind: "event",
+      ownerId: "event_1",
+      file: uploadFile({
+        name: "Hero Image.webp",
+        type: "image/webp",
+        size: 12,
+      }),
+    });
+
+    expect(result).toMatchObject({
+      kind: "event",
+      filename: "Hero Image.webp",
+      contentType: "image/webp",
+    });
+    expect(result.url).toBe(`https://assets.example.com/${result.key}`);
+  });
+
   test("validates remote launch URLs", () => {
     expect(validateRemoteAssetUrl("https://example.com/image.png")).toBe(
       "https://example.com/image.png",
@@ -85,3 +180,12 @@ describe("asset storage", () => {
     ).toThrow();
   });
 });
+
+function uploadFile(input: { name: string; type: string; size: number }) {
+  return {
+    ...input,
+    async arrayBuffer() {
+      return new ArrayBuffer(input.size);
+    },
+  };
+}
