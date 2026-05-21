@@ -90,7 +90,11 @@ describe("parity data-access regression", () => {
         ctaLabel: "Book now",
       });
 
-      expect(memberData.discovery.featuredEvents).toHaveLength(5);
+      expect(
+        memberData.discovery.featuredEvents.filter(
+          (event) => !event.id.startsWith("booking-tx-"),
+        ),
+      ).toHaveLength(5);
       expect(memberData.savedEvents.map((event) => event.title)).toContain(
         "Parity Voucher Night",
       );

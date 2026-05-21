@@ -41,26 +41,18 @@ export function createDb(env?: RuntimeEnv) {
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
-let defaultDb: Database | undefined;
-let defaultPool: Pool | undefined;
+const dbClientsCache = new Map<string, Database>();
 
 export function getDb(env?: RuntimeEnv): Database {
   if (env) return createDb(env);
-  if (!shouldCacheDefaultDb()) return createDb();
 
-  if (!defaultDb) {
-    const databaseUrl = getRequiredEnv("DATABASE_URL");
-    if (databaseDriver() === "neon-http") {
-      const sql = neon(databaseUrl);
-      defaultDb = drizzle(sql, { schema });
-    } else {
-      defaultPool = createPool(databaseUrl);
-      defaultDb = drizzleNeonServerless(defaultPool, {
-        schema,
-      }) as unknown as Database;
-    }
+  const databaseUrl = getRequiredEnv("DATABASE_URL");
+  let cached = dbClientsCache.get(databaseUrl);
+  if (!cached) {
+    cached = createDb();
+    dbClientsCache.set(databaseUrl, cached);
   }
-  return defaultDb;
+  return cached;
 }
 
 export const db = new Proxy({} as Database, {
@@ -73,8 +65,7 @@ export const postgresClient = {
   async end() {
     await Promise.all([...connectionPools].map((pool) => pool.end()));
     connectionPools.clear();
-    defaultPool = undefined;
-    defaultDb = undefined;
+    dbClientsCache.clear();
   },
 };
 

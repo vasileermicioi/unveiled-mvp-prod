@@ -120,13 +120,19 @@ bun run parity:seed
 bun run test:parity:smoke
 ```
 
-If you also want the Bun-side regression tests:
+If you also want the Bun-side contract and integration tests:
 
 ```bash
 bun run test:parity:contracts
 ```
 
-Or everything:
+Or run only the booking transaction integration tests (which verify transaction correctness, row-level locks, and ledger adjustments):
+
+```bash
+bun run test:transactions
+```
+
+Or run everything (contract tests, smoke tests, and transaction integration tests):
 
 ```bash
 bun run test:parity

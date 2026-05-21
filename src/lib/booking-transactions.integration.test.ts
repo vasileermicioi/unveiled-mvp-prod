@@ -1,7 +1,24 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
-const databaseUrl = process.env.BOOKING_TRANSACTION_TEST_DATABASE_URL;
+let rawDatabaseUrl =
+  process.env.BOOKING_TRANSACTION_TEST_DATABASE_URL ||
+  process.env.PARITY_TEST_DATABASE_URL;
+
+// Automatically resolve pooled Neon URL to direct unpooled URL to avoid transaction hangs
+if (rawDatabaseUrl && rawDatabaseUrl.includes("-pooler")) {
+  try {
+    const parsed = new URL(rawDatabaseUrl);
+    if (parsed.hostname.endsWith(".neon.tech") && parsed.hostname.includes("-pooler")) {
+      parsed.hostname = parsed.hostname.replace("-pooler", "");
+      rawDatabaseUrl = parsed.toString();
+    }
+  } catch {
+    rawDatabaseUrl = rawDatabaseUrl.replace("-pooler", "");
+  }
+}
+
+const databaseUrl = rawDatabaseUrl;
 const integrationTest = databaseUrl ? test : test.skip;
 
 describe("booking transactions integration", () => {
@@ -16,36 +33,38 @@ describe("booking transactions integration", () => {
       const { bookMemberEvent } = await import("@/lib/booking-transactions");
 
       const ids = idsFor("success");
-      await seedMemberEvent(ids, { credits: 10, remainingCapacity: 2 });
+      try {
+        await seedMemberEvent(ids, { credits: 10, remainingCapacity: 2 });
 
-      const result = await bookMemberEvent({
-        userId: ids.userId,
-        eventId: ids.eventId,
-        ticketQuantity: 2,
-        idempotencyKey: "retry-success",
-      });
-      expect(result.state).toBe("confirmed");
+        const result = await bookMemberEvent({
+          userId: ids.userId,
+          eventId: ids.eventId,
+          ticketQuantity: 2,
+          idempotencyKey: "retry-success",
+        });
+        expect(result.state).toBe("confirmed");
 
-      const retry = await bookMemberEvent({
-        userId: ids.userId,
-        eventId: ids.eventId,
-        ticketQuantity: 2,
-        idempotencyKey: "retry-success",
-      });
-      expect(retry).toEqual(result);
+        const retry = await bookMemberEvent({
+          userId: ids.userId,
+          eventId: ids.eventId,
+          ticketQuantity: 2,
+          idempotencyKey: "retry-success",
+        });
+        expect(retry).toEqual(result);
 
-      const [profile, event] = await Promise.all([
-        db.query.userProfiles.findFirst({
-          where: (table, { eq }) => eq(table.userId, ids.userId),
-        }),
-        db.query.events.findFirst({
-          where: (table, { eq }) => eq(table.id, ids.eventId),
-        }),
-      ]);
-      expect(profile?.credits).toBe(6);
-      expect(event?.remainingCapacity).toBe(0);
-
-      await cleanup(ids);
+        const [profile, event] = await Promise.all([
+          db.query.userProfiles.findFirst({
+            where: (table, { eq }) => eq(table.userId, ids.userId),
+          }),
+          db.query.events.findFirst({
+            where: (table, { eq }) => eq(table.id, ids.eventId),
+          }),
+        ]);
+        expect(profile?.credits).toBe(6);
+        expect(event?.remainingCapacity).toBe(0);
+      } finally {
+        await cleanup(ids);
+      }
 
       async function seedMemberEvent(
         input: ReturnType<typeof idsFor>,
@@ -72,6 +91,7 @@ describe("booking transactions integration", () => {
           .values(eventValues(input, options.remainingCapacity));
       }
     },
+    30_000,
   );
 
   integrationTest(
@@ -82,49 +102,52 @@ describe("booking transactions integration", () => {
       const { bookMemberEvent } = await import("@/lib/booking-transactions");
 
       const inactive = idsFor("inactive");
-      await seedFixture(inactive, {
-        credits: 10,
-        remainingCapacity: 3,
-        subscriptionStatus: "INACTIVE",
-      });
-
-      expect(
-        (
-          await bookMemberEvent({
-            userId: inactive.userId,
-            eventId: inactive.eventId,
-            ticketQuantity: 1,
-            idempotencyKey: "inactive",
-          })
-        ).state,
-      ).toBe("inactive_subscription");
-
       const insufficient = idsFor("credits");
-      await seedFixture(insufficient, {
-        credits: 1,
-        remainingCapacity: 3,
-        subscriptionStatus: "ACTIVE",
-      });
+      try {
+        await seedFixture(inactive, {
+          credits: 10,
+          remainingCapacity: 3,
+          subscriptionStatus: "INACTIVE",
+        });
 
-      expect(
-        (
-          await bookMemberEvent({
-            userId: insufficient.userId,
-            eventId: insufficient.eventId,
-            ticketQuantity: 2,
-            idempotencyKey: "credits",
-          })
-        ).state,
-      ).toBe("insufficient_credits");
+        expect(
+          (
+            await bookMemberEvent({
+              userId: inactive.userId,
+              eventId: inactive.eventId,
+              ticketQuantity: 1,
+              idempotencyKey: "inactive",
+            })
+          ).state,
+        ).toBe("inactive_subscription");
 
-      const profile = await db.query.userProfiles.findFirst({
-        where: (table, { eq }) => eq(table.userId, insufficient.userId),
-      });
-      expect(profile?.credits).toBe(1);
+        await seedFixture(insufficient, {
+          credits: 1,
+          remainingCapacity: 3,
+          subscriptionStatus: "ACTIVE",
+        });
 
-      await cleanup(inactive);
-      await cleanup(insufficient);
+        expect(
+          (
+            await bookMemberEvent({
+              userId: insufficient.userId,
+              eventId: insufficient.eventId,
+              ticketQuantity: 2,
+              idempotencyKey: "credits",
+            })
+          ).state,
+        ).toBe("insufficient_credits");
+
+        const profile = await db.query.userProfiles.findFirst({
+          where: (table, { eq }) => eq(table.userId, insufficient.userId),
+        });
+        expect(profile?.credits).toBe(1);
+      } finally {
+        await cleanup(inactive);
+        await cleanup(insufficient);
+      }
     },
+    30_000,
   );
 
   integrationTest(
@@ -136,47 +159,54 @@ describe("booking transactions integration", () => {
 
       const first = idsFor("race-a");
       const second = idsFor("race-b");
-      await seedFixture(first, {
-        credits: 10,
-        remainingCapacity: 1,
-        subscriptionStatus: "ACTIVE",
-      });
-      await seedUserProfile(second.userId, { credits: 10 });
+      try {
+        await seedFixture(first, {
+          credits: 10,
+          remainingCapacity: 1,
+          subscriptionStatus: "ACTIVE",
+        });
+        await seedUserProfile(second.userId, { credits: 10 });
 
-      const results = await Promise.all([
-        bookMemberEvent({
-          userId: first.userId,
+        const results = await Promise.all([
+          bookMemberEvent({
+            userId: first.userId,
+            eventId: first.eventId,
+            ticketQuantity: 1,
+            idempotencyKey: "race-a",
+          }),
+          bookMemberEvent({
+            userId: second.userId,
+            eventId: first.eventId,
+            ticketQuantity: 1,
+            idempotencyKey: "race-b",
+          }),
+        ]);
+
+        expect(
+          results.filter((result) => result.state === "confirmed"),
+        ).toHaveLength(1);
+        expect(
+          results.filter((result) => result.state === "sold_out"),
+        ).toHaveLength(1);
+
+        const event = await db.query.events.findFirst({
+          where: (table, { eq }) => eq(table.id, first.eventId),
+        });
+        expect(event?.remainingCapacity).toBe(0);
+      } finally {
+        // Clean up bookings for both users first to prevent foreign key constraint violations
+        // when deleting the shared event and partner.
+        await cleanupUserBookings(first.userId);
+        await cleanupUserBookings(second.userId);
+        await cleanup(first);
+        await cleanup({
+          ...second,
           eventId: first.eventId,
-          ticketQuantity: 1,
-          idempotencyKey: "race-a",
-        }),
-        bookMemberEvent({
-          userId: second.userId,
-          eventId: first.eventId,
-          ticketQuantity: 1,
-          idempotencyKey: "race-b",
-        }),
-      ]);
-
-      expect(
-        results.filter((result) => result.state === "confirmed"),
-      ).toHaveLength(1);
-      expect(
-        results.filter((result) => result.state === "sold_out"),
-      ).toHaveLength(1);
-
-      const event = await db.query.events.findFirst({
-        where: (table, { eq }) => eq(table.id, first.eventId),
-      });
-      expect(event?.remainingCapacity).toBe(0);
-
-      await cleanup(first);
-      await cleanup({
-        ...second,
-        eventId: first.eventId,
-        partnerId: first.partnerId,
-      });
+          partnerId: first.partnerId,
+        });
+      }
     },
+    30_000,
   );
 
   integrationTest(
@@ -187,32 +217,35 @@ describe("booking transactions integration", () => {
       const { joinEventWaitlist } = await import("@/lib/booking-transactions");
 
       const ids = idsFor("waitlist");
-      await seedFixture(ids, {
-        credits: 5,
-        remainingCapacity: 0,
-        subscriptionStatus: "ACTIVE",
-      });
+      try {
+        await seedFixture(ids, {
+          credits: 5,
+          remainingCapacity: 0,
+          subscriptionStatus: "ACTIVE",
+        });
 
-      const result = await joinEventWaitlist({
-        userId: ids.userId,
-        eventId: ids.eventId,
-        ticketQuantity: 1,
-      });
-      expect(result.state).toBe("waitlist");
+        const result = await joinEventWaitlist({
+          userId: ids.userId,
+          eventId: ids.eventId,
+          ticketQuantity: 1,
+        });
+        expect(result.state).toBe("waitlist");
 
-      const [profile, event] = await Promise.all([
-        db.query.userProfiles.findFirst({
-          where: (table, { eq }) => eq(table.userId, ids.userId),
-        }),
-        db.query.events.findFirst({
-          where: (table, { eq }) => eq(table.id, ids.eventId),
-        }),
-      ]);
-      expect(profile?.credits).toBe(5);
-      expect(event?.remainingCapacity).toBe(0);
-
-      await cleanup(ids);
+        const [profile, event] = await Promise.all([
+          db.query.userProfiles.findFirst({
+            where: (table, { eq }) => eq(table.userId, ids.userId),
+          }),
+          db.query.events.findFirst({
+            where: (table, { eq }) => eq(table.id, ids.eventId),
+          }),
+        ]);
+        expect(profile?.credits).toBe(5);
+        expect(event?.remainingCapacity).toBe(0);
+      } finally {
+        await cleanup(ids);
+      }
     },
+    30_000,
   );
 
   integrationTest(
@@ -227,42 +260,47 @@ describe("booking transactions integration", () => {
 
       const ids = idsFor("admin");
       const adminId = `${ids.userId}-admin`;
-      await seedFixture(ids, {
-        credits: 5,
-        remainingCapacity: 2,
-        subscriptionStatus: "ACTIVE",
-      });
-      await seedUserProfile(adminId, { credits: 0, role: "ADMIN" });
+      try {
+        await seedFixture(ids, {
+          credits: 5,
+          remainingCapacity: 2,
+          subscriptionStatus: "ACTIVE",
+        });
+        await seedUserProfile(adminId, { credits: 0, role: "ADMIN" });
 
-      const ticket = await createAdminTicket({
-        adminUserId: adminId,
-        userId: ids.userId,
-        eventId: ids.eventId,
-        ticketQuantity: 1,
-        consumeCapacity: true,
-        debitCredits: false,
-      });
-      expect(ticket.state).toBe("confirmed");
+        const ticket = await createAdminTicket({
+          adminUserId: adminId,
+          userId: ids.userId,
+          eventId: ids.eventId,
+          ticketQuantity: 1,
+          consumeCapacity: true,
+          debitCredits: false,
+        });
+        expect(ticket.state).toBe("confirmed");
 
-      const adjustment = await adjustUserCredits({
-        adminUserId: adminId,
-        userId: ids.userId,
-        amount: 2,
-        reason: "Integration test adjustment",
-      });
-      expect(adjustment.state).toBe("adjusted");
+        const adjustment = await adjustUserCredits({
+          adminUserId: adminId,
+          userId: ids.userId,
+          amount: 2,
+          reason: "Integration test adjustment",
+        });
+        expect(adjustment.state).toBe("adjusted");
 
-      const ledger = await db.query.creditLedgerEntries.findFirst({
-        where: (table, { eq }) => eq(table.actorUserId, adminId),
-      });
-      expect(ledger?.type).toBe("ADMIN_ADJUST");
-
-      await db
-        .delete(creditLedgerEntries)
-        .where(eq(creditLedgerEntries.actorUserId, adminId));
-      await cleanup(ids);
-      await cleanupUser(adminId);
+        const ledger = await db.query.creditLedgerEntries.findFirst({
+          where: (table, { eq }) => eq(table.actorUserId, adminId),
+        });
+        expect(ledger?.type).toBe("ADMIN_ADJUST");
+      } finally {
+        try {
+          await db
+            .delete(creditLedgerEntries)
+            .where(eq(creditLedgerEntries.actorUserId, adminId));
+        } catch {}
+        await cleanup(ids);
+        await cleanupUser(adminId);
+      }
     },
+    30_000,
   );
 });
 
@@ -374,4 +412,25 @@ async function cleanupUser(userId: string) {
   const { db } = await import("@/db/client");
   const { user } = await import("@/db/schema");
   await db.delete(user).where(eq(user.id, userId));
+}
+
+async function cleanupUserBookings(userId: string) {
+  const { db } = await import("@/db/client");
+  const {
+    bookingIdempotencyRecords,
+    bookings,
+    creditLedgerEntries,
+    waitlistEntries,
+  } = await import("@/db/schema");
+
+  await db
+    .delete(bookingIdempotencyRecords)
+    .where(eq(bookingIdempotencyRecords.userId, userId));
+  await db
+    .delete(creditLedgerEntries)
+    .where(eq(creditLedgerEntries.userId, userId));
+  await db
+    .delete(waitlistEntries)
+    .where(eq(waitlistEntries.userId, userId));
+  await db.delete(bookings).where(eq(bookings.userId, userId));
 }

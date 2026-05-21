@@ -21,6 +21,7 @@
     "test:parity:smoke": "bun scripts/run-parity-smoke.ts",
     "test:parity": "bun run test:parity:contracts && bun run test:parity:smoke",
     "test:visual": "VISUAL_TESTS=true bun scripts/run-parity-smoke.ts test tests/visual",
+    "test:transactions": "bun run scripts/run-booking-transaction-tests.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run scripts/seed-domain-data.ts",
