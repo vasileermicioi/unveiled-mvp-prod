@@ -759,17 +759,13 @@ function EventCard({
   );
 }
 
-function PublicDiscover({
-  setView,
-  onOpenEvent,
-}: {
-  setView: (view: View) => void;
-  onOpenEvent: (event: EventCardView) => void;
-}) {
+function PublicDiscover() {
   const copy = useCopy();
   const live = useLiveData();
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
+  const [selectedPublicEvent, setSelectedPublicEvent] =
+    useState<EventCardView | null>(null);
   const mapProvider = readDiscoveryMapProviderConfig(
     import.meta.env as { PUBLIC_GOOGLE_MAPS_API_KEY?: string },
   );
@@ -800,119 +796,127 @@ function PublicDiscover({
   } as const;
 
   return (
-    <DiscoveryShell
-      discovery={discovery}
-      filterPanel={<DiscoveryFilterPanel />}
-      mapPanel={
-        <DiscoveryMapPanel
-          events={visible}
-          surface="public"
-          providerKey={mapProvider.key}
-          actionLabel={copy.discovery.viewEvent}
-          onOpenEvent={(event) => {
-            onOpenEvent(event);
-            setView("member");
-          }}
-          onRetry={live.refetchActiveSurface}
-        />
-      }
-      onAction={(actionId) => {
-        if (actionId === "toggle-filters") {
-          setFiltersOpen((open) => !open);
-          setMapOpen(false);
+    <>
+      <DiscoveryShell
+        discovery={discovery}
+        filterPanel={<DiscoveryFilterPanel />}
+        mapPanel={
+          <DiscoveryMapPanel
+            events={visible}
+            surface="public"
+            providerKey={mapProvider.key}
+            actionLabel={copy.discovery.viewEvent}
+            onOpenEvent={(event) => {
+              setSelectedPublicEvent(event);
+            }}
+            onRetry={live.refetchActiveSurface}
+          />
         }
-        if (actionId === "toggle-map") {
-          setMapOpen((open) => !open);
-          setFiltersOpen(false);
-        }
-        if (actionId === "reset-filters") {
-          live.setDiscoveryFilters?.({});
-          live.refetchActiveSurface();
-        }
-      }}
-    >
-      <div className="space-y-10 py-8">
-        <Panel
-          tone="white"
-          className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
-        >
-          <div>
-            <Badge tone="yellow">{copy.public.discover.included}</Badge>
-            <h1 className="headline-lg mt-5">{copy.public.discover.title}</h1>
-            <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
-              {copy.public.discover.body}
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {live.publicStats.map((stat) => (
-              <StatPanel key={stat.label} {...stat} />
-            ))}
-          </div>
-        </Panel>
-
-        <section className="grid gap-5 md:grid-cols-3">
-          {live.publicCategories.map((category) => (
-            <Card key={category} interactive className="bg-brand-cream p-6">
-              <p className="headline-md">{category}</p>
-              <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-                {copy.public.discover.categoryBody}
+        onAction={(actionId) => {
+          if (actionId === "toggle-filters") {
+            setFiltersOpen((open) => !open);
+            setMapOpen(false);
+          }
+          if (actionId === "toggle-map") {
+            setMapOpen((open) => !open);
+            setFiltersOpen(false);
+          }
+          if (actionId === "reset-filters") {
+            live.setDiscoveryFilters?.({});
+            live.refetchActiveSurface();
+          }
+        }}
+      >
+        <div className="space-y-10 py-8">
+          <Panel
+            tone="white"
+            className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
+          >
+            <div>
+              <Badge tone="yellow">{copy.public.discover.included}</Badge>
+              <h1 className="headline-lg mt-5">{copy.public.discover.title}</h1>
+              <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
+                {copy.public.discover.body}
               </p>
-            </Card>
-          ))}
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-3">
-          {live.events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              compact
-              onOpen={() => setView("member")}
-            />
-          ))}
-        </section>
-
-        <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
-          <Panel tone="dark">
-            <p className="unveiled-meta opacity-60">
-              {copy.public.discover.missingVenue}
-            </p>
-            <p className="headline-md mt-4">
-              {copy.public.discover.wantPartner}
-            </p>
-            <Button type="button" variant="yellow" className="mt-6">
-              {copy.public.discover.tellSupport}
-              <Mail />
-            </Button>
-          </Panel>
-          <Panel tone="white">
-            <p className="unveiled-meta opacity-60">
-              {copy.public.discover.activePartners}
-            </p>
-            <div className="mt-4 grid gap-3">
-              {live.publicPartners.map((partner) => (
-                <div
-                  key={partner.id}
-                  className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
-                >
-                  <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
-                    {partner.logoInitial}
-                  </span>
-                  <span>
-                    <span className="block text-xs font-black uppercase tracking-widest">
-                      {partner.name}
-                    </span>
-                    <span className="block text-xs font-bold opacity-55">
-                      {partner.address}
-                    </span>
-                  </span>
-                </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {live.publicStats.map((stat) => (
+                <StatPanel key={stat.label} {...stat} />
               ))}
             </div>
           </Panel>
-        </section>
-      </div>
-    </DiscoveryShell>
+
+          <section className="grid gap-5 md:grid-cols-3">
+            {live.publicCategories.map((category) => (
+              <Card key={category} interactive className="bg-brand-cream p-6">
+                <p className="headline-md">{category}</p>
+                <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
+                  {copy.public.discover.categoryBody}
+                </p>
+              </Card>
+            ))}
+          </section>
+
+          <section className="grid gap-5 lg:grid-cols-3">
+            {live.events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                compact
+                onOpen={() => setSelectedPublicEvent(event)}
+              />
+            ))}
+          </section>
+
+          <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
+            <Panel tone="dark">
+              <p className="unveiled-meta opacity-60">
+                {copy.public.discover.missingVenue}
+              </p>
+              <p className="headline-md mt-4">
+                {copy.public.discover.wantPartner}
+              </p>
+              <Button type="button" variant="yellow" className="mt-6">
+                {copy.public.discover.tellSupport}
+                <Mail />
+              </Button>
+            </Panel>
+            <Panel tone="white">
+              <p className="unveiled-meta opacity-60">
+                {copy.public.discover.activePartners}
+              </p>
+              <div className="mt-4 grid gap-3">
+                {live.publicPartners.map((partner) => (
+                  <div
+                    key={partner.id}
+                    className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
+                  >
+                    <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
+                      {partner.logoInitial}
+                    </span>
+                    <span>
+                      <span className="block text-xs font-black uppercase tracking-widest">
+                        {partner.name}
+                      </span>
+                      <span className="block text-xs font-bold opacity-55">
+                        {partner.address}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </section>
+        </div>
+      </DiscoveryShell>
+      {selectedPublicEvent ? (
+        <BookingModal
+          key={selectedPublicEvent.id}
+          event={selectedPublicEvent}
+          onClose={() => setSelectedPublicEvent(null)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -1589,6 +1593,7 @@ function BookingModal({
 }) {
   const copy = useCopy().booking;
   const live = useLiveData();
+  const isGuest = !live.profile.email;
   const [count, setCount] = useState(1);
   const [result, setResult] = useState<
     | null
@@ -1708,123 +1713,168 @@ function BookingModal({
             <p className="max-w-2xl text-xl font-bold leading-relaxed opacity-80">
               {event.description}
             </p>
-            <div className="border-t-2 border-brand-dark/15 pt-6">
-              <p className="unveiled-meta opacity-45">{copy.location}</p>
-              <p className="mt-2 text-2xl font-black uppercase tracking-tight">
-                {event.address}
-              </p>
-            </div>
-            <Panel tone="cream" shadow={false} className="p-4">
-              <p className="unveiled-meta">{copy.gateCopy}</p>
-              <p className="mt-2 text-sm font-bold">{copy.gateMessage}</p>
-              {result?.state === "failure" ? (
-                <p className="mt-4 border-t-2 border-brand-dark/20 pt-4 text-sm font-black uppercase text-red-700">
-                  {result.message}
-                  {result.waitlistAvailable ? copy.joinInstead : ""}
+            <div className="grid gap-6 sm:grid-cols-2 border-t-2 border-brand-dark/15 pt-6">
+              <div>
+                <p className="unveiled-meta opacity-45">
+                  {live.profile.language === "DE" ? "ZEITPUNKT" : "WHEN"}
                 </p>
-              ) : null}
-            </Panel>
-          </section>
-
-          <Panel tone="dark" className="space-y-8">
-            <div className="flex items-center justify-between gap-4">
-              <span className="unveiled-meta">{copy.tickets}</span>
-              <div className="flex items-center gap-7 font-display text-5xl font-black">
-                <button
-                  type="button"
-                  onClick={() => setCount(Math.max(1, count - 1))}
-                >
-                  <Minus />
-                </button>
-                {count}
-                <button
-                  type="button"
-                  onClick={() => setCount(Math.min(3, count + 1))}
-                >
-                  <Plus />
-                </button>
+                <p className="mt-2 text-2xl font-black uppercase tracking-tight">
+                  {event.dateLabel}
+                </p>
+              </div>
+              <div>
+                <p className="unveiled-meta opacity-45">{copy.location}</p>
+                <p className="mt-2 text-2xl font-black uppercase tracking-tight">
+                  {event.address}
+                </p>
               </div>
             </div>
-            <Divider className="bg-brand-yellow/25" />
-            <div className="flex items-end justify-between gap-4">
-              <span className="unveiled-meta opacity-55">{copy.total}</span>
-              <span className="font-display text-5xl font-black uppercase">
-                {total} credits
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="yellow"
-              className="w-full"
-              disabled={submitting || membershipBlocked}
-              onClick={async () => {
-                setResult(null);
-                setCopied(false);
-                if (membershipBlocked) {
-                  setResult({
-                    state: "failure",
-                    message: event.membershipCta ?? copy.membershipRequired,
-                  });
-                  return;
-                }
-                setSubmitting(true);
-                const response =
-                  event.remainingCapacity === 0
-                    ? await actions.joinWaitlist({
-                        eventId: event.id,
-                        ticketQuantity: count,
-                      })
-                    : await actions.bookEvent({
-                        eventId: event.id,
-                        ticketQuantity: count,
-                        idempotencyKey: crypto.randomUUID(),
-                      });
+            {!isGuest && (
+              <Panel tone="cream" shadow={false} className="p-4">
+                <p className="unveiled-meta">{copy.gateCopy}</p>
+                <p className="mt-2 text-sm font-bold">{copy.gateMessage}</p>
+                {result?.state === "failure" ? (
+                  <p className="mt-4 border-t-2 border-brand-dark/20 pt-4 text-sm font-black uppercase text-red-700">
+                    {result.message}
+                    {result.waitlistAvailable ? copy.joinInstead : ""}
+                  </p>
+                ) : null}
+              </Panel>
+            )}
+          </section>
 
-                setSubmitting(false);
-                if (response.error || !response.data) {
-                  setResult({
-                    state: "failure",
-                    message: copy.requestFailed,
-                  });
-                  return;
-                }
-
-                if (!response.data.ok) {
-                  setResult({
-                    state: "failure",
-                    message: response.data.formError ?? copy.checkFields,
-                    waitlistAvailable: event.remainingCapacity === 0,
-                  });
-                  return;
-                }
-
-                const data = response.data.data;
-                if (data?.state === "confirmed") {
-                  live.refetchActiveSurface();
-                  setResult({
-                    state: "confirmed",
-                    code: data.redemption.code,
-                    url: data.redemption.url,
-                  });
-                  return;
-                }
-
-                if (data?.state === "waitlist") {
-                  live.refetchActiveSurface();
-                  setResult({ state: "waitlist" });
-                }
-              }}
+          {isGuest ? (
+            <Panel
+              tone="dark"
+              className="space-y-8 flex flex-col justify-between"
             >
-              {submitting ? (
-                <Loader2 className="animate-spin" />
-              ) : event.remainingCapacity === 0 ? (
-                copy.joinWaitlist
-              ) : (
-                copy.confirm
-              )}
-              <ArrowRight />
-            </Button>
-          </Panel>
+              <div>
+                <p className="unveiled-meta opacity-55 text-white">
+                  {live.profile.language === "DE"
+                    ? "PREMIUM-ZUGANG"
+                    : "PREMIUM ACCESS"}
+                </p>
+                <p className="headline-md mt-5 text-white">
+                  {live.profile.language === "DE"
+                    ? "Werde Unveiled-Mitglied, um dieses Event zu buchen."
+                    : "Join Unveiled to book this event."}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="yellow"
+                className="w-full justify-center"
+                onClick={() => {
+                  window.location.assign(`/?callbackURL=/discover`);
+                }}
+              >
+                {live.profile.language === "DE"
+                  ? "Jetzt beitreten"
+                  : "Join Unveiled to Book"}
+                <ArrowRight />
+              </Button>
+            </Panel>
+          ) : (
+            <Panel tone="dark" className="space-y-8">
+              <div className="flex items-center justify-between gap-4">
+                <span className="unveiled-meta">{copy.tickets}</span>
+                <div className="flex items-center gap-7 font-display text-5xl font-black">
+                  <button
+                    type="button"
+                    onClick={() => setCount(Math.max(1, count - 1))}
+                  >
+                    <Minus />
+                  </button>
+                  {count}
+                  <button
+                    type="button"
+                    onClick={() => setCount(Math.min(3, count + 1))}
+                  >
+                    <Plus />
+                  </button>
+                </div>
+              </div>
+              <Divider className="bg-brand-yellow/25" />
+              <div className="flex items-end justify-between gap-4">
+                <span className="unveiled-meta opacity-55">{copy.total}</span>
+                <span className="font-display text-5xl font-black uppercase">
+                  {total} credits
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="yellow"
+                className="w-full"
+                disabled={submitting || membershipBlocked}
+                onClick={async () => {
+                  setResult(null);
+                  setCopied(false);
+                  if (membershipBlocked) {
+                    setResult({
+                      state: "failure",
+                      message: event.membershipCta ?? copy.membershipRequired,
+                    });
+                    return;
+                  }
+                  setSubmitting(true);
+                  const response =
+                    event.remainingCapacity === 0
+                      ? await actions.joinWaitlist({
+                          eventId: event.id,
+                          ticketQuantity: count,
+                        })
+                      : await actions.bookEvent({
+                          eventId: event.id,
+                          ticketQuantity: count,
+                          idempotencyKey: crypto.randomUUID(),
+                        });
+
+                  setSubmitting(false);
+                  if (response.error || !response.data) {
+                    setResult({
+                      state: "failure",
+                      message: copy.requestFailed,
+                    });
+                    return;
+                  }
+
+                  if (!response.data.ok) {
+                    setResult({
+                      state: "failure",
+                      message: response.data.formError ?? copy.checkFields,
+                      waitlistAvailable: event.remainingCapacity === 0,
+                    });
+                    return;
+                  }
+
+                  const data = response.data.data;
+                  if (data?.state === "confirmed") {
+                    live.refetchActiveSurface();
+                    setResult({
+                      state: "confirmed",
+                      code: data.redemption.code,
+                      url: data.redemption.url,
+                    });
+                    return;
+                  }
+
+                  if (data?.state === "waitlist") {
+                    live.refetchActiveSurface();
+                    setResult({ state: "waitlist" });
+                  }
+                }}
+              >
+                {submitting ? (
+                  <Loader2 className="animate-spin" />
+                ) : event.remainingCapacity === 0 ? (
+                  copy.joinWaitlist
+                ) : (
+                  copy.confirm
+                )}
+                <ArrowRight />
+              </Button>
+            </Panel>
+          )}
         </>
       )}
     </ModalShell>
@@ -3653,9 +3703,7 @@ function VisualSystemAppContent({
             {view === "landing" ? (
               <LandingPage setView={setView} callbackURL={callbackURL} />
             ) : null}
-            {view === "discover" ? (
-              <PublicDiscover setView={setView} onOpenEvent={handleOpenEvent} />
-            ) : null}
+            {view === "discover" ? <PublicDiscover /> : null}
             {view === "how" ? <HowItWorks /> : null}
             {view === "onboarding" ? <OnboardingPage /> : null}
             {view === "membership" ? <MembershipPage /> : null}
