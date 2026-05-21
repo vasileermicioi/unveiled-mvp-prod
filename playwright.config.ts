@@ -19,10 +19,19 @@ process.env.PUBLIC_BETTER_AUTH_URL =
   process.env.PUBLIC_BETTER_AUTH_URL ?? process.env.BETTER_AUTH_URL;
 
 export default defineConfig({
-  testDir: "./tests/parity",
-  fullyParallel: true,
+  testDir: process.env.VISUAL_TESTS ? "./tests/visual" : "./tests/parity",
+  fullyParallel: process.env.VISUAL_TESTS ? false : true,
+  workers: process.env.VISUAL_TESTS ? 1 : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "line" : "list",
+  expect: {
+    toHaveScreenshot: {
+      threshold: 0.1,
+      maxDiffPixels: 50,
+      animations: "disabled",
+    },
+  },
+  snapshotDir: "./tests/visual/snapshots",
   use: {
     baseURL,
     trace: "retain-on-failure",

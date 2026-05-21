@@ -189,3 +189,36 @@ bunx playwright install
 
 - [parity-suite.md](/root/dev/deepcode/unveiled-mvp-prod/docs/testing/parity-suite.md)
 - [legacy-parity-matrix.md](/root/dev/deepcode/unveiled-mvp-prod/docs/testing/legacy-parity-matrix.md)
+
+## Visual Regression Testing
+
+A dedicated visual regression suite runs screenshot-based tests to prevent visual drift from `_old_app`.
+
+### Setup and Configuration
+- **Config**: Configured within [playwright.config.ts](/root/dev/deepcode/unveiled-mvp-prod/playwright.config.ts) when `VISUAL_TESTS=true` is set.
+- **Stabilization Helpers**: [tests/visual/helpers.ts](/root/dev/deepcode/unveiled-mvp-prod/tests/visual/helpers.ts) contains helper functions to disable transitions/animations, stabilize font rendering, disable text cursors, and wait for network/font loading.
+- **Dynamic Masking**: Elements such as Google Maps and Stripe containers are automatically masked in screenshot comparisons to ensure determinism.
+
+### Commands
+
+Run the visual regression suite:
+
+```bash
+bun run test:visual
+```
+
+Generate or update screenshot baselines:
+
+```bash
+bun run test:visual --update-snapshots
+```
+
+Running visual tests on a specific file:
+
+```bash
+VISUAL_TESTS=true bun scripts/run-parity-smoke.ts test tests/visual/visual-parity.spec.ts
+```
+
+### Baseline Management
+- Screenshots are saved under `tests/visual/snapshots/`.
+- Snapshot comparisons utilize a small color difference threshold (`threshold: 0.1`) and pixel count tolerance (`maxDiffPixels: 50`) to tolerate minor font rendering discrepancies.
