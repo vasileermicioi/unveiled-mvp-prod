@@ -112,6 +112,11 @@ Public and member page surfaces SHALL render legacy-equivalent German and Englis
 - **THEN** it asserts at least one German and one English public route landmark
 - **AND** it asserts at least one German and one English authenticated member route landmark
 
+#### Scenario: FAQ routes render specific answers
+- **WHEN** a user views the FAQ page after selecting `DE` or `EN`
+- **THEN** the FAQ accordion items display specific translated answers matching each respective question
+- **AND** the page does not display the single static placeholder text
+
 ### Requirement: Visual Parity Regression Coverage
 The app SHALL have automated screenshot-based visual regression coverage for critical public, member, partner, and admin route surfaces across both desktop and mobile viewports.
 

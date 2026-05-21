@@ -115,8 +115,12 @@ export const appCopy = {
           "Wo erscheinen Redemption Codes?",
           "Was passiert, wenn ein Event voll ist?",
         ],
-        answer:
-          "Antworten erscheinen als gerahmte Accordion-Zeilen mit direktem Support unter support@unveiled.berlin.",
+        answers: [
+          "Jedes Event kostet eine bestimmte Anzahl an Credits. Mit deiner Mitgliedschaft erhältst du monatlich neue Credits, die du flexibel für Buchungen einlösen kannst.",
+          "Ja, deine Mitgliedschaft ist monatlich kündbar. Du kannst dein Abonnement jederzeit in deinem Profil unter den Billing-Einstellungen verwalten oder kündigen.",
+          "Nach einer erfolgreichen Buchung findest du deine Ticket-Codes, Passwörter oder Gutscheine direkt unter 'Meine Tickets' in deiner App.",
+          "Wenn ein Event ausgebucht ist, kannst du der Warteliste beitreten. Dafür werden keine Credits abgebucht, bis ein Platz für dich frei wird.",
+        ],
       },
       membership: {
         badge: "Mitgliedschaft",
@@ -364,8 +368,12 @@ export const appCopy = {
           "Where do redemption codes appear?",
           "What if an event is full?",
         ],
-        answer:
-          "Answers render as bordered accordion rows with direct support access at support@unveiled.berlin.",
+        answers: [
+          "Each event costs a specific number of credits. Your membership includes monthly credits that you can flexibly spend to book events.",
+          "Yes, you can cancel your membership at any time. You can manage or cancel your subscription under the Billing settings in your profile.",
+          "After a successful booking, your ticket codes, entry passwords, or promo codes will appear directly under 'Bookings' in your app.",
+          "If an event is fully booked, you can join the waitlist. No credits are debited for joining the waitlist unless a spot becomes available for you.",
+        ],
       },
       membership: {
         badge: "Membership",

@@ -953,7 +953,7 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
               <ChevronDown className="size-5" />
             </summary>
             <p className="mt-4 max-w-3xl text-sm font-bold leading-6 opacity-65">
-              {copy.answer}
+              {copy.answers[index]}
             </p>
           </details>
         ))}
