@@ -1,5 +1,8 @@
 # jobs-notifications Specification
 
+## Purpose
+Define requirements for daily passcode emails and scheduled notifications.
+
 ## Requirements
 
 ### Requirement: Scheduled Partner Code Email

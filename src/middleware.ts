@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { getViewer } from "@/lib/auth-profile";
+import { trackSessionInDb } from "@/lib/behavior-tracking";
 import {
   resolveMemberOnboardingRoute,
   routeForPath,
@@ -20,6 +21,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   try {
     const viewer = await getViewer(request);
+    if (viewer.kind === "authenticated") {
+      try {
+        await trackSessionInDb(viewer.user.id);
+      } catch (err) {
+        console.error("Failed to track session:", err);
+      }
+    }
     const outcome = resolveMemberOnboardingRoute(viewer, route);
 
     if (!outcome.ok) {

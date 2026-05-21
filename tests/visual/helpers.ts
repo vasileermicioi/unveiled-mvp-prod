@@ -5,18 +5,18 @@ if (process.env.PARITY_TEST_DATABASE_URL) {
   process.env.PARITY_TEST_MODE = "1";
 }
 
-import { expect, type Page } from "@playwright/test";
-import {
-  login as parityLogin,
-  loginWithForm as parityLoginWithForm,
-  parityFixtureEmails,
-  parityFixtureIds,
-  parityPassword,
-} from "../parity/helpers";
+import { expect, type Locator, type Page } from "@playwright/test";
+import { eq } from "drizzle-orm";
 
 import { db } from "../../src/db/client";
 import { user, userProfiles } from "../../src/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  parityFixtureEmails,
+  parityFixtureIds,
+  login as parityLogin,
+  loginWithForm as parityLoginWithForm,
+  parityPassword,
+} from "../parity/helpers";
 
 export { parityFixtureEmails, parityFixtureIds, parityPassword };
 
@@ -39,7 +39,11 @@ export async function login(page: Page, email: string, callbackURL = "/") {
 /**
  * Re-exports parity loginWithForm helper
  */
-export async function loginWithForm(page: Page, email: string, callbackURL = "/") {
+export async function loginWithForm(
+  page: Page,
+  email: string,
+  callbackURL = "/",
+) {
   const dbUser = await db.query.user.findFirst({
     where: eq(user.email, email),
   });
@@ -81,7 +85,7 @@ export async function stabilizePage(page: Page) {
   await page.waitForLoadState("domcontentloaded");
   try {
     await page.waitForLoadState("networkidle", { timeout: 5000 });
-  } catch (e) {
+  } catch (_e) {
     // networkidle is nice to have, but don't fail if some analytics/polling persists
   }
 }
@@ -92,7 +96,7 @@ export async function stabilizePage(page: Page) {
 export async function expectVisualParity(
   page: Page,
   snapshotName: string,
-  options: any = {},
+  options: { mask?: Locator[] } & Record<string, unknown> = {},
 ): Promise<void> {
   await stabilizePage(page);
 
@@ -107,7 +111,8 @@ export async function expectVisualParity(
   ];
 
   // Merge custom masks if provided
-  const masks = options.mask ? [...defaultMasks, ...options.mask] : defaultMasks;
+  const customMasks = options.mask as Locator[] | undefined;
+  const masks = customMasks ? [...defaultMasks, ...customMasks] : defaultMasks;
 
   await expect(page).toHaveScreenshot(snapshotName, {
     animations: "disabled",

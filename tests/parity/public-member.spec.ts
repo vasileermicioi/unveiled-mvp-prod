@@ -150,7 +150,9 @@ test.describe("public and member route parity", () => {
     ).toBeVisible();
 
     await page.goto("/profile", { timeout: 5_000 }).catch(() => undefined);
-    await expect(page.getByText("Active Member")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Active Member" }),
+    ).toBeVisible();
     await expect(
       page.getByText(parityFixtureEmails.activeMember),
     ).toBeVisible();

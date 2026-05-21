@@ -1,5 +1,8 @@
-## ADDED Requirements
+# data-access Specification
 
+## Purpose
+Define authorized loader and query models for partner and admin operations UI, along with invalidation scopes.
+## Requirements
 ### Requirement: Operational Read Models Cover Live UI Parity
 The data-access layer SHALL provide authorized read models for the complete partner and admin operations UI.
 
@@ -52,3 +55,11 @@ The data-access layer SHALL have regression coverage that proves route loaders a
 #### Scenario: Mutation refresh targets stay precise
 - **WHEN** a covered booking, profile, partner, or admin mutation succeeds
 - **THEN** regression assertions verify that invalidation hints and affected query keys target the specific route-owned data sets that should refresh.
+
+### Requirement: Member Behavior Analytics Loader
+The data-access layer SHALL load complete and aggregated member behavior metrics for the admin interface.
+
+#### Scenario: Behavior metrics are loaded for admin member view
+- **WHEN** the admin loads or expands a member's profile
+- **THEN** the returned read model includes the correct values for sessionCount, eventOpenCount, bookingCount, waitlistCount, savedCount, unsavedCount, filterApplyCount, recentEventIds, and lastSeenAt.
+

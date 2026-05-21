@@ -17,6 +17,11 @@ export async function login(page: Page, email: string, callbackURL = "/") {
       callbackURL,
     },
   });
+  if (!response.ok()) {
+    console.error(
+      `[login helper] Login failed for ${email}. Status: ${response.status()}. Body: ${await response.text()}`,
+    );
+  }
   expect(response.ok()).toBe(true);
 
   const body = (await response.json()) as { nextPath?: string };

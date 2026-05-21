@@ -8,7 +8,26 @@ const host = baseUrl.hostname;
 const port = baseUrl.port || (baseUrl.protocol === "https:" ? "443" : "80");
 
 if (process.env.PARITY_TEST_DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.PARITY_TEST_DATABASE_URL;
+  let dbUrl = process.env.PARITY_TEST_DATABASE_URL;
+  if (dbUrl.includes("-pooler")) {
+    try {
+      const parsed = new URL(dbUrl);
+      parsed.hostname = parsed.hostname.replace("-pooler", "");
+      dbUrl = parsed.toString();
+    } catch (_e) {}
+  }
+  process.env.DATABASE_URL = dbUrl;
+  process.env.PARITY_TEST_MODE = "1";
+} else if (process.env.DATABASE_URL) {
+  let dbUrl = process.env.DATABASE_URL;
+  if (dbUrl.includes("-pooler")) {
+    try {
+      const parsed = new URL(dbUrl);
+      parsed.hostname = parsed.hostname.replace("-pooler", "");
+      dbUrl = parsed.toString();
+    } catch (_e) {}
+  }
+  process.env.DATABASE_URL = dbUrl;
   process.env.PARITY_TEST_MODE = "1";
 }
 
@@ -20,7 +39,7 @@ process.env.PUBLIC_BETTER_AUTH_URL =
 
 export default defineConfig({
   testDir: process.env.VISUAL_TESTS ? "./tests/visual" : "./tests/parity",
-  fullyParallel: process.env.VISUAL_TESTS ? false : true,
+  fullyParallel: !process.env.VISUAL_TESTS,
   workers: process.env.VISUAL_TESTS ? 1 : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "line" : "list",

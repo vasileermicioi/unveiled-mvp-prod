@@ -1,4 +1,4 @@
-import { neon, Pool } from "@neondatabase/serverless";
+import { Client, neon, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { drizzle as drizzleNeonServerless } from "drizzle-orm/neon-serverless";
 
@@ -18,10 +18,6 @@ function databaseDriver(env?: RuntimeEnv): DatabaseDriver {
   return value === "neon-http" ? "neon-http" : "neon-serverless";
 }
 
-function shouldCacheDefaultDb() {
-  return process.env.PARITY_TEST_MODE !== "1";
-}
-
 function createPool(databaseUrl: string, max = 10) {
   const pool = new Pool({ connectionString: databaseUrl, max });
   connectionPools.add(pool);
@@ -32,7 +28,26 @@ export function createDb(env?: RuntimeEnv) {
   const databaseUrl = getRequiredEnv("DATABASE_URL", env);
   if (databaseDriver(env) === "neon-http") {
     const sql = neon(databaseUrl);
-    return drizzle(sql, { schema });
+    const mainDb = drizzle(sql, { schema });
+    // Override the transaction method to support transactions in neon-http mode
+    // by using a transient, self-closing WebSocket connection.
+    mainDb.transaction = (async (
+      transactionCallback: Parameters<typeof mainDb.transaction>[0],
+      config?: Parameters<typeof mainDb.transaction>[1],
+    ) => {
+      const client = new Client({ connectionString: databaseUrl });
+      await client.connect();
+      try {
+        const txDb = drizzleNeonServerless(client, { schema });
+        return await (txDb.transaction as unknown as typeof mainDb.transaction)(
+          transactionCallback,
+          config,
+        );
+      } finally {
+        await client.end();
+      }
+    }) as unknown as typeof mainDb.transaction;
+    return mainDb;
   }
 
   const pool = createPool(databaseUrl);

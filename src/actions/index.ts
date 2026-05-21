@@ -36,6 +36,10 @@ import {
   getAuthRedirectPath as resolveRedirectPath,
 } from "@/lib/auth-profile";
 import {
+  trackEventOpenInDb,
+  trackFilterApplyInDb,
+} from "@/lib/behavior-tracking";
+import {
   adjustUserCredits,
   type BookingTransactionResult,
   bookingFailureMessage,
@@ -76,6 +80,8 @@ import {
   profileSchema,
   savedEventActionSchema,
   signupSchema,
+  trackEventOpenSchema,
+  trackFilterApplySchema,
   venueQrCheckInSchema,
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
@@ -94,6 +100,7 @@ function safeActionError(error: unknown) {
   if (error instanceof AuthAccessError) {
     return formFailure(error.message);
   }
+  console.error("[safeActionError] Caught unexpected action error:", error);
   return formFailure("The request could not be completed.");
 }
 
@@ -1061,6 +1068,70 @@ export const server = {
         return actionSuccess({
           data: { rows },
           invalidate: dataAccessInvalidationKeys([{ type: "admin-exports" }]),
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  trackEventOpen: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(trackEventOpenSchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await getViewer(context.request.headers);
+        if (viewer.kind !== "authenticated") {
+          return actionSuccess({ data: { status: "no-op" } });
+        }
+        await trackEventOpenInDb(
+          viewer.user.id,
+          parsed.data.eventId,
+          parsed.data.viewName,
+        );
+        return actionSuccess({
+          data: { status: "success" },
+          invalidate: [
+            queryKeys.adminMembers,
+            ...dataAccessInvalidationKeys([
+              { type: "admin-members", userId: viewer.user.id },
+            ]),
+          ],
+        });
+      } catch (error) {
+        return safeActionError(error);
+      }
+    },
+  }),
+
+  trackFilterApply: defineAction({
+    accept: "json",
+    input: jsonInputSchema,
+    handler: async (input, context) => {
+      const parsed = parseFormInput(trackFilterApplySchema, input);
+      if (!parsed.ok) return parsed;
+
+      try {
+        const viewer = await getViewer(context.request.headers);
+        if (viewer.kind !== "authenticated") {
+          return actionSuccess({ data: { status: "no-op" } });
+        }
+        await trackFilterApplyInDb(
+          viewer.user.id,
+          parsed.data.filters,
+          parsed.data.viewName,
+        );
+        return actionSuccess({
+          data: { status: "success" },
+          invalidate: [
+            queryKeys.adminMembers,
+            ...dataAccessInvalidationKeys([
+              { type: "admin-members", userId: viewer.user.id },
+            ]),
+          ],
         });
       } catch (error) {
         return safeActionError(error);

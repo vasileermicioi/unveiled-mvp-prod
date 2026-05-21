@@ -6,10 +6,13 @@ let rawDatabaseUrl =
   process.env.PARITY_TEST_DATABASE_URL;
 
 // Automatically resolve pooled Neon URL to direct unpooled URL to avoid transaction hangs
-if (rawDatabaseUrl && rawDatabaseUrl.includes("-pooler")) {
+if (rawDatabaseUrl?.includes("-pooler")) {
   try {
     const parsed = new URL(rawDatabaseUrl);
-    if (parsed.hostname.endsWith(".neon.tech") && parsed.hostname.includes("-pooler")) {
+    if (
+      parsed.hostname.endsWith(".neon.tech") &&
+      parsed.hostname.includes("-pooler")
+    ) {
       parsed.hostname = parsed.hostname.replace("-pooler", "");
       rawDatabaseUrl = parsed.toString();
     }
@@ -429,8 +432,6 @@ async function cleanupUserBookings(userId: string) {
   await db
     .delete(creditLedgerEntries)
     .where(eq(creditLedgerEntries.userId, userId));
-  await db
-    .delete(waitlistEntries)
-    .where(eq(waitlistEntries.userId, userId));
+  await db.delete(waitlistEntries).where(eq(waitlistEntries.userId, userId));
   await db.delete(bookings).where(eq(bookings.userId, userId));
 }

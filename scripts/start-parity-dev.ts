@@ -45,6 +45,7 @@ writeFileSync(
   [
     generatedMarker,
     "PARITY_TEST_MODE=1",
+    "DATABASE_DRIVER=neon-http",
     `DATABASE_URL=${dotenvValue(databaseUrl)}`,
     `PARITY_TEST_DATABASE_URL=${dotenvValue(databaseUrl)}`,
     `PUBLIC_APP_URL=${dotenvValue(baseURL)}`,
@@ -60,6 +61,7 @@ const child = Bun.spawn(
   {
     env: {
       ...process.env,
+      DATABASE_DRIVER: "neon-http",
       DATABASE_URL: databaseUrl,
       PARITY_TEST_DATABASE_URL: databaseUrl,
       PARITY_TEST_MODE: "1",

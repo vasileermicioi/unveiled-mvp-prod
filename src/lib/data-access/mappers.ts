@@ -188,6 +188,26 @@ export type DataAccessAdminMemberView = {
   billingOverrideActions: Array<"freeze" | "unfreeze">;
   preferencesSummary: string;
   historySummary: string;
+  sessionCount: number;
+  unsavedCount: number;
+  filterApplyCount: number;
+  recentEventIds: string[];
+  lastSeenAt?: string | null;
+  lastView?: string | null;
+  lastBookedEventId?: string | null;
+  lastWaitlistedEventId?: string | null;
+  preferencesUpdatedAt?: string | null;
+  preferences: {
+    ageGroup?: string | null;
+    maxDistance: number;
+    accessibility: boolean;
+    interests: string[];
+    moods: string[];
+    districts: string[];
+    timing: string[];
+    preferredDays: string[];
+    preferredLanguages: string[];
+  };
 };
 
 export function formatDateLabel(value: Date | string | null | undefined) {
@@ -528,6 +548,30 @@ export function mapAdminMemberView(input: {
     billingOverrideActions: [...billingOverrideActions],
     preferencesSummary: `${preferenceCount} preferences`,
     historySummary: `${input.profile.bookingCount} bookings // ${input.profile.waitlistCount} waitlist // ${input.profile.savedCount} saved`,
+    sessionCount: input.profile.sessionCount,
+    unsavedCount: input.profile.unsavedCount,
+    filterApplyCount: input.profile.filterApplyCount,
+    recentEventIds: input.profile.recentEventIds || [],
+    lastSeenAt: input.profile.lastSeenAt
+      ? input.profile.lastSeenAt.toISOString()
+      : null,
+    lastView: input.profile.lastView,
+    lastBookedEventId: input.profile.lastBookedEventId,
+    lastWaitlistedEventId: input.profile.lastWaitlistedEventId,
+    preferencesUpdatedAt: input.profile.preferencesUpdatedAt
+      ? input.profile.preferencesUpdatedAt.toISOString()
+      : null,
+    preferences: {
+      ageGroup: input.profile.ageGroup,
+      maxDistance: input.profile.maxDistance,
+      accessibility: input.profile.accessibility,
+      interests: input.profile.interests || [],
+      moods: input.profile.moods || [],
+      districts: input.profile.districts || [],
+      timing: input.profile.timing || [],
+      preferredDays: input.profile.preferredDays || [],
+      preferredLanguages: input.profile.preferredLanguages || [],
+    },
   };
 }
 

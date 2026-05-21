@@ -473,7 +473,9 @@ export async function resetParityWorld(database: Db = createParityDb()) {
 
   await database.delete(bookings).where(inArray(bookings.userId, userIds));
   if (allEventIds.length > 0) {
-    await database.delete(bookings).where(inArray(bookings.eventId, allEventIds));
+    await database
+      .delete(bookings)
+      .where(inArray(bookings.eventId, allEventIds));
   }
   await database
     .delete(bookings)

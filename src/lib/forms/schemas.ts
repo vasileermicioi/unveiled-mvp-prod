@@ -428,3 +428,22 @@ export const creditAdjustmentSchema = z.object({
   idempotencyKey: optionalTrimmedString(200),
 });
 export type CreditAdjustmentInput = z.infer<typeof creditAdjustmentSchema>;
+
+export const trackEventOpenSchema = z.object({
+  eventId: requiredString("Event ID is required.", 120),
+  viewName: requiredString("View name is required.", 120),
+});
+export type TrackEventOpenInput = z.infer<typeof trackEventOpenSchema>;
+
+export const trackFilterApplySchema = z.object({
+  viewName: requiredString("View name is required.", 120),
+  filters: z.object({
+    category: z.string().optional(),
+    partnerId: z.string().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    resultCount: z.number().int().optional(),
+    appliedAt: z.string().optional(),
+  }),
+});
+export type TrackFilterApplyInput = z.infer<typeof trackFilterApplySchema>;
