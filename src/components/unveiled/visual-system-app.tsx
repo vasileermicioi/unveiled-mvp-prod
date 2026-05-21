@@ -132,10 +132,29 @@ type AuthEndpointResult = {
 };
 
 const onboardingPreferenceOptions = {
-  interests: ["Theater", "Kino"],
-  districts: ["Mitte"],
-  timing: ["After Work"],
-  preferredDays: ["Fr", "Sa"],
+  interests: [
+    "Theater",
+    "Kino",
+    "Museum",
+    "Ausstellung",
+    "Konzert",
+    "Talk/Lesung",
+    "Comedy",
+    "Tanz/Performance",
+  ],
+  moods: ["Leicht", "Experimentell", "Klassisch", "Politisch", "Familie"],
+  districts: [
+    "Mitte",
+    "X-Berg",
+    "P-Berg",
+    "Charlottenburg",
+    "Wedding",
+    "F-Hain",
+    "Schöneberg",
+  ],
+  timing: ["After Work", "Weekend", "Day"],
+  preferredDays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+  preferredLanguages: ["DE", "EN", "Non-V"],
 } as const;
 
 type OnboardingPreferenceGroup = keyof typeof onboardingPreferenceOptions;
@@ -164,10 +183,12 @@ type AdminAssetUploadResponse =
     };
 
 const defaultOnboardingPreferences: OnboardingPreferenceSelections = {
-  interests: ["Theater", "Kino"],
-  districts: ["Mitte"],
-  timing: ["After Work"],
-  preferredDays: ["Fr", "Sa"],
+  interests: [],
+  moods: [],
+  districts: [],
+  timing: [],
+  preferredDays: [],
+  preferredLanguages: ["DE", "EN"],
 };
 
 const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
@@ -962,13 +983,65 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
   );
 }
 
+const onboardingTranslations = {
+  DE: {
+    title: "DEIN KULTUR-PROFIL",
+    subtitle: "Wir finden die Events, die wirklich zu dir passen.",
+    ageLabel: "WIE ALT BIST DU?",
+    ageSubtitle:
+      "Keine Sorge, nur für die Statistik (und Altersbeschränkungen).",
+    interestLabel: "WAS INTERESSIERT DICH?",
+    moodLabel: "WELCHE VIBES SUCHST DU?",
+    districtLabel: "WO BIST DU UNTERWEGS?",
+    radiusLabel: "WIE WEIT WÜRDEST DU FAHREN?",
+    timingLabel: "WANN HAST DU ZEIT?",
+    daysLabel: "WELCHE TAGE?",
+    languagePrefLabel: "SPRACHEN?",
+    accessibilityLabel: "BARRIEREFREIHEIT ERFORDERLICH?",
+    finish: "FERTIG",
+    next: "WEITER",
+    back: "ZURÜCK",
+    skip: "ÜBERSPRINGEN",
+    km: "km",
+  },
+  EN: {
+    title: "YOUR CULTURE PROFILE",
+    subtitle: "Let's find the events that actually vibe with you.",
+    ageLabel: "HOW OLD ARE YOU?",
+    ageSubtitle: "Don't worry, just for stats (and age restrictions).",
+    interestLabel: "WHAT INTERESTS YOU?",
+    moodLabel: "WHAT VIBES ARE YOU AFTER?",
+    districtLabel: "WHERE DO YOU HANG OUT?",
+    radiusLabel: "HOW FAR WOULD YOU TRAVEL?",
+    timingLabel: "WHEN DO YOU HAVE TIME?",
+    daysLabel: "WHICH DAYS?",
+    languagePrefLabel: "LANGUAGES?",
+    accessibilityLabel: "ACCESSIBILITY REQUIRED?",
+    finish: "FINISH",
+    next: "NEXT",
+    back: "BACK",
+    skip: "SKIP",
+    km: "km",
+  },
+};
+
 function OnboardingPage() {
   const copy = useCopy().onboarding;
   const live = useLiveData();
+  const language = useContext(LanguageContext);
+  const t = onboardingTranslations[language];
+
+  const [step, setStep] = useState(1);
   const [message, setMessage] = useState<string>(copy.message);
   const [submitting, setSubmitting] = useState(false);
   const [preferences, setPreferences] =
     useState<OnboardingPreferenceSelections>(defaultOnboardingPreferences);
+
+  const [ageGroup, setAgeGroup] = useState<
+    "18-25" | "26-35" | "36-50" | "50+" | ""
+  >("");
+  const [maxDistance, setMaxDistance] = useState(10);
+  const [accessibility, setAccessibility] = useState(false);
 
   function togglePreference<Group extends OnboardingPreferenceGroup>(
     group: Group,
@@ -977,7 +1050,7 @@ function OnboardingPage() {
     setPreferences((current) => {
       const selected = current[group];
       const nextValues = selected.includes(value)
-        ? selected.filter((entry) => entry !== value)
+        ? selected.filter((entry: string) => entry !== value)
         : [...selected, value];
 
       return {
@@ -992,15 +1065,15 @@ function OnboardingPage() {
     await runServerAction(
       () =>
         actions.saveOnboarding({
-          ageGroup: "26-35",
+          ageGroup: ageGroup || undefined,
           interests: preferences.interests,
-          moods: ["Leicht"],
+          moods: preferences.moods,
           districts: preferences.districts,
-          maxDistance: 10,
+          maxDistance,
           timing: preferences.timing,
           preferredDays: preferences.preferredDays,
-          preferredLanguages: ["DE"],
-          accessibility: false,
+          preferredLanguages: preferences.preferredLanguages,
+          accessibility,
           onboardingComplete,
         }),
       setMessage,
@@ -1012,68 +1085,327 @@ function OnboardingPage() {
     setSubmitting(false);
   }
 
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <h3 className="unveiled-meta">{t.ageLabel}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {(["18-25", "26-35", "36-50", "50+"] as const).map((age) => (
+                <button
+                  key={age}
+                  type="button"
+                  className={cn(
+                    "border-4 border-brand-dark p-6 font-black text-sm transition-all uppercase tracking-widest",
+                    ageGroup === age
+                      ? "bg-brand-dark text-white"
+                      : "bg-white border-brand-dark text-brand-dark hover:bg-brand-yellow",
+                  )}
+                  onClick={() => setAgeGroup(age)}
+                >
+                  {age}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-8">
+            <div>
+              <h3 className="unveiled-meta mb-3 flex items-center gap-2">
+                <Heart className="size-4 fill-brand-dark text-brand-dark" />
+                {t.interestLabel}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {onboardingPreferenceOptions.interests.map((opt) => {
+                  const selected = preferences.interests.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center gap-1 border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        selected
+                          ? "bg-brand-yellow text-brand-dark"
+                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                      )}
+                      onClick={() => togglePreference("interests", opt)}
+                    >
+                      <Heart
+                        className={cn(
+                          "size-3",
+                          selected ? "fill-brand-dark" : "fill-transparent",
+                        )}
+                      />
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <h3 className="unveiled-meta mb-3">{t.moodLabel}</h3>
+              <div className="flex flex-wrap gap-2">
+                {onboardingPreferenceOptions.moods.map((opt) => {
+                  const selected = preferences.moods.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        selected
+                          ? "bg-brand-yellow text-brand-dark"
+                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                      )}
+                      onClick={() => togglePreference("moods", opt)}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-8">
+            <div>
+              <h3 className="unveiled-meta mb-3">{t.districtLabel}</h3>
+              <div className="flex flex-wrap gap-2">
+                {onboardingPreferenceOptions.districts.map((opt) => {
+                  const selected = preferences.districts.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        selected
+                          ? "bg-brand-yellow text-brand-dark"
+                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                      )}
+                      onClick={() => togglePreference("districts", opt)}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="border-4 border-brand-dark bg-brand-cream p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="unveiled-meta">{t.radiusLabel}</h3>
+                <Badge tone="yellow">
+                  {maxDistance} {t.km}
+                </Badge>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="25"
+                value={maxDistance}
+                onChange={(e) => setMaxDistance(parseInt(e.target.value, 10))}
+                className="w-full h-2 bg-brand-grey border-2 border-brand-dark rounded-lg appearance-none cursor-pointer accent-brand-dark"
+              />
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-8">
+            <div>
+              <h3 className="unveiled-meta mb-3">{t.timingLabel}</h3>
+              <div className="flex flex-wrap gap-2">
+                {onboardingPreferenceOptions.timing.map((opt) => {
+                  const selected = preferences.timing.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        selected
+                          ? "bg-brand-yellow text-brand-dark"
+                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                      )}
+                      onClick={() => togglePreference("timing", opt)}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="unveiled-meta mb-3">{t.daysLabel}</h3>
+              <div className="flex flex-wrap gap-2">
+                {onboardingPreferenceOptions.preferredDays.map((opt) => {
+                  const selected = preferences.preferredDays.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={cn(
+                        "w-10 h-10 border-2 border-brand-dark flex items-center justify-center text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        selected
+                          ? "bg-brand-yellow text-brand-dark"
+                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                      )}
+                      onClick={() => togglePreference("preferredDays", opt)}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border-t-2 border-brand-dark/20 pt-6">
+              <div className="flex flex-col sm:flex-row gap-6">
+                <div className="flex-1">
+                  <h3 className="unveiled-meta mb-3">{t.languagePrefLabel}</h3>
+                  <div className="flex gap-2">
+                    {onboardingPreferenceOptions.preferredLanguages.map(
+                      (opt) => {
+                        const selected =
+                          preferences.preferredLanguages.includes(opt);
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            className={cn(
+                              "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                              selected
+                                ? "bg-brand-yellow text-brand-dark"
+                                : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                            )}
+                            onClick={() =>
+                              togglePreference("preferredLanguages", opt)
+                            }
+                          >
+                            {opt}
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-brand-cream border-2 border-brand-dark">
+                  <span className="unveiled-meta mr-4">
+                    {t.accessibilityLabel}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAccessibility(!accessibility)}
+                    className={cn(
+                      "w-12 h-6 rounded-full p-1 transition-all border-2 border-brand-dark relative",
+                      accessibility ? "bg-brand-yellow" : "bg-brand-grey",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-3 h-3 bg-brand-dark rounded-full transition-all absolute top-1",
+                        accessibility ? "right-1.5" : "left-1.5",
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
       <Panel tone="white" className="space-y-6">
         <Badge tone="yellow">{copy.badge}</Badge>
-        <h1 className="headline-lg">{copy.title}</h1>
+        <h1 className="headline-lg">{t.title}</h1>
         <p className="text-sm font-bold uppercase tracking-widest opacity-55">
-          {message}
+          {step === 1 ? t.ageSubtitle : t.subtitle}
         </p>
-      </Panel>
-      <Panel tone="dark" className="space-y-6">
-        <p className="unveiled-meta opacity-55">{copy.preview}</p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            ["interests", "districts", "timing", "preferredDays"] as const
-          ).flatMap((group) =>
-            onboardingPreferenceOptions[group].map((value) => {
-              const selected = (
-                preferences[group] as readonly string[]
-              ).includes(value);
 
-              return (
-                <button
-                  key={`${group}-${value}`}
-                  type="button"
-                  aria-pressed={selected}
-                  className={cn(
-                    "inline-flex items-center gap-1 border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
-                    selected
-                      ? "bg-brand-yellow text-brand-dark"
-                      : "bg-white text-brand-dark opacity-65 hover:opacity-100",
-                  )}
-                  onClick={() => togglePreference(group, value)}
-                >
-                  <Heart
-                    className={cn(
-                      "size-3",
-                      selected ? "fill-brand-dark" : "fill-transparent",
-                    )}
-                  />
-                  {value}
-                </button>
-              );
-            }),
-          )}
+        {/* Progress Bar */}
+        <div className="pt-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-55">
+              Step: {step}/4
+            </span>
+            <span className="text-[10px] font-black opacity-40">
+              {Math.round((step / 4) * 100)}%
+            </span>
+          </div>
+          <div className="h-2 w-full bg-brand-grey border border-brand-dark overflow-hidden">
+            <div
+              className="h-full bg-brand-yellow transition-all duration-500"
+              style={{ width: `${(step / 4) * 100}%` }}
+            />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
+
+        {message !== copy.message ? (
+          <p className="mt-4 text-xs font-bold uppercase tracking-widest text-[#b21d17]">
+            {message}
+          </p>
+        ) : null}
+      </Panel>
+
+      <Panel tone="dark" className="space-y-6 flex flex-col justify-between">
+        <div className="space-y-6">
+          <p className="unveiled-meta opacity-55">{copy.preview}</p>
+          {renderStep()}
+        </div>
+
+        <div className="mt-8 flex gap-3">
+          {step > 1 && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setStep(step - 1)}
+            >
+              {t.back}
+            </Button>
+          )}
           <Button
             type="button"
             variant="yellow"
+            className="flex-1"
             loading={submitting}
-            onClick={() => void submit(true)}
+            onClick={() => {
+              if (step < 4) {
+                setStep(step + 1);
+              } else {
+                void submit(true);
+              }
+            }}
           >
-            {copy.save}
+            {step === 4
+              ? t.finish
+              : step === 1 && ageGroup === ""
+                ? t.skip
+                : t.next}
+            <ArrowRight className="size-4" />
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={submitting}
-            onClick={() => void submit(true)}
-          >
-            {copy.skip}
-          </Button>
+
+          {step < 4 && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={submitting}
+              onClick={() => void submit(true)}
+            >
+              {t.skip}
+            </Button>
+          )}
         </div>
       </Panel>
     </div>
