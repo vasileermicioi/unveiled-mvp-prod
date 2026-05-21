@@ -6,6 +6,17 @@ import { getViewer } from "@/lib/auth-profile";
 import { loadPublicDiscoveryData } from "@/lib/data-access/loaders";
 import { createPublicInitialSurfaceData } from "@/lib/data-access/surface-data";
 
+const venuePartner = Astro.url.searchParams.get("venuePartner");
+const venueToken = Astro.url.searchParams.get("venueToken");
+if (venuePartner && venueToken) {
+  const safeFormat = /^[a-zA-Z0-9\-_]+$/;
+  if (safeFormat.test(venuePartner) && safeFormat.test(venueToken)) {
+    return Astro.redirect(
+      `/venue-check-in/${venuePartner}?token=${venueToken}`,
+    );
+  }
+}
+
 const viewer = await getViewer(Astro.request);
 const initialShell = createShellFromViewer(viewer, "landing");
 const initialDiscovery = createPublicInitialSurfaceData(

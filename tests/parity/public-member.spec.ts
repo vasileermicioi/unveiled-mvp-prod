@@ -195,4 +195,28 @@ test.describe("public and member route parity", () => {
       "unveiled-parity-secret-access.ics",
     );
   });
+
+  test("redirects legacy venue QR parameters to the migrated venue check-in route", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/?venuePartner=parity-partner-venue&venueToken=PARITY-VENUE-CHECK-IN",
+    );
+    await expect(page).toHaveURL(
+      /\/venue-check-in\/parity-partner-venue\?token=PARITY-VENUE-CHECK-IN$/,
+    );
+    await expect(page.getByText("Sign in to check in")).toBeVisible();
+  });
+
+  test("does not redirect legacy venue QR parameters if they are malformed", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/?venuePartner=parity-partner-venue&venueToken=PARITY-VENUE-CHECK-IN;evil=true",
+    );
+    await expect(page).not.toHaveURL(/\/venue-check-in/);
+    await expect(
+      page.getByText("Culture before it goes public."),
+    ).toBeVisible();
+  });
 });
