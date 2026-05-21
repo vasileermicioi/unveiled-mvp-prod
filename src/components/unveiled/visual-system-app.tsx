@@ -1087,6 +1087,7 @@ function MembershipPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
   >();
+  const [checkoutPromoCode, setCheckoutPromoCode] = useState("");
 
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -1152,7 +1153,12 @@ function MembershipPage() {
           ))}
         </div>
         <Field label={copy.promoCode}>
-          <TextInput name="promoCode" placeholder={copy.optional} />
+          <TextInput
+            name="promoCode"
+            placeholder={copy.optional}
+            value={checkoutPromoCode}
+            onChange={(e) => setCheckoutPromoCode(e.target.value)}
+          />
         </Field>
         <Button
           type="button"
@@ -1162,7 +1168,7 @@ function MembershipPage() {
               () =>
                 actions.updateMembership({
                   paymentMethod: selectedPaymentMethod,
-                  promoCode: "",
+                  promoCode: checkoutPromoCode,
                   isFrozen: false,
                   isActive:
                     live.billingDisplay.subscriptionStatusLabel === "Active",

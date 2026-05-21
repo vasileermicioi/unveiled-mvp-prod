@@ -114,3 +114,10 @@ The system SHALL provide server actions or endpoints to record member behavior e
 - **WHEN** a guest or unauthenticated user triggers a behavior tracking event
 - **THEN** the system ignores the tracking call without throwing an error or committing any database changes.
 
+### Requirement: Member Checkout Form Promo Code
+The checkout form SHALL forward the user-entered promo code when initiating a membership update or registration.
+
+#### Scenario: Member submits promo code at checkout
+- **WHEN** a user enters a promo code in the checkout form and clicks continue
+- **THEN** the checkout button action submits the typed promo code value to the update membership server action
+
