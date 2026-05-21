@@ -9,6 +9,7 @@ export type CalendarEventMetadata = {
 };
 
 export type EventCardView = {
+  language?: "DE" | "EN";
   id: string;
   title: string;
   partnerName: string;
@@ -20,7 +21,7 @@ export type EventCardView = {
   creditPrice: number;
   remainingCapacity: number;
   capacityLabel: string;
-  ticketType: "Secret code" | "Voucher" | "Waitlist";
+  ticketType: string;
   description: string;
   saved: boolean;
   ctaLabel: string;
@@ -34,6 +35,7 @@ export type EventCardView = {
 };
 
 export type BookingCardView = {
+  language?: "DE" | "EN";
   id: string;
   eventTitle: string;
   dateLabel: string;

@@ -5,6 +5,7 @@ import type {
   PartnerData,
   PublicDiscoveryData,
 } from "@/lib/data-access/repositories";
+import { normalizeLanguage } from "@/lib/i18n";
 import type {
   EventCardView,
   WaitlistCardView,
@@ -162,6 +163,9 @@ export function createLiveDataView(input: {
   const preferences = input.memberData?.preferences;
   const events = (input.memberData?.discovery.featuredEvents ??
     input.publicData.featuredEvents) as EventCardView[];
+  const language = normalizeLanguage(
+    input.memberData?.profile.language ?? events[0]?.language,
+  );
   const credits = memberProfile?.credits ?? 0;
   const vibes = [
     ...(preferences?.interests ?? []),
@@ -198,20 +202,29 @@ export function createLiveDataView(input: {
     publicPartners: input.publicData.activePartners,
     publicStats: [
       {
-        label: "Events this week",
+        label: language === "DE" ? "Events diese Woche" : "Events this week",
         value: `${input.publicData.stats.upcomingEventCount}`,
-        caption: "Curated by the team",
+        caption:
+          language === "DE" ? "Vom Team kuratiert" : "Curated by the team",
       },
       {
-        label: "Partner venues",
+        label: language === "DE" ? "Partner Venues" : "Partner venues",
         value: `${input.publicData.stats.activePartnerCount}`,
-        caption: "Across Berlin",
+        caption: language === "DE" ? "In ganz Berlin" : "Across Berlin",
       },
-      { label: "Credits included", value: "10", caption: "Every month" },
+      {
+        label: language === "DE" ? "Credits inklusive" : "Credits included",
+        value: "10",
+        caption: language === "DE" ? "Jeden Monat" : "Every month",
+      },
     ],
-    visibleEventCountLabel: `${events.length} visible events`,
+    visibleEventCountLabel:
+      language === "DE"
+        ? `${events.length} sichtbare Events`
+        : `${events.length} visible events`,
     activeRangeLabel:
-      input.memberData?.discovery.activeRangeLabel ?? "Upcoming",
+      input.memberData?.discovery.activeRangeLabel ??
+      (language === "DE" ? "Kommend" : "Upcoming"),
     activeFilterCount: input.memberData?.discovery.activeFilterCount ?? 0,
     discoveryFilters: input.discoveryFilters ?? {},
     savedCount:
@@ -229,7 +242,7 @@ export function createLiveDataView(input: {
       credits,
       monthlyCredits: 10,
       vibes,
-      language: memberProfile?.language ?? "DE",
+      language,
       billingAddress:
         memberProfile?.billingAddress === "Not set"
           ? ""

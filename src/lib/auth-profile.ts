@@ -3,6 +3,11 @@ import { count, eq } from "drizzle-orm";
 import { type Db, db } from "@/db/client";
 import { savedEvents, userProfiles } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import {
+  defaultLanguage,
+  languageFromCookieHeader,
+  normalizeLanguage,
+} from "@/lib/i18n";
 
 export type DomainRole = "USER" | "ADMIN" | "PARTNER";
 export type DomainLanguage = "DE" | "EN";
@@ -86,7 +91,7 @@ export type CreateDefaultProfileInput = {
 const defaultProfileValues = {
   role: "USER" as const,
   credits: 0,
-  language: "DE" as const,
+  language: defaultLanguage,
   subscriptionStatus: "INACTIVE" as const,
   subscriptionPlan: "BASIC_BERLIN",
   onboardingComplete: false,
@@ -207,12 +212,10 @@ export async function getViewer(
   });
 
   if (!session) {
-    const cookies = getHeaders(input).get("cookie");
-    const langMatch = cookies?.match(/unveiled_lang=(DE|EN)/);
-    const language =
-      (langMatch?.[1] as DomainLanguage) ??
-      options.guestLanguage ??
-      defaultProfileValues.language;
+    const language = languageFromCookieHeader(
+      getHeaders(input).get("cookie"),
+      options.guestLanguage ?? defaultProfileValues.language,
+    );
 
     return {
       kind: "guest",
@@ -253,7 +256,7 @@ export async function getViewer(
     },
     role,
     partnerId: profile.partnerId,
-    language: profile.language as DomainLanguage,
+    language: normalizeLanguage(profile.language),
     credits: profile.credits,
     subscriptionStatus: profile.subscriptionStatus,
     subscriptionPlan: profile.subscriptionPlan,

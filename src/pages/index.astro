@@ -9,7 +9,7 @@ import { createPublicInitialSurfaceData } from "@/lib/data-access/surface-data";
 const viewer = await getViewer(Astro.request);
 const initialShell = createShellFromViewer(viewer, "landing");
 const initialDiscovery = createPublicInitialSurfaceData(
-  await loadPublicDiscoveryData(),
+  await loadPublicDiscoveryData({}, undefined, viewer.language),
 );
 const callbackURL = Astro.url.searchParams.get("callbackURL") ?? "/";
 ---

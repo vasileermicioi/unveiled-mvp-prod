@@ -79,6 +79,7 @@ import {
   venueQrCheckInSchema,
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
+import { copyFor } from "@/lib/i18n";
 import { initializeBasicBerlinCheckout } from "@/lib/payments/subscriptions";
 
 const jsonInputSchema = z.record(z.string(), z.unknown());
@@ -303,11 +304,6 @@ export const server = {
     accept: "json",
     input: z.object({ language: z.enum(["DE", "EN"]) }),
     handler: async (input, context) => {
-      context.cookies.set("unveiled_lang", input.language, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-      });
-
       try {
         const viewer = await getViewer(context.request.headers);
         if (viewer.kind === "authenticated") {
@@ -315,14 +311,25 @@ export const server = {
             .update(userProfiles)
             .set({ language: input.language, updatedAt: new Date() })
             .where(eq(userProfiles.userId, viewer.user.id));
+        } else {
+          context.cookies.set("unveiled_lang", input.language, {
+            path: "/",
+            maxAge: 60 * 60 * 24 * 365,
+          });
         }
-      } catch {
-        // Ignore errors for guests or missing profiles
+      } catch (error) {
+        return safeActionError(error);
       }
 
       return actionSuccess({
-        notice: { type: "success", message: "Language updated." },
-        invalidate: [queryKeys.authViewer],
+        notice: {
+          type: "success",
+          message: copyFor(input.language).action.languageUpdated,
+        },
+        invalidate: [
+          queryKeys.authViewer,
+          ...dataAccessInvalidationKeys([{ type: "public-discovery" }]),
+        ],
       });
     },
   }),

@@ -17,7 +17,7 @@ const initialShell = createShellFromViewer(
   ownership.route.id,
 );
 const initialDiscovery = createPublicInitialSurfaceData(
-  await loadPublicDiscoveryData(),
+  await loadPublicDiscoveryData({}, undefined, ownership.viewer.language),
 );
 ---
 

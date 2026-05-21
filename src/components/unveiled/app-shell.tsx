@@ -30,6 +30,7 @@ import type {
   ShellStateView,
   ShellStatusBannerView,
 } from "@/lib/app-shell-view-models";
+import { copyFor } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type ShellActionHandler = (actionId: string) => void;
@@ -185,6 +186,7 @@ export function ShellNavigation({
 }) {
   const isGuest = shell.viewerContext === "guest";
   const isMember = shell.viewerContext === "member";
+  const copy = copyFor(shell.language.selected).shell.nav;
   const isOperational =
     shell.viewerContext === "admin" || shell.viewerContext === "partner";
 
@@ -230,14 +232,14 @@ export function ShellNavigation({
                 {typeof shell.creditCount === "number" ? (
                   <Badge tone="yellow" className="hidden sm:inline-flex">
                     <Coins className="size-3" />
-                    {shell.creditCount} credits
+                    {shell.creditCount} {copy.credits}
                   </Badge>
                 ) : null}
                 {shell.showProfile ? (
                   <ShellActionButton
                     action={{
                       id: "profile",
-                      label: "Profile",
+                      label: copy.profile,
                       icon: "user",
                       active: shell.activeItem === "profile",
                     }}
@@ -262,7 +264,7 @@ export function ShellNavigation({
 
             {shell.showLogout ? (
               <ShellActionButton
-                action={{ id: "logout", label: "Log out", icon: "logout" }}
+                action={{ id: "logout", label: copy.logout, icon: "logout" }}
                 onAction={onAction}
                 iconOnly
               />
@@ -555,6 +557,7 @@ export function ModalShell({
   children: ReactNode;
   onAction?: ShellActionHandler;
 }) {
+  const copy = copyFor("EN").shell.state;
   useEffect(() => {
     if (!modal.open) return;
 
@@ -602,8 +605,8 @@ export function ModalShell({
           <GlobalStateWrapper
             state={{
               state: "loading",
-              title: "Loading",
-              message: "Preparing modal content.",
+              title: copy.loading,
+              message: copy.modalLoading,
               icon: "loader",
             }}
             onAction={onAction}

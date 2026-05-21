@@ -435,9 +435,23 @@ export async function resetParityWorld(database: Db = createParityDb()) {
   const userIds = Object.values(parityFixtureIds.users);
   const eventIds = Object.values(parityFixtureIds.events);
 
+  // Find all events belonging to the parity partner
+  const partnerEvents = await database
+    .select({ id: events.id })
+    .from(events)
+    .where(eq(events.partnerId, parityFixtureIds.partner));
+  const partnerEventIds = partnerEvents.map((e) => e.id);
+  const allEventIds = Array.from(new Set([...eventIds, ...partnerEventIds]));
+
   await database
     .delete(savedEvents)
     .where(inArray(savedEvents.userId, userIds));
+  if (allEventIds.length > 0) {
+    await database
+      .delete(savedEvents)
+      .where(inArray(savedEvents.eventId, allEventIds));
+  }
+
   await database
     .delete(billingAdminOverrides)
     .where(inArray(billingAdminOverrides.userId, userIds));
@@ -447,15 +461,35 @@ export async function resetParityWorld(database: Db = createParityDb()) {
   await database
     .delete(creditLedgerEntries)
     .where(inArray(creditLedgerEntries.userId, userIds));
+
   await database
     .delete(waitlistEntries)
     .where(inArray(waitlistEntries.userId, userIds));
+  if (allEventIds.length > 0) {
+    await database
+      .delete(waitlistEntries)
+      .where(inArray(waitlistEntries.eventId, allEventIds));
+  }
+
   await database.delete(bookings).where(inArray(bookings.userId, userIds));
-  await database.delete(bookings).where(inArray(bookings.eventId, eventIds));
+  if (allEventIds.length > 0) {
+    await database.delete(bookings).where(inArray(bookings.eventId, allEventIds));
+  }
+  await database
+    .delete(bookings)
+    .where(eq(bookings.partnerId, parityFixtureIds.partner));
+
   await database
     .delete(subscriptions)
     .where(inArray(subscriptions.userId, userIds));
-  await database.delete(events).where(inArray(events.id, eventIds));
+
+  if (allEventIds.length > 0) {
+    await database.delete(events).where(inArray(events.id, allEventIds));
+  }
+  await database
+    .delete(events)
+    .where(eq(events.partnerId, parityFixtureIds.partner));
+
   await database
     .delete(userProfiles)
     .where(inArray(userProfiles.userId, userIds));

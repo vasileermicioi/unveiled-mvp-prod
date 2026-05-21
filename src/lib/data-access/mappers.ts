@@ -9,6 +9,7 @@ import type {
   userProfiles,
   waitlistEntries,
 } from "@/db/schema";
+import { copyFor, type UiLanguage } from "@/lib/i18n";
 import type { CalendarEventMetadata } from "@/lib/unveiled-view-models";
 
 export type EventRow = InferSelectModel<typeof events>;
@@ -20,6 +21,7 @@ export type CreditLedgerRow = InferSelectModel<typeof creditLedgerEntries>;
 export type WaitlistRow = InferSelectModel<typeof waitlistEntries>;
 
 export type DataAccessEventView = {
+  language: UiLanguage;
   id: string;
   title: string;
   partnerName: string;
@@ -32,7 +34,7 @@ export type DataAccessEventView = {
   creditPrice: number;
   remainingCapacity: number;
   capacityLabel: string;
-  ticketType: "Secret code" | "Voucher" | "Waitlist";
+  ticketType: string;
   description: string;
   saved: boolean;
   ctaLabel: string;
@@ -59,6 +61,7 @@ export type DataAccessPartnerView = {
 };
 
 export type DataAccessBookingView = {
+  language: UiLanguage;
   id: string;
   eventId: string;
   partnerId: string;
@@ -237,17 +240,21 @@ export function mapEventView(input: {
   saved?: boolean;
   bookingAvailabilityState?: "available" | "frozen";
   membershipCta?: string;
+  language?: UiLanguage;
 }): DataAccessEventView {
+  const language = input.language ?? "EN";
+  const copy = copyFor(language).event;
   const ticketType =
     input.event.remainingCapacity <= 0
-      ? "Waitlist"
+      ? copy.waitlist
       : input.event.ticketType === "VOUCHER"
-        ? "Voucher"
-        : "Secret code";
+        ? copy.voucher
+        : copy.secretCode;
   const partnerName = input.partner?.name ?? "Partner";
 
   return {
     id: input.event.id,
+    language,
     title: input.event.title,
     partnerName,
     partnerId: input.partner?.id ?? input.event.partnerId,
@@ -260,12 +267,13 @@ export function mapEventView(input: {
     remainingCapacity: input.event.remainingCapacity,
     capacityLabel:
       input.event.remainingCapacity <= 0
-        ? "Waitlist"
-        : `${input.event.remainingCapacity} available`,
+        ? copy.waitlist
+        : `${input.event.remainingCapacity} ${copy.available}`,
     ticketType,
     description: input.event.description,
     saved: input.saved ?? false,
-    ctaLabel: input.event.remainingCapacity <= 0 ? "Join waitlist" : "Book now",
+    ctaLabel:
+      input.event.remainingCapacity <= 0 ? copy.joinWaitlist : copy.bookNow,
     mapLabel: `${input.event.neighborhood} ${input.event.category}`,
     lat: input.event.lat ?? undefined,
     lng: input.event.lng ?? undefined,
@@ -302,9 +310,12 @@ export function mapBookingView(input: {
   booking: BookingRow;
   event: EventRow;
   partner: PartnerRow;
+  language?: UiLanguage;
 }): DataAccessBookingView {
+  const language = input.language ?? "EN";
   return {
     id: input.booking.id,
+    language,
     eventId: input.event.id,
     partnerId: input.partner.id,
     eventTitle: input.event.title,

@@ -8,6 +8,7 @@ import {
   requireUser,
   type Viewer,
 } from "@/lib/auth-profile";
+import type { UiLanguage } from "@/lib/i18n";
 import type { DiscoveryFilters } from "./query-keys";
 import {
   getAdminData,
@@ -19,8 +20,9 @@ import {
 export async function loadPublicDiscoveryData(
   filters: DiscoveryFilters = {},
   database: Db = db,
+  language: UiLanguage = "EN",
 ) {
-  return getPublicDiscoveryData(filters, database);
+  return getPublicDiscoveryData(filters, database, language);
 }
 
 export async function loadMemberData(

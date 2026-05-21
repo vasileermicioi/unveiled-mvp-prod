@@ -84,6 +84,7 @@ function publicData(): PublicDiscoveryData {
     featuredEvents: [
       {
         id: "event-1",
+        language: "EN",
         title: "Live Event",
         partnerName: "Venue",
         partnerId: "partner-1",
@@ -139,6 +140,7 @@ function memberData(): MemberData {
     bookings: [
       {
         id: "booking-1",
+        language: "EN",
         eventId: "event-1",
         partnerId: "partner-1",
         eventTitle: "Live Booking",

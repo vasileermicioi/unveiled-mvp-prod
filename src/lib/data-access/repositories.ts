@@ -15,6 +15,7 @@ import type {
   AdminExportRow,
   PartnerGuestExportRow,
 } from "@/lib/admin-operations";
+import { copyFor, type UiLanguage } from "@/lib/i18n";
 import {
   type DataAccessAdminEventView,
   type DataAccessAdminMemberView,
@@ -100,6 +101,7 @@ export type AdminData = {
 export async function getPublicDiscoveryData(
   filters: DiscoveryFilters = {},
   database: Db = db,
+  language: UiLanguage = "EN",
 ): Promise<PublicDiscoveryData> {
   const eventRows = await findEventRows(filters, database);
   const partnerRows = await database
@@ -115,7 +117,11 @@ export async function getPublicDiscoveryData(
 
   return {
     featuredEvents: eventRows.map((event) =>
-      mapEventView({ event, partner: partnerById.get(event.partnerId) }),
+      mapEventView({
+        event,
+        partner: partnerById.get(event.partnerId),
+        language,
+      }),
     ),
     activePartners: partnerRows.map(mapPartnerView),
     categories,
@@ -138,7 +144,7 @@ export async function getMemberData(
 ): Promise<MemberData> {
   const savedOnly = filters.savedOnly === "true";
   const publicFilters = { ...filters, savedOnly: undefined };
-  const [publicData, profileData, savedRows, bookingRows, ledgerRows] =
+  const [basePublicData, profileData, savedRows, bookingRows, ledgerRows] =
     await Promise.all([
       getPublicDiscoveryData(publicFilters, database),
       getProfileData(userId, database),
@@ -153,6 +159,29 @@ export async function getMemberData(
     ]);
 
   const savedEventIds = savedRows.map((row) => row.eventId);
+  const language = profileData.profile.language;
+  const copy = copyFor(language);
+  const publicData: PublicDiscoveryData = {
+    ...basePublicData,
+    featuredEvents: basePublicData.featuredEvents.map((event) => ({
+      ...event,
+      language,
+      capacityLabel:
+        event.remainingCapacity <= 0
+          ? copy.event.waitlist
+          : `${event.remainingCapacity} ${copy.event.available}`,
+      ticketType:
+        event.remainingCapacity <= 0
+          ? copy.event.waitlist
+          : event.ticketType === "Voucher"
+            ? copy.event.voucher
+            : copy.event.secretCode,
+      ctaLabel:
+        event.remainingCapacity <= 0
+          ? copy.event.joinWaitlist
+          : copy.event.bookNow,
+    })),
+  };
   const savedSet = new Set(savedEventIds);
   const bookingAvailable: "available" | "frozen" =
     profileData.profile.subscriptionStatus === "ACTIVE"
@@ -164,7 +193,7 @@ export async function getMemberData(
       saved: savedSet.has(event.id),
       bookingAvailabilityState: bookingAvailable,
       membershipCta:
-        bookingAvailable === "frozen" ? "Update membership" : undefined,
+        bookingAvailable === "frozen" ? copy.event.updateMembership : undefined,
     }))
     .filter((event) => !savedOnly || event.saved);
 
@@ -173,12 +202,14 @@ export async function getMemberData(
       ...publicData,
       savedEventIds,
       featuredEvents: filteredEvents,
-      activeRangeLabel: activeRangeLabel(filters),
+      activeRangeLabel: activeRangeLabel(filters, language),
       resultCount: filteredEvents.length,
       activeFilterCount: activeFilterCount(filters),
     },
     savedEvents: filteredEvents.filter((event) => event.saved),
-    bookings: bookingRows.map(mapBookingView),
+    bookings: bookingRows.map((row) =>
+      mapBookingView({ ...row, language: profileData.profile.language }),
+    ),
     profile: profileData.profile,
     wallet: {
       credits: profileData.profile.credits,
@@ -198,12 +229,17 @@ function activeFilterCount(filters: DiscoveryFilters) {
   ].filter(Boolean).length;
 }
 
-function activeRangeLabel(filters: DiscoveryFilters) {
+function activeRangeLabel(
+  filters: DiscoveryFilters,
+  language: UiLanguage = "EN",
+) {
   if (filters.startDate && filters.endDate)
     return `${filters.startDate} - ${filters.endDate}`;
-  if (filters.startDate) return `From ${filters.startDate}`;
-  if (filters.endDate) return `Until ${filters.endDate}`;
-  return "Upcoming";
+  if (filters.startDate)
+    return `${language === "DE" ? "Ab" : "From"} ${filters.startDate}`;
+  if (filters.endDate)
+    return `${language === "DE" ? "Bis" : "Until"} ${filters.endDate}`;
+  return language === "DE" ? "Kommend" : "Upcoming";
 }
 
 export async function getPartnerData(

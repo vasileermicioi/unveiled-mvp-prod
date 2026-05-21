@@ -85,6 +85,7 @@ import {
   passwordRecoverySchema,
   signupSchema,
 } from "@/lib/forms/schemas";
+import { copyFor, type UiLanguage } from "@/lib/i18n";
 import {
   derivedValues,
   type EventCardView,
@@ -163,9 +164,14 @@ const defaultOnboardingPreferences: OnboardingPreferenceSelections = {
 };
 
 const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
+const LanguageContext = createContext<UiLanguage>("DE");
 
 function useLiveData() {
   return useContext(LiveDataContext);
+}
+
+function useCopy() {
+  return copyFor(useContext(LanguageContext));
 }
 
 async function runServerAction<TData>(
@@ -376,9 +382,10 @@ function LandingPage({
   setView: (view: View) => void;
   callbackURL?: string;
 }) {
+  const copy = useCopy().public;
   const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
-  const [formMessage, setFormMessage] = useState(
-    "Use your member email to continue.",
+  const [formMessage, setFormMessage] = useState<string>(
+    copy.auth.defaultMessage,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -435,12 +442,10 @@ function LandingPage({
             data: { nextPath: payload.nextPath },
             notice: {
               type: "success",
-              message: payload.state?.message ?? "Done.",
+              message: payload.state?.message ?? copy.auth.done,
             },
           })
-        : formFailure(
-            payload?.state?.message ?? "The request could not be completed.",
-          );
+        : formFailure(payload?.state?.message ?? copy.auth.failed);
 
     await applyFormActionResult(actionResult, {
       form,
@@ -463,19 +468,15 @@ function LandingPage({
     <div className="grid gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-16">
       <section className="space-y-8">
         <div className="space-y-5">
-          <Badge tone="white">Berlin membership access</Badge>
-          <h1 className="headline-xl max-w-4xl">
-            Culture before it goes public.
-          </h1>
+          <Badge tone="white">{copy.landingBadge}</Badge>
+          <h1 className="headline-xl max-w-4xl">{copy.landingTitle}</h1>
           <p className="max-w-2xl text-lg font-bold leading-relaxed md:text-2xl">
-            Unveiled recreates the legacy first impression: oversized display
-            type, yellow field, thick black borders, compact labels, and direct
-            CTAs.
+            {copy.landingBody}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button type="button" size="lg" onClick={() => setView("discover")}>
-            Explore access
+            {copy.exploreAccess}
             <ArrowRight />
           </Button>
           <Button
@@ -484,15 +485,11 @@ function LandingPage({
             size="lg"
             onClick={() => setView("how")}
           >
-            How it works
+            {copy.howItWorks}
           </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            "No public feed noise",
-            "Credits included monthly",
-            "Partner redemptions",
-          ].map((label) => (
+          {copy.landingPerks.map((label) => (
             <Badge key={label} tone="yellow" className="justify-center py-2">
               <Check className="size-3" />
               {label}
@@ -514,7 +511,7 @@ function LandingPage({
             }}
             type="button"
           >
-            Login
+            {copy.auth.login}
           </button>
           <button
             className={cn(
@@ -527,7 +524,7 @@ function LandingPage({
             }}
             type="button"
           >
-            Register
+            {copy.auth.register}
           </button>
         </div>
         <div>
@@ -535,26 +532,26 @@ function LandingPage({
             {mode === "login"
               ? "Welcome back"
               : mode === "signup"
-                ? "Create access"
-                : "Reset password"}
+                ? copy.auth.createAccess
+                : copy.auth.resetPassword}
           </p>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
             {mode === "recovery"
-              ? "Enter your email to receive recovery instructions."
-              : "Visible validation and notice panels match the legacy auth surface."}
+              ? copy.auth.recoveryInstructions
+              : copy.auth.helper}
           </p>
         </div>
         <Panel tone="cream" shadow={false} className="p-4">
-          <p className="unveiled-meta">Notice</p>
+          <p className="unveiled-meta">{copy.auth.notice}</p>
           <p className="text-sm font-bold">
-            {formMessage || "Use your member email to continue."}
+            {formMessage || copy.auth.defaultMessage}
           </p>
         </Panel>
         {isSuccess ? (
           <StatePanel
             state="success"
-            title="Check your email"
-            text="If an account exists for that email, recovery instructions have been sent."
+            title={copy.auth.checkEmail}
+            text={copy.auth.recoverySent}
             action={
               <Button
                 type="button"
@@ -564,7 +561,7 @@ function LandingPage({
                   setIsSuccess(false);
                 }}
               >
-                Back to login
+                {copy.auth.backToLogin}
               </Button>
             }
           />
@@ -573,7 +570,7 @@ function LandingPage({
             {mode === "signup" ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="First name"
+                  label={copy.auth.firstName}
                   error={form.formState.errors.firstName?.message}
                 >
                   <TextInput
@@ -582,7 +579,7 @@ function LandingPage({
                   />
                 </Field>
                 <Field
-                  label="Last name"
+                  label={copy.auth.lastName}
                   error={form.formState.errors.lastName?.message}
                 >
                   <TextInput
@@ -592,7 +589,10 @@ function LandingPage({
                 </Field>
               </div>
             ) : null}
-            <Field label="Email" error={form.formState.errors.email?.message}>
+            <Field
+              label={copy.auth.email}
+              error={form.formState.errors.email?.message}
+            >
               <TextInput
                 type="email"
                 placeholder="you@example.com"
@@ -601,7 +601,7 @@ function LandingPage({
             </Field>
             {mode !== "recovery" ? (
               <Field
-                label="Password"
+                label={copy.auth.password}
                 error={form.formState.errors.password?.message}
                 helper={formContracts.landing.visibleMessages[1]}
               >
@@ -616,8 +616,8 @@ function LandingPage({
               {mode === "login"
                 ? "Login"
                 : mode === "signup"
-                  ? "Start membership"
-                  : "Send reset link"}
+                  ? copy.auth.startMembership
+                  : copy.auth.sendReset}
             </Button>
             {mode === "login" ? (
               <button
@@ -625,7 +625,7 @@ function LandingPage({
                 className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
                 onClick={() => setMode("recovery")}
               >
-                Forgot password?
+                {copy.auth.forgotPassword}
               </button>
             ) : mode === "recovery" ? (
               <button
@@ -633,7 +633,7 @@ function LandingPage({
                 className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
                 onClick={() => setMode("login")}
               >
-                Back to login
+                {copy.auth.backToLogin}
               </button>
             ) : null}
           </form>
@@ -654,6 +654,7 @@ function EventCard({
   onOpen: (event: EventCardView) => void;
   onSave?: (event: EventCardView) => void;
 }) {
+  const copy = useCopy().event;
   return (
     <Card
       interactive
@@ -702,7 +703,7 @@ function EventCard({
           <div className="font-display text-3xl font-black uppercase leading-none">
             {event.creditPrice}
             <span className="ml-1 font-sans text-[10px] tracking-widest opacity-35">
-              Credits
+              {copy.credits}
             </span>
           </div>
           <div className="flex gap-2">
@@ -710,7 +711,7 @@ function EventCard({
               type="button"
               variant={event.saved ? "active" : "outline"}
               size="icon-sm"
-              aria-label={event.saved ? "Saved" : "Save"}
+              aria-label={event.saved ? copy.saved : copy.save}
               onClick={() => onSave?.(event)}
             >
               <Bookmark fill={event.saved ? "currentColor" : "none"} />
@@ -737,6 +738,7 @@ function PublicDiscover({
   setView: (view: View) => void;
   onOpenEvent: (event: EventCardView) => void;
 }) {
+  const copy = useCopy();
   const live = useLiveData();
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
@@ -752,19 +754,19 @@ function PublicDiscover({
     resultCountLabel: live.visibleEventCountLabel,
     activeRangeLabel: live.activeRangeLabel,
     activeFilterCount: live.activeFilterCount,
-    filterToggleLabel: "Refine results",
-    mapToggleLabel: "Explore map",
+    filterToggleLabel: copy.discovery.refine,
+    mapToggleLabel: copy.discovery.map,
     emptyState: {
       state: live.isLoading ? "loading" : live.isError ? "error" : "empty",
-      title: "Nothing public yet",
+      title: copy.discovery.noPublicTitle,
       message: live.isLoading
-        ? "Live event data is loading."
+        ? copy.discovery.liveLoading
         : live.isError
-          ? "Live event data could not be loaded."
-          : "No upcoming events are available.",
+          ? copy.discovery.liveError
+          : copy.discovery.noUpcoming,
       retryAction: {
         id: "reset-filters",
-        label: "Reset filters",
+        label: copy.discovery.resetFilters,
       },
     },
   } as const;
@@ -778,7 +780,7 @@ function PublicDiscover({
           events={visible}
           surface="public"
           providerKey={mapProvider.key}
-          actionLabel="View event"
+          actionLabel={copy.discovery.viewEvent}
           onOpenEvent={(event) => {
             onOpenEvent(event);
             setView("member");
@@ -807,12 +809,10 @@ function PublicDiscover({
           className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
         >
           <div>
-            <Badge tone="yellow">What's included</Badge>
-            <h1 className="headline-lg mt-5">This week inside Unveiled.</h1>
+            <Badge tone="yellow">{copy.public.discover.included}</Badge>
+            <h1 className="headline-lg mt-5">{copy.public.discover.title}</h1>
             <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
-              A public preview with stat cards, featured events, category cards,
-              partner cards, and the same no-results support behavior as the
-              legacy access page.
+              {copy.public.discover.body}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
@@ -827,8 +827,7 @@ function PublicDiscover({
             <Card key={category} interactive className="bg-brand-cream p-6">
               <p className="headline-md">{category}</p>
               <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-                Curated drops, partner capacity, and credit pricing stay
-                visible.
+                {copy.public.discover.categoryBody}
               </p>
             </Card>
           ))}
@@ -847,15 +846,21 @@ function PublicDiscover({
 
         <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
           <Panel tone="dark">
-            <p className="unveiled-meta opacity-60">Missing venue</p>
-            <p className="headline-md mt-4">Want a partner added?</p>
+            <p className="unveiled-meta opacity-60">
+              {copy.public.discover.missingVenue}
+            </p>
+            <p className="headline-md mt-4">
+              {copy.public.discover.wantPartner}
+            </p>
             <Button type="button" variant="yellow" className="mt-6">
-              Tell support
+              {copy.public.discover.tellSupport}
               <Mail />
             </Button>
           </Panel>
           <Panel tone="white">
-            <p className="unveiled-meta opacity-60">Active partners</p>
+            <p className="unveiled-meta opacity-60">
+              {copy.public.discover.activePartners}
+            </p>
             <div className="mt-4 grid gap-3">
               {live.publicPartners.map((partner) => (
                 <div
@@ -884,61 +889,53 @@ function PublicDiscover({
 }
 
 function HowItWorks() {
+  const copy = useCopy().public.how;
   return (
     <div className="space-y-8 py-8">
       <Panel tone="white">
-        <Badge tone="yellow">How it works</Badge>
-        <h1 className="headline-lg mt-5 max-w-4xl">
-          Credits become cultural access.
-        </h1>
+        <Badge tone="yellow">{copy.badge}</Badge>
+        <h1 className="headline-lg mt-5 max-w-4xl">{copy.title}</h1>
       </Panel>
       <div className="grid gap-5 md:grid-cols-3">
-        {["Pick a moment", "Spend credits", "Redeem at venue"].map(
-          (title, index) => (
-            <Card key={title} className="p-6">
-              <p className="font-display text-7xl font-black leading-none">
-                0{index + 1}
-              </p>
-              <h2 className="mt-5 font-display text-3xl font-black uppercase leading-none">
-                {title}
-              </h2>
-              <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-                Step cards keep the same compact label hierarchy and thick
-                border rhythm.
-              </p>
-            </Card>
-          ),
-        )}
+        {copy.steps.map((title, index) => (
+          <Card key={title} className="p-6">
+            <p className="font-display text-7xl font-black leading-none">
+              0{index + 1}
+            </p>
+            <h2 className="mt-5 font-display text-3xl font-black uppercase leading-none">
+              {title}
+            </h2>
+            <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
+              {copy.stepBody}
+            </p>
+          </Card>
+        ))}
       </div>
       <Panel
         tone="dark"
         className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center"
       >
-        <p className="headline-md">Membership, not a public marketplace.</p>
-        <Badge tone="yellow">10 credits monthly</Badge>
+        <p className="headline-md">{copy.membership}</p>
+        <Badge tone="yellow">{copy.monthlyCredits}</Badge>
       </Panel>
     </div>
   );
 }
 
 function FaqPage({ setView }: { setView: (view: View) => void }) {
+  const copy = useCopy().public.faq;
   return (
     <div className="space-y-8 py-8">
       <Button type="button" variant="ghost" onClick={() => setView("landing")}>
         <ArrowLeft />
-        Back
+        {copy.back}
       </Button>
       <Panel tone="white">
         <Badge tone="yellow">FAQ</Badge>
-        <h1 className="headline-lg mt-5">Questions before access?</h1>
+        <h1 className="headline-lg mt-5">{copy.title}</h1>
       </Panel>
       <div className="grid gap-4">
-        {[
-          "How do credits work?",
-          "Can I cancel membership?",
-          "Where do redemption codes appear?",
-          "What if an event is full?",
-        ].map((question, index) => (
+        {copy.questions.map((question, index) => (
           <details
             key={question}
             className="border-4 border-brand-dark bg-white p-5 open:bg-brand-cream"
@@ -949,8 +946,7 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
               <ChevronDown className="size-5" />
             </summary>
             <p className="mt-4 max-w-3xl text-sm font-bold leading-6 opacity-65">
-              Answers render as bordered accordion rows with direct support
-              access at support@unveiled.berlin.
+              {copy.answer}
             </p>
           </details>
         ))}
@@ -960,10 +956,9 @@ function FaqPage({ setView }: { setView: (view: View) => void }) {
 }
 
 function OnboardingPage() {
+  const copy = useCopy().onboarding;
   const live = useLiveData();
-  const [message, setMessage] = useState(
-    "Choose a few preferences to personalize your feed.",
-  );
+  const [message, setMessage] = useState<string>(copy.message);
   const [submitting, setSubmitting] = useState(false);
   const [preferences, setPreferences] =
     useState<OnboardingPreferenceSelections>(defaultOnboardingPreferences);
@@ -1013,14 +1008,14 @@ function OnboardingPage() {
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
       <Panel tone="white" className="space-y-6">
-        <Badge tone="yellow">Onboarding</Badge>
-        <h1 className="headline-lg">Make the feed yours.</h1>
+        <Badge tone="yellow">{copy.badge}</Badge>
+        <h1 className="headline-lg">{copy.title}</h1>
         <p className="text-sm font-bold uppercase tracking-widest opacity-55">
           {message}
         </p>
       </Panel>
       <Panel tone="dark" className="space-y-6">
-        <p className="unveiled-meta opacity-55">Preference preview</p>
+        <p className="unveiled-meta opacity-55">{copy.preview}</p>
         <div className="flex flex-wrap gap-2">
           {(
             ["interests", "districts", "timing", "preferredDays"] as const
@@ -1062,7 +1057,7 @@ function OnboardingPage() {
             loading={submitting}
             onClick={() => void submit(true)}
           >
-            Save preferences
+            {copy.save}
           </Button>
           <Button
             type="button"
@@ -1070,7 +1065,7 @@ function OnboardingPage() {
             disabled={submitting}
             onClick={() => void submit(true)}
           >
-            Skip for now
+            {copy.skip}
           </Button>
         </div>
       </Panel>
@@ -1079,10 +1074,9 @@ function OnboardingPage() {
 }
 
 function MembershipPage() {
+  const copy = useCopy().public.membership;
   const live = useLiveData();
-  const [message, setMessage] = useState(
-    "Choose a payment method to start checkout.",
-  );
+  const [message, setMessage] = useState<string>(copy.defaultMessage);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
   >();
@@ -1090,13 +1084,12 @@ function MembershipPage() {
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
       <Panel tone="white" className="space-y-6">
-        <Badge tone="yellow">Membership</Badge>
+        <Badge tone="yellow">{copy.badge}</Badge>
         <div>
-          <h1 className="headline-lg">Basic Berlin</h1>
-          <p className="mt-3 text-4xl font-black">29€/mo</p>
+          <h1 className="headline-lg">{copy.plan}</h1>
+          <p className="mt-3 text-4xl font-black">{copy.price}</p>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
-            Monthly credits, verified partner access, and member-only event
-            drops.
+            {copy.body}
           </p>
         </div>
         <Badge
@@ -1110,12 +1103,7 @@ function MembershipPage() {
         </Badge>
         <Divider />
         <div className="grid gap-3">
-          {[
-            "Curated Berlin culture access",
-            "Credits refreshed monthly",
-            "Password and voucher redemption",
-            "Support at support@unveiled.berlin",
-          ].map((perk) => (
+          {copy.perks.map((perk) => (
             <Badge key={perk} tone="white" className="justify-start">
               <Check className="size-3" />
               {perk}
@@ -1126,10 +1114,9 @@ function MembershipPage() {
 
       <Panel tone="cream" className="space-y-5">
         <div>
-          <p className="unveiled-meta">Payment method</p>
+          <p className="unveiled-meta">{copy.paymentMethod}</p>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
-            Sign in before provider checkout initializes. No payment method is
-            preselected.
+            {copy.paymentHelper}
           </p>
         </div>
         <div className="grid gap-3">
@@ -1157,8 +1144,8 @@ function MembershipPage() {
             </button>
           ))}
         </div>
-        <Field label="Promo code">
-          <TextInput name="promoCode" placeholder="Optional" />
+        <Field label={copy.promoCode}>
+          <TextInput name="promoCode" placeholder={copy.optional} />
         </Field>
         <Button
           type="button"
@@ -1178,7 +1165,7 @@ function MembershipPage() {
             )
           }
         >
-          Continue to checkout
+          {copy.continueCheckout}
         </Button>
         <p className="text-xs font-bold uppercase tracking-widest opacity-55">
           {message}
@@ -1189,6 +1176,7 @@ function MembershipPage() {
 }
 
 function DiscoveryFilterPanel() {
+  const copy = useCopy().discovery;
   const live = useLiveData();
   const [filters, setFilters] = useState<DiscoveryFilters>(
     live.discoveryFilters,
@@ -1205,37 +1193,37 @@ function DiscoveryFilterPanel() {
       shadow={false}
       className="grid gap-4 p-4 md:grid-cols-4"
     >
-      <Field label="Start date">
+      <Field label={copy.startDate}>
         <TextInput
           type="date"
           value={filters.startDate ?? ""}
           onChange={(event) => updateFilter({ startDate: event.target.value })}
         />
       </Field>
-      <Field label="End date">
+      <Field label={copy.endDate}>
         <TextInput
           type="date"
           value={filters.endDate ?? ""}
           onChange={(event) => updateFilter({ endDate: event.target.value })}
         />
       </Field>
-      <Field label="Category">
+      <Field label={copy.category}>
         <SelectInput
           value={filters.category ?? ""}
           onChange={(event) => updateFilter({ category: event.target.value })}
         >
-          <option value="">All categories</option>
+          <option value="">{copy.allCategories}</option>
           {live.publicCategories.map((category) => (
             <option key={category}>{category}</option>
           ))}
         </SelectInput>
       </Field>
-      <Field label="Partner">
+      <Field label={copy.partner}>
         <SelectInput
           value={filters.partnerId ?? ""}
           onChange={(event) => updateFilter({ partnerId: event.target.value })}
         >
-          <option value="">All partners</option>
+          <option value="">{copy.allPartners}</option>
           {live.publicPartnerOptions.map((partner) => (
             <option key={partner.id} value={partner.id}>
               {partner.name}
@@ -1254,6 +1242,7 @@ function BookingModal({
   event: EventCardView;
   onClose: () => void;
 }) {
+  const copy = useCopy().booking;
   const live = useLiveData();
   const [count, setCount] = useState(1);
   const [result, setResult] = useState<
@@ -1290,16 +1279,16 @@ function BookingModal({
           <div className="mx-auto max-w-5xl space-y-10 text-center">
             <h2 className="headline-xl">
               {result?.state === "waitlist"
-                ? "Waitlist success"
-                : "Booking success"}
+                ? copy.waitlistSuccess
+                : copy.success}
             </h2>
             <div className="grid gap-6 text-left md:grid-cols-2">
               {result?.state === "confirmed" ? (
                 <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
                   <p className="unveiled-meta opacity-55">
                     {event.ticketType === "Voucher"
-                      ? "Ticket code"
-                      : "Password to enter"}
+                      ? copy.ticketCode
+                      : copy.passwordToEnter}
                   </p>
                   <p className="mt-6 break-all font-display text-5xl font-black uppercase">
                     {result.code}
@@ -1322,15 +1311,15 @@ function BookingModal({
                     onClick={() => setCopied(true)}
                   >
                     {copied ? <Check /> : <Copy />}
-                    {copied ? "Copied" : "Copy code"}
+                    {copied ? copy.copied : copy.copyCode}
                   </Button>
                 </Panel>
               ) : (
                 <Panel tone="white">
-                  <p className="unveiled-meta opacity-55">Waitlist</p>
-                  <p className="headline-md mt-5">You're on the list</p>
+                  <p className="unveiled-meta opacity-55">{copy.waitlist}</p>
+                  <p className="headline-md mt-5">{copy.onList}</p>
                   <p className="mt-4 text-sm font-bold opacity-70">
-                    No credits were debited and capacity was not changed.
+                    {copy.waitlistBody}
                   </p>
                 </Panel>
               )}
@@ -1340,8 +1329,8 @@ function BookingModal({
                   className="flex flex-col justify-between gap-8"
                 >
                   <div>
-                    <p className="unveiled-meta opacity-55">Save the date</p>
-                    <p className="headline-md mt-5">Mark the moment</p>
+                    <p className="unveiled-meta opacity-55">{copy.saveDate}</p>
+                    <p className="headline-md mt-5">{copy.markMoment}</p>
                   </div>
                   <Button
                     type="button"
@@ -1350,13 +1339,13 @@ function BookingModal({
                     onClick={() => downloadCalendarFile(calendarMetadata)}
                   >
                     <Calendar />
-                    Sync to life
+                    {copy.sync}
                   </Button>
                 </Panel>
               ) : null}
             </div>
             <Button type="button" variant="link" onClick={onClose}>
-              Return to feed
+              {copy.returnFeed}
             </Button>
           </div>
         </div>
@@ -1375,23 +1364,18 @@ function BookingModal({
               {event.description}
             </p>
             <div className="border-t-2 border-brand-dark/15 pt-6">
-              <p className="unveiled-meta opacity-45">Location</p>
+              <p className="unveiled-meta opacity-45">{copy.location}</p>
               <p className="mt-2 text-2xl font-black uppercase tracking-tight">
                 {event.address}
               </p>
             </div>
             <Panel tone="cream" shadow={false} className="p-4">
-              <p className="unveiled-meta">Gate copy</p>
-              <p className="mt-2 text-sm font-bold">
-                Active membership required. Password and voucher redemption
-                states are rendered after booking.
-              </p>
+              <p className="unveiled-meta">{copy.gateCopy}</p>
+              <p className="mt-2 text-sm font-bold">{copy.gateMessage}</p>
               {result?.state === "failure" ? (
                 <p className="mt-4 border-t-2 border-brand-dark/20 pt-4 text-sm font-black uppercase text-red-700">
                   {result.message}
-                  {result.waitlistAvailable
-                    ? " Join the waitlist instead."
-                    : ""}
+                  {result.waitlistAvailable ? copy.joinInstead : ""}
                 </p>
               ) : null}
             </Panel>
@@ -1399,7 +1383,7 @@ function BookingModal({
 
           <Panel tone="dark" className="space-y-8">
             <div className="flex items-center justify-between gap-4">
-              <span className="unveiled-meta">Tickets</span>
+              <span className="unveiled-meta">{copy.tickets}</span>
               <div className="flex items-center gap-7 font-display text-5xl font-black">
                 <button
                   type="button"
@@ -1418,7 +1402,7 @@ function BookingModal({
             </div>
             <Divider className="bg-brand-yellow/25" />
             <div className="flex items-end justify-between gap-4">
-              <span className="unveiled-meta opacity-55">Total</span>
+              <span className="unveiled-meta opacity-55">{copy.total}</span>
               <span className="font-display text-5xl font-black uppercase">
                 {total} credits
               </span>
@@ -1434,9 +1418,7 @@ function BookingModal({
                 if (membershipBlocked) {
                   setResult({
                     state: "failure",
-                    message:
-                      event.membershipCta ??
-                      "An active membership is required.",
+                    message: event.membershipCta ?? copy.membershipRequired,
                   });
                   return;
                 }
@@ -1457,7 +1439,7 @@ function BookingModal({
                 if (response.error || !response.data) {
                   setResult({
                     state: "failure",
-                    message: "The request could not be completed.",
+                    message: copy.requestFailed,
                   });
                   return;
                 }
@@ -1465,9 +1447,7 @@ function BookingModal({
                 if (!response.data.ok) {
                   setResult({
                     state: "failure",
-                    message:
-                      response.data.formError ??
-                      "Check the highlighted fields.",
+                    message: response.data.formError ?? copy.checkFields,
                     waitlistAvailable: event.remainingCapacity === 0,
                   });
                   return;
@@ -1493,9 +1473,9 @@ function BookingModal({
               {submitting ? (
                 <Loader2 className="animate-spin" />
               ) : event.remainingCapacity === 0 ? (
-                "Join waitlist"
+                copy.joinWaitlist
               ) : (
-                "Confirm access"
+                copy.confirm
               )}
               <ArrowRight />
             </Button>
@@ -1517,6 +1497,7 @@ function MemberFeed({
   bookingEvent: EventCardView | null;
   setBookingEvent: (event: EventCardView | null) => void;
 }) {
+  const copy = useCopy();
   const live = useLiveData();
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
@@ -1532,17 +1513,19 @@ function MemberFeed({
     resultCountLabel: live.visibleEventCountLabel,
     activeRangeLabel: live.activeRangeLabel,
     activeFilterCount: live.activeFilterCount,
-    filterToggleLabel: "Refine results",
-    mapToggleLabel: "Explore map",
+    filterToggleLabel: copy.discovery.refine,
+    mapToggleLabel: copy.discovery.map,
     emptyState: {
       state: live.isLoading ? "loading" : live.isError ? "error" : "empty",
-      title: live.isLoading ? "Loading events" : "No matching events",
+      title: live.isLoading
+        ? copy.discovery.loadingEvents
+        : copy.discovery.noMatchingEvents,
       message: live.isError
-        ? "Live event data could not be loaded."
-        : "No live events match the current filters.",
+        ? copy.discovery.liveError
+        : copy.discovery.noMatches,
       retryAction: {
         id: "reset-all",
-        label: "Reset all",
+        label: copy.discovery.resetAll,
       },
     },
   } as const;
@@ -1560,14 +1543,14 @@ function MemberFeed({
   return (
     <div className="space-y-6">
       <Panel tone="white">
-        <Badge tone="yellow">Member feed</Badge>
-        <h1 className="headline-lg mt-5">Today in Berlin.</h1>
+        <Badge tone="yellow">{copy.member.feedBadge}</Badge>
+        <h1 className="headline-lg mt-5">{copy.member.feedTitle}</h1>
       </Panel>
       {gateBlocked ? (
         <Panel tone="cream" shadow={false} className="p-4">
-          <p className="unveiled-meta">Membership gate</p>
+          <p className="unveiled-meta">{copy.member.membershipGate}</p>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest">
-            Update billing to book or join waitlists.
+            {copy.member.billingGate}
           </p>
         </Panel>
       ) : null}
@@ -1586,7 +1569,7 @@ function MemberFeed({
             events={visible}
             surface="member"
             providerKey={mapProvider.key}
-            actionLabel="Continue to booking"
+            actionLabel={copy.discovery.continueBooking}
             selectedMarkerIdOverride={selectedEvent?.id ?? null}
             onOpenEvent={(event) => {
               setSelectedEvent(event);
@@ -1637,11 +1620,15 @@ function MemberFeed({
           ))}
           {visible.length === 0 ? (
             <StatePanel
-              title={live.isLoading ? "Loading events" : "No matching events"}
+              title={
+                live.isLoading
+                  ? copy.discovery.loadingEvents
+                  : copy.discovery.noMatchingEvents
+              }
               text={
                 live.isError
-                  ? "Live event data could not be loaded."
-                  : "No live events match the current filters."
+                  ? copy.discovery.liveError
+                  : copy.discovery.noMatches
               }
               state={
                 live.isLoading ? "loading" : live.isError ? "error" : "empty"
@@ -1652,7 +1639,7 @@ function MemberFeed({
                   variant="secondary"
                   onClick={live.refetchActiveSurface}
                 >
-                  Reset all
+                  {copy.discovery.resetAll}
                 </Button>
               }
             />
@@ -1671,13 +1658,16 @@ function MemberFeed({
 }
 
 function BookingsPage() {
+  const allCopy = useCopy();
+  const copy = allCopy.member;
+  const bookingCopy = allCopy.booking;
   const live = useLiveData();
 
   return (
     <div className="space-y-8 py-8">
       <Panel tone="white">
-        <Badge tone="yellow">My bookings</Badge>
-        <h1 className="headline-lg mt-5">Your access codes.</h1>
+        <Badge tone="yellow">{copy.bookingsBadge}</Badge>
+        <h1 className="headline-lg mt-5">{copy.bookingsTitle}</h1>
       </Panel>
       <div className="grid gap-5 lg:grid-cols-2">
         {live.bookings.map((booking) => (
@@ -1698,7 +1688,9 @@ function BookingsPage() {
                   {booking.partnerName}
                 </p>
               </div>
-              <Badge tone="white">{booking.ticketCount} tickets</Badge>
+              <Badge tone="white">
+                {booking.ticketCount} {copy.tickets}
+              </Badge>
             </div>
             <Divider className="my-6" />
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1716,7 +1708,7 @@ function BookingsPage() {
                   </p>
                 ) : null}
                 <p className="mt-2 text-xs font-bold uppercase opacity-45">
-                  {booking.totalCredits} credits spent
+                  {booking.totalCredits} {copy.creditsSpent}
                 </p>
               </div>
               <Button
@@ -1724,7 +1716,7 @@ function BookingsPage() {
                 variant={booking.copied ? "copied" : "secondary"}
               >
                 {booking.copied ? <Check /> : <Copy />}
-                {booking.copied ? "Copied" : "Copy code"}
+                {booking.copied ? bookingCopy.copied : bookingCopy.copyCode}
               </Button>
             </div>
           </Card>
@@ -1745,7 +1737,7 @@ function BookingsPage() {
         ))}
       </div>
       <Panel tone="white">
-        <Badge tone="yellow">Credit ledger</Badge>
+        <Badge tone="yellow">{copy.creditLedger}</Badge>
         <div className="mt-5 space-y-3">
           {live.creditLedgerEntries.map((entry) => (
             <TableRow key={entry.id}>
@@ -1755,7 +1747,9 @@ function BookingsPage() {
               </span>
               <span>{entry.createdLabel}</span>
               <span>
-                {entry.actorLabel ? `Actor: ${entry.actorLabel}` : "Member"}
+                {entry.actorLabel
+                  ? `Actor: ${entry.actorLabel}`
+                  : copy.memberActor}
               </span>
               <span className="font-black">
                 {entry.amount > 0 ? "+" : ""}
@@ -1765,8 +1759,8 @@ function BookingsPage() {
           ))}
           {live.creditLedgerEntries.length === 0 ? (
             <StatePanel
-              title="No credit history"
-              text="Ledger entries will appear after credits are added or spent."
+              title={copy.noCreditHistory}
+              text={copy.ledgerEmpty}
               state="empty"
             />
           ) : null}
@@ -1774,16 +1768,12 @@ function BookingsPage() {
       </Panel>
       {live.bookings.length === 0 ? (
         <StatePanel
-          title={live.isLoading ? "Loading bookings" : "No bookings yet"}
-          text={
-            live.isError
-              ? "Live booking data could not be loaded."
-              : "Your access codes will appear after booking."
-          }
+          title={live.isLoading ? copy.loadingBookings : copy.noBookings}
+          text={live.isError ? copy.bookingsError : copy.bookingsEmpty}
           state={live.isLoading ? "loading" : live.isError ? "error" : "empty"}
           action={
             <Button type="button" variant="primary">
-              Browse events
+              {copy.browseEvents}
             </Button>
           }
         />
@@ -1792,9 +1782,7 @@ function BookingsPage() {
         tone="dark"
         className="flex flex-wrap items-center justify-between gap-4"
       >
-        <span className="unveiled-meta opacity-60">
-          Questions about your ticket?
-        </span>
+        <span className="unveiled-meta opacity-60">{copy.ticketQuestion}</span>
         <Button type="button" variant="yellow">
           support@unveiled.berlin
           <Mail />
@@ -1805,18 +1793,19 @@ function BookingsPage() {
 }
 
 function ProfilePage() {
+  const copy = useCopy().profile;
   const live = useLiveData();
-  const [profileMessage, setProfileMessage] = useState(
-    "Profile changes submit through server actions.",
+  const [profileMessage, setProfileMessage] = useState<string>(
+    copy.profileMessage,
   );
-  const [membershipMessage, setMembershipMessage] = useState(
-    "Choose a payment method to start Stripe subscription checkout.",
+  const [membershipMessage, setMembershipMessage] = useState<string>(
+    copy.membershipMessage,
   );
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "EXPRESS" | "PAYPAL" | "CARD" | "SEPA" | undefined
   >();
-  const [preferenceMessage, setPreferenceMessage] = useState(
-    "Preference and onboarding state can be saved from this panel.",
+  const [preferenceMessage, setPreferenceMessage] = useState<string>(
+    copy.preferenceMessage,
   );
 
   return (
@@ -1833,7 +1822,7 @@ function ProfilePage() {
           </p>
         </div>
         <StatPanel
-          label="Wallet"
+          label={copy.wallet}
           value={`${live.profile.credits}`}
           caption={`${live.profile.credits} credits`}
         />
@@ -1862,27 +1851,27 @@ function ProfilePage() {
             );
           }}
         >
-          <p className="unveiled-meta">Identity</p>
+          <p className="unveiled-meta">{copy.identity}</p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
             {profileMessage}
           </p>
-          <Field label="Name" className="mt-5">
+          <Field label={copy.name} className="mt-5">
             <TextInput name="firstName" defaultValue={live.profile.firstName} />
           </Field>
-          <Field label="Last name" className="mt-4">
+          <Field label={copy.lastName} className="mt-4">
             <TextInput name="lastName" defaultValue={live.profile.lastName} />
           </Field>
-          <Field label="Email" className="mt-4">
+          <Field label={copy.email} className="mt-4">
             <TextInput defaultValue={live.profile.email} disabled />
           </Field>
-          <Field label="Billing address" className="mt-4">
+          <Field label={copy.billingAddress} className="mt-4">
             <TextInput
               name="billingAddress"
               defaultValue={live.profile.billingAddress}
               placeholder="Berlin"
             />
           </Field>
-          <Field label="Language" className="mt-4">
+          <Field label={copy.language} className="mt-4">
             <SelectInput name="language" defaultValue={live.profile.language}>
               <option value="DE">DE</option>
               <option value="EN">EN</option>
@@ -1894,16 +1883,16 @@ function ProfilePage() {
               type="checkbox"
               defaultChecked={live.profile.newsletterOptIn}
             />
-            Newsletter
+            {copy.newsletter}
           </label>
           <a
             className="mt-4 block text-[10px] font-black uppercase tracking-widest underline"
             href="/api/account/password-recovery"
           >
-            Password recovery
+            {copy.passwordRecovery}
           </a>
           <Button type="submit" className="mt-5" variant="secondary">
-            Save profile
+            {copy.saveProfile}
           </Button>
         </Panel>
         <Panel
@@ -1928,16 +1917,16 @@ function ProfilePage() {
             );
           }}
         >
-          <p className="unveiled-meta">Billing</p>
+          <p className="unveiled-meta">{copy.billing}</p>
           <p className="headline-md mt-5">{live.billingDisplay.planLabel}</p>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
             {live.billingDisplay.planPriceLabel} {" // "}
-            {live.profile.monthlyCredits} credits monthly
+            {live.profile.monthlyCredits} {copy.creditsMonthly}
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
             {live.billingDisplay.subscriptionStatusLabel} {" // "}
             {live.billingDisplay.paymentMethodDisplay} {" // "}
-            renews {live.billingDisplay.nextBillDateLabel}
+            {copy.renews} {live.billingDisplay.nextBillDateLabel}
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
             {membershipMessage}
@@ -1975,7 +1964,7 @@ function ProfilePage() {
               </button>
             </div>
             <div>
-              <p className="unveiled-meta opacity-55">Standard</p>
+              <p className="unveiled-meta opacity-55">{copy.standard}</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {(["CARD", "SEPA"] as const).map((method) => (
                   <button
@@ -1996,25 +1985,25 @@ function ProfilePage() {
               {selectedPaymentMethod === "CARD" ? (
                 <Panel tone="cream" shadow={false} className="mt-3 p-3">
                   <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                    Stripe card fields mount here.
+                    {copy.stripeCard}
                   </p>
                 </Panel>
               ) : null}
               {selectedPaymentMethod === "SEPA" ? (
                 <Panel tone="cream" shadow={false} className="mt-3 p-3">
                   <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                    Stripe SEPA mandate and IBAN controls mount here.
+                    {copy.stripeSepa}
                   </p>
                 </Panel>
               ) : null}
             </div>
           </div>
-          <Field label="Promo code" className="mt-4">
+          <Field label={copy.promoCode} className="mt-4">
             <TextInput name="promoCode" placeholder="Optional" />
           </Field>
           <Button type="submit" variant="secondary" className="mt-6">
             <CreditCard />
-            Start checkout
+            {copy.startCheckout}
           </Button>
         </Panel>
         <Panel
@@ -2042,7 +2031,7 @@ function ProfilePage() {
             );
           }}
         >
-          <p className="unveiled-meta opacity-55">Vibes</p>
+          <p className="unveiled-meta opacity-55">{copy.vibes}</p>
           <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-60">
             {preferenceMessage}
           </p>
@@ -2054,15 +2043,15 @@ function ProfilePage() {
               </Badge>
             ))}
             {live.profile.vibes.length === 0 ? (
-              <Badge tone="white">No preferences yet</Badge>
+              <Badge tone="white">{copy.noPreferences}</Badge>
             ) : null}
           </div>
           <div className="mt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">
             <Loader2 className="size-4 animate-spin" />
-            Loading preference preview
+            {copy.loadingPreview}
           </div>
           <Button type="submit" variant="yellow" className="mt-6">
-            Save onboarding
+            {copy.saveOnboarding}
           </Button>
         </Panel>
       </div>
@@ -2883,6 +2872,60 @@ function useLiveDataView(
   });
 }
 
+function localizeShellViewModel(
+  shell: AppShellViewModel,
+  language: UiLanguage,
+  counts: { savedCount: number; creditCount: number },
+): AppShellViewModel {
+  const copy = copyFor(language);
+  const navCopy = copy.shell.nav;
+
+  const labelForItem = (
+    itemId: AppShellViewModel["navItems"][number]["itemId"],
+  ) => {
+    if (itemId === "discover") return navCopy.discover;
+    if (itemId === "how") return navCopy.how;
+    if (itemId === "membership") return navCopy.membership;
+    if (itemId === "faq") return navCopy.faq;
+    if (itemId === "member") return navCopy.member;
+    if (itemId === "saved") return navCopy.saved;
+    if (itemId === "bookings") return navCopy.bookings;
+    if (itemId === "profile") return navCopy.profile;
+    return itemId === "admin"
+      ? "Admin"
+      : itemId === "partner"
+        ? "Partner"
+        : shell.logo.alt;
+  };
+
+  return {
+    ...shell,
+    language: {
+      ...shell.language,
+      selected: language,
+    },
+    tagline:
+      shell.viewerContext === "guest" ? copy.shell.tagline : shell.tagline,
+    savedCount: counts.savedCount,
+    creditCount:
+      shell.viewerContext === "member" ? counts.creditCount : shell.creditCount,
+    navItems: shell.navItems.map((item) => ({
+      ...item,
+      label: labelForItem(item.itemId),
+      count: item.itemId === "saved" ? counts.savedCount : item.count,
+    })),
+    primaryAction: shell.primaryAction
+      ? {
+          ...shell.primaryAction,
+          label:
+            shell.primaryAction.id === "login"
+              ? navCopy.login
+              : navCopy.becomeMember,
+        }
+      : undefined,
+  };
+}
+
 function VisualSystemAppContent({
   initialShell,
   initialDiscovery,
@@ -2903,6 +2946,9 @@ function VisualSystemAppContent({
     null,
   );
   const [bookingEvent, setBookingEvent] = useState<EventCardView | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<UiLanguage>(
+    initialShell?.language.selected ?? "DE",
+  );
   const live = useLiveDataView(
     initialDiscovery,
     discoveryFilters,
@@ -2913,23 +2959,14 @@ function VisualSystemAppContent({
     savedCount: live.savedCount,
     creditCount: live.profile.credits,
   });
-  const shell = initialShell
-    ? {
-        ...initialShell,
-        language: {
-          ...initialShell.language,
-          selected: live.profile.language ?? initialShell.language.selected,
-        },
-        savedCount: live.savedCount,
-        creditCount:
-          initialShell.viewerContext === "member"
-            ? live.profile.credits
-            : initialShell.creditCount,
-        navItems: initialShell.navItems.map((item) =>
-          item.itemId === "saved" ? { ...item, count: live.savedCount } : item,
-        ),
-      }
-    : demoShell;
+  const shell = localizeShellViewModel(
+    initialShell ?? demoShell,
+    selectedLanguage,
+    {
+      savedCount: live.savedCount,
+      creditCount: live.profile.credits,
+    },
+  );
   const memberPageShell =
     initialShell &&
     view === "member" &&
@@ -2957,13 +2994,8 @@ function VisualSystemAppContent({
     if (actionId.startsWith("language:")) {
       const language = actionId.slice("language:".length);
       if (language === "DE" || language === "EN") {
-        await actions.updateProfile({
-          firstName: live.profile.firstName,
-          lastName: live.profile.lastName,
-          language,
-          billingAddress: live.profile.billingAddress,
-          newsletterOptIn: live.profile.newsletterOptIn,
-        });
+        setSelectedLanguage(language);
+        await actions.setLanguage({ language });
         live.refetchActiveSurface();
       }
       return;
@@ -2982,55 +3014,57 @@ function VisualSystemAppContent({
 
   return (
     <LiveDataContext.Provider value={live}>
-      <AppShell shell={shell} onAction={navigateShell}>
-        <div className="pt-6">
-          {!initialShell ? (
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
-              {shellDemoViews.map((item) => (
-                <Button
-                  key={item.id}
-                  type="button"
-                  size="sm"
-                  variant={view === item.id ? "active" : "secondary"}
-                  onClick={() => setView(item.id as View)}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <PageShell page={pageShell} onAction={navigateShell}>
-          {view === "landing" ? (
-            <LandingPage setView={setView} callbackURL={callbackURL} />
-          ) : null}
-          {view === "discover" ? (
-            <PublicDiscover
-              setView={setView}
-              onOpenEvent={(event) => {
-                setSelectedEvent(event);
-                setBookingEvent(event);
-              }}
-            />
-          ) : null}
-          {view === "how" ? <HowItWorks /> : null}
-          {view === "onboarding" ? <OnboardingPage /> : null}
-          {view === "membership" ? <MembershipPage /> : null}
-          {view === "faq" ? <FaqPage setView={setView} /> : null}
-          {view === "member" ? (
-            <MemberFeed
-              selectedEvent={selectedEvent}
-              setSelectedEvent={setSelectedEvent}
-              bookingEvent={bookingEvent}
-              setBookingEvent={setBookingEvent}
-            />
-          ) : null}
-          {view === "bookings" ? <BookingsPage /> : null}
-          {view === "profile" ? <ProfilePage /> : null}
-          {view === "partner" ? <PartnerPortal /> : null}
-          {view === "admin" ? <AdminPanel /> : null}
-        </PageShell>
-      </AppShell>
+      <LanguageContext.Provider value={selectedLanguage}>
+        <AppShell shell={shell} onAction={navigateShell}>
+          <div className="pt-6">
+            {!initialShell ? (
+              <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+                {shellDemoViews.map((item) => (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    size="sm"
+                    variant={view === item.id ? "active" : "secondary"}
+                    onClick={() => setView(item.id as View)}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <PageShell page={pageShell} onAction={navigateShell}>
+            {view === "landing" ? (
+              <LandingPage setView={setView} callbackURL={callbackURL} />
+            ) : null}
+            {view === "discover" ? (
+              <PublicDiscover
+                setView={setView}
+                onOpenEvent={(event) => {
+                  setSelectedEvent(event);
+                  setBookingEvent(event);
+                }}
+              />
+            ) : null}
+            {view === "how" ? <HowItWorks /> : null}
+            {view === "onboarding" ? <OnboardingPage /> : null}
+            {view === "membership" ? <MembershipPage /> : null}
+            {view === "faq" ? <FaqPage setView={setView} /> : null}
+            {view === "member" ? (
+              <MemberFeed
+                selectedEvent={selectedEvent}
+                setSelectedEvent={setSelectedEvent}
+                bookingEvent={bookingEvent}
+                setBookingEvent={setBookingEvent}
+              />
+            ) : null}
+            {view === "bookings" ? <BookingsPage /> : null}
+            {view === "profile" ? <ProfilePage /> : null}
+            {view === "partner" ? <PartnerPortal /> : null}
+            {view === "admin" ? <AdminPanel /> : null}
+          </PageShell>
+        </AppShell>
+      </LanguageContext.Provider>
     </LiveDataContext.Provider>
   );
 }

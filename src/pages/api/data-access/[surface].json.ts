@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-import { AuthAccessError, toAuthResponse } from "@/lib/auth-profile";
+import { AuthAccessError, getViewer, toAuthResponse } from "@/lib/auth-profile";
 import {
   loadAdminData,
   loadCurrentPartnerData,
@@ -11,9 +11,14 @@ import {
 export const GET: APIRoute = async ({ params, request }) => {
   try {
     if (params.surface === "public-discovery") {
+      const viewer = await getViewer(request);
       return Response.json({
         surface: "public-discovery",
-        data: await loadPublicDiscoveryData(filtersFromUrl(request.url)),
+        data: await loadPublicDiscoveryData(
+          filtersFromUrl(request.url),
+          undefined,
+          viewer.language,
+        ),
       });
     }
 

@@ -16,50 +16,64 @@ import {
   requireUser,
   type Viewer,
 } from "@/lib/auth-profile";
+import { copyFor } from "@/lib/i18n";
 import { routePathFor } from "@/lib/product-routes";
 
-const publicNavItems = [
-  {
-    id: "discover",
-    itemId: "discover",
-    label: "Discover",
-    targetHref: routePathFor("discover"),
-  },
-  {
-    id: "how",
-    itemId: "how",
-    label: "How it works",
-    targetHref: routePathFor("how"),
-  },
-  {
-    id: "membership",
-    itemId: "membership",
-    label: "Membership",
-    targetHref: routePathFor("membership"),
-  },
-  { id: "faq", itemId: "faq", label: "FAQ", targetHref: routePathFor("faq") },
-] satisfies AppShellViewModel["navItems"];
+function publicNavItems(language: AppShellViewModel["language"]["selected"]) {
+  const copy = copyFor(language).shell.nav;
+  return [
+    {
+      id: "discover",
+      itemId: "discover",
+      label: copy.discover,
+      targetHref: routePathFor("discover"),
+    },
+    {
+      id: "how",
+      itemId: "how",
+      label: copy.how,
+      targetHref: routePathFor("how"),
+    },
+    {
+      id: "membership",
+      itemId: "membership",
+      label: copy.membership,
+      targetHref: routePathFor("membership"),
+    },
+    {
+      id: "faq",
+      itemId: "faq",
+      label: copy.faq,
+      targetHref: routePathFor("faq"),
+    },
+  ] satisfies AppShellViewModel["navItems"];
+}
 
-function memberNavItems(activeItem: ShellNavItemId, savedCount: number) {
+function memberNavItems(
+  activeItem: ShellNavItemId,
+  savedCount: number,
+  language: AppShellViewModel["language"]["selected"],
+) {
+  const copy = copyFor(language).shell.nav;
   return [
     {
       id: "member",
       itemId: "member",
-      label: "Current access",
+      label: copy.member,
       targetHref: routePathFor("member"),
       active: activeItem === "member" || activeItem === "saved",
     },
     {
       id: "faq",
       itemId: "faq",
-      label: "FAQ",
+      label: copy.faq,
       targetHref: routePathFor("faq"),
       active: activeItem === "faq",
     },
     {
       id: "saved",
       itemId: "saved",
-      label: "Saved",
+      label: copy.saved,
       targetHref: routePathFor("saved"),
       icon: "bookmark",
       collapseLabel: true,
@@ -69,7 +83,7 @@ function memberNavItems(activeItem: ShellNavItemId, savedCount: number) {
     {
       id: "bookings",
       itemId: "bookings",
-      label: "Bookings",
+      label: copy.bookings,
       targetHref: routePathFor("bookings"),
       icon: "ticket",
       collapseLabel: true,
@@ -97,25 +111,30 @@ export function createShellFromViewer(
 ): AppShellViewModel {
   const isGuest = viewer.kind === "guest";
   const isMember = viewer.kind === "authenticated" && viewer.role === "USER";
+  const copy = copyFor(viewer.language);
+  const shellNav = copy.shell.nav;
 
   return {
     viewerContext: viewer.viewerContext,
     activeItem,
     logo: { variant: "black", alt: "Unveiled" },
     language: { selected: viewer.language, options: ["DE", "EN"] },
-    tagline: isGuest ? "Curated cultural access in Berlin" : undefined,
+    tagline: isGuest ? copy.shell.tagline : undefined,
     navItems: isGuest
-      ? publicNavItems.map((item) => ({
+      ? publicNavItems(viewer.language).map((item) => ({
           ...item,
           active: item.itemId === activeItem,
         }))
       : isMember
-        ? memberNavItems(activeItem, viewer.savedCount)
+        ? memberNavItems(activeItem, viewer.savedCount, viewer.language)
         : operationalNavItem(viewer),
     primaryAction: isGuest
       ? {
           id: activeItem === "membership" ? "login" : "membership",
-          label: activeItem === "membership" ? "Login" : "Become a member",
+          label:
+            activeItem === "membership"
+              ? shellNav.login
+              : shellNav.becomeMember,
           targetHref:
             activeItem === "membership" ? "/" : routePathFor("membership"),
           variant: activeItem === "membership" ? "secondary" : "primary",
@@ -136,18 +155,19 @@ export async function createShellFromRequest(
 }
 
 export function authFailurePageState(failure: AuthFailure): PageShellViewModel {
+  const copy = copyFor("EN").shell.state;
   return {
     state: {
       state: failure.code === "forbidden" ? "error" : "empty",
       title:
         failure.code === "forbidden"
-          ? "Access unavailable"
-          : "Sign in required",
+          ? copy.accessUnavailable
+          : copy.signInRequired,
       message: failure.message,
       icon: failure.code === "forbidden" ? "lock" : "user",
       ctaAction:
         failure.code === "unauthenticated"
-          ? { id: "login", label: "Log in", variant: "primary" }
+          ? { id: "login", label: copy.login, variant: "primary" }
           : undefined,
     },
   };
