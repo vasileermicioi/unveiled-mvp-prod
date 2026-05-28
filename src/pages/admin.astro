@@ -22,9 +22,14 @@ const initialDiscovery = createAdminInitialSurfaceData(
 
 const tabQuery =
   new URL(Astro.request.url).searchParams.get("tab") || "metrics";
-const initialTab = ["metrics", "events", "partners", "members"].includes(
-  tabQuery,
-)
+const initialTab = [
+  "metrics",
+  "events",
+  "partners",
+  "members",
+  "add-event",
+  "add-partner",
+].includes(tabQuery)
   ? tabQuery
   : "metrics";
 ---

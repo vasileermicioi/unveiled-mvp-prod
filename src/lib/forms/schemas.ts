@@ -429,6 +429,12 @@ export const creditAdjustmentSchema = z.object({
 });
 export type CreditAdjustmentInput = z.infer<typeof creditAdjustmentSchema>;
 
+export const paginationActionSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().default(20),
+});
+export type PaginationActionInput = z.infer<typeof paginationActionSchema>;
+
 export const trackEventOpenSchema = z.object({
   eventId: requiredString("Event ID is required.", 120),
   viewName: requiredString("View name is required.", 120),

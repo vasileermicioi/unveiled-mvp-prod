@@ -758,13 +758,19 @@ export const server = {
 
   listUsers: defineAction({
     accept: "json",
-    input: jsonInputSchema,
-    handler: async (_input, context) => {
+    input: z.object({
+      page: z.number().int().positive().optional(),
+      pageSize: z.number().int().positive().optional(),
+    }),
+    handler: async (input, context) => {
       try {
         await requireAdmin(context.request.headers);
-        const members = await listAdminMembers();
+        const { members, totalCount, hasMore } = await listAdminMembers({
+          page: input.page,
+          pageSize: input.pageSize,
+        });
         return actionSuccess({
-          data: { members },
+          data: { members, totalCount, hasMore },
           invalidate: [
             queryKeys.adminMembers,
             ...dataAccessInvalidationKeys([{ type: "admin-members" }]),
@@ -1077,11 +1083,19 @@ export const server = {
 
   getAdminExportRows: defineAction({
     accept: "json",
-    input: z.object({ partnerId: z.string().trim().optional() }),
+    input: z.object({
+      partnerId: z.string().trim().optional(),
+      page: z.number().int().positive().optional(),
+      pageSize: z.number().int().positive().optional(),
+    }),
     handler: async (input, context) => {
       try {
         await requireAdmin(context.request.headers);
-        const rows = await getAdminExportRows(input.partnerId);
+        const rows = await getAdminExportRows(
+          input.partnerId,
+          input.page,
+          input.pageSize,
+        );
         return actionSuccess({
           data: { rows },
           invalidate: dataAccessInvalidationKeys([{ type: "admin-exports" }]),

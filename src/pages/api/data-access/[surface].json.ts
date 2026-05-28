@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     if (params.surface === "admin") {
       return Response.json({
         surface: "admin",
-        data: await loadAdminData(request),
+        data: await loadAdminData(request, filtersFromUrl(request.url)),
       });
     }
 
@@ -75,5 +75,11 @@ function filtersFromUrl(url: string) {
     startDate: search.get("startDate") ?? undefined,
     endDate: search.get("endDate") ?? undefined,
     savedOnly: search.get("savedOnly") ?? undefined,
+    membersPage: search.get("membersPage") ?? undefined,
+    membersPageSize: search.get("membersPageSize") ?? undefined,
+    partnersPage: search.get("partnersPage") ?? undefined,
+    partnersPageSize: search.get("partnersPageSize") ?? undefined,
+    eventsPage: search.get("eventsPage") ?? undefined,
+    eventsPageSize: search.get("eventsPageSize") ?? undefined,
   };
 }

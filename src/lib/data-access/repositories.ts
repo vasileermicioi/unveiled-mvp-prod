@@ -92,9 +92,21 @@ export type AdminData = {
     exportPartnerOptions: Array<{ id: string; name: string }>;
     exportAvailable: boolean;
   };
-  events: DataAccessAdminEventView[];
-  partners: DataAccessAdminPartnerView[];
-  members: DataAccessAdminMemberView[];
+  events: {
+    items: DataAccessAdminEventView[];
+    totalCount: number;
+    hasMore: boolean;
+  };
+  partners: {
+    items: DataAccessAdminPartnerView[];
+    totalCount: number;
+    hasMore: boolean;
+  };
+  members: {
+    items: DataAccessAdminMemberView[];
+    totalCount: number;
+    hasMore: boolean;
+  };
   exportRows: AdminExportRow[];
 };
 
@@ -298,8 +310,32 @@ export async function getPartnerData(
   };
 }
 
-export async function getAdminData(database: Db = db): Promise<AdminData> {
+export async function getAdminData(
+  filters?: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  },
+  database: Db = db,
+): Promise<AdminData> {
+  const mPage = Math.max(1, Number(filters?.membersPage ?? "1"));
+  const mPageSize = Math.max(1, Number(filters?.membersPageSize ?? "20"));
+  const pPage = Math.max(1, Number(filters?.partnersPage ?? "1"));
+  const pPageSize = Math.max(1, Number(filters?.partnersPageSize ?? "20"));
+  const ePage = Math.max(1, Number(filters?.eventsPage ?? "1"));
+  const ePageSize = Math.max(1, Number(filters?.eventsPageSize ?? "20"));
+
+  const mOffset = (mPage - 1) * mPageSize;
+  const pOffset = (pPage - 1) * pPageSize;
+  const eOffset = (ePage - 1) * ePageSize;
+
   const [
+    totalEventsCount,
+    totalPartnersCount,
+    totalMembersCount,
     eventRows,
     partnerRows,
     memberRows,
@@ -308,13 +344,22 @@ export async function getAdminData(database: Db = db): Promise<AdminData> {
     bookingAggregateRows,
     recentBookingRows,
   ] = await Promise.all([
+    database.select({ count: count() }).from(events),
+    database.select({ count: count() }).from(partners),
+    database.select({ count: count() }).from(userProfiles),
     database
       .select({ event: events, partner: partners })
       .from(events)
       .innerJoin(partners, eq(events.partnerId, partners.id))
       .orderBy(desc(events.dateTime))
-      .limit(100),
-    database.select().from(partners).orderBy(asc(partners.name)).limit(100),
+      .limit(ePageSize)
+      .offset(eOffset),
+    database
+      .select()
+      .from(partners)
+      .orderBy(asc(partners.name))
+      .limit(pPageSize)
+      .offset(pOffset),
     database
       .select({
         profile: userProfiles,
@@ -330,7 +375,8 @@ export async function getAdminData(database: Db = db): Promise<AdminData> {
       .innerJoin(user, eq(userProfiles.userId, user.id))
       .leftJoin(subscriptions, eq(subscriptions.userId, user.id))
       .orderBy(asc(user.email))
-      .limit(100),
+      .limit(mPageSize)
+      .offset(mOffset),
     database
       .select({ value: count() })
       .from(bookings)
@@ -361,6 +407,10 @@ export async function getAdminData(database: Db = db): Promise<AdminData> {
       .limit(100),
   ]);
 
+  const eventsTotal = totalEventsCount[0]?.count ?? 0;
+  const partnersTotal = totalPartnersCount[0]?.count ?? 0;
+  const membersTotal = totalMembersCount[0]?.count ?? 0;
+
   const eventsView = eventRows.map(mapAdminEventView);
   const partnersView = partnerRows.map(mapAdminPartnerView);
   const membersView = memberRows.map((row) =>
@@ -383,9 +433,9 @@ export async function getAdminData(database: Db = db): Promise<AdminData> {
 
   return {
     dashboard: {
-      upcomingEventCount: eventsView.length,
-      activePartnerCount: partnersView.length,
-      memberCount: membersView.length,
+      upcomingEventCount: eventsTotal,
+      activePartnerCount: partnersTotal,
+      memberCount: membersTotal,
       confirmedBookingCount: confirmedBookingCountRows[0]?.value ?? 0,
       totalBookings: totalBookingCountRows[0]?.value ?? 0,
       creditsBurned: Number(bookingAggregate?.totalCredits ?? 0),
@@ -397,9 +447,21 @@ export async function getAdminData(database: Db = db): Promise<AdminData> {
       })),
       exportAvailable: recentBookings.length > 0,
     },
-    events: eventsView,
-    partners: partnersView,
-    members: membersView,
+    events: {
+      items: eventsView,
+      totalCount: eventsTotal,
+      hasMore: eOffset + eventsView.length < eventsTotal,
+    },
+    partners: {
+      items: partnersView,
+      totalCount: partnersTotal,
+      hasMore: pOffset + partnersView.length < partnersTotal,
+    },
+    members: {
+      items: membersView,
+      totalCount: membersTotal,
+      hasMore: mOffset + membersView.length < membersTotal,
+    },
     exportRows: recentBookings,
   };
 }

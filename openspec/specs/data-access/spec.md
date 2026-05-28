@@ -63,3 +63,10 @@ The data-access layer SHALL load complete and aggregated member behavior metrics
 - **WHEN** the admin loads or expands a member's profile
 - **THEN** the returned read model includes the correct values for sessionCount, eventOpenCount, bookingCount, waitlistCount, savedCount, unsavedCount, filterApplyCount, recentEventIds, and lastSeenAt.
 
+### Requirement: Paginated Operational Data Retrieval
+The data-access layer SHALL provide paginated query models for user profiles, partner venues, and events, including total count and availability of subsequent pages.
+
+#### Scenario: Admin retrieves paginated members registry
+- **WHEN** an authenticated admin requests user profiles with page `2` and pageSize `20`
+- **THEN** the data-access layer returns only the matching subset of 20 user profiles (offset by 20), along with the total user profile count and a flag indicating if more pages are available.
+

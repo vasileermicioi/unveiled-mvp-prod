@@ -44,6 +44,16 @@ test.describe("partner, admin, and venue parity", () => {
         .filter({ hasText: /^Parity Partner Venue$/ })
         .first(),
     ).toBeVisible();
+    await expect(page.getByText("Page 1 of").first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Next" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Prev" }).first(),
+    ).toBeVisible();
+
+    // Verify Add Event form
+    await page.getByRole("button", { name: "New event" }).click();
     await expect(page.getByTestId("admin-event-image-upload")).toHaveAttribute(
       "accept",
       "image/jpeg,image/png,image/webp,image/gif",
@@ -51,19 +61,26 @@ test.describe("partner, admin, and venue parity", () => {
     await expect(
       page.getByPlaceholder("https://assets.example.com/image.jpg").first(),
     ).toBeVisible();
+    await page.getByRole("button", { name: "Back to Events" }).click();
 
     // Verify Partners tab content
     await page.getByTestId("admin-tab-partners").click();
+    await expect(page.getByText("Page 1 of").first()).toBeVisible();
+
+    // Verify Add Partner form
+    await page.getByRole("button", { name: "New partner" }).click();
     await expect(page.getByTestId("admin-partner-logo-upload")).toHaveAttribute(
       "accept",
       "image/jpeg,image/png,image/webp,image/gif",
     );
+    await page.getByRole("button", { name: "Back to Partners" }).click();
 
     // Verify Members tab content
     await page.getByTestId("admin-tab-members").click();
     await expect(
       page.getByText(parityFixtureEmails.frozenMember).first(),
     ).toBeVisible();
+    await expect(page.getByText("Page 1 of").first()).toBeVisible();
 
     await page.goto("/partner");
     await expect(page).toHaveURL(/\/admin$/);

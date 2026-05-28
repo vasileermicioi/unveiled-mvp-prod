@@ -203,7 +203,7 @@ describe("authorized data loaders", () => {
 
   test("rejects admin reads for non-admin viewers before database access", async () => {
     const error = await captureError(() =>
-      loadAdminData(partnerViewer("partner-1"), throwingDb()),
+      loadAdminData(partnerViewer("partner-1"), undefined, throwingDb()),
     );
     expect(error).toMatchObject({ code: "forbidden", status: 403 });
   });

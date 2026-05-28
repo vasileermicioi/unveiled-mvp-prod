@@ -652,7 +652,19 @@ export async function checkInWithVenueQrOperation(
   };
 }
 
-export async function listAdminMembers(database: Db = db) {
+export async function listAdminMembers(
+  input?: { page?: number; pageSize?: number },
+  database: Db = db,
+) {
+  const page = input?.page ?? 1;
+  const pageSize = input?.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+
+  const totalCountResult = await database
+    .select({ count: count() })
+    .from(userProfiles);
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
   const rows = await database
     .select({
       userId: user.id,
@@ -675,9 +687,11 @@ export async function listAdminMembers(database: Db = db) {
     .from(user)
     .innerJoin(userProfiles, eq(userProfiles.userId, user.id))
     .leftJoin(subscriptions, eq(subscriptions.userId, user.id))
-    .orderBy(asc(user.name), asc(user.email));
+    .orderBy(asc(user.name), asc(user.email))
+    .limit(pageSize)
+    .offset(offset);
 
-  return rows.map((row) => ({
+  const members = rows.map((row) => ({
     ...row,
     billingOverrideActions:
       row.subscriptionStatus === "ADMIN_FROZEN" ||
@@ -685,6 +699,12 @@ export async function listAdminMembers(database: Db = db) {
         ? (["unfreeze"] as const)
         : (["freeze"] as const),
   }));
+
+  return {
+    members,
+    totalCount,
+    hasMore: offset + members.length < totalCount,
+  };
 }
 
 export async function setMemberFreezeStatus(
@@ -791,6 +811,8 @@ export async function getPartnerGuestExportRows(
 
 export async function getAdminExportRows(
   partnerId?: string,
+  page?: number,
+  pageSize?: number,
   database: Db = db,
 ): Promise<AdminExportRow[]> {
   const conditions = [];
@@ -798,7 +820,7 @@ export async function getAdminExportRows(
     conditions.push(eq(bookings.partnerId, partnerId));
   }
 
-  return database
+  const query = database
     .select({
       bookingId: bookings.id,
       userId: bookings.userId,
@@ -815,6 +837,13 @@ export async function getAdminExportRows(
     .innerJoin(partners, eq(partners.id, bookings.partnerId))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(bookings.createdAt));
+
+  if (page && pageSize) {
+    const offset = (page - 1) * pageSize;
+    query.limit(pageSize).offset(offset);
+  }
+
+  return query;
 }
 
 export async function getPartnerGuestRows(

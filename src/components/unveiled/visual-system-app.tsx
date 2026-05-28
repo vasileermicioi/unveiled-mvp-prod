@@ -249,26 +249,89 @@ function downloadCsv(
   return true;
 }
 
-function scrollToAdminEventForm() {
-  const form = document.getElementById("admin-event-form");
-  form?.scrollIntoView({ behavior: "smooth", block: "start" });
-  form
-    ?.querySelector<HTMLInputElement>('input[name="title"]')
-    ?.focus({ preventScroll: true });
+interface PaginationProps {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  hasMore: boolean;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  className?: string;
+}
+
+function Pagination({
+  page,
+  pageSize,
+  totalCount,
+  hasMore,
+  onPageChange,
+  onPageSizeChange,
+  className,
+}: PaginationProps) {
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-4 border-t-4 border-brand-dark bg-brand-cream p-4 text-sm font-bold uppercase tracking-widest text-brand-dark",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span className="unveiled-meta">Show</span>
+        <SelectInput
+          value={String(pageSize)}
+          onChange={(e) => {
+            const nextSize = Number(e.currentTarget.value);
+            onPageSizeChange(nextSize);
+            onPageChange(1); // Reset page to 1 when changing page size
+          }}
+          className="min-h-10 w-16 py-1.5 px-3 border-2 border-brand-dark"
+        >
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </SelectInput>
+        <span className="unveiled-meta">per page</span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Prev</span>
+        </Button>
+
+        <span className="unveiled-meta font-black">
+          Page {page} of {totalPages}{" "}
+          <span className="opacity-50">({totalCount} total)</span>
+        </span>
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => onPageChange(page + 1)}
+          disabled={!hasMore}
+          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+        >
+          <span>Next</span>
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function scrollToAdminExport() {
   document
     .getElementById("admin-export-panel")
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function scrollToAdminPartnerForm() {
-  const form = document.getElementById("admin-partner-form");
-  form?.scrollIntoView({ behavior: "smooth", block: "start" });
-  form
-    ?.querySelector<HTMLInputElement>('input[name="name"]')
-    ?.focus({ preventScroll: true });
 }
 
 function AdminAssetUploadField({
@@ -2736,7 +2799,37 @@ function PartnerPortal() {
   );
 }
 
-function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
+interface AdminPanelProps {
+  initialTab?: string;
+  membersPage: number;
+  setMembersPage: (p: number) => void;
+  membersPageSize: number;
+  setMembersPageSize: (s: number) => void;
+  partnersPage: number;
+  setPartnersPage: (p: number) => void;
+  partnersPageSize: number;
+  setPartnersPageSize: (s: number) => void;
+  eventsPage: number;
+  setEventsPage: (p: number) => void;
+  eventsPageSize: number;
+  setEventsPageSize: (s: number) => void;
+}
+
+function AdminPanel({
+  initialTab = "metrics",
+  membersPage,
+  setMembersPage,
+  membersPageSize,
+  setMembersPageSize,
+  partnersPage,
+  setPartnersPage,
+  partnersPageSize,
+  setPartnersPageSize,
+  eventsPage,
+  setEventsPage,
+  eventsPageSize,
+  setEventsPageSize,
+}: AdminPanelProps) {
   const copy = useCopy().admin;
   const live = useLiveData();
   const [adminMessage, setAdminMessage] = useState<string>(
@@ -2786,6 +2879,11 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
   const [partnerSubmitting, setPartnerSubmitting] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  useEffect(() => {
+    if (memberSearchQuery !== undefined) {
+      setMembersPage(1);
+    }
+  }, [memberSearchQuery, setMembersPage]);
   const [ticketType, setTicketType] = useState<"SECRET_CODE" | "VOUCHER">(
     "SECRET_CODE",
   );
@@ -2797,6 +2895,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
     "Select a partner to filter the booking export.",
   );
 
+  const [seriesEnabled, setSeriesEnabled] = useState(false);
   const [seriesStartDate, setSeriesStartDate] = useState("2026-05-04");
   const [seriesEndDate, setSeriesEndDate] = useState("2026-05-30");
   const [seriesWeekdays, setSeriesWeekdays] = useState<string[]>([
@@ -2807,7 +2906,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
   const [seriesTimes, setSeriesTimes] = useState("19:00, 21:00");
   const [seriesExcludedDates, setSeriesExcludedDates] = useState("2026-05-12");
 
-  const computedSeriesPreview = useMemo(() => {
+  const computedSeries = useMemo(() => {
     try {
       const start = new Date(`${seriesStartDate}T00:00:00`);
       const end = new Date(`${seriesEndDate}T23:59:59`);
@@ -2816,7 +2915,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
         Number.isNaN(end.getTime()) ||
         start > end
       ) {
-        return [];
+        return { labels: [], isoStrings: [] };
       }
 
       const weekdayNamesShort = [
@@ -2837,7 +2936,8 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
         .map((d) => d.trim())
         .filter(Boolean);
 
-      const slots: string[] = [];
+      const labels: string[] = [];
+      const isoStrings: string[] = [];
       const current = new Date(start);
       let limit = 100;
       while (current <= end && limit-- > 0) {
@@ -2871,15 +2971,23 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                 month: "short",
               };
               const dateLabel = current.toLocaleDateString("en-US", options);
-              slots.push(`${dateLabel}, ${time}`);
+              labels.push(`${dateLabel}, ${time}`);
+
+              const [hours, minutes] = time.split(":").map(Number);
+              const slotDate = new Date(current);
+              slotDate.setHours(hours || 0, minutes || 0, 0, 0);
+              isoStrings.push(slotDate.toISOString());
             }
           }
         }
         current.setDate(current.getDate() + 1);
       }
-      return slots.slice(0, 8);
+      return {
+        labels: labels.slice(0, 8),
+        isoStrings: isoStrings.slice(0, 8),
+      };
     } catch (_e) {
-      return [];
+      return { labels: [], isoStrings: [] };
     }
   }, [
     seriesStartDate,
@@ -2918,13 +3026,17 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
         {(["metrics", "events", "partners", "members"] as const).map((tab) => {
           const tabLabel =
             copy.tabs?.[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1);
+          const isSelected =
+            activeTab === tab ||
+            (tab === "events" && activeTab === "add-event") ||
+            (tab === "partners" && activeTab === "add-partner");
           return (
             <button
               key={tab}
               data-testid={`admin-tab-${tab}`}
               className={cn(
                 "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all",
-                activeTab === tab
+                isSelected
                   ? "bg-brand-dark text-white shadow-[2px_2px_0_0_#202621]"
                   : "text-brand-dark hover:bg-brand-dark/10",
               )}
@@ -2966,7 +3078,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
             <Button
               type="button"
               variant="yellow"
-              onClick={scrollToAdminEventForm}
+              onClick={() => updateTab("add-event")}
             >
               New event
               <Plus />
@@ -3023,7 +3135,39 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                 }
               />
             ) : null}
+            {live.adminEvents.length > 0 && (
+              <Pagination
+                page={eventsPage}
+                pageSize={eventsPageSize}
+                totalCount={live.adminEventsTotal}
+                hasMore={live.adminEventsHasMore}
+                onPageChange={setEventsPage}
+                onPageSizeChange={setEventsPageSize}
+                className="border-t-4 border-l-0 border-r-0 border-b-0 shadow-none"
+              />
+            )}
           </TableShell>
+        </div>
+      )}
+
+      {activeTab === "add-event" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="headline-md">New Event</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Create a new drop slot or series of events for members.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => updateTab("events")}
+            >
+              <ArrowLeft />
+              Back to Events
+            </Button>
+          </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <Panel
               id="admin-event-form"
@@ -3114,10 +3258,16 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                       languages: languagesVal,
                       targetAgeGroups: targetAgeGroupsVal,
                       series: {
-                        enabled: false,
-                        count: 1,
+                        enabled:
+                          seriesEnabled && computedSeries.isoStrings.length > 0,
+                        count:
+                          seriesEnabled && computedSeries.isoStrings.length > 0
+                            ? computedSeries.isoStrings.length
+                            : 1,
                         intervalDays: 7,
-                        slotIsoDateTimes: [],
+                        slotIsoDateTimes: seriesEnabled
+                          ? computedSeries.isoStrings
+                          : [],
                       },
                     }),
                   setAdminMessage,
@@ -3126,7 +3276,10 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                     setEventImageUrl("");
                     setTicketType("SECRET_CODE");
                     setSecretCodeMode("MANUAL");
+                    setSeriesEnabled(false);
+                    setSeriesWeekdays(["Mon", "Wed", "Fri"]);
                     live.refetchActiveSurface();
+                    updateTab("events");
                   },
                 );
                 setEventSubmitting(false);
@@ -3380,13 +3533,31 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
               </div>
             </Panel>
             <Panel tone="cream" shadow={false} className="space-y-5">
-              <p className="headline-md">{copy.seriesBuilder}</p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-wrap items-center justify-between border-b border-brand-dark/20 pb-3 gap-2">
+                <p className="headline-md">{copy.seriesBuilder}</p>
+                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={seriesEnabled}
+                    onChange={(e) => setSeriesEnabled(e.target.checked)}
+                    data-testid="admin-series-enabled-checkbox"
+                    className="w-4 h-4 accent-brand-dark"
+                  />
+                  <span>Publish as Event Series</span>
+                </label>
+              </div>
+              <div
+                className={cn(
+                  "grid gap-4 sm:grid-cols-2 transition-opacity duration-200",
+                  !seriesEnabled && "opacity-50 pointer-events-none",
+                )}
+              >
                 <Field label={`${copy.dateRange} (Start)`}>
                   <TextInput
                     type="date"
                     value={seriesStartDate}
                     onChange={(e) => setSeriesStartDate(e.currentTarget.value)}
+                    disabled={!seriesEnabled}
                   />
                 </Field>
                 <Field label={`${copy.dateRange} (End)`}>
@@ -3394,6 +3565,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                     type="date"
                     value={seriesEndDate}
                     onChange={(e) => setSeriesEndDate(e.currentTarget.value)}
+                    disabled={!seriesEnabled}
                   />
                 </Field>
                 <Field label={copy.weekdays} className="sm:col-span-2">
@@ -3409,6 +3581,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                             <input
                               type="checkbox"
                               checked={isChecked}
+                              disabled={!seriesEnabled}
                               onChange={() => {
                                 if (isChecked) {
                                   setSeriesWeekdays(
@@ -3431,6 +3604,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                     value={seriesTimes}
                     onChange={(e) => setSeriesTimes(e.currentTarget.value)}
                     placeholder="e.g. 19:00, 21:00"
+                    disabled={!seriesEnabled}
                   />
                 </Field>
                 <Field label={copy.excludedDates}>
@@ -3440,18 +3614,25 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                       setSeriesExcludedDates(e.currentTarget.value)
                     }
                     placeholder="e.g. 2026-05-12"
+                    disabled={!seriesEnabled}
                   />
                 </Field>
               </div>
-              <div className="grid gap-2">
-                {computedSeriesPreview.map((slot) => (
-                  <Badge key={slot} tone="white">
-                    {slot}
-                  </Badge>
-                ))}
-                {computedSeriesPreview.length === 0 && (
+              <div className="grid gap-2 border-t border-brand-dark/20 pt-4">
+                {seriesEnabled &&
+                  computedSeries.labels.map((slot) => (
+                    <Badge key={slot} tone="white">
+                      {slot}
+                    </Badge>
+                  ))}
+                {seriesEnabled && computedSeries.labels.length === 0 && (
                   <p className="text-[10px] uppercase font-bold opacity-40">
                     No slots matching criteria
+                  </p>
+                )}
+                {!seriesEnabled && (
+                  <p className="text-[10px] uppercase font-bold opacity-40">
+                    Check "Publish as Event Series" to configure.
                   </p>
                 )}
               </div>
@@ -3473,7 +3654,7 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
               <Button
                 type="button"
                 variant="yellow"
-                onClick={scrollToAdminPartnerForm}
+                onClick={() => updateTab("add-partner")}
               >
                 New partner
                 <Plus />
@@ -3567,78 +3748,18 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                 state="empty"
               />
             ) : null}
+            {live.adminPartners.length > 0 && (
+              <Pagination
+                page={partnersPage}
+                pageSize={partnersPageSize}
+                totalCount={live.adminPartnersTotal}
+                hasMore={live.adminPartnersHasMore}
+                onPageChange={setPartnersPage}
+                onPageSizeChange={setPartnersPageSize}
+                className="border-t-4 border-l-0 border-r-0 border-b-0 shadow-none"
+              />
+            )}
           </TableShell>
-
-          <Panel
-            id="admin-partner-form"
-            tone="white"
-            shadow={false}
-            className="scroll-mt-24 space-y-5"
-            as="form"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              if (partnerSubmitting) return;
-              const form = event.currentTarget as HTMLFormElement;
-              if (!form.reportValidity()) {
-                setAdminMessage("Check the highlighted fields.");
-                return;
-              }
-              const formData = new FormData(form);
-              setPartnerSubmitting(true);
-              setAdminMessage("Saving partner...");
-              await runServerAction(
-                () =>
-                  actions.savePartner({
-                    name: String(formData.get("name") || ""),
-                    contactEmail: String(formData.get("contactEmail") || ""),
-                    address: String(formData.get("address") || "Berlin"),
-                    logoUrl: String(formData.get("logoUrl") || ""),
-                  }),
-                setAdminMessage,
-                () => {
-                  form.reset();
-                  setPartnerLogoUrl("");
-                  live.refetchActiveSurface();
-                },
-              );
-              setPartnerSubmitting(false);
-            }}
-          >
-            <p className="headline-md">Add new partner venue</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Venue name">
-                <TextInput name="name" placeholder="Venue name" required />
-              </Field>
-              <Field label="Contact email">
-                <TextInput
-                  name="contactEmail"
-                  type="email"
-                  placeholder="partner@example.com"
-                  required
-                />
-              </Field>
-              <Field label="Address" className="sm:col-span-2">
-                <TextInput name="address" placeholder="Berlin" required />
-              </Field>
-            </div>
-            <AdminAssetUploadField
-              kind="partner"
-              label="Partner logo"
-              ownerId="partner-draft"
-              value={partnerLogoUrl}
-              onUrlChange={setPartnerLogoUrl}
-              testId="admin-partner-logo-upload"
-            />
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                loading={partnerSubmitting}
-              >
-                Save partner
-              </Button>
-            </div>
-          </Panel>
 
           <Panel
             id="admin-export-panel"
@@ -3705,7 +3826,100 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
             </div>
           </Panel>
         </div>
-      )}{" "}
+      )}
+
+      {activeTab === "add-partner" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="headline-md">New Partner</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Register a new partner venue.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => updateTab("partners")}
+            >
+              <ArrowLeft />
+              Back to Partners
+            </Button>
+          </div>
+
+          <Panel
+            id="admin-partner-form"
+            tone="white"
+            shadow={false}
+            className="scroll-mt-24 space-y-5"
+            as="form"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (partnerSubmitting) return;
+              const form = event.currentTarget as HTMLFormElement;
+              if (!form.reportValidity()) {
+                setAdminMessage("Check the highlighted fields.");
+                return;
+              }
+              const formData = new FormData(form);
+              setPartnerSubmitting(true);
+              setAdminMessage("Saving partner...");
+              await runServerAction(
+                () =>
+                  actions.savePartner({
+                    name: String(formData.get("name") || ""),
+                    contactEmail: String(formData.get("contactEmail") || ""),
+                    address: String(formData.get("address") || "Berlin"),
+                    logoUrl: String(formData.get("logoUrl") || ""),
+                  }),
+                setAdminMessage,
+                () => {
+                  form.reset();
+                  setPartnerLogoUrl("");
+                  live.refetchActiveSurface();
+                  updateTab("partners");
+                },
+              );
+              setPartnerSubmitting(false);
+            }}
+          >
+            <p className="headline-md">Add new partner venue</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Venue name">
+                <TextInput name="name" placeholder="Venue name" required />
+              </Field>
+              <Field label="Contact email">
+                <TextInput
+                  name="contactEmail"
+                  type="email"
+                  placeholder="partner@example.com"
+                  required
+                />
+              </Field>
+              <Field label="Address" className="sm:col-span-2">
+                <TextInput name="address" placeholder="Berlin" required />
+              </Field>
+            </div>
+            <AdminAssetUploadField
+              kind="partner"
+              label="Partner logo"
+              ownerId="partner-draft"
+              value={partnerLogoUrl}
+              onUrlChange={setPartnerLogoUrl}
+              testId="admin-partner-logo-upload"
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                variant="primary"
+                loading={partnerSubmitting}
+              >
+                Save partner
+              </Button>
+            </div>
+          </Panel>
+        </div>
+      )}
       {activeTab === "members" && (
         <div className="space-y-8 animate-fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -4086,6 +4300,16 @@ function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
                 }
               />
             ) : null}
+            {live.adminMembers.length > 0 && (
+              <Pagination
+                page={membersPage}
+                pageSize={membersPageSize}
+                totalCount={live.adminMembersTotal}
+                hasMore={live.adminMembersHasMore}
+                onPageChange={setMembersPage}
+                onPageSizeChange={setMembersPageSize}
+              />
+            )}
           </div>
         </div>
       )}
@@ -4097,6 +4321,14 @@ function useLiveDataView(
   initialSurface: InitialSurfaceData | undefined,
   discoveryFilters: DiscoveryFilters,
   setDiscoveryFilters: (filters: DiscoveryFilters) => void,
+  adminFilters?: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  },
 ) {
   const publicInitial =
     initialSurface?.surface === "public" ? initialSurface : undefined;
@@ -4123,7 +4355,7 @@ function useLiveDataView(
     initialData: partnerInitial?.data,
     enabled: Boolean(partnerInitial),
   });
-  const adminQuery = useAdminDataQuery({
+  const adminQuery = useAdminDataQuery(adminFilters, {
     initialData: adminInitial?.data,
     enabled: Boolean(adminInitial),
   });
@@ -4239,10 +4471,37 @@ function VisualSystemAppContent({
   const [selectedLanguage, setSelectedLanguage] = useState<UiLanguage>(
     initialShell?.language.selected ?? "DE",
   );
+  const [membersPage, setMembersPage] = useState(1);
+  const [membersPageSize, setMembersPageSize] = useState(20);
+  const [partnersPage, setPartnersPage] = useState(1);
+  const [partnersPageSize, setPartnersPageSize] = useState(20);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsPageSize, setEventsPageSize] = useState(20);
+
+  const adminFilters = useMemo(
+    () => ({
+      membersPage: String(membersPage),
+      membersPageSize: String(membersPageSize),
+      partnersPage: String(partnersPage),
+      partnersPageSize: String(partnersPageSize),
+      eventsPage: String(eventsPage),
+      eventsPageSize: String(eventsPageSize),
+    }),
+    [
+      membersPage,
+      membersPageSize,
+      partnersPage,
+      partnersPageSize,
+      eventsPage,
+      eventsPageSize,
+    ],
+  );
+
   const live = useLiveDataView(
     initialDiscovery,
     discoveryFilters,
     setDiscoveryFilters,
+    adminFilters,
   );
   const [view, setView] = useState<View>(initialView);
 
@@ -4328,14 +4587,9 @@ function VisualSystemAppContent({
     if (actionId === "new-event") {
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
-        url.searchParams.set("tab", "events");
+        url.searchParams.set("tab", "add-event");
         window.history.pushState(null, "", url.pathname + url.search);
         window.dispatchEvent(new Event("admin-tab-change"));
-        setTimeout(() => {
-          scrollToAdminEventForm();
-        }, 50);
-      } else {
-        scrollToAdminEventForm();
       }
       return;
     }
@@ -4402,7 +4656,23 @@ function VisualSystemAppContent({
             {view === "bookings" ? <BookingsPage /> : null}
             {view === "profile" ? <ProfilePage /> : null}
             {view === "partner" ? <PartnerPortal /> : null}
-            {view === "admin" ? <AdminPanel initialTab={initialTab} /> : null}
+            {view === "admin" ? (
+              <AdminPanel
+                initialTab={initialTab}
+                membersPage={membersPage}
+                setMembersPage={setMembersPage}
+                membersPageSize={membersPageSize}
+                setMembersPageSize={setMembersPageSize}
+                partnersPage={partnersPage}
+                setPartnersPage={setPartnersPage}
+                partnersPageSize={partnersPageSize}
+                setPartnersPageSize={setPartnersPageSize}
+                eventsPage={eventsPage}
+                setEventsPage={setEventsPage}
+                eventsPageSize={eventsPageSize}
+                setEventsPageSize={setEventsPageSize}
+              />
+            ) : null}
           </PageShell>
         </AppShell>
       </LanguageContext.Provider>

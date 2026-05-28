@@ -162,6 +162,7 @@ export const partners = pgTable(
     ),
     index("partners_portal_user_id_idx").on(table.portalUserId),
     index("partners_contact_email_idx").on(table.contactEmail),
+    index("partners_name_idx").on(table.name),
   ],
 );
 
@@ -260,6 +261,7 @@ export const userProfiles = pgTable(
     index("user_profiles_role_idx").on(table.role),
     index("user_profiles_partner_id_idx").on(table.partnerId),
     index("user_profiles_subscription_status_idx").on(table.subscriptionStatus),
+    index("user_profiles_last_name_idx").on(table.lastName),
   ],
 );
 

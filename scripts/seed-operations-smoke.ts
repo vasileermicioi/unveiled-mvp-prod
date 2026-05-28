@@ -308,15 +308,15 @@ async function run() {
   );
 
   assert(
-    adminData.events.some((event) => event.id === eventId),
+    adminData.events.items.some((event) => event.id === eventId),
     "Admin smoke event should be visible.",
   );
   assert(
-    adminData.partners.some((partner) => partner.id === smokePartner.id),
+    adminData.partners.items.some((partner) => partner.id === smokePartner.id),
     "Admin smoke partner should be visible.",
   );
   assert(
-    adminData.members.some((row) => row.userId === member.id),
+    adminData.members.items.some((row) => row.userId === member.id),
     "Admin smoke member should be visible.",
   );
   assert(

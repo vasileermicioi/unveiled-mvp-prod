@@ -43,7 +43,14 @@ export type LiveDataView = {
   visibleEventCountLabel: string;
   activeRangeLabel: string;
   activeFilterCount: number;
-  discoveryFilters: DiscoveryFilters;
+  discoveryFilters: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  };
   savedCount: number;
   bookings: MemberData["bookings"];
   creditLedgerEntries: MemberData["wallet"]["ledger"];
@@ -71,9 +78,15 @@ export type LiveDataView = {
     value: string;
     caption: string;
   }>;
-  adminEvents: AdminData["events"];
-  adminPartners: AdminData["partners"];
-  adminMembers: AdminData["members"];
+  adminEvents: AdminData["events"]["items"];
+  adminPartners: AdminData["partners"]["items"];
+  adminMembers: AdminData["members"]["items"];
+  adminEventsTotal: number;
+  adminEventsHasMore: boolean;
+  adminPartnersTotal: number;
+  adminPartnersHasMore: boolean;
+  adminMembersTotal: number;
+  adminMembersHasMore: boolean;
   isLoading: boolean;
   isError: boolean;
   refetchActiveSurface: () => void;
@@ -143,6 +156,12 @@ export const emptyLiveDataView: LiveDataView = {
   adminEvents: [],
   adminPartners: [],
   adminMembers: [],
+  adminEventsTotal: 0,
+  adminEventsHasMore: false,
+  adminPartnersTotal: 0,
+  adminPartnersHasMore: false,
+  adminMembersTotal: 0,
+  adminMembersHasMore: false,
   isLoading: false,
   isError: false,
   refetchActiveSurface: () => undefined,
@@ -283,9 +302,15 @@ export function createLiveDataView(input: {
         caption: `${input.adminData?.dashboard.memberCount ?? 0} members`,
       },
     ],
-    adminEvents: input.adminData?.events ?? [],
-    adminPartners: input.adminData?.partners ?? [],
-    adminMembers: input.adminData?.members ?? [],
+    adminEvents: input.adminData?.events?.items ?? [],
+    adminPartners: input.adminData?.partners?.items ?? [],
+    adminMembers: input.adminData?.members?.items ?? [],
+    adminEventsTotal: input.adminData?.events?.totalCount ?? 0,
+    adminEventsHasMore: input.adminData?.events?.hasMore ?? false,
+    adminPartnersTotal: input.adminData?.partners?.totalCount ?? 0,
+    adminPartnersHasMore: input.adminData?.partners?.hasMore ?? false,
+    adminMembersTotal: input.adminData?.members?.totalCount ?? 0,
+    adminMembersHasMore: input.adminData?.members?.hasMore ?? false,
     isLoading: input.isLoading,
     isError: input.isError,
     refetchActiveSurface: input.refetchActiveSurface,

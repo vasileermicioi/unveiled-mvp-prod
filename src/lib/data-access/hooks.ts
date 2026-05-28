@@ -62,12 +62,22 @@ export function usePartnerDataQuery(
 }
 
 export function useAdminDataQuery(
+  filters?: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  },
   options: Partial<UseQueryOptions<AdminData>> = {},
 ) {
   return useQuery({
-    queryKey: dataQueryKeys.adminDashboard,
+    queryKey: [...dataQueryKeys.adminDashboard, filters],
     queryFn: () =>
-      fetchDataAccessSurface<{ surface: "admin"; data: AdminData }>("admin"),
+      fetchDataAccessSurface<{ surface: "admin"; data: AdminData }>("admin", {
+        filters,
+      }),
     staleTime: queryStaleTimes.admin,
     ...options,
   });

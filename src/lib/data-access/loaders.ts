@@ -58,8 +58,16 @@ export async function loadCurrentPartnerData(
 
 export async function loadAdminData(
   input: Viewer | Request | Headers,
+  filters?: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  },
   database: Db = db,
 ) {
   await requireAdmin(input);
-  return getAdminData(database);
+  return getAdminData(filters, database);
 }

@@ -74,6 +74,7 @@ describe("parity data-access regression", () => {
           email: parityFixtureEmails.admin,
           role: "ADMIN",
         }),
+        undefined,
         testDb,
       );
 
@@ -107,10 +108,10 @@ describe("parity data-access regression", () => {
       );
       expect(partnerData.partner?.venueQrTokenLabel).toContain("Token");
 
-      expect(adminData.events.map((event) => event.title)).toContain(
+      expect(adminData.events.items.map((event) => event.title)).toContain(
         "Parity Secret Access",
       );
-      expect(adminData.members.map((member) => member.email)).toContain(
+      expect(adminData.members.items.map((member) => member.email)).toContain(
         parityFixtureEmails.frozenMember,
       );
 
