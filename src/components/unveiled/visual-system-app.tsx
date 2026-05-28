@@ -93,11 +93,7 @@ import {
   signupSchema,
 } from "@/lib/forms/schemas";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
-import {
-  derivedValues,
-  type EventCardView,
-  formContracts,
-} from "@/lib/unveiled-view-models";
+import { type EventCardView, formContracts } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 
 type View = Extract<
@@ -2209,6 +2205,88 @@ function ProfilePage() {
     copy.preferenceMessage,
   );
 
+  const [stripeInstance, setStripeInstance] = useState<
+    import("@stripe/stripe-js").Stripe | null
+  >(null);
+  const cardElementRef = useRef<
+    import("@stripe/stripe-js").StripeCardElement | null
+  >(null);
+  const sepaElementRef = useRef<
+    import("@stripe/stripe-js").StripeIbanElement | null
+  >(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    import("@stripe/stripe-js")
+      .then(({ loadStripe }) => {
+        const pubKey =
+          import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_mock";
+        return loadStripe(pubKey);
+      })
+      .then((stripe) => {
+        setStripeInstance(stripe);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!stripeInstance) return;
+
+    if (selectedPaymentMethod === "CARD") {
+      const el = document.getElementById("stripe-card-element");
+      if (el) {
+        if (cardElementRef.current) {
+          cardElementRef.current.destroy();
+        }
+        const elements = stripeInstance.elements();
+        const card = elements.create("card", {
+          style: {
+            base: {
+              fontSize: "14px",
+              color: "#202621",
+              fontFamily: "monospace",
+            },
+          },
+        });
+        card.mount("#stripe-card-element");
+        cardElementRef.current = card;
+      }
+    } else {
+      if (cardElementRef.current) {
+        cardElementRef.current.destroy();
+        cardElementRef.current = null;
+      }
+    }
+
+    if (selectedPaymentMethod === "SEPA") {
+      const el = document.getElementById("stripe-sepa-element");
+      if (el) {
+        if (sepaElementRef.current) {
+          sepaElementRef.current.destroy();
+        }
+        const elements = stripeInstance.elements();
+        const iban = elements.create("iban", {
+          supportedCountries: ["SEPA"],
+          placeholderCountry: "DE",
+          style: {
+            base: {
+              fontSize: "14px",
+              color: "#202621",
+              fontFamily: "monospace",
+            },
+          },
+        });
+        iban.mount("#stripe-sepa-element");
+        sepaElementRef.current = iban;
+      }
+    } else {
+      if (sepaElementRef.current) {
+        sepaElementRef.current.destroy();
+        sepaElementRef.current = null;
+      }
+    }
+  }, [stripeInstance, selectedPaymentMethod]);
+
   return (
     <div className="space-y-8 py-8">
       <Panel
@@ -2385,16 +2463,18 @@ function ProfilePage() {
               </div>
               {selectedPaymentMethod === "CARD" ? (
                 <Panel tone="cream" shadow={false} className="mt-3 p-3">
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                    {copy.stripeCard}
-                  </p>
+                  <div
+                    id="stripe-card-element"
+                    className="min-h-[40px] w-full p-2 border-2 border-brand-dark bg-white"
+                  />
                 </Panel>
               ) : null}
               {selectedPaymentMethod === "SEPA" ? (
                 <Panel tone="cream" shadow={false} className="mt-3 p-3">
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                    {copy.stripeSepa}
-                  </p>
+                  <div
+                    id="stripe-sepa-element"
+                    className="min-h-[40px] w-full p-2 border-2 border-brand-dark bg-white"
+                  />
                 </Panel>
               ) : null}
             </div>
@@ -2461,10 +2541,14 @@ function ProfilePage() {
 }
 
 function PartnerPortal() {
+  const copy = useCopy().admin;
   const live = useLiveData();
-  const [checkInMessage, setCheckInMessage] = useState(
-    "Check-in actions enforce partner ownership on the server.",
+  const [checkInMessage, setCheckInMessage] = useState<string>(
+    copy.checkInDefault,
   );
+  useEffect(() => {
+    setCheckInMessage(copy.checkInDefault);
+  }, [copy.checkInDefault]);
   const [guestSearch, setGuestSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("");
   const filteredGuests = useMemo(() => {
@@ -2645,10 +2729,15 @@ function PartnerPortal() {
 }
 
 function AdminPanel() {
+  const copy = useCopy().admin;
   const live = useLiveData();
-  const [adminMessage, setAdminMessage] = useState(
-    "Admin forms submit through authorized Astro Actions.",
+  const [adminMessage, setAdminMessage] = useState<string>(
+    copy.adminMessageDefault,
   );
+  useEffect(() => {
+    setAdminMessage(copy.adminMessageDefault);
+  }, [copy.adminMessageDefault]);
+
   const [eventImageUrl, setEventImageUrl] = useState("");
   const [partnerLogoUrl, setPartnerLogoUrl] = useState("");
   const [eventSubmitting, setEventSubmitting] = useState(false);
@@ -2664,6 +2753,98 @@ function AdminPanel() {
   const [exportMessage, setExportMessage] = useState(
     "Select a partner to filter the booking export.",
   );
+
+  const [seriesStartDate, setSeriesStartDate] = useState("2026-05-04");
+  const [seriesEndDate, setSeriesEndDate] = useState("2026-05-30");
+  const [seriesWeekdays, setSeriesWeekdays] = useState<string[]>([
+    "Mon",
+    "Wed",
+    "Fri",
+  ]);
+  const [seriesTimes, setSeriesTimes] = useState("19:00, 21:00");
+  const [seriesExcludedDates, setSeriesExcludedDates] = useState("2026-05-12");
+
+  const computedSeriesPreview = useMemo(() => {
+    try {
+      const start = new Date(`${seriesStartDate}T00:00:00`);
+      const end = new Date(`${seriesEndDate}T23:59:59`);
+      if (
+        Number.isNaN(start.getTime()) ||
+        Number.isNaN(end.getTime()) ||
+        start > end
+      ) {
+        return [];
+      }
+
+      const weekdayNamesShort = [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+      ];
+      const times = seriesTimes
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const excluded = seriesExcludedDates
+        .split(",")
+        .map((d) => d.trim())
+        .filter(Boolean);
+
+      const slots: string[] = [];
+      const current = new Date(start);
+      let limit = 100;
+      while (current <= end && limit-- > 0) {
+        const dayName = weekdayNamesShort[current.getDay()];
+        const matchesWeekday = seriesWeekdays.some((w) => {
+          const wLower = w.toLowerCase();
+          return (
+            wLower.includes(dayName.toLowerCase()) ||
+            dayName.toLowerCase().includes(wLower)
+          );
+        });
+
+        if (matchesWeekday) {
+          const yyyy = current.getFullYear();
+          const mm = String(current.getMonth() + 1).padStart(2, "0");
+          const dd = String(current.getDate()).padStart(2, "0");
+          const dateStr = `${yyyy}-${mm}-${dd}`;
+
+          const isExcluded = excluded.some((ex) => {
+            if (ex.includes("-")) return ex === dateStr;
+            return (
+              dateStr.includes(ex) || ex.includes(String(current.getDate()))
+            );
+          });
+
+          if (!isExcluded) {
+            for (const time of times) {
+              const options: Intl.DateTimeFormatOptions = {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+              };
+              const dateLabel = current.toLocaleDateString("en-US", options);
+              slots.push(`${dateLabel}, ${time}`);
+            }
+          }
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return slots.slice(0, 8);
+    } catch (_e) {
+      return [];
+    }
+  }, [
+    seriesStartDate,
+    seriesEndDate,
+    seriesWeekdays,
+    seriesTimes,
+    seriesExcludedDates,
+  ]);
 
   return (
     <div className="space-y-8 py-8">
@@ -3074,27 +3255,78 @@ function AdminPanel() {
           </div>
         </Panel>
         <Panel tone="cream" shadow={false} className="space-y-5">
-          <p className="headline-md">Series builder</p>
+          <p className="headline-md">{copy.seriesBuilder}</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Date range">
-              <TextInput defaultValue="04 May - 30 May" />
+            <Field label={`${copy.dateRange} (Start)`}>
+              <TextInput
+                type="date"
+                value={seriesStartDate}
+                onChange={(e) => setSeriesStartDate(e.currentTarget.value)}
+              />
             </Field>
-            <Field label="Weekdays">
-              <TextInput defaultValue="Mon, Wed, Fri" />
+            <Field label={`${copy.dateRange} (End)`}>
+              <TextInput
+                type="date"
+                value={seriesEndDate}
+                onChange={(e) => setSeriesEndDate(e.currentTarget.value)}
+              />
             </Field>
-            <Field label="Times">
-              <TextInput defaultValue="19:00, 21:00" />
+            <Field label={copy.weekdays} className="sm:col-span-2">
+              <div className="flex flex-wrap gap-3 mt-1">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                  (day) => {
+                    const isChecked = seriesWeekdays.includes(day);
+                    return (
+                      <label
+                        key={day}
+                        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            if (isChecked) {
+                              setSeriesWeekdays(
+                                seriesWeekdays.filter((d) => d !== day),
+                              );
+                            } else {
+                              setSeriesWeekdays([...seriesWeekdays, day]);
+                            }
+                          }}
+                        />
+                        {day}
+                      </label>
+                    );
+                  },
+                )}
+              </div>
             </Field>
-            <Field label="Excluded dates">
-              <TextInput defaultValue="12 May" />
+            <Field label={copy.times}>
+              <TextInput
+                value={seriesTimes}
+                onChange={(e) => setSeriesTimes(e.currentTarget.value)}
+                placeholder="e.g. 19:00, 21:00"
+              />
+            </Field>
+            <Field label={copy.excludedDates}>
+              <TextInput
+                value={seriesExcludedDates}
+                onChange={(e) => setSeriesExcludedDates(e.currentTarget.value)}
+                placeholder="e.g. 2026-05-12"
+              />
             </Field>
           </div>
           <div className="grid gap-2">
-            {derivedValues.seriesPreview.map((slot) => (
+            {computedSeriesPreview.map((slot) => (
               <Badge key={slot} tone="white">
                 {slot}
               </Badge>
             ))}
+            {computedSeriesPreview.length === 0 && (
+              <p className="text-[10px] uppercase font-bold opacity-40">
+                No slots matching criteria
+              </p>
+            )}
           </div>
         </Panel>
         <Panel

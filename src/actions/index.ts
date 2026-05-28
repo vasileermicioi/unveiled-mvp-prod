@@ -58,7 +58,6 @@ import {
   type FormActionResult,
   formFailure,
   parseFormInput,
-  validationFailure,
 } from "@/lib/forms/action-result";
 import { queryKeys } from "@/lib/forms/query-keys";
 import {
@@ -85,12 +84,21 @@ import {
   venueQrCheckInSchema,
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
-import { copyFor } from "@/lib/i18n";
+import { copyFor, normalizeLanguage } from "@/lib/i18n";
 import { initializeBasicBerlinCheckout } from "@/lib/payments/subscriptions";
 
 const jsonInputSchema = z.record(z.string(), z.unknown());
 
 type ActionContext = ActionAPIContext;
+
+function parseInput<TSchema extends z.ZodType>(
+  schema: TSchema,
+  input: unknown,
+  context: ActionContext,
+) {
+  const lang = normalizeLanguage(context.cookies.get("unveiled_lang")?.value);
+  return parseFormInput(schema, input, lang);
+}
 
 function newId() {
   return crypto.randomUUID();
@@ -228,7 +236,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(signupSchema, input);
+      const parsed = parseInput(signupSchema, input, context);
       if (!parsed.ok) return parsed;
       return authResultToFormAction(
         await signUpWithEmail(parsed.data),
@@ -241,7 +249,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(loginSchema, input);
+      const parsed = parseInput(loginSchema, input, context);
       if (!parsed.ok) return parsed;
       return authResultToFormAction(await loginWithEmail(parsed.data), context);
     },
@@ -251,7 +259,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(passwordRecoverySchema, input);
+      const parsed = parseInput(passwordRecoverySchema, input, context);
       if (!parsed.ok) return parsed;
       return authResultToFormAction(
         await requestPasswordRecovery(parsed.data),
@@ -271,7 +279,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(onboardingSchema, input);
+      const parsed = parseInput(onboardingSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -345,7 +353,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(preferenceSchema, input);
+      const parsed = parseInput(preferenceSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -380,7 +388,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(profileSchema, input);
+      const parsed = parseInput(profileSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -417,7 +425,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(savedEventActionSchema, input);
+      const parsed = parseInput(savedEventActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -465,7 +473,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(savedEventActionSchema, input);
+      const parsed = parseInput(savedEventActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -513,8 +521,8 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = membershipSchema.safeParse(input);
-      if (!parsed.success) return validationFailure(parsed.error);
+      const parsed = parseInput(membershipSchema, input, context);
+      if (!parsed.ok) return parsed;
 
       try {
         const viewer = await requireMember(context.request.headers);
@@ -546,7 +554,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(partnerFormSchema, input);
+      const parsed = parseInput(partnerFormSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -581,8 +589,8 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = eventFormSchema.safeParse(input);
-      if (!parsed.success) return validationFailure(parsed.error);
+      const parsed = parseInput(eventFormSchema, input, context);
+      if (!parsed.ok) return parsed;
 
       try {
         await requireAdmin(context.request.headers);
@@ -622,10 +630,12 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = z
-        .object({ eventId: z.string().trim().min(1) })
-        .safeParse(input);
-      if (!parsed.success) return validationFailure(parsed.error);
+      const parsed = parseInput(
+        z.object({ eventId: z.string().trim().min(1) }),
+        input,
+        context,
+      );
+      if (!parsed.ok) return parsed;
 
       try {
         await requireAdmin(context.request.headers);
@@ -656,7 +666,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(partnerTokenSchema, input);
+      const parsed = parseInput(partnerTokenSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -686,7 +696,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(partnerPortalAccessSchema, input);
+      const parsed = parseInput(partnerPortalAccessSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -716,7 +726,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(deletePartnerSchema, input);
+      const parsed = parseInput(deletePartnerSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -770,7 +780,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(memberAdminSchema, input);
+      const parsed = parseInput(memberAdminSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -832,14 +842,16 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = z
-        .object({
+      const parsed = parseInput(
+        z.object({
           userId: z.string().trim().min(1),
           frozen: z.coerce.boolean(),
           reason: z.string().trim().min(1).default("Admin billing override"),
-        })
-        .safeParse(input);
-      if (!parsed.success) return validationFailure(parsed.error);
+        }),
+        input,
+        context,
+      );
+      if (!parsed.ok) return parsed;
 
       try {
         const viewer = await requireAdmin(context.request.headers);
@@ -873,7 +885,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(bookingActionSchema, input);
+      const parsed = parseInput(bookingActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -896,7 +908,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(waitlistActionSchema, input);
+      const parsed = parseInput(waitlistActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -918,7 +930,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(adminTicketSchema, input);
+      const parsed = parseInput(adminTicketSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -944,7 +956,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(creditAdjustmentSchema, input);
+      const parsed = parseInput(creditAdjustmentSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -968,7 +980,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(checkInSchema, input);
+      const parsed = parseInput(checkInSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -1004,7 +1016,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(venueQrCheckInSchema, input);
+      const parsed = parseInput(venueQrCheckInSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -1084,7 +1096,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(trackEventOpenSchema, input);
+      const parsed = parseInput(trackEventOpenSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
@@ -1116,7 +1128,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
-      const parsed = parseFormInput(trackFilterApplySchema, input);
+      const parsed = parseInput(trackFilterApplySchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {

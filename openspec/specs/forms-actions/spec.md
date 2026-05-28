@@ -153,3 +153,10 @@ The partner booking export server action SHALL accept an optional `eventId` para
 - **WHEN** a partner requests to export bookings passing a specific `eventId`
 - **THEN** the action verifies the partner ownership and returns only bookings linked to the specified event.
 
+### Requirement: Localized Action Validation Errors
+Action validation schemas and server-side operations SHALL return failure/validation error messages and success feedback in the language specified by the active guest session or member locale.
+
+#### Scenario: Validation failure returns localized message
+- **WHEN** an action input validation fails
+- **THEN** the returned validation error details are localized into the language specified by the active viewer or request header language parameter
+

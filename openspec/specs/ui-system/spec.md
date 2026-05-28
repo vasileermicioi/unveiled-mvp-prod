@@ -50,7 +50,7 @@ Buttons, segmented controls, toggles, and icon controls SHALL match legacy visib
 ### Requirement: Forms
 This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/Onboarding.tsx`, `_old_app/components/CheckoutView.tsx`, `_old_app/components/ProfileView.tsx`, `_old_app/components/AdminPanel.tsx`.
 
-Forms SHALL preserve visible field structure, validation message placement, and responsive grouping.
+Forms SHALL preserve visible field structure, validation message placement, and responsive grouping. Payment integration and builder forms MUST mount interactive components without static mock text placeholders.
 
 #### Scenario: Visible elements render
 - **WHEN** a form renders
@@ -68,6 +68,14 @@ Forms SHALL preserve visible field structure, validation message placement, and 
 #### Scenario: Data requirements are met
 - **WHEN** forms render
 - **THEN** required display data is field label, current value, placeholder where shown, validation message, selected state, disabled state, and submit/loading label
+
+#### Scenario: Stripe payment form mounts active elements
+- **WHEN** a user selects Stripe Card or SEPA payment methods
+- **THEN** the checkout form displays standard container divs for Stripe Elements instead of hardcoded text placeholders (e.g. "Stripe card fields mount here")
+
+#### Scenario: Event series builder mounts standard selectors
+- **WHEN** an admin views the Event Series Builder input fields
+- **THEN** the builder displays standard date picker and day selection inputs rather than hardcoded "defaultValue" range string prompts (e.g. "04 May - 30 May")
 
 ### Requirement: Event Card Component
 This requirement SHALL use legacy reference path: `_old_app/components/EventCard.tsx`.
@@ -200,6 +208,10 @@ Reusable UI controls, forms, modal states, and shared feedback surfaces SHALL re
 #### Scenario: Shared states render localized messages
 - **WHEN** empty, loading, error, unavailable, no-results, or retry states appear in public or member flows
 - **THEN** headings, body copy, and action labels use the selected language while preserving existing visual parity behavior
+
+#### Scenario: Admin views and actions render localized copy
+- **WHEN** an administrator views the admin dashboard, partner tables, member lists, or submits administrative forms
+- **THEN** all header labels, action buttons, table headings, and toast messages use the selected language
 
 ### Requirement: Primitive Styling Stability
 Migrated UI primitives, forms, interactive controls, and modal states SHALL maintain visual stability and prevent styling regressions through automated visual checks.
