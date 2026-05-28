@@ -2639,6 +2639,12 @@ function AdminPanel() {
   const [eventSubmitting, setEventSubmitting] = useState(false);
   const [partnerSubmitting, setPartnerSubmitting] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+  const [ticketType, setTicketType] = useState<"SECRET_CODE" | "VOUCHER">(
+    "SECRET_CODE",
+  );
+  const [secretCodeMode, setSecretCodeMode] = useState<
+    "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING"
+  >("MANUAL");
 
   return (
     <div className="space-y-8 py-8">
@@ -2768,6 +2774,36 @@ function AdminPanel() {
             const formData = new FormData(form);
             setEventSubmitting(true);
             setAdminMessage("Publishing event...");
+
+            const dateVal = String(formData.get("date") || "2026-05-04");
+            const timeVal = String(formData.get("time") || "19:00");
+            const [hours, minutes] = timeVal.split(":").map(Number);
+            const startTimeMinutes =
+              (Number.isNaN(hours) ? 19 : hours) * 60 +
+              (Number.isNaN(minutes) ? 0 : minutes);
+            const weekday = new Date(`${dateVal}T00:00:00`).getDay();
+
+            const category = String(formData.get("category") || "Theater");
+            const ticketTypeVal = String(
+              formData.get("ticketType") || "SECRET_CODE",
+            ) as "SECRET_CODE" | "VOUCHER";
+            const secretCodeModeVal = String(
+              formData.get("secretCodeMode") || "MANUAL",
+            ) as "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING";
+            const secretCodeVal = String(formData.get("secretCode") || "");
+            const promoCodeVal = String(formData.get("promoCode") || "");
+            const eventWebsiteUrlVal = String(
+              formData.get("eventWebsiteUrl") || "",
+            );
+            const languagesVal = formData.getAll("languages").map(String);
+            const targetAgeGroupsVal = formData
+              .getAll("targetAgeGroups")
+              .map(String);
+            const addressVal = String(formData.get("address") || "Berlin");
+            const neighborhoodVal = String(
+              formData.get("neighborhood") || "Mitte",
+            );
+
             await runServerAction(
               () =>
                 actions.saveEvent({
@@ -2778,24 +2814,37 @@ function AdminPanel() {
                   ),
                   title: String(formData.get("title") || ""),
                   description: String(formData.get("description") || ""),
-                  category: "Theater",
+                  category,
                   eventType: "Drop",
-                  dateTime: `${String(formData.get("date") || "2026-05-04")}T${String(formData.get("time") || "19:00")}:00.000Z`,
+                  dateTime: `${dateVal}T${timeVal}:00.000Z`,
                   timingMode: "TIME_SLOT",
-                  startTimeMinutes: 19 * 60,
-                  weekday: 1,
-                  address: "Berlin",
-                  neighborhood: "Mitte",
+                  startTimeMinutes,
+                  weekday,
+                  address: addressVal,
+                  neighborhood: neighborhoodVal,
                   imageUrl: String(formData.get("imageUrl") || ""),
                   tags: [],
                   creditPrice: Number(formData.get("credits") || 0),
                   totalCapacity: Number(formData.get("capacity") || 1),
-                  ticketType: "SECRET_CODE",
-                  secretCodeMode: "MANUAL",
-                  secretCode: "UNVEILED",
+                  ticketType: ticketTypeVal,
+                  secretCodeMode:
+                    ticketTypeVal === "SECRET_CODE"
+                      ? secretCodeModeVal
+                      : undefined,
+                  secretCode:
+                    ticketTypeVal === "SECRET_CODE" &&
+                    secretCodeModeVal === "MANUAL"
+                      ? secretCodeVal
+                      : undefined,
+                  promoCode:
+                    ticketTypeVal === "VOUCHER" ? promoCodeVal : undefined,
+                  eventWebsiteUrl:
+                    ticketTypeVal === "VOUCHER"
+                      ? eventWebsiteUrlVal
+                      : undefined,
                   barrierFree: false,
-                  languages: ["DE"],
-                  targetAgeGroups: ["26-35"],
+                  languages: languagesVal,
+                  targetAgeGroups: targetAgeGroupsVal,
                   series: {
                     enabled: false,
                     count: 1,
@@ -2807,6 +2856,8 @@ function AdminPanel() {
               () => {
                 form.reset();
                 setEventImageUrl("");
+                setTicketType("SECRET_CODE");
+                setSecretCodeMode("MANUAL");
                 live.refetchActiveSurface();
               },
             );
@@ -2863,6 +2914,162 @@ function AdminPanel() {
                 defaultValue={1}
                 required
               />
+            </Field>
+            <Field label="Category">
+              <SelectInput name="category" required>
+                <option value="Theater">Theater</option>
+                <option value="Kino">Kino</option>
+                <option value="Museum">Museum</option>
+                <option value="Ausstellung">Ausstellung</option>
+                <option value="Konzert">Konzert</option>
+                <option value="Kultur">Kultur</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Tanz/Performance">Tanz/Performance</option>
+                <option value="Talk/Lesung">Talk/Lesung</option>
+              </SelectInput>
+            </Field>
+            <Field label="Ticket Type">
+              <SelectInput
+                name="ticketType"
+                value={ticketType}
+                onChange={(e) =>
+                  setTicketType(
+                    e.currentTarget.value as "SECRET_CODE" | "VOUCHER",
+                  )
+                }
+                required
+              >
+                <option value="SECRET_CODE">
+                  Workaround Password (SECRET_CODE)
+                </option>
+                <option value="VOUCHER">Promo Code (VOUCHER)</option>
+              </SelectInput>
+            </Field>
+
+            {ticketType === "VOUCHER" && (
+              <>
+                <Field label="Promo Code">
+                  <TextInput
+                    name="promoCode"
+                    placeholder="Promo code"
+                    required
+                  />
+                </Field>
+                <Field label="Event Website URL">
+                  <TextInput
+                    name="eventWebsiteUrl"
+                    type="url"
+                    placeholder="https://..."
+                    required
+                  />
+                </Field>
+              </>
+            )}
+            {ticketType === "SECRET_CODE" && (
+              <>
+                <Field label="Secret Code Mode">
+                  <SelectInput
+                    name="secretCodeMode"
+                    value={secretCodeMode}
+                    onChange={(e) =>
+                      setSecretCodeMode(
+                        e.currentTarget.value as
+                          | "MANUAL"
+                          | "SHARED_GENERATED"
+                          | "UNIQUE_PER_BOOKING",
+                      )
+                    }
+                    required
+                  >
+                    <option value="MANUAL">Manual</option>
+                    <option value="SHARED_GENERATED">Shared Generated</option>
+                    <option value="UNIQUE_PER_BOOKING">
+                      Unique Per Booking
+                    </option>
+                  </SelectInput>
+                </Field>
+                {secretCodeMode === "MANUAL" && (
+                  <Field label="Secret Code">
+                    <TextInput
+                      name="secretCode"
+                      placeholder="Secret code"
+                      required
+                    />
+                  </Field>
+                )}
+              </>
+            )}
+
+            <Field label="Address">
+              <TextInput
+                name="address"
+                defaultValue="Berlin"
+                placeholder="Event address"
+                required
+              />
+            </Field>
+            <Field label="Neighborhood">
+              <TextInput
+                name="neighborhood"
+                defaultValue="Mitte"
+                placeholder="Neighborhood (e.g. Mitte)"
+                required
+              />
+            </Field>
+
+            <Field label="Languages" className="sm:col-span-2">
+              <div className="mt-2 flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input
+                    type="checkbox"
+                    name="languages"
+                    value="DE"
+                    defaultChecked
+                  />{" "}
+                  DE
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="languages" value="EN" /> EN
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="languages" value="TR" /> Turki
+                  (TR)
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="languages" value="AR" /> Arabic
+                  (AR)
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="languages" value="NON_VERBAL" />{" "}
+                  Non-Verbal
+                </label>
+              </div>
+            </Field>
+
+            <Field label="Target Age Groups" className="sm:col-span-2">
+              <div className="mt-2 flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="targetAgeGroups" value="18-25" />{" "}
+                  18-25
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input
+                    type="checkbox"
+                    name="targetAgeGroups"
+                    value="26-35"
+                    defaultChecked
+                  />{" "}
+                  26-35
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="targetAgeGroups" value="36-50" />{" "}
+                  36-50
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <input type="checkbox" name="targetAgeGroups" value="50+" />{" "}
+                  50+
+                </label>
+              </div>
             </Field>
           </div>
           <Field label="Optional info">
