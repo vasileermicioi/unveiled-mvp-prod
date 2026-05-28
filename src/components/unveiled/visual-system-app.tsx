@@ -261,6 +261,12 @@ function scrollToAdminEventForm() {
     ?.focus({ preventScroll: true });
 }
 
+function scrollToAdminExport() {
+  document
+    .getElementById("admin-export-panel")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function AdminAssetUploadField({
   kind,
   label,
@@ -2645,6 +2651,10 @@ function AdminPanel() {
   const [secretCodeMode, setSecretCodeMode] = useState<
     "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING"
   >("MANUAL");
+  const [exportPartnerId, setExportPartnerId] = useState("");
+  const [exportMessage, setExportMessage] = useState(
+    "Select a partner to filter the booking export.",
+  );
 
   return (
     <div className="space-y-8 py-8">
@@ -2662,49 +2672,10 @@ function AdminPanel() {
           New event
           <Plus />
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() =>
-            void runServerAction(
-              () => actions.getAdminExportRows({}),
-              setAdminMessage,
-              (data) => {
-                const downloaded = downloadCsv(
-                  "admin-bookings.csv",
-                  data?.rows ?? [],
-                  [
-                    "bookingId",
-                    "userId",
-                    "event",
-                    "partner",
-                    "code",
-                    "status",
-                    "tickets",
-                    "credits",
-                    "createdAt",
-                  ],
-                );
-                setAdminMessage(
-                  downloaded ? "CSV export downloaded." : "No export rows.",
-                );
-              },
-            )
-          }
-        >
+        <Button type="button" variant="secondary" onClick={scrollToAdminExport}>
           Partner export
           <ArrowDownToLine />
         </Button>
-        <Field label="Export partner" className="min-w-64 text-brand-yellow">
-          <SelectInput>
-            <option>All partners</option>
-            {live.adminPartners.map((partner) => (
-              <option key={partner.id} value={partner.id}>
-                {partner.name}
-              </option>
-            ))}
-          </SelectInput>
-        </Field>
       </Panel>
       <TableShell>
         {live.adminEvents.map((event) => (
@@ -3625,6 +3596,68 @@ function AdminPanel() {
           ) : null}
         </Panel>
       </div>
+      <Panel
+        id="admin-export-panel"
+        tone="cream"
+        shadow={false}
+        className="scroll-mt-24 space-y-5"
+      >
+        <p className="headline-md">Export Bookings</p>
+        <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+          {exportMessage}
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <Field label="Export partner" className="min-w-64">
+            <SelectInput
+              value={exportPartnerId}
+              onChange={(e) => setExportPartnerId(e.currentTarget.value)}
+            >
+              <option value="">All partners</option>
+              {live.adminPartners.map((partner) => (
+                <option key={partner.id} value={partner.id}>
+                  {partner.name}
+                </option>
+              ))}
+            </SelectInput>
+          </Field>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() =>
+              void runServerAction(
+                () =>
+                  actions.getAdminExportRows({
+                    partnerId: exportPartnerId || undefined,
+                  }),
+                setExportMessage,
+                (data) => {
+                  const downloaded = downloadCsv(
+                    "admin-bookings.csv",
+                    data?.rows ?? [],
+                    [
+                      "bookingId",
+                      "userId",
+                      "event",
+                      "partner",
+                      "code",
+                      "status",
+                      "tickets",
+                      "credits",
+                      "createdAt",
+                    ],
+                  );
+                  setExportMessage(
+                    downloaded ? "CSV export downloaded." : "No export rows.",
+                  );
+                },
+              )
+            }
+          >
+            Download CSV
+            <ArrowDownToLine />
+          </Button>
+        </div>
+      </Panel>
     </div>
   );
 }
@@ -3854,7 +3887,7 @@ function VisualSystemAppContent({
       : view === "partner"
         ? demoPageShells.partner
         : view === "admin"
-          ? demoPageShells.admin
+          ? undefined
           : view === "discover"
             ? demoPageShells.public
             : undefined;

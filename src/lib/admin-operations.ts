@@ -784,8 +784,14 @@ export async function getPartnerGuestExportRows(
 }
 
 export async function getAdminExportRows(
+  partnerId?: string,
   database: Db = db,
 ): Promise<AdminExportRow[]> {
+  const conditions = [];
+  if (partnerId) {
+    conditions.push(eq(bookings.partnerId, partnerId));
+  }
+
   return database
     .select({
       bookingId: bookings.id,
@@ -801,6 +807,7 @@ export async function getAdminExportRows(
     .from(bookings)
     .innerJoin(events, eq(events.id, bookings.eventId))
     .innerJoin(partners, eq(partners.id, bookings.partnerId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(bookings.createdAt));
 }
 

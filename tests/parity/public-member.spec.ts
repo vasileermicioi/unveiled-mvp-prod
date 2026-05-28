@@ -154,7 +154,7 @@ test.describe("public and member route parity", () => {
       page.getByRole("heading", { name: "Active Member" }),
     ).toBeVisible();
     await expect(
-      page.getByText(parityFixtureEmails.activeMember),
+      page.getByText(parityFixtureEmails.activeMember, { exact: true }),
     ).toBeVisible();
     await expectNoDemoOnlyLabels(page);
   });

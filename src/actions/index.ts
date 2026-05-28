@@ -1060,11 +1060,11 @@ export const server = {
 
   getAdminExportRows: defineAction({
     accept: "json",
-    input: jsonInputSchema,
-    handler: async (_input, context) => {
+    input: z.object({ partnerId: z.string().trim().optional() }),
+    handler: async (input, context) => {
       try {
         await requireAdmin(context.request.headers);
-        const rows = await getAdminExportRows();
+        const rows = await getAdminExportRows(input.partnerId);
         return actionSuccess({
           data: { rows },
           invalidate: dataAccessInvalidationKeys([{ type: "admin-exports" }]),

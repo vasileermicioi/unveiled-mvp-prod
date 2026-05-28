@@ -139,3 +139,10 @@ The admin event creation and editing form SHALL include configurable controls fo
 - **WHEN** an admin selects ticket type "Workaround Password" (SECRET_CODE), enters secret code and secret code mode, and submits the form
 - **THEN** the form reads these inputs from FormData and calls the saveEvent action with the dynamic payload containing secretCodeMode and secretCode.
 
+### Requirement: Admin Export Action Partner Filter
+The admin export server action SHALL accept an optional `partnerId` parameter to filter the exported bookings.
+
+#### Scenario: Admin exports bookings filtered by partner
+- **WHEN** an admin requests to export bookings passing a specific `partnerId`
+- **THEN** the action verifies the admin role and returns only bookings linked to the specified partner.
+
