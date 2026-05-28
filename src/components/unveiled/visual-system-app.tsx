@@ -263,6 +263,14 @@ function scrollToAdminExport() {
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function scrollToAdminPartnerForm() {
+  const form = document.getElementById("admin-partner-form");
+  form?.scrollIntoView({ behavior: "smooth", block: "start" });
+  form
+    ?.querySelector<HTMLInputElement>('input[name="name"]')
+    ?.focus({ preventScroll: true });
+}
+
 function AdminAssetUploadField({
   kind,
   label,
@@ -2728,7 +2736,7 @@ function PartnerPortal() {
   );
 }
 
-function AdminPanel() {
+function AdminPanel({ initialTab = "metrics" }: { initialTab?: string }) {
   const copy = useCopy().admin;
   const live = useLiveData();
   const [adminMessage, setAdminMessage] = useState<string>(
@@ -2738,11 +2746,46 @@ function AdminPanel() {
     setAdminMessage(copy.adminMessageDefault);
   }, [copy.adminMessageDefault]);
 
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  const updateTab = (newTab: string) => {
+    setActiveTab(newTab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", newTab);
+      window.history.pushState(null, "", url.pathname + url.search);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const currentTab = params.get("tab") || "metrics";
+      if (["metrics", "events", "partners", "members"].includes(currentTab)) {
+        setActiveTab(currentTab);
+      } else {
+        setActiveTab("metrics");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("admin-tab-change", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("admin-tab-change", handlePopState);
+    };
+  }, []);
+
   const [eventImageUrl, setEventImageUrl] = useState("");
   const [partnerLogoUrl, setPartnerLogoUrl] = useState("");
   const [eventSubmitting, setEventSubmitting] = useState(false);
   const [partnerSubmitting, setPartnerSubmitting] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [ticketType, setTicketType] = useState<"SECRET_CODE" | "VOUCHER">(
     "SECRET_CODE",
   );
@@ -2846,561 +2889,621 @@ function AdminPanel() {
     seriesExcludedDates,
   ]);
 
+  const filteredMembers = useMemo(() => {
+    const query = memberSearchQuery.toLowerCase().trim();
+    if (!query) return live.adminMembers;
+    return live.adminMembers.filter(
+      (m) =>
+        m.fullName.toLowerCase().includes(query) ||
+        m.email.toLowerCase().includes(query),
+    );
+  }, [live.adminMembers, memberSearchQuery]);
+
+  const handlePartnerExportClick = () => {
+    updateTab("partners");
+    setTimeout(() => {
+      scrollToAdminExport();
+    }, 50);
+  };
+
   return (
     <div className="space-y-8 py-8">
       <Panel tone="white">
         <Badge tone="yellow">Admin</Badge>
-        <h1 className="headline-lg mt-5">Operations overview.</h1>
+        <h1 className="headline-lg mt-5">
+          {copy.operationsOverview || "Operations overview."}
+        </h1>
       </Panel>
-      <div className="grid gap-4 md:grid-cols-3">
-        {live.adminDashboardMetrics.map((metric) => (
-          <StatPanel key={metric.label} {...metric} />
-        ))}
+      <div className="flex border-4 border-brand-dark bg-brand-grey p-1">
+        {(["metrics", "events", "partners", "members"] as const).map((tab) => {
+          const tabLabel =
+            copy.tabs?.[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1);
+          return (
+            <button
+              key={tab}
+              data-testid={`admin-tab-${tab}`}
+              className={cn(
+                "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all",
+                activeTab === tab
+                  ? "bg-brand-dark text-white shadow-[2px_2px_0_0_#202621]"
+                  : "text-brand-dark hover:bg-brand-dark/10",
+              )}
+              onClick={() => updateTab(tab)}
+              type="button"
+            >
+              {tabLabel}
+            </button>
+          );
+        })}
       </div>
-      <Panel tone="dark" className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="yellow" onClick={scrollToAdminEventForm}>
-          New event
-          <Plus />
-        </Button>
-        <Button type="button" variant="secondary" onClick={scrollToAdminExport}>
-          Partner export
-          <ArrowDownToLine />
-        </Button>
-      </Panel>
-      <TableShell>
-        {live.adminEvents.map((event) => (
-          <TableRow key={event.id}>
+      {activeTab === "metrics" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
-              <p className="text-sm font-black uppercase tracking-widest">
-                {event.title}
-              </p>
-              <p className="text-xs font-bold opacity-55">
-                {event.partnerName}
+              <h2 className="headline-md">Operational KPIs</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Overview of key business metrics, including active members,
+                ticket bookings, and venue partners.
               </p>
             </div>
-            <p className="text-sm font-bold uppercase">{event.dateLabel}</p>
-            <p className="text-sm font-bold uppercase">{event.capacityLabel}</p>
-            <p className="text-xs font-black uppercase tracking-widest opacity-55">
-              {event.codeStrategyLabel} {" // "}
-              {event.creditPrice} credits
-            </p>
-            <Badge tone={event.statusLabel === "Draft" ? "grey" : "yellow"}>
-              {event.statusLabel}
-            </Badge>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {live.adminDashboardMetrics.map((metric) => (
+              <StatPanel key={metric.label} {...metric} />
+            ))}
+          </div>
+        </div>
+      )}
+      {activeTab === "events" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="headline-md">Events registry</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Manage live drops, create series slots, and track capacity.
+              </p>
+            </div>
             <Button
               type="button"
-              size="sm"
-              variant="destructive"
-              onClick={() =>
-                void runServerAction(
-                  () => actions.deleteEvent({ eventId: event.id }),
-                  setAdminMessage,
-                  live.refetchActiveSurface,
-                )
-              }
+              variant="yellow"
+              onClick={scrollToAdminEventForm}
             >
-              Delete
+              New event
+              <Plus />
             </Button>
-          </TableRow>
-        ))}
-        {live.adminEvents.length === 0 ? (
-          <StatePanel
-            title={live.isLoading ? "Loading events" : "No admin events"}
-            text={
-              live.isError
-                ? "Live admin data could not be loaded."
-                : "Admin event rows will appear after events are created."
-            }
-            state={
-              live.isLoading ? "loading" : live.isError ? "error" : "empty"
-            }
-          />
-        ) : null}
-      </TableShell>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel
-          id="admin-event-form"
-          tone="white"
-          shadow={false}
-          className="scroll-mt-24 space-y-5"
-          as="form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (eventSubmitting) return;
-            const form = event.currentTarget as HTMLFormElement;
-            if (!form.reportValidity()) {
-              setAdminMessage("Check the highlighted fields.");
-              return;
-            }
-            const formData = new FormData(form);
-            setEventSubmitting(true);
-            setAdminMessage("Publishing event...");
-
-            const dateVal = String(formData.get("date") || "2026-05-04");
-            const timeVal = String(formData.get("time") || "19:00");
-            const [hours, minutes] = timeVal.split(":").map(Number);
-            const startTimeMinutes =
-              (Number.isNaN(hours) ? 19 : hours) * 60 +
-              (Number.isNaN(minutes) ? 0 : minutes);
-            const weekday = new Date(`${dateVal}T00:00:00`).getDay();
-
-            const category = String(formData.get("category") || "Theater");
-            const ticketTypeVal = String(
-              formData.get("ticketType") || "SECRET_CODE",
-            ) as "SECRET_CODE" | "VOUCHER";
-            const secretCodeModeVal = String(
-              formData.get("secretCodeMode") || "MANUAL",
-            ) as "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING";
-            const secretCodeVal = String(formData.get("secretCode") || "");
-            const promoCodeVal = String(formData.get("promoCode") || "");
-            const eventWebsiteUrlVal = String(
-              formData.get("eventWebsiteUrl") || "",
-            );
-            const languagesVal = formData.getAll("languages").map(String);
-            const targetAgeGroupsVal = formData
-              .getAll("targetAgeGroups")
-              .map(String);
-            const addressVal = String(formData.get("address") || "Berlin");
-            const neighborhoodVal = String(
-              formData.get("neighborhood") || "Mitte",
-            );
-
-            await runServerAction(
-              () =>
-                actions.saveEvent({
-                  partnerId: String(
-                    formData.get("partnerId") ||
-                      live.adminPartners[0]?.id ||
-                      "",
-                  ),
-                  title: String(formData.get("title") || ""),
-                  description: String(formData.get("description") || ""),
-                  category,
-                  eventType: "Drop",
-                  dateTime: `${dateVal}T${timeVal}:00.000Z`,
-                  timingMode: "TIME_SLOT",
-                  startTimeMinutes,
-                  weekday,
-                  address: addressVal,
-                  neighborhood: neighborhoodVal,
-                  imageUrl: String(formData.get("imageUrl") || ""),
-                  tags: [],
-                  creditPrice: Number(formData.get("credits") || 0),
-                  totalCapacity: Number(formData.get("capacity") || 1),
-                  ticketType: ticketTypeVal,
-                  secretCodeMode:
-                    ticketTypeVal === "SECRET_CODE"
-                      ? secretCodeModeVal
-                      : undefined,
-                  secretCode:
-                    ticketTypeVal === "SECRET_CODE" &&
-                    secretCodeModeVal === "MANUAL"
-                      ? secretCodeVal
-                      : undefined,
-                  promoCode:
-                    ticketTypeVal === "VOUCHER" ? promoCodeVal : undefined,
-                  eventWebsiteUrl:
-                    ticketTypeVal === "VOUCHER"
-                      ? eventWebsiteUrlVal
-                      : undefined,
-                  barrierFree: false,
-                  languages: languagesVal,
-                  targetAgeGroups: targetAgeGroupsVal,
-                  series: {
-                    enabled: false,
-                    count: 1,
-                    intervalDays: 7,
-                    slotIsoDateTimes: [],
-                  },
-                }),
-              setAdminMessage,
-              () => {
-                form.reset();
-                setEventImageUrl("");
-                setTicketType("SECRET_CODE");
-                setSecretCodeMode("MANUAL");
-                live.refetchActiveSurface();
-              },
-            );
-            setEventSubmitting(false);
-          }}
-        >
-          <p className="headline-md">Event form</p>
-          <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-            {adminMessage}
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Title">
-              <TextInput name="title" placeholder="Event title" required />
-            </Field>
-            <Field label="Partner">
-              <SelectInput name="partnerId" required>
-                {live.adminPartners.map((partner) => (
-                  <option key={partner.id} value={partner.id}>
-                    {partner.name}
-                  </option>
-                ))}
-              </SelectInput>
-            </Field>
-            <Field label="Date">
-              <TextInput
-                name="date"
-                type="date"
-                defaultValue="2026-05-04"
-                required
-              />
-            </Field>
-            <Field label="Time">
-              <TextInput
-                name="time"
-                type="time"
-                defaultValue="19:00"
-                required
-              />
-            </Field>
-            <Field label="Credits">
-              <TextInput
-                name="credits"
-                type="number"
-                min={0}
-                defaultValue={2}
-                required
-              />
-            </Field>
-            <Field label="Capacity">
-              <TextInput
-                name="capacity"
-                type="number"
-                min={1}
-                defaultValue={1}
-                required
-              />
-            </Field>
-            <Field label="Category">
-              <SelectInput name="category" required>
-                <option value="Theater">Theater</option>
-                <option value="Kino">Kino</option>
-                <option value="Museum">Museum</option>
-                <option value="Ausstellung">Ausstellung</option>
-                <option value="Konzert">Konzert</option>
-                <option value="Kultur">Kultur</option>
-                <option value="Comedy">Comedy</option>
-                <option value="Tanz/Performance">Tanz/Performance</option>
-                <option value="Talk/Lesung">Talk/Lesung</option>
-              </SelectInput>
-            </Field>
-            <Field label="Ticket Type">
-              <SelectInput
-                name="ticketType"
-                value={ticketType}
-                onChange={(e) =>
-                  setTicketType(
-                    e.currentTarget.value as "SECRET_CODE" | "VOUCHER",
-                  )
+          </div>
+          <TableShell>
+            {live.adminEvents.map((event) => (
+              <TableRow key={event.id}>
+                <div>
+                  <p className="text-sm font-black uppercase tracking-widest">
+                    {event.title}
+                  </p>
+                  <p className="text-xs font-bold opacity-55">
+                    {event.partnerName}
+                  </p>
+                </div>
+                <p className="text-sm font-bold uppercase">{event.dateLabel}</p>
+                <p className="text-sm font-bold uppercase">
+                  {event.capacityLabel}
+                </p>
+                <p className="text-xs font-black uppercase tracking-widest opacity-55">
+                  {event.codeStrategyLabel} {" // "}
+                  {event.creditPrice} credits
+                </p>
+                <Badge tone={event.statusLabel === "Draft" ? "grey" : "yellow"}>
+                  {event.statusLabel}
+                </Badge>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={() =>
+                    void runServerAction(
+                      () => actions.deleteEvent({ eventId: event.id }),
+                      setAdminMessage,
+                      live.refetchActiveSurface,
+                    )
+                  }
+                >
+                  Delete
+                </Button>
+              </TableRow>
+            ))}
+            {live.adminEvents.length === 0 ? (
+              <StatePanel
+                title={live.isLoading ? "Loading events" : "No admin events"}
+                text={
+                  live.isError
+                    ? "Live admin data could not be loaded."
+                    : "Admin event rows will appear after events are created."
                 }
-                required
-              >
-                <option value="SECRET_CODE">
-                  Workaround Password (SECRET_CODE)
-                </option>
-                <option value="VOUCHER">Promo Code (VOUCHER)</option>
-              </SelectInput>
-            </Field>
+                state={
+                  live.isLoading ? "loading" : live.isError ? "error" : "empty"
+                }
+              />
+            ) : null}
+          </TableShell>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Panel
+              id="admin-event-form"
+              tone="white"
+              shadow={false}
+              className="scroll-mt-24 space-y-5"
+              as="form"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (eventSubmitting) return;
+                const form = event.currentTarget as HTMLFormElement;
+                if (!form.reportValidity()) {
+                  setAdminMessage("Check the highlighted fields.");
+                  return;
+                }
+                const formData = new FormData(form);
+                setEventSubmitting(true);
+                setAdminMessage("Publishing event...");
 
-            {ticketType === "VOUCHER" && (
-              <>
-                <Field label="Promo Code">
+                const dateVal = String(formData.get("date") || "2026-05-04");
+                const timeVal = String(formData.get("time") || "19:00");
+                const [hours, minutes] = timeVal.split(":").map(Number);
+                const startTimeMinutes =
+                  (Number.isNaN(hours) ? 19 : hours) * 60 +
+                  (Number.isNaN(minutes) ? 0 : minutes);
+                const weekday = new Date(`${dateVal}T00:00:00`).getDay();
+
+                const category = String(formData.get("category") || "Theater");
+                const ticketTypeVal = String(
+                  formData.get("ticketType") || "SECRET_CODE",
+                ) as "SECRET_CODE" | "VOUCHER";
+                const secretCodeModeVal = String(
+                  formData.get("secretCodeMode") || "MANUAL",
+                ) as "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING";
+                const secretCodeVal = String(formData.get("secretCode") || "");
+                const promoCodeVal = String(formData.get("promoCode") || "");
+                const eventWebsiteUrlVal = String(
+                  formData.get("eventWebsiteUrl") || "",
+                );
+                const languagesVal = formData.getAll("languages").map(String);
+                const targetAgeGroupsVal = formData
+                  .getAll("targetAgeGroups")
+                  .map(String);
+                const addressVal = String(formData.get("address") || "Berlin");
+                const neighborhoodVal = String(
+                  formData.get("neighborhood") || "Mitte",
+                );
+
+                await runServerAction(
+                  () =>
+                    actions.saveEvent({
+                      partnerId: String(
+                        formData.get("partnerId") ||
+                          live.adminPartners[0]?.id ||
+                          "",
+                      ),
+                      title: String(formData.get("title") || ""),
+                      description: String(formData.get("description") || ""),
+                      category,
+                      eventType: "Drop",
+                      dateTime: `${dateVal}T${timeVal}:00.000Z`,
+                      timingMode: "TIME_SLOT",
+                      startTimeMinutes,
+                      weekday,
+                      address: addressVal,
+                      neighborhood: neighborhoodVal,
+                      imageUrl: String(formData.get("imageUrl") || ""),
+                      tags: [],
+                      creditPrice: Number(formData.get("credits") || 0),
+                      totalCapacity: Number(formData.get("capacity") || 1),
+                      ticketType: ticketTypeVal,
+                      secretCodeMode:
+                        ticketTypeVal === "SECRET_CODE"
+                          ? secretCodeModeVal
+                          : undefined,
+                      secretCode:
+                        ticketTypeVal === "SECRET_CODE" &&
+                        secretCodeModeVal === "MANUAL"
+                          ? secretCodeVal
+                          : undefined,
+                      promoCode:
+                        ticketTypeVal === "VOUCHER" ? promoCodeVal : undefined,
+                      eventWebsiteUrl:
+                        ticketTypeVal === "VOUCHER"
+                          ? eventWebsiteUrlVal
+                          : undefined,
+                      barrierFree: false,
+                      languages: languagesVal,
+                      targetAgeGroups: targetAgeGroupsVal,
+                      series: {
+                        enabled: false,
+                        count: 1,
+                        intervalDays: 7,
+                        slotIsoDateTimes: [],
+                      },
+                    }),
+                  setAdminMessage,
+                  () => {
+                    form.reset();
+                    setEventImageUrl("");
+                    setTicketType("SECRET_CODE");
+                    setSecretCodeMode("MANUAL");
+                    live.refetchActiveSurface();
+                  },
+                );
+                setEventSubmitting(false);
+              }}
+            >
+              <p className="headline-md">Event form</p>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                {adminMessage}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Title">
+                  <TextInput name="title" placeholder="Event title" required />
+                </Field>
+                <Field label="Partner">
+                  <SelectInput name="partnerId" required>
+                    {live.adminPartners.map((partner) => (
+                      <option key={partner.id} value={partner.id}>
+                        {partner.name}
+                      </option>
+                    ))}
+                  </SelectInput>
+                </Field>
+                <Field label="Date">
                   <TextInput
-                    name="promoCode"
-                    placeholder="Promo code"
+                    name="date"
+                    type="date"
+                    defaultValue="2026-05-04"
                     required
                   />
                 </Field>
-                <Field label="Event Website URL">
+                <Field label="Time">
                   <TextInput
-                    name="eventWebsiteUrl"
-                    type="url"
-                    placeholder="https://..."
+                    name="time"
+                    type="time"
+                    defaultValue="19:00"
                     required
                   />
                 </Field>
-              </>
-            )}
-            {ticketType === "SECRET_CODE" && (
-              <>
-                <Field label="Secret Code Mode">
+                <Field label="Credits">
+                  <TextInput
+                    name="credits"
+                    type="number"
+                    min={0}
+                    defaultValue={2}
+                    required
+                  />
+                </Field>
+                <Field label="Capacity">
+                  <TextInput
+                    name="capacity"
+                    type="number"
+                    min={1}
+                    defaultValue={1}
+                    required
+                  />
+                </Field>
+                <Field label="Category">
+                  <SelectInput name="category" required>
+                    <option value="Theater">Theater</option>
+                    <option value="Kino">Kino</option>
+                    <option value="Museum">Museum</option>
+                    <option value="Ausstellung">Ausstellung</option>
+                    <option value="Konzert">Konzert</option>
+                    <option value="Kultur">Kultur</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Tanz/Performance">Tanz/Performance</option>
+                    <option value="Talk/Lesung">Talk/Lesung</option>
+                  </SelectInput>
+                </Field>
+                <Field label="Ticket Type">
                   <SelectInput
-                    name="secretCodeMode"
-                    value={secretCodeMode}
+                    name="ticketType"
+                    value={ticketType}
                     onChange={(e) =>
-                      setSecretCodeMode(
-                        e.currentTarget.value as
-                          | "MANUAL"
-                          | "SHARED_GENERATED"
-                          | "UNIQUE_PER_BOOKING",
+                      setTicketType(
+                        e.currentTarget.value as "SECRET_CODE" | "VOUCHER",
                       )
                     }
                     required
                   >
-                    <option value="MANUAL">Manual</option>
-                    <option value="SHARED_GENERATED">Shared Generated</option>
-                    <option value="UNIQUE_PER_BOOKING">
-                      Unique Per Booking
+                    <option value="SECRET_CODE">
+                      Workaround Password (SECRET_CODE)
                     </option>
+                    <option value="VOUCHER">Promo Code (VOUCHER)</option>
                   </SelectInput>
                 </Field>
-                {secretCodeMode === "MANUAL" && (
-                  <Field label="Secret Code">
-                    <TextInput
-                      name="secretCode"
-                      placeholder="Secret code"
-                      required
-                    />
-                  </Field>
+
+                {ticketType === "VOUCHER" && (
+                  <>
+                    <Field label="Promo Code">
+                      <TextInput
+                        name="promoCode"
+                        placeholder="Promo code"
+                        required
+                      />
+                    </Field>
+                    <Field label="Event Website URL">
+                      <TextInput
+                        name="eventWebsiteUrl"
+                        type="url"
+                        placeholder="https://..."
+                        required
+                      />
+                    </Field>
+                  </>
                 )}
-              </>
-            )}
-
-            <Field label="Address">
-              <TextInput
-                name="address"
-                defaultValue="Berlin"
-                placeholder="Event address"
-                required
-              />
-            </Field>
-            <Field label="Neighborhood">
-              <TextInput
-                name="neighborhood"
-                defaultValue="Mitte"
-                placeholder="Neighborhood (e.g. Mitte)"
-                required
-              />
-            </Field>
-
-            <Field label="Languages" className="sm:col-span-2">
-              <div className="mt-2 flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input
-                    type="checkbox"
-                    name="languages"
-                    value="DE"
-                    defaultChecked
-                  />{" "}
-                  DE
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="languages" value="EN" /> EN
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="languages" value="TR" /> Turki
-                  (TR)
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="languages" value="AR" /> Arabic
-                  (AR)
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="languages" value="NON_VERBAL" />{" "}
-                  Non-Verbal
-                </label>
-              </div>
-            </Field>
-
-            <Field label="Target Age Groups" className="sm:col-span-2">
-              <div className="mt-2 flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="targetAgeGroups" value="18-25" />{" "}
-                  18-25
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input
-                    type="checkbox"
-                    name="targetAgeGroups"
-                    value="26-35"
-                    defaultChecked
-                  />{" "}
-                  26-35
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="targetAgeGroups" value="36-50" />{" "}
-                  36-50
-                </label>
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <input type="checkbox" name="targetAgeGroups" value="50+" />{" "}
-                  50+
-                </label>
-              </div>
-            </Field>
-          </div>
-          <Field label="Optional info">
-            <TextArea
-              name="description"
-              placeholder="Door notes, redemption details, image alt text"
-            />
-          </Field>
-          <AdminAssetUploadField
-            kind="event"
-            label="Event image"
-            ownerId="event-draft"
-            value={eventImageUrl}
-            onUrlChange={setEventImageUrl}
-            testId="admin-event-image-upload"
-            className="sm:col-span-2"
-          />
-          <div className="flex justify-end">
-            <Button type="submit" loading={eventSubmitting}>
-              Publish event
-            </Button>
-          </div>
-        </Panel>
-        <Panel tone="cream" shadow={false} className="space-y-5">
-          <p className="headline-md">{copy.seriesBuilder}</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={`${copy.dateRange} (Start)`}>
-              <TextInput
-                type="date"
-                value={seriesStartDate}
-                onChange={(e) => setSeriesStartDate(e.currentTarget.value)}
-              />
-            </Field>
-            <Field label={`${copy.dateRange} (End)`}>
-              <TextInput
-                type="date"
-                value={seriesEndDate}
-                onChange={(e) => setSeriesEndDate(e.currentTarget.value)}
-              />
-            </Field>
-            <Field label={copy.weekdays} className="sm:col-span-2">
-              <div className="flex flex-wrap gap-3 mt-1">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                  (day) => {
-                    const isChecked = seriesWeekdays.includes(day);
-                    return (
-                      <label
-                        key={day}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest cursor-pointer"
+                {ticketType === "SECRET_CODE" && (
+                  <>
+                    <Field label="Secret Code Mode">
+                      <SelectInput
+                        name="secretCodeMode"
+                        value={secretCodeMode}
+                        onChange={(e) =>
+                          setSecretCodeMode(
+                            e.currentTarget.value as
+                              | "MANUAL"
+                              | "SHARED_GENERATED"
+                              | "UNIQUE_PER_BOOKING",
+                          )
+                        }
+                        required
                       >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {
-                            if (isChecked) {
-                              setSeriesWeekdays(
-                                seriesWeekdays.filter((d) => d !== day),
-                              );
-                            } else {
-                              setSeriesWeekdays([...seriesWeekdays, day]);
-                            }
-                          }}
+                        <option value="MANUAL">Manual</option>
+                        <option value="SHARED_GENERATED">
+                          Shared Generated
+                        </option>
+                        <option value="UNIQUE_PER_BOOKING">
+                          Unique Per Booking
+                        </option>
+                      </SelectInput>
+                    </Field>
+                    {secretCodeMode === "MANUAL" && (
+                      <Field label="Secret Code">
+                        <TextInput
+                          name="secretCode"
+                          placeholder="Secret code"
+                          required
                         />
-                        {day}
-                      </label>
-                    );
-                  },
+                      </Field>
+                    )}
+                  </>
+                )}
+
+                <Field label="Address">
+                  <TextInput
+                    name="address"
+                    defaultValue="Berlin"
+                    placeholder="Event address"
+                    required
+                  />
+                </Field>
+                <Field label="Neighborhood">
+                  <TextInput
+                    name="neighborhood"
+                    defaultValue="Mitte"
+                    placeholder="Neighborhood (e.g. Mitte)"
+                    required
+                  />
+                </Field>
+
+                <Field label="Languages" className="sm:col-span-2">
+                  <div className="mt-2 flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="languages"
+                        value="DE"
+                        defaultChecked
+                      />{" "}
+                      DE
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input type="checkbox" name="languages" value="EN" /> EN
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input type="checkbox" name="languages" value="TR" />{" "}
+                      Turki (TR)
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input type="checkbox" name="languages" value="AR" />{" "}
+                      Arabic (AR)
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="languages"
+                        value="NON_VERBAL"
+                      />{" "}
+                      Non-Verbal
+                    </label>
+                  </div>
+                </Field>
+
+                <Field label="Target Age Groups" className="sm:col-span-2">
+                  <div className="mt-2 flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="targetAgeGroups"
+                        value="18-25"
+                      />{" "}
+                      18-25
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="targetAgeGroups"
+                        value="26-35"
+                        defaultChecked
+                      />{" "}
+                      26-35
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="targetAgeGroups"
+                        value="36-50"
+                      />{" "}
+                      36-50
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <input
+                        type="checkbox"
+                        name="targetAgeGroups"
+                        value="50+"
+                      />{" "}
+                      50+
+                    </label>
+                  </div>
+                </Field>
+              </div>
+              <Field label="Optional info">
+                <TextArea
+                  name="description"
+                  placeholder="Door notes, redemption details, image alt text"
+                />
+              </Field>
+              <AdminAssetUploadField
+                kind="event"
+                label="Event image"
+                ownerId="event-draft"
+                value={eventImageUrl}
+                onUrlChange={setEventImageUrl}
+                testId="admin-event-image-upload"
+                className="sm:col-span-2"
+              />
+              <div className="flex justify-end">
+                <Button type="submit" loading={eventSubmitting}>
+                  Publish event
+                </Button>
+              </div>
+            </Panel>
+            <Panel tone="cream" shadow={false} className="space-y-5">
+              <p className="headline-md">{copy.seriesBuilder}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={`${copy.dateRange} (Start)`}>
+                  <TextInput
+                    type="date"
+                    value={seriesStartDate}
+                    onChange={(e) => setSeriesStartDate(e.currentTarget.value)}
+                  />
+                </Field>
+                <Field label={`${copy.dateRange} (End)`}>
+                  <TextInput
+                    type="date"
+                    value={seriesEndDate}
+                    onChange={(e) => setSeriesEndDate(e.currentTarget.value)}
+                  />
+                </Field>
+                <Field label={copy.weekdays} className="sm:col-span-2">
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                      (day) => {
+                        const isChecked = seriesWeekdays.includes(day);
+                        return (
+                          <label
+                            key={day}
+                            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSeriesWeekdays(
+                                    seriesWeekdays.filter((d) => d !== day),
+                                  );
+                                } else {
+                                  setSeriesWeekdays([...seriesWeekdays, day]);
+                                }
+                              }}
+                            />
+                            {day}
+                          </label>
+                        );
+                      },
+                    )}
+                  </div>
+                </Field>
+                <Field label={copy.times}>
+                  <TextInput
+                    value={seriesTimes}
+                    onChange={(e) => setSeriesTimes(e.currentTarget.value)}
+                    placeholder="e.g. 19:00, 21:00"
+                  />
+                </Field>
+                <Field label={copy.excludedDates}>
+                  <TextInput
+                    value={seriesExcludedDates}
+                    onChange={(e) =>
+                      setSeriesExcludedDates(e.currentTarget.value)
+                    }
+                    placeholder="e.g. 2026-05-12"
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-2">
+                {computedSeriesPreview.map((slot) => (
+                  <Badge key={slot} tone="white">
+                    {slot}
+                  </Badge>
+                ))}
+                {computedSeriesPreview.length === 0 && (
+                  <p className="text-[10px] uppercase font-bold opacity-40">
+                    No slots matching criteria
+                  </p>
                 )}
               </div>
-            </Field>
-            <Field label={copy.times}>
-              <TextInput
-                value={seriesTimes}
-                onChange={(e) => setSeriesTimes(e.currentTarget.value)}
-                placeholder="e.g. 19:00, 21:00"
-              />
-            </Field>
-            <Field label={copy.excludedDates}>
-              <TextInput
-                value={seriesExcludedDates}
-                onChange={(e) => setSeriesExcludedDates(e.currentTarget.value)}
-                placeholder="e.g. 2026-05-12"
-              />
-            </Field>
+            </Panel>
           </div>
-          <div className="grid gap-2">
-            {computedSeriesPreview.map((slot) => (
-              <Badge key={slot} tone="white">
-                {slot}
-              </Badge>
-            ))}
-            {computedSeriesPreview.length === 0 && (
-              <p className="text-[10px] uppercase font-bold opacity-40">
-                No slots matching criteria
+        </div>
+      )}
+      {activeTab === "partners" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="headline-md">Partners directory</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Manage partner venues, provision portal access, and rotate
+                check-in tokens.
               </p>
-            )}
-          </div>
-        </Panel>
-        <Panel
-          tone="white"
-          shadow={false}
-          className="space-y-5"
-          as="form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (partnerSubmitting) return;
-            const form = event.currentTarget as HTMLFormElement;
-            if (!form.reportValidity()) {
-              setAdminMessage("Check the highlighted fields.");
-              return;
-            }
-            const formData = new FormData(form);
-            setPartnerSubmitting(true);
-            setAdminMessage("Saving partner...");
-            await runServerAction(
-              () =>
-                actions.savePartner({
-                  name: String(formData.get("name") || ""),
-                  contactEmail: String(formData.get("contactEmail") || ""),
-                  address: String(formData.get("address") || "Berlin"),
-                  logoUrl: String(formData.get("logoUrl") || ""),
-                }),
-              setAdminMessage,
-              () => {
-                form.reset();
-                setPartnerLogoUrl("");
-                live.refetchActiveSurface();
-              },
-            );
-            setPartnerSubmitting(false);
-          }}
-        >
-          <p className="headline-md">Partners</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Venue name">
-              <TextInput name="name" placeholder="Venue name" required />
-            </Field>
-            <Field label="Contact email">
-              <TextInput
-                name="contactEmail"
-                type="email"
-                placeholder="partner@example.com"
-                required
-              />
-            </Field>
-            <Field label="Address" className="sm:col-span-2">
-              <TextInput name="address" placeholder="Berlin" required />
-            </Field>
-          </div>
-          <AdminAssetUploadField
-            kind="partner"
-            label="Partner logo"
-            ownerId="partner-draft"
-            value={partnerLogoUrl}
-            onUrlChange={setPartnerLogoUrl}
-            testId="admin-partner-logo-upload"
-          />
-          <div className="grid gap-3">
-            {live.adminPartners.map((partner) => (
-              <div
-                key={partner.id}
-                className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand-dark/20 pb-3"
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="yellow"
+                onClick={scrollToAdminPartnerForm}
               >
-                <Badge tone="white">
-                  {partner.name}
-                  {" // "}
-                  {partner.portalLoginLabel}
-                  {" // "}
-                  {partner.venueQrTokenLabel}
-                </Badge>
+                New partner
+                <Plus />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handlePartnerExportClick}
+              >
+                Export Bookings
+                <ArrowDownToLine />
+              </Button>
+            </div>
+          </div>
+
+          <TableShell>
+            {live.adminPartners.map((partner) => (
+              <TableRow
+                key={partner.id}
+                className="md:grid-cols-[1.5fr_auto] md:items-center"
+              >
+                <div>
+                  <p className="text-sm font-black uppercase tracking-widest">
+                    {partner.name}
+                  </p>
+                  <p className="text-xs font-bold opacity-55">
+                    {partner.portalLoginLabel} {" // "}{" "}
+                    {partner.venueQrTokenLabel}
+                  </p>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -3455,450 +3558,537 @@ function AdminPanel() {
                     Delete
                   </Button>
                 </div>
-              </div>
+              </TableRow>
             ))}
-          </div>
-          <div className="flex justify-end">
-            <Button type="submit" variant="primary" loading={partnerSubmitting}>
-              Save
-            </Button>
-          </div>
-        </Panel>
-        <Panel
-          tone="dark"
-          shadow={false}
-          className="space-y-4"
-          as="form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData(
-              event.currentTarget as HTMLFormElement,
-            );
-            void runServerAction(
-              () =>
-                actions.adjustMemberCredits({
-                  userId: String(formData.get("userId") || ""),
-                  amount: Number(formData.get("creditAdjustment") || 0),
-                  reason: "Admin panel adjustment",
-                }),
-              setAdminMessage,
-              live.refetchActiveSurface,
-            );
-          }}
-        >
-          <p className="headline-md">Members</p>
-          <Field label="Search members" className="text-brand-yellow">
-            <TextInput placeholder="Name or email" />
-          </Field>
-          <Button
-            type="button"
-            size="sm"
-            variant="yellow"
-            onClick={() =>
-              void runServerAction(
-                () => actions.listUsers({}),
+            {live.adminPartners.length === 0 ? (
+              <StatePanel
+                title="No partner venues"
+                text="Admin partner rows will appear after partner venues are created."
+                state="empty"
+              />
+            ) : null}
+          </TableShell>
+
+          <Panel
+            id="admin-partner-form"
+            tone="white"
+            shadow={false}
+            className="scroll-mt-24 space-y-5"
+            as="form"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (partnerSubmitting) return;
+              const form = event.currentTarget as HTMLFormElement;
+              if (!form.reportValidity()) {
+                setAdminMessage("Check the highlighted fields.");
+                return;
+              }
+              const formData = new FormData(form);
+              setPartnerSubmitting(true);
+              setAdminMessage("Saving partner...");
+              await runServerAction(
+                () =>
+                  actions.savePartner({
+                    name: String(formData.get("name") || ""),
+                    contactEmail: String(formData.get("contactEmail") || ""),
+                    address: String(formData.get("address") || "Berlin"),
+                    logoUrl: String(formData.get("logoUrl") || ""),
+                  }),
                 setAdminMessage,
-                live.refetchActiveSurface,
-              )
-            }
+                () => {
+                  form.reset();
+                  setPartnerLogoUrl("");
+                  live.refetchActiveSurface();
+                },
+              );
+              setPartnerSubmitting(false);
+            }}
           >
-            Refresh users
-          </Button>
-          {live.adminMembers.map((member) => (
-            <Card key={member.userId} className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
-                {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
-                <div
-                  className="cursor-pointer flex-1 min-w-[200px]"
-                  onClick={() =>
-                    setExpandedMemberId(
-                      expandedMemberId === member.userId ? null : member.userId,
-                    )
-                  }
+            <p className="headline-md">Add new partner venue</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Venue name">
+                <TextInput name="name" placeholder="Venue name" required />
+              </Field>
+              <Field label="Contact email">
+                <TextInput
+                  name="contactEmail"
+                  type="email"
+                  placeholder="partner@example.com"
+                  required
+                />
+              </Field>
+              <Field label="Address" className="sm:col-span-2">
+                <TextInput name="address" placeholder="Berlin" required />
+              </Field>
+            </div>
+            <AdminAssetUploadField
+              kind="partner"
+              label="Partner logo"
+              ownerId="partner-draft"
+              value={partnerLogoUrl}
+              onUrlChange={setPartnerLogoUrl}
+              testId="admin-partner-logo-upload"
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                variant="primary"
+                loading={partnerSubmitting}
+              >
+                Save partner
+              </Button>
+            </div>
+          </Panel>
+
+          <Panel
+            id="admin-export-panel"
+            tone="cream"
+            shadow={false}
+            className="scroll-mt-24 space-y-5"
+          >
+            <p className="headline-md">Export Bookings</p>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              {exportMessage}
+            </p>
+            <div className="flex flex-wrap items-end gap-4">
+              <Field label="Export partner" className="min-w-64">
+                <SelectInput
+                  value={exportPartnerId}
+                  onChange={(e) => setExportPartnerId(e.currentTarget.value)}
                 >
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-black uppercase tracking-widest">
-                      {member.fullName}
-                    </p>
-                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                      {expandedMemberId === member.userId
-                        ? "(Hide Intel)"
-                        : "(Show Intel)"}
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold opacity-55">
-                    {member.subscriptionStatusLabel} {" // "}
-                    {member.credits} credits {" // "}
-                    {member.roleLabel}
-                  </p>
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
-                    {member.email} {" // "}
-                    {member.bookingCount} bookings {" // "}
-                    {member.savedCount} saved {" // "}
-                    {member.waitlistCount} waitlist
-                  </p>
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
-                    {member.providerStatus ?? "No provider"} {" // "}
-                    {member.currentPeriodLabel} {" // "}
-                    {member.historySummary}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      void runServerAction(
-                        () =>
-                          actions.adjustMemberCredits({
-                            userId: member.userId,
-                            amount: 1,
-                            reason: "Admin panel adjustment",
-                            idempotencyKey: crypto.randomUUID(),
-                          }),
-                        setAdminMessage,
-                        live.refetchActiveSurface,
-                      )
-                    }
-                  >
-                    + Credit
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() =>
-                      void runServerAction(
-                        () =>
-                          actions.toggleUserFreeze({
-                            userId: member.userId,
-                            frozen:
-                              member.billingOverrideActions.includes("freeze"),
-                          }),
-                        setAdminMessage,
-                        live.refetchActiveSurface,
-                      )
-                    }
-                  >
-                    {member.billingOverrideActions.includes("freeze")
-                      ? "Freeze"
-                      : "Unfreeze"}
-                  </Button>
-                </div>
-              </div>
-
-              {expandedMemberId === member.userId && (
-                <div className="mt-4 pt-4 border-t border-brand-dark/20 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                        Preferences
-                      </div>
-                      <div className="text-xs font-bold uppercase tracking-widest mt-2">
-                        Age {member.preferences.ageGroup || "Unknown"} / Radius{" "}
-                        {member.preferences.maxDistance}km /{" "}
-                        {member.preferences.accessibility
-                          ? "Accessible"
-                          : "No accessibility flag"}
-                      </div>
-                      <div className="space-y-3">
-                        {[
-                          {
-                            label: "Interests",
-                            values: member.preferences.interests,
-                          },
-                          { label: "Moods", values: member.preferences.moods },
-                          {
-                            label: "Districts",
-                            values: member.preferences.districts,
-                          },
-                          {
-                            label: "Timing",
-                            values: member.preferences.timing,
-                          },
-                          {
-                            label: "Days",
-                            values: member.preferences.preferredDays,
-                          },
-                          {
-                            label: "Languages",
-                            values: member.preferences.preferredLanguages,
-                          },
-                        ].map((group) => (
-                          <div key={group.label} className="space-y-1">
-                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                              {group.label}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {(group.values?.length
-                                ? group.values
-                                : ["None"]
-                              ).map((value) => (
-                                <Badge
-                                  key={`${group.label}-${value}`}
-                                  tone="white"
-                                  className="text-[9px]"
-                                >
-                                  {value}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                        History
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Bookings
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.bookingCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Waitlist
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.waitlistCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Saved
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.savedCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Sessions
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.sessionCount}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                        Behavior Intel
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Event Opens
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.eventOpenCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Filter Applies
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.filterApplyCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Saves
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.savedCount}
-                          </div>
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded">
-                          <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            Unsaves
-                          </div>
-                          <div className="text-lg font-black tracking-tight">
-                            {member.unsavedCount}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                          Latest Signals
-                        </div>
-                        <div className="border border-brand-dark/20 p-2 rounded space-y-1 text-[9px] font-bold uppercase tracking-widest">
-                          <div>Last View: {member.lastView || "Unknown"}</div>
-                          <div>
-                            Last Seen:{" "}
-                            {member.lastSeenAt
-                              ? new Date(member.lastSeenAt).toLocaleString()
-                              : "Unknown"}
-                          </div>
-                          <div>
-                            Last Booking: {member.lastBookedEventId || "None"}
-                          </div>
-                          <div>
-                            Last Waitlist:{" "}
-                            {member.lastWaitlistedEventId || "None"}
-                          </div>
-                          <div>
-                            Pref Update:{" "}
-                            {member.preferencesUpdatedAt
-                              ? new Date(
-                                  member.preferencesUpdatedAt,
-                                ).toLocaleString()
-                              : "Never"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                          Recently Touched Events
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {member.recentEventIds.length === 0 ? (
-                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              No tracked event opens.
-                            </span>
-                          ) : (
-                            member.recentEventIds.map((eventId) => {
-                              const matchingEvent =
-                                live.events.find((e) => e.id === eventId) ||
-                                live.adminEvents.find((e) => e.id === eventId);
-                              return (
-                                <Badge
-                                  key={eventId}
-                                  tone="yellow"
-                                  className="text-[9px]"
-                                >
-                                  {matchingEvent
-                                    ? matchingEvent.title
-                                    : eventId}
-                                </Badge>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <Divider className="my-4" />
+                  <option value="">All partners</option>
+                  {live.adminPartners.map((partner) => (
+                    <option key={partner.id} value={partner.id}>
+                      {partner.name}
+                    </option>
+                  ))}
+                </SelectInput>
+              </Field>
               <Button
                 type="button"
-                size="sm"
                 variant="secondary"
-                onClick={() => {
+                onClick={() =>
                   void runServerAction(
                     () =>
-                      actions.createAdminTicket({
-                        userId: member.userId,
-                        eventId: live.adminEvents[0]?.id ?? "",
-                        ticketQuantity: 1,
-                        consumeCapacity: true,
-                        debitCredits: false,
-                        idempotencyKey: crypto.randomUUID(),
+                      actions.getAdminExportRows({
+                        partnerId: exportPartnerId || undefined,
                       }),
+                    setExportMessage,
+                    (data) => {
+                      const downloaded = downloadCsv(
+                        "admin-bookings.csv",
+                        data?.rows ?? [],
+                        [
+                          "bookingId",
+                          "userId",
+                          "event",
+                          "partner",
+                          "code",
+                          "status",
+                          "tickets",
+                          "credits",
+                          "createdAt",
+                        ],
+                      );
+                      setExportMessage(
+                        downloaded
+                          ? "CSV export downloaded."
+                          : "No export rows.",
+                      );
+                    },
+                  )
+                }
+              >
+                Download CSV
+                <ArrowDownToLine />
+              </Button>
+            </div>
+          </Panel>
+        </div>
+      )}{" "}
+      {activeTab === "members" && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="headline-md">Member registry</h2>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+                Review member preferences, billing status, and adjust booking
+                credits.
+              </p>
+            </div>
+          </div>
+
+          <Panel tone="cream" shadow={false} className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <Field label="Search members" className="flex-1 min-w-64">
+                <TextInput
+                  placeholder="Name or email"
+                  value={memberSearchQuery}
+                  onChange={(e) => setMemberSearchQuery(e.currentTarget.value)}
+                />
+              </Field>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  void runServerAction(
+                    () => actions.listUsers({}),
                     setAdminMessage,
                     live.refetchActiveSurface,
-                  );
-                }}
+                  )
+                }
               >
-                Create ticket
+                Refresh registry
               </Button>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                History, preferences, bookings, and adjustment controls are
-                expandable.
-              </p>
-            </Card>
-          ))}
-          {live.adminMembers.length === 0 ? (
-            <StatePanel
-              title={live.isLoading ? "Loading members" : "No members"}
-              text={
-                live.isError
-                  ? "Live member rows could not be loaded."
-                  : "Admin member rows will appear after members sign up."
-              }
-              state={
-                live.isLoading ? "loading" : live.isError ? "error" : "empty"
-              }
-            />
-          ) : null}
-        </Panel>
-      </div>
-      <Panel
-        id="admin-export-panel"
-        tone="cream"
-        shadow={false}
-        className="scroll-mt-24 space-y-5"
-      >
-        <p className="headline-md">Export Bookings</p>
-        <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-          {exportMessage}
-        </p>
-        <div className="flex flex-wrap items-end gap-4">
-          <Field label="Export partner" className="min-w-64">
-            <SelectInput
-              value={exportPartnerId}
-              onChange={(e) => setExportPartnerId(e.currentTarget.value)}
-            >
-              <option value="">All partners</option>
-              {live.adminPartners.map((partner) => (
-                <option key={partner.id} value={partner.id}>
-                  {partner.name}
-                </option>
-              ))}
-            </SelectInput>
-          </Field>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              void runServerAction(
-                () =>
-                  actions.getAdminExportRows({
-                    partnerId: exportPartnerId || undefined,
-                  }),
-                setExportMessage,
-                (data) => {
-                  const downloaded = downloadCsv(
-                    "admin-bookings.csv",
-                    data?.rows ?? [],
-                    [
-                      "bookingId",
-                      "userId",
-                      "event",
-                      "partner",
-                      "code",
-                      "status",
-                      "tickets",
-                      "credits",
-                      "createdAt",
-                    ],
-                  );
-                  setExportMessage(
-                    downloaded ? "CSV export downloaded." : "No export rows.",
-                  );
-                },
-              )
-            }
-          >
-            Download CSV
-            <ArrowDownToLine />
-          </Button>
+            </div>
+          </Panel>
+
+          <div className="space-y-4">
+            {filteredMembers.map((member) => (
+              <Card key={member.userId} className="p-4 md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
+                  <div
+                    className="cursor-pointer flex-1 min-w-[200px]"
+                    onClick={() =>
+                      setExpandedMemberId(
+                        expandedMemberId === member.userId
+                          ? null
+                          : member.userId,
+                      )
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black uppercase tracking-widest">
+                        {member.fullName}
+                      </p>
+                      <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                        {expandedMemberId === member.userId
+                          ? "(Hide Intel)"
+                          : "(Show Intel)"}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold opacity-55">
+                      {member.subscriptionStatusLabel} {" // "}
+                      {member.credits} credits {" // "}
+                      {member.roleLabel}
+                    </p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                      {member.email} {" // "}
+                      {member.bookingCount} bookings {" // "}
+                      {member.savedCount} saved {" // "}
+                      {member.waitlistCount} waitlist
+                    </p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                      {member.providerStatus ?? "No provider"} {" // "}
+                      {member.currentPeriodLabel} {" // "}
+                      {member.historySummary}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        void runServerAction(
+                          () =>
+                            actions.adjustMemberCredits({
+                              userId: member.userId,
+                              amount: 1,
+                              reason: "Admin panel adjustment",
+                              idempotencyKey: crypto.randomUUID(),
+                            }),
+                          setAdminMessage,
+                          live.refetchActiveSurface,
+                        )
+                      }
+                    >
+                      + Credit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={() =>
+                        void runServerAction(
+                          () =>
+                            actions.toggleUserFreeze({
+                              userId: member.userId,
+                              frozen:
+                                member.billingOverrideActions.includes(
+                                  "freeze",
+                                ),
+                            }),
+                          setAdminMessage,
+                          live.refetchActiveSurface,
+                        )
+                      }
+                    >
+                      {member.billingOverrideActions.includes("freeze")
+                        ? "Freeze"
+                        : "Unfreeze"}
+                    </Button>
+                  </div>
+                </div>
+
+                {expandedMemberId === member.userId && (
+                  <div className="mt-4 pt-4 border-t border-brand-dark/20 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                          Preferences
+                        </div>
+                        <div className="text-xs font-bold uppercase tracking-widest mt-2">
+                          Age {member.preferences.ageGroup || "Unknown"} /
+                          Radius {member.preferences.maxDistance}km /{" "}
+                          {member.preferences.accessibility
+                            ? "Accessible"
+                            : "No accessibility flag"}
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            {
+                              label: "Interests",
+                              values: member.preferences.interests,
+                            },
+                            {
+                              label: "Moods",
+                              values: member.preferences.moods,
+                            },
+                            {
+                              label: "Districts",
+                              values: member.preferences.districts,
+                            },
+                            {
+                              label: "Timing",
+                              values: member.preferences.preferredDays
+                                ? member.preferences.timing
+                                : [],
+                            },
+                            {
+                              label: "Days",
+                              values: member.preferences.preferredDays,
+                            },
+                            {
+                              label: "Languages",
+                              values: member.preferences.preferredLanguages,
+                            },
+                          ].map((group) => (
+                            <div key={group.label} className="space-y-1">
+                              <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                {group.label}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {(group.values?.length
+                                  ? group.values
+                                  : ["None"]
+                                ).map((value) => (
+                                  <Badge
+                                    key={`${group.label}-${value}`}
+                                    tone="white"
+                                    className="text-[9px]"
+                                  >
+                                    {value}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                          History
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Bookings
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.bookingCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Waitlist
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.waitlistCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Saved
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.savedCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Sessions
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.sessionCount}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                          Behavior Intel
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Event Opens
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.eventOpenCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Filter Applies
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.filterApplyCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Saves
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.savedCount}
+                            </div>
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded">
+                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                              Unsaves
+                            </div>
+                            <div className="text-lg font-black tracking-tight">
+                              {member.unsavedCount}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                            Latest Signals
+                          </div>
+                          <div className="border border-brand-dark/20 p-2 rounded space-y-1 text-[9px] font-bold uppercase tracking-widest">
+                            <div>Last View: {member.lastView || "Unknown"}</div>
+                            <div>
+                              Last Seen:{" "}
+                              {member.lastSeenAt
+                                ? new Date(member.lastSeenAt).toLocaleString()
+                                : "Unknown"}
+                            </div>
+                            <div>
+                              Last Booking: {member.lastBookedEventId || "None"}
+                            </div>
+                            <div>
+                              Last Waitlist:{" "}
+                              {member.lastWaitlistedEventId || "None"}
+                            </div>
+                            <div>
+                              Pref Update:{" "}
+                              {member.preferencesUpdatedAt
+                                ? new Date(
+                                    member.preferencesUpdatedAt,
+                                  ).toLocaleString()
+                                : "Never"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                            Recently Touched Events
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {member.recentEventIds.length === 0 ? (
+                              <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                No tracked event opens.
+                              </span>
+                            ) : (
+                              member.recentEventIds.map((eventId) => {
+                                const matchingEvent =
+                                  live.events.find((e) => e.id === eventId) ||
+                                  live.adminEvents.find(
+                                    (e) => e.id === eventId,
+                                  );
+                                return (
+                                  <Badge
+                                    key={eventId}
+                                    tone="yellow"
+                                    className="text-[9px]"
+                                  >
+                                    {matchingEvent
+                                      ? matchingEvent.title
+                                      : eventId}
+                                  </Badge>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Divider className="my-4" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    void runServerAction(
+                      () =>
+                        actions.createAdminTicket({
+                          userId: member.userId,
+                          eventId: live.adminEvents[0]?.id ?? "",
+                          ticketQuantity: 1,
+                          consumeCapacity: true,
+                          debitCredits: false,
+                          idempotencyKey: crypto.randomUUID(),
+                        }),
+                      setAdminMessage,
+                      live.refetchActiveSurface,
+                    );
+                  }}
+                >
+                  Create ticket
+                </Button>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                  History, preferences, bookings, and adjustment controls are
+                  expandable.
+                </p>
+              </Card>
+            ))}
+            {filteredMembers.length === 0 ? (
+              <StatePanel
+                title={live.isLoading ? "Loading members" : "No members found"}
+                text={
+                  live.isError
+                    ? "Live member rows could not be loaded."
+                    : "No members match your search criteria or none signed up yet."
+                }
+                state={
+                  live.isLoading ? "loading" : live.isError ? "error" : "empty"
+                }
+              />
+            ) : null}
+          </div>
         </div>
-      </Panel>
+      )}
     </div>
   );
 }
@@ -4029,11 +4219,13 @@ function VisualSystemAppContent({
   initialDiscovery,
   initialView = "landing",
   callbackURL = "/",
+  initialTab = "metrics",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: InitialSurfaceData;
   initialView?: View;
   callbackURL?: string;
+  initialTab?: string;
 }) {
   const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(
     initialDiscovery && "filters" in initialDiscovery
@@ -4134,7 +4326,17 @@ function VisualSystemAppContent({
             : undefined;
   const navigateShell = async (actionId: string) => {
     if (actionId === "new-event") {
-      scrollToAdminEventForm();
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", "events");
+        window.history.pushState(null, "", url.pathname + url.search);
+        window.dispatchEvent(new Event("admin-tab-change"));
+        setTimeout(() => {
+          scrollToAdminEventForm();
+        }, 50);
+      } else {
+        scrollToAdminEventForm();
+      }
       return;
     }
 
@@ -4200,7 +4402,7 @@ function VisualSystemAppContent({
             {view === "bookings" ? <BookingsPage /> : null}
             {view === "profile" ? <ProfilePage /> : null}
             {view === "partner" ? <PartnerPortal /> : null}
-            {view === "admin" ? <AdminPanel /> : null}
+            {view === "admin" ? <AdminPanel initialTab={initialTab} /> : null}
           </PageShell>
         </AppShell>
       </LanguageContext.Provider>
@@ -4213,11 +4415,13 @@ export function VisualSystemApp({
   initialDiscovery,
   initialView = "landing",
   callbackURL = "/",
+  initialTab = "metrics",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: unknown;
   initialView?: View;
   callbackURL?: string;
+  initialTab?: string;
 }) {
   const initialSurface = isInitialSurfaceData(initialDiscovery)
     ? initialDiscovery
@@ -4230,6 +4434,7 @@ export function VisualSystemApp({
         initialDiscovery={initialSurface}
         initialView={initialView}
         callbackURL={callbackURL}
+        initialTab={initialTab}
       />
     </QueryProvider>
   );

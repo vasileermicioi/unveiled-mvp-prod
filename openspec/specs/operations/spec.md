@@ -120,3 +120,10 @@ The partner portal SHALL pass the active event ID filter value to the booking ex
 - **WHEN** a partner selects an event in the event filter dropdown and clicks the download CSV button
 - **THEN** the UI passes the selected `eventId` to the booking export action.
 
+### Requirement: Admin Dashboard Tab Navigation
+The Admin dashboard UI SHALL provide tab navigation header controls to switch between operational categories and mount them conditionally.
+
+#### Scenario: Admin switches tab navigation view
+- **WHEN** an admin clicks the "Partners" tab header
+- **THEN** the active tab updates to "Partners" and only the partners table list and partner creation form are mounted in the viewport
+

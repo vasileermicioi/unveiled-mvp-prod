@@ -264,6 +264,12 @@ export const appCopy = {
       saveOnboarding: "Onboarding speichern",
     },
     admin: {
+      tabs: {
+        metrics: "Kennzahlen",
+        events: "Events",
+        partners: "Partner",
+        members: "Mitglieder",
+      },
       adminMessageDefault:
         "Admin-Formulare werden über autorisierte Astro-Actions übermittelt.",
       operationsOverview: "Betriebsübersicht.",
@@ -563,6 +569,12 @@ export const appCopy = {
       saveOnboarding: "Save onboarding",
     },
     admin: {
+      tabs: {
+        metrics: "Metrics",
+        events: "Events",
+        partners: "Partners",
+        members: "Members",
+      },
       adminMessageDefault:
         "Admin forms submit through authorized Astro Actions.",
       operationsOverview: "Operations overview.",

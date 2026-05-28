@@ -33,7 +33,7 @@ The partner page SHALL render the existing partner portal surface from live part
 - **THEN** the page displays a safe visible error in the portal surface and keeps protected row details scoped to the partner.
 
 ### Requirement: Admin Page Uses Live Operations Data
-The admin page SHALL render dashboard, event, partner, and member management surfaces from authorized live admin data.
+The admin page SHALL render dashboard, event, partner, and member management surfaces from authorized live admin data. The mounted view SHALL be determined by the URL query parameter state.
 
 #### Scenario: Admin dashboard renders live counts
 - **WHEN** an authorized admin opens the dashboard tab
@@ -50,6 +50,10 @@ The admin page SHALL render dashboard, event, partner, and member management sur
 #### Scenario: Admin members tab mutates live members
 - **WHEN** an admin refreshes member rows, expands details, freezes or unfreezes a member, or adjusts credits
 - **THEN** the page uses authorized live data and refreshes affected member, profile, ledger, and eligibility views after success.
+
+#### Scenario: Admin page URL tab state synchronizes
+- **WHEN** an admin clicks an admin navigation tab, or deep-links directly to `/admin?tab=partners`
+- **THEN** the browser URL parameter reflects the selected tab (e.g. `tab=partners`) and only the active tab's view component is mounted.
 
 ### Requirement: Route Parity Smoke Coverage
 The app SHALL have automated regression coverage for every legacy-visible route surface.

@@ -19,8 +19,16 @@ const initialShell = createShellFromViewer(
 const initialDiscovery = createAdminInitialSurfaceData(
   await loadAdminData(ownership.viewer),
 );
+
+const tabQuery =
+  new URL(Astro.request.url).searchParams.get("tab") || "metrics";
+const initialTab = ["metrics", "events", "partners", "members"].includes(
+  tabQuery,
+)
+  ? tabQuery
+  : "metrics";
 ---
 
 <BaseLayout title="Admin | Unveiled">
-  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="admin" />
+  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="admin" initialTab={initialTab} />
 </BaseLayout>

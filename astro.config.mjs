@@ -14,6 +14,28 @@ export default defineConfig({
   integrations: [react()],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(),
+      {
+        name: "optimize-ssr-deps",
+        configEnvironment(name) {
+          if (name !== "client") {
+            return {
+              optimizeDeps: {
+                include: [
+                  "react",
+                  "react-dom",
+                  "react-dom/server",
+                  "@tanstack/react-query",
+                ],
+              },
+            };
+          }
+        },
+      },
+    ],
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
   },
 });
