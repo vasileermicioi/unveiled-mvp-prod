@@ -2506,9 +2506,15 @@ function PartnerPortal() {
             <QrCode className="size-8" />
             <p className="mt-4 unveiled-meta">Venue QR</p>
             {live.partner?.venueQrUrl ? (
-              <Button type="button" variant="copied" className="mt-4">
-                <Check />
-                {live.partner.venueQrUrl}
+              <Button
+                type="button"
+                variant="copied"
+                className="mt-4 w-full h-auto whitespace-normal break-all text-left min-w-0"
+              >
+                <Check className="shrink-0" />
+                <span className="min-w-0 break-all">
+                  {live.partner.venueQrUrl}
+                </span>
               </Button>
             ) : (
               <Badge tone="white" className="mt-4">
@@ -2549,7 +2555,10 @@ function PartnerPortal() {
           variant="secondary"
           onClick={() =>
             void runServerAction(
-              () => actions.getPartnerBookingExportRows({}),
+              () =>
+                actions.getPartnerBookingExportRows({
+                  eventId: eventFilter || undefined,
+                }),
               setCheckInMessage,
               (data) => {
                 const downloaded = downloadCsv(

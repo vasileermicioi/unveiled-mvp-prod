@@ -1038,14 +1038,19 @@ export const server = {
 
   getPartnerBookingExportRows: defineAction({
     accept: "json",
-    input: jsonInputSchema,
-    handler: async (_input, context) => {
+    input: z.object({
+      eventId: z.string().trim().optional(),
+    }),
+    handler: async (input, context) => {
       try {
         const viewer = await requireUser(context.request.headers);
         if (viewer.role !== "PARTNER" || !viewer.partnerId) {
           return formFailure("You do not have access to this resource.");
         }
-        const rows = await getPartnerGuestExportRows(viewer.partnerId);
+        const rows = await getPartnerGuestExportRows(
+          viewer.partnerId,
+          input.eventId,
+        );
         return actionSuccess({
           data: { rows },
           invalidate: dataAccessInvalidationKeys([

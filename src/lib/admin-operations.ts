@@ -765,8 +765,14 @@ export async function setMemberFreezeStatus(
 
 export async function getPartnerGuestExportRows(
   partnerId: string,
+  eventId?: string,
   database: Db = db,
 ): Promise<PartnerGuestExportRow[]> {
+  const conditions = [eq(bookings.partnerId, partnerId)];
+  if (eventId) {
+    conditions.push(eq(bookings.eventId, eventId));
+  }
+
   return database
     .select({
       bookingId: bookings.id,
@@ -779,7 +785,7 @@ export async function getPartnerGuestExportRows(
     })
     .from(bookings)
     .innerJoin(events, eq(events.id, bookings.eventId))
-    .where(eq(bookings.partnerId, partnerId))
+    .where(and(...conditions))
     .orderBy(desc(bookings.createdAt));
 }
 

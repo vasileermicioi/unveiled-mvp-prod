@@ -59,7 +59,7 @@ export default defineConfig({
   webServer: {
     command: `bun scripts/start-parity-dev.ts ${host} ${port}`,
     url: baseURL,
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
 });
