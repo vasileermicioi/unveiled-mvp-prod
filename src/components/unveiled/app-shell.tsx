@@ -10,13 +10,14 @@ import {
   Lock,
   LogOut,
   Map as MapIcon,
+  Menu,
   Settings,
   Ticket,
   User,
   X,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge, Panel, StatePanel } from "@/components/ui/unveiled-primitives";
@@ -152,12 +153,19 @@ function ShellActionButton({
 function LanguageToggle({
   shell,
   onAction,
+  className,
 }: {
   shell: AppShellViewModel;
   onAction?: ShellActionHandler;
+  className?: string;
 }) {
   return (
-    <div className="flex shrink-0 overflow-hidden border-2 border-brand-dark bg-brand-grey">
+    <div
+      className={cn(
+        "flex shrink-0 overflow-hidden border-2 border-brand-dark bg-brand-grey",
+        className,
+      )}
+    >
       {shell.language.options.map((language) => (
         <button
           key={language}
@@ -189,6 +197,18 @@ export function ShellNavigation({
   const copy = copyFor(shell.language.selected).shell.nav;
   const isOperational =
     shell.viewerContext === "admin" || shell.viewerContext === "partner";
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, [drawerOpen]);
 
   return (
     <nav className="sticky top-0 z-50 border-b-2 border-brand-dark bg-white md:border-b-4">
@@ -227,6 +247,7 @@ export function ShellNavigation({
                       action={item}
                       onAction={onAction}
                       iconOnly
+                      className="hidden lg:inline-flex"
                     />
                   ))}
                 {typeof shell.creditCount === "number" ? (
@@ -245,6 +266,7 @@ export function ShellNavigation({
                     }}
                     onAction={onAction}
                     iconOnly
+                    className="hidden lg:inline-flex"
                   />
                 ) : null}
               </>
@@ -260,16 +282,142 @@ export function ShellNavigation({
               />
             ) : null}
 
-            <LanguageToggle shell={shell} onAction={onAction} />
+            <LanguageToggle
+              shell={shell}
+              onAction={onAction}
+              className="hidden lg:flex"
+            />
 
             {shell.showLogout ? (
               <ShellActionButton
                 action={{ id: "logout", label: copy.logout, icon: "logout" }}
                 onAction={onAction}
                 iconOnly
+                className="hidden lg:inline-flex"
               />
             ) : null}
+
+            <button
+              type="button"
+              className="lg:hidden flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <Menu className="size-5 md:size-6" />
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Overlay Backdrop */}
+      {drawerOpen && (
+        // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss
+        // biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss
+        <div
+          className="fixed inset-0 z-[100] bg-brand-dark/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer Panel */}
+      <div
+        className={cn(
+          "fixed inset-y-0 right-0 z-[101] w-80 max-w-full bg-white border-l-4 border-brand-dark p-6 transition-transform duration-300 ease-in-out transform lg:hidden flex flex-col justify-between",
+          drawerOpen ? "translate-x-0" : "translate-x-full",
+        )}
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <ShellLogo variant={shell.logo.variant} className="h-7 w-auto" />
+            <button
+              type="button"
+              className="flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              <X className="size-5 md:size-6" />
+            </button>
+          </div>
+
+          <nav className="flex flex-col gap-2">
+            {shell.navItems
+              .filter((item) => isGuest || isOperational || !item.icon)
+              .map((item) => (
+                <ShellActionButton
+                  key={item.id}
+                  action={item}
+                  onAction={(actionId) => {
+                    setDrawerOpen(false);
+                    onAction?.(actionId);
+                  }}
+                  className="w-full justify-start"
+                />
+              ))}
+
+            {isMember && (
+              <>
+                {shell.navItems
+                  .filter((item) => item.icon)
+                  .map((item) => (
+                    <ShellActionButton
+                      key={item.id}
+                      action={item}
+                      onAction={(actionId) => {
+                        setDrawerOpen(false);
+                        onAction?.(actionId);
+                      }}
+                      className="w-full justify-start"
+                    />
+                  ))}
+                {typeof shell.creditCount === "number" ? (
+                  <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold uppercase tracking-widest">
+                    <Coins className="size-4" />
+                    <span>
+                      {shell.creditCount} {copy.credits}
+                    </span>
+                  </div>
+                ) : null}
+                {shell.showProfile ? (
+                  <ShellActionButton
+                    action={{
+                      id: "profile",
+                      label: copy.profile,
+                      icon: "user",
+                      active: shell.activeItem === "profile",
+                    }}
+                    onAction={(actionId) => {
+                      setDrawerOpen(false);
+                      onAction?.(actionId);
+                    }}
+                    className="w-full justify-start"
+                  />
+                ) : null}
+              </>
+            )}
+          </nav>
+        </div>
+
+        <div className="space-y-6 border-t-2 border-brand-dark/20 pt-6">
+          <div className="flex justify-center">
+            <LanguageToggle
+              shell={shell}
+              onAction={(actionId) => {
+                setDrawerOpen(false);
+                onAction?.(actionId);
+              }}
+            />
+          </div>
+
+          {shell.showLogout ? (
+            <ShellActionButton
+              action={{ id: "logout", label: copy.logout, icon: "logout" }}
+              onAction={(actionId) => {
+                setDrawerOpen(false);
+                onAction?.(actionId);
+              }}
+              className="w-full justify-start"
+            />
+          ) : null}
         </div>
       </div>
     </nav>

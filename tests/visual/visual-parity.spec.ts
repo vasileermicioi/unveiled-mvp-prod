@@ -138,6 +138,22 @@ for (const viewport of viewports) {
       await expectVisualParity(page, `member-profile-${viewport.name}.png`);
     });
 
+    test("mobile navigation drawer opens", async ({ page }) => {
+      if (viewport.name !== "mobile") {
+        test.skip();
+        return;
+      }
+      await login(page, parityFixtureEmails.activeMember, "/app");
+      await page.waitForSelector('text="Today in Berlin."', {
+        state: "visible",
+      });
+      await page.getByRole("button", { name: "Open navigation menu" }).click();
+      await expect(
+        page.getByRole("button", { name: "Close navigation menu" }),
+      ).toBeVisible();
+      await expectVisualParity(page, `mobile-nav-drawer-${viewport.name}.png`);
+    });
+
     test("member onboarding", async ({ page }) => {
       const activeMemberUser = await db.query.user.findFirst({
         where: eq(user.email, parityFixtureEmails.activeMember),
@@ -158,17 +174,17 @@ for (const viewport of viewports) {
 
         // Wait for either the English or German version of the onboarding title
         const titleLocator = page.getByRole("heading", {
-          name: /Make the feed yours|Mach den Feed zu deinem/i,
+          name: /YOUR CULTURE PROFILE|DEIN KULTUR-PROFIL/i,
         });
         await expect(titleLocator.first()).toBeVisible();
 
         // If the page is in German, click the EN toggle
         const isGerman = await page
-          .locator('text="Mach den Feed zu deinem."')
+          .locator('text="DEIN KULTUR-PROFIL"')
           .isVisible();
         if (isGerman) {
           await page.getByRole("button", { name: "EN" }).first().click();
-          await page.waitForSelector('text="Make the feed yours."', {
+          await page.waitForSelector('text="YOUR CULTURE PROFILE"', {
             state: "visible",
           });
         }

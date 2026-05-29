@@ -320,3 +320,11 @@ The app shell SHALL render legacy-equivalent German and English copy for shared 
 - **WHEN** shell-level loading, empty, error, frozen-account, or membership attention states are visible
 - **THEN** their visible messages and action labels use the selected language without mixing stale copy from a previous language
 
+### Requirement: Collapsible Mobile Navigation Drawer
+The app shell SHALL provide a responsive mobile header on narrow screens containing a hamburger toggle button that reveals a collapsible slide-in navigation drawer.
+
+#### Scenario: Mobile drawer is toggled
+- **WHEN** the viewer is on a viewport below 1024px and clicks the hamburger menu button
+- **THEN** the navigation drawer transitions into view from the side using a smooth CSS transition
+- **AND** displaying all role-relevant navigation links, language selector, and logout controls.
+

@@ -249,6 +249,111 @@ function downloadCsv(
   return true;
 }
 
+function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("animate-pulse bg-brand-dark/15 rounded", className)}
+      {...props}
+    />
+  );
+}
+
+function MemberCardSkeleton() {
+  return (
+    <div className="border-4 border-brand-dark bg-white p-4 md:p-6 space-y-4 unveiled-shadow">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-3 w-80" />
+          <Skeleton className="h-3 w-72" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1.2fr_auto_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <Skeleton className="h-5 w-32" />
+      <Skeleton className="h-5 w-16" />
+      <Skeleton className="h-4 w-36" />
+      <Skeleton className="h-6 w-16" />
+      <Skeleton className="h-9 w-20" />
+    </div>
+  );
+}
+
+function PartnerRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-4 w-60" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-20" />
+      </div>
+    </div>
+  );
+}
+
+function GuestRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <Skeleton className="h-5 w-40" />
+      <Skeleton className="h-6 w-16" />
+      <Skeleton className="h-9 w-28" />
+    </div>
+  );
+}
+
+function FadeInImage({
+  src,
+  alt,
+  className,
+  ...props
+}: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const [loaded, setLoaded] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset loaded state when src changes
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onLoad={() => setLoaded(true)}
+      className={cn(
+        "transition-opacity duration-500 ease-in-out",
+        loaded ? "opacity-100" : "opacity-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 interface PaginationProps {
   page: number;
   pageSize: number;
@@ -449,7 +554,7 @@ function AdminAssetUploadField({
       <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
         <div className="grid aspect-video place-items-center overflow-hidden border-4 border-brand-dark bg-brand-grey">
           {visiblePreview ? (
-            <img
+            <FadeInImage
               src={visiblePreview}
               alt=""
               className="h-full w-full object-cover"
@@ -768,7 +873,7 @@ function EventCard({
           compact ? "h-48" : "h-64",
         )}
       >
-        <img
+        <FadeInImage
           src={event.imageUrl || undefined}
           alt={event.title}
           className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:scale-110 group-hover:grayscale-0"
@@ -2741,53 +2846,84 @@ function PartnerPortal() {
         </Button>
       </Panel>
       <TableShell>
-        {filteredGuests.map((guest) => (
-          <TableRow key={guest.bookingId}>
-            <div>
-              <p className="text-sm font-black uppercase tracking-widest">
-                {guest.name}
-              </p>
-              <p className="text-xs font-bold opacity-55">{guest.email}</p>
-            </div>
-            <p className="text-sm font-bold">{guest.eventTitle}</p>
-            <Badge tone={guest.statusLabel === "Waitlist" ? "grey" : "yellow"}>
-              {guest.statusLabel}
-            </Badge>
-            <Button
-              type="button"
-              variant={
-                guest.checkedInLabel === "Checked in" ? "copied" : "primary"
-              }
-              disabled={guest.checkInDisabled}
-              onClick={() =>
-                void runServerAction(
-                  () =>
-                    actions.checkInBooking({
-                      bookingId: guest.bookingId,
-                      partnerId: live.partner?.id ?? "",
-                    }),
-                  setCheckInMessage,
-                  live.refetchActiveSurface,
-                )
-              }
-            >
-              {guest.checkedInLabel}
-            </Button>
-          </TableRow>
-        ))}
-        {filteredGuests.length === 0 ? (
+        {live.isLoading ? (
+          <>
+            <GuestRowSkeleton />
+            <GuestRowSkeleton />
+            <GuestRowSkeleton />
+          </>
+        ) : filteredGuests.length === 0 ? (
           <StatePanel
-            title={live.isLoading ? "Loading guests" : "No guests"}
+            title="No guests"
             text={
               live.isError
                 ? "Live partner data could not be loaded."
                 : "Search and event filters can render an empty guest list state."
             }
-            state={
-              live.isLoading ? "loading" : live.isError ? "error" : "empty"
-            }
+            state={live.isError ? "error" : "empty"}
           />
-        ) : null}
+        ) : (
+          filteredGuests.map((guest) => (
+            <TableRow
+              key={guest.bookingId}
+              className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] md:items-center gap-4"
+            >
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                  Guest
+                </span>
+                <p className="text-sm font-black uppercase tracking-widest">
+                  {guest.name}
+                </p>
+                <p className="text-xs font-bold opacity-55">{guest.email}</p>
+              </div>
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                  Event
+                </span>
+                <p className="text-sm font-bold">{guest.eventTitle}</p>
+              </div>
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                  Status
+                </span>
+                <div>
+                  <Badge
+                    tone={guest.statusLabel === "Waitlist" ? "grey" : "yellow"}
+                  >
+                    {guest.statusLabel}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
+                  Action
+                </span>
+                <Button
+                  type="button"
+                  className="w-full md:w-auto"
+                  variant={
+                    guest.checkedInLabel === "Checked in" ? "copied" : "primary"
+                  }
+                  disabled={guest.checkInDisabled}
+                  onClick={() =>
+                    void runServerAction(
+                      () =>
+                        actions.checkInBooking({
+                          bookingId: guest.bookingId,
+                          partnerId: live.partner?.id ?? "",
+                        }),
+                      setCheckInMessage,
+                      live.refetchActiveSurface,
+                    )
+                  }
+                >
+                  {guest.checkedInLabel}
+                </Button>
+              </div>
+            </TableRow>
+          ))
+        )}
       </TableShell>
       <Panel tone="cream" shadow={false} className="p-4">
         <p className="unveiled-meta">Check-in status</p>
@@ -3085,57 +3221,97 @@ function AdminPanel({
             </Button>
           </div>
           <TableShell>
-            {live.adminEvents.map((event) => (
-              <TableRow key={event.id}>
-                <div>
-                  <p className="text-sm font-black uppercase tracking-widest">
-                    {event.title}
-                  </p>
-                  <p className="text-xs font-bold opacity-55">
-                    {event.partnerName}
-                  </p>
-                </div>
-                <p className="text-sm font-bold uppercase">{event.dateLabel}</p>
-                <p className="text-sm font-bold uppercase">
-                  {event.capacityLabel}
-                </p>
-                <p className="text-xs font-black uppercase tracking-widest opacity-55">
-                  {event.codeStrategyLabel} {" // "}
-                  {event.creditPrice} credits
-                </p>
-                <Badge tone={event.statusLabel === "Draft" ? "grey" : "yellow"}>
-                  {event.statusLabel}
-                </Badge>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() =>
-                    void runServerAction(
-                      () => actions.deleteEvent({ eventId: event.id }),
-                      setAdminMessage,
-                      live.refetchActiveSurface,
-                    )
-                  }
-                >
-                  Delete
-                </Button>
-              </TableRow>
-            ))}
-            {live.adminEvents.length === 0 ? (
+            {live.isLoading ? (
+              <>
+                <EventRowSkeleton />
+                <EventRowSkeleton />
+                <EventRowSkeleton />
+              </>
+            ) : live.adminEvents.length === 0 ? (
               <StatePanel
-                title={live.isLoading ? "Loading events" : "No admin events"}
+                title="No admin events"
                 text={
                   live.isError
                     ? "Live admin data could not be loaded."
                     : "Admin event rows will appear after events are created."
                 }
-                state={
-                  live.isLoading ? "loading" : live.isError ? "error" : "empty"
-                }
+                state={live.isError ? "error" : "empty"}
               />
-            ) : null}
-            {live.adminEvents.length > 0 && (
+            ) : (
+              live.adminEvents.map((event) => (
+                <TableRow
+                  key={event.id}
+                  className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1.2fr_auto_auto] md:items-center gap-4"
+                >
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Event
+                    </span>
+                    <p className="text-sm font-black uppercase tracking-widest">
+                      {event.title}
+                    </p>
+                    <p className="text-xs font-bold opacity-55">
+                      {event.partnerName}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Date
+                    </span>
+                    <p className="text-sm font-bold uppercase">
+                      {event.dateLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Capacity
+                    </span>
+                    <p className="text-sm font-bold uppercase">
+                      {event.capacityLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Details
+                    </span>
+                    <p className="text-xs font-black uppercase tracking-widest opacity-55">
+                      {event.codeStrategyLabel} {" // "}
+                      {event.creditPrice} credits
+                    </p>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Status
+                    </span>
+                    <div>
+                      <Badge
+                        tone={event.statusLabel === "Draft" ? "grey" : "yellow"}
+                      >
+                        {event.statusLabel}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex md:justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="w-full md:w-auto"
+                      onClick={() =>
+                        void runServerAction(
+                          () => actions.deleteEvent({ eventId: event.id }),
+                          setAdminMessage,
+                          live.refetchActiveSurface,
+                        )
+                      }
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </TableRow>
+              ))
+            )}
+            {!live.isLoading && live.adminEvents.length > 0 && (
               <Pagination
                 page={eventsPage}
                 pageSize={eventsPageSize}
@@ -3671,84 +3847,102 @@ function AdminPanel({
           </div>
 
           <TableShell>
-            {live.adminPartners.map((partner) => (
-              <TableRow
-                key={partner.id}
-                className="md:grid-cols-[1.5fr_auto] md:items-center"
-              >
-                <div>
-                  <p className="text-sm font-black uppercase tracking-widest">
-                    {partner.name}
-                  </p>
-                  <p className="text-xs font-bold opacity-55">
-                    {partner.portalLoginLabel} {" // "}{" "}
-                    {partner.venueQrTokenLabel}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      void runServerAction(
-                        () =>
-                          actions.createPartnerPortalAccess({
-                            partnerId: partner.id,
-                            email: partner.contactEmail,
-                          }),
-                        setAdminMessage,
-                        live.refetchActiveSurface,
-                      )
-                    }
-                  >
-                    <ExternalLink /> Portal
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      void runServerAction(
-                        () =>
-                          actions.rotatePartnerVenueToken({
-                            partnerId: partner.id,
-                          }),
-                        setAdminMessage,
-                        live.refetchActiveSurface,
-                      )
-                    }
-                  >
-                    <QrCode /> QR
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() =>
-                      void runServerAction(
-                        () =>
-                          actions.deletePartner({
-                            partnerId: partner.id,
-                          }),
-                        setAdminMessage,
-                        live.refetchActiveSurface,
-                      )
-                    }
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableRow>
-            ))}
-            {live.adminPartners.length === 0 ? (
+            {live.isLoading ? (
+              <>
+                <PartnerRowSkeleton />
+                <PartnerRowSkeleton />
+                <PartnerRowSkeleton />
+              </>
+            ) : live.adminPartners.length === 0 ? (
               <StatePanel
                 title="No partner venues"
                 text="Admin partner rows will appear after partner venues are created."
                 state="empty"
               />
-            ) : null}
-            {live.adminPartners.length > 0 && (
+            ) : (
+              live.adminPartners.map((partner) => (
+                <TableRow
+                  key={partner.id}
+                  className="grid grid-cols-1 md:grid-cols-[1.5fr_auto] md:items-center gap-4"
+                >
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                      Partner
+                    </span>
+                    <p className="text-sm font-black uppercase tracking-widest">
+                      {partner.name}
+                    </p>
+                    <p className="text-xs font-bold opacity-55">
+                      {partner.portalLoginLabel} {" // "}{" "}
+                      {partner.venueQrTokenLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
+                      Actions
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 md:flex-initial"
+                        onClick={() =>
+                          void runServerAction(
+                            () =>
+                              actions.createPartnerPortalAccess({
+                                partnerId: partner.id,
+                                email: partner.contactEmail,
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          )
+                        }
+                      >
+                        <ExternalLink /> Portal
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 md:flex-initial"
+                        onClick={() =>
+                          void runServerAction(
+                            () =>
+                              actions.rotatePartnerVenueToken({
+                                partnerId: partner.id,
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          )
+                        }
+                      >
+                        <QrCode /> QR
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        className="w-full md:w-auto"
+                        onClick={() =>
+                          void runServerAction(
+                            () =>
+                              actions.deletePartner({
+                                partnerId: partner.id,
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          )
+                        }
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </TableRow>
+              ))
+            )}
+            {!live.isLoading && live.adminPartners.length > 0 && (
               <Pagination
                 page={partnersPage}
                 pageSize={partnersPageSize}
@@ -3958,349 +4152,357 @@ function AdminPanel({
           </Panel>
 
           <div className="space-y-4">
-            {filteredMembers.map((member) => (
-              <Card key={member.userId} className="p-4 md:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
-                  <div
-                    className="cursor-pointer flex-1 min-w-[200px]"
-                    onClick={() =>
-                      setExpandedMemberId(
-                        expandedMemberId === member.userId
-                          ? null
-                          : member.userId,
-                      )
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-black uppercase tracking-widest">
-                        {member.fullName}
-                      </p>
-                      <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                        {expandedMemberId === member.userId
-                          ? "(Hide Intel)"
-                          : "(Show Intel)"}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold opacity-55">
-                      {member.subscriptionStatusLabel} {" // "}
-                      {member.credits} credits {" // "}
-                      {member.roleLabel}
-                    </p>
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
-                      {member.email} {" // "}
-                      {member.bookingCount} bookings {" // "}
-                      {member.savedCount} saved {" // "}
-                      {member.waitlistCount} waitlist
-                    </p>
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
-                      {member.providerStatus ?? "No provider"} {" // "}
-                      {member.currentPeriodLabel} {" // "}
-                      {member.historySummary}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      onClick={() =>
-                        void runServerAction(
-                          () =>
-                            actions.adjustMemberCredits({
-                              userId: member.userId,
-                              amount: 1,
-                              reason: "Admin panel adjustment",
-                              idempotencyKey: crypto.randomUUID(),
-                            }),
-                          setAdminMessage,
-                          live.refetchActiveSurface,
-                        )
-                      }
-                    >
-                      + Credit
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={() =>
-                        void runServerAction(
-                          () =>
-                            actions.toggleUserFreeze({
-                              userId: member.userId,
-                              frozen:
-                                member.billingOverrideActions.includes(
-                                  "freeze",
-                                ),
-                            }),
-                          setAdminMessage,
-                          live.refetchActiveSurface,
-                        )
-                      }
-                    >
-                      {member.billingOverrideActions.includes("freeze")
-                        ? "Freeze"
-                        : "Unfreeze"}
-                    </Button>
-                  </div>
-                </div>
-
-                {expandedMemberId === member.userId && (
-                  <div className="mt-4 pt-4 border-t border-brand-dark/20 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-4">
-                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                          Preferences
-                        </div>
-                        <div className="text-xs font-bold uppercase tracking-widest mt-2">
-                          Age {member.preferences.ageGroup || "Unknown"} /
-                          Radius {member.preferences.maxDistance}km /{" "}
-                          {member.preferences.accessibility
-                            ? "Accessible"
-                            : "No accessibility flag"}
-                        </div>
-                        <div className="space-y-3">
-                          {[
-                            {
-                              label: "Interests",
-                              values: member.preferences.interests,
-                            },
-                            {
-                              label: "Moods",
-                              values: member.preferences.moods,
-                            },
-                            {
-                              label: "Districts",
-                              values: member.preferences.districts,
-                            },
-                            {
-                              label: "Timing",
-                              values: member.preferences.preferredDays
-                                ? member.preferences.timing
-                                : [],
-                            },
-                            {
-                              label: "Days",
-                              values: member.preferences.preferredDays,
-                            },
-                            {
-                              label: "Languages",
-                              values: member.preferences.preferredLanguages,
-                            },
-                          ].map((group) => (
-                            <div key={group.label} className="space-y-1">
-                              <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                                {group.label}
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {(group.values?.length
-                                  ? group.values
-                                  : ["None"]
-                                ).map((value) => (
-                                  <Badge
-                                    key={`${group.label}-${value}`}
-                                    tone="white"
-                                    className="text-[9px]"
-                                  >
-                                    {value}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                          History
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Bookings
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.bookingCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Waitlist
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.waitlistCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Saved
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.savedCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Sessions
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.sessionCount}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                          Behavior Intel
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Event Opens
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.eventOpenCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Filter Applies
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.filterApplyCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Saves
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.savedCount}
-                            </div>
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded">
-                            <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                              Unsaves
-                            </div>
-                            <div className="text-lg font-black tracking-tight">
-                              {member.unsavedCount}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                            Latest Signals
-                          </div>
-                          <div className="border border-brand-dark/20 p-2 rounded space-y-1 text-[9px] font-bold uppercase tracking-widest">
-                            <div>Last View: {member.lastView || "Unknown"}</div>
-                            <div>
-                              Last Seen:{" "}
-                              {member.lastSeenAt
-                                ? new Date(member.lastSeenAt).toLocaleString()
-                                : "Unknown"}
-                            </div>
-                            <div>
-                              Last Booking: {member.lastBookedEventId || "None"}
-                            </div>
-                            <div>
-                              Last Waitlist:{" "}
-                              {member.lastWaitlistedEventId || "None"}
-                            </div>
-                            <div>
-                              Pref Update:{" "}
-                              {member.preferencesUpdatedAt
-                                ? new Date(
-                                    member.preferencesUpdatedAt,
-                                  ).toLocaleString()
-                                : "Never"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                            Recently Touched Events
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {member.recentEventIds.length === 0 ? (
-                              <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                No tracked event opens.
-                              </span>
-                            ) : (
-                              member.recentEventIds.map((eventId) => {
-                                const matchingEvent =
-                                  live.events.find((e) => e.id === eventId) ||
-                                  live.adminEvents.find(
-                                    (e) => e.id === eventId,
-                                  );
-                                return (
-                                  <Badge
-                                    key={eventId}
-                                    tone="yellow"
-                                    className="text-[9px]"
-                                  >
-                                    {matchingEvent
-                                      ? matchingEvent.title
-                                      : eventId}
-                                  </Badge>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Divider className="my-4" />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    void runServerAction(
-                      () =>
-                        actions.createAdminTicket({
-                          userId: member.userId,
-                          eventId: live.adminEvents[0]?.id ?? "",
-                          ticketQuantity: 1,
-                          consumeCapacity: true,
-                          debitCredits: false,
-                          idempotencyKey: crypto.randomUUID(),
-                        }),
-                      setAdminMessage,
-                      live.refetchActiveSurface,
-                    );
-                  }}
-                >
-                  Create ticket
-                </Button>
-                <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                  History, preferences, bookings, and adjustment controls are
-                  expandable.
-                </p>
-              </Card>
-            ))}
-            {filteredMembers.length === 0 ? (
+            {live.isLoading ? (
+              <>
+                <MemberCardSkeleton />
+                <MemberCardSkeleton />
+                <MemberCardSkeleton />
+              </>
+            ) : filteredMembers.length === 0 ? (
               <StatePanel
-                title={live.isLoading ? "Loading members" : "No members found"}
+                title="No members found"
                 text={
                   live.isError
                     ? "Live member rows could not be loaded."
                     : "No members match your search criteria or none signed up yet."
                 }
-                state={
-                  live.isLoading ? "loading" : live.isError ? "error" : "empty"
-                }
+                state={live.isError ? "error" : "empty"}
               />
-            ) : null}
-            {live.adminMembers.length > 0 && (
+            ) : (
+              filteredMembers.map((member) => (
+                <Card key={member.userId} className="p-4 md:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
+                    <div
+                      className="cursor-pointer flex-1 min-w-[200px]"
+                      onClick={() =>
+                        setExpandedMemberId(
+                          expandedMemberId === member.userId
+                            ? null
+                            : member.userId,
+                        )
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black uppercase tracking-widest">
+                          {member.fullName}
+                        </p>
+                        <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                          {expandedMemberId === member.userId
+                            ? "(Hide Intel)"
+                            : "(Show Intel)"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold opacity-55">
+                        {member.subscriptionStatusLabel} {" // "}
+                        {member.credits} credits {" // "}
+                        {member.roleLabel}
+                      </p>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                        {member.email} {" // "}
+                        {member.bookingCount} bookings {" // "}
+                        {member.savedCount} saved {" // "}
+                        {member.waitlistCount} waitlist
+                      </p>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                        {member.providerStatus ?? "No provider"} {" // "}
+                        {member.currentPeriodLabel} {" // "}
+                        {member.historySummary}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          void runServerAction(
+                            () =>
+                              actions.adjustMemberCredits({
+                                userId: member.userId,
+                                amount: 1,
+                                reason: "Admin panel adjustment",
+                                idempotencyKey: crypto.randomUUID(),
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          )
+                        }
+                      >
+                        + Credit
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() =>
+                          void runServerAction(
+                            () =>
+                              actions.toggleUserFreeze({
+                                userId: member.userId,
+                                frozen:
+                                  member.billingOverrideActions.includes(
+                                    "freeze",
+                                  ),
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          )
+                        }
+                      >
+                        {member.billingOverrideActions.includes("freeze")
+                          ? "Freeze"
+                          : "Unfreeze"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {expandedMemberId === member.userId && (
+                    <div className="mt-4 pt-4 border-t border-brand-dark/20 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-4">
+                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                            Preferences
+                          </div>
+                          <div className="text-xs font-bold uppercase tracking-widest mt-2">
+                            Age {member.preferences.ageGroup || "Unknown"} /
+                            Radius {member.preferences.maxDistance}km /{" "}
+                            {member.preferences.accessibility
+                              ? "Accessible"
+                              : "No accessibility flag"}
+                          </div>
+                          <div className="space-y-3">
+                            {[
+                              {
+                                label: "Interests",
+                                values: member.preferences.interests,
+                              },
+                              {
+                                label: "Moods",
+                                values: member.preferences.moods,
+                              },
+                              {
+                                label: "Districts",
+                                values: member.preferences.districts,
+                              },
+                              {
+                                label: "Timing",
+                                values: member.preferences.preferredDays
+                                  ? member.preferences.timing
+                                  : [],
+                              },
+                              {
+                                label: "Days",
+                                values: member.preferences.preferredDays,
+                              },
+                              {
+                                label: "Languages",
+                                values: member.preferences.preferredLanguages,
+                              },
+                            ].map((group) => (
+                              <div key={group.label} className="space-y-1">
+                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                  {group.label}
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {(group.values?.length
+                                    ? group.values
+                                    : ["None"]
+                                  ).map((value) => (
+                                    <Badge
+                                      key={`${group.label}-${value}`}
+                                      tone="white"
+                                      className="text-[9px]"
+                                    >
+                                      {value}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                            History
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Bookings
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.bookingCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Waitlist
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.waitlistCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Saved
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.savedCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Sessions
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.sessionCount}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                            Behavior Intel
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Event Opens
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.eventOpenCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Filter Applies
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.filterApplyCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Saves
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.savedCount}
+                              </div>
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded">
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                Unsaves
+                              </div>
+                              <div className="text-lg font-black tracking-tight">
+                                {member.unsavedCount}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                              Latest Signals
+                            </div>
+                            <div className="border border-brand-dark/20 p-2 rounded space-y-1 text-[9px] font-bold uppercase tracking-widest">
+                              <div>
+                                Last View: {member.lastView || "Unknown"}
+                              </div>
+                              <div>
+                                Last Seen:{" "}
+                                {member.lastSeenAt
+                                  ? new Date(member.lastSeenAt).toLocaleString()
+                                  : "Unknown"}
+                              </div>
+                              <div>
+                                Last Booking:{" "}
+                                {member.lastBookedEventId || "None"}
+                              </div>
+                              <div>
+                                Last Waitlist:{" "}
+                                {member.lastWaitlistedEventId || "None"}
+                              </div>
+                              <div>
+                                Pref Update:{" "}
+                                {member.preferencesUpdatedAt
+                                  ? new Date(
+                                      member.preferencesUpdatedAt,
+                                    ).toLocaleString()
+                                  : "Never"}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                              Recently Touched Events
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {member.recentEventIds.length === 0 ? (
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                  No tracked event opens.
+                                </span>
+                              ) : (
+                                member.recentEventIds.map((eventId) => {
+                                  const matchingEvent =
+                                    live.events.find((e) => e.id === eventId) ||
+                                    live.adminEvents.find(
+                                      (e) => e.id === eventId,
+                                    );
+                                  return (
+                                    <Badge
+                                      key={eventId}
+                                      tone="yellow"
+                                      className="text-[9px]"
+                                    >
+                                      {matchingEvent
+                                        ? matchingEvent.title
+                                        : eventId}
+                                    </Badge>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Divider className="my-4" />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          void runServerAction(
+                            () =>
+                              actions.createAdminTicket({
+                                userId: member.userId,
+                                eventId: live.adminEvents[0]?.id ?? "",
+                                ticketQuantity: 1,
+                                consumeCapacity: true,
+                                debitCredits: false,
+                                idempotencyKey: crypto.randomUUID(),
+                              }),
+                            setAdminMessage,
+                            live.refetchActiveSurface,
+                          );
+                        }}
+                      >
+                        Create ticket
+                      </Button>
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                        History, preferences, bookings, and adjustment controls
+                        are expandable.
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              ))
+            )}
+            {!live.isLoading && live.adminMembers.length > 0 && (
               <Pagination
                 page={membersPage}
                 pageSize={membersPageSize}
