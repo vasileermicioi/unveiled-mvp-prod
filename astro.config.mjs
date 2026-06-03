@@ -10,6 +10,7 @@ export default defineConfig({
   output: "server",
   adapter: cloudflare({
     imageService: "compile",
+    configPath: "wrangler.toml",
   }),
   integrations: [react()],
 

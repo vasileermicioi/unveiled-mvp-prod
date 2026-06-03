@@ -57,7 +57,7 @@ Navigation SHALL adapt visible controls to guest, member, admin, and partner con
 ### Requirement: Language Toggle
 This requirement SHALL use legacy reference path: `_old_app/components/Navbar.tsx`.
 
-The app shell SHALL expose a persistent DE/EN language selector.
+The app shell SHALL expose a persistent DE/EN language selector that reflects the selected language as a route parameter.
 
 #### Scenario: Visible elements render
 - **WHEN** navigation is visible
@@ -67,10 +67,11 @@ The app shell SHALL expose a persistent DE/EN language selector.
 - **WHEN** a language is selected
 - **THEN** the active language uses dark fill and white text
 - **AND** inactive language controls remain muted and interactive
+- **AND** the app transitions the active URL route to prepend the selected language prefix (e.g. from `/de/...` to `/en/...`), keeping the same subpaths and query parameters.
 
 #### Scenario: Data requirements are met
 - **WHEN** language toggle renders
-- **THEN** required display data is current language and localized labels/copy for the visible page
+- **THEN** required display data is current language derived from the URL prefix, and localized labels/copy for the visible page
 
 ### Requirement: Shell Status Messages
 This requirement SHALL use legacy reference path: `_old_app/App.tsx`.
@@ -265,7 +266,7 @@ The app shell SHALL expose auth-related actions that route to Better Auth-backed
 - **THEN** the app routes to the authenticated profile surface only if a valid session remains present.
 
 ### Requirement: Navigation Uses URL Routes
-Shell navigation SHALL navigate to stable route URLs for product surfaces and derive selected state from the current route.
+Shell navigation SHALL navigate to stable route URLs for product surfaces prefixed by the active route language parameter, and derive selected state from the current route.
 
 #### Scenario: Nav item is selected
 - **WHEN** a shell nav item is activated
@@ -274,15 +275,15 @@ Shell navigation SHALL navigate to stable route URLs for product surfaces and de
 
 #### Scenario: Guest navigation targets public routes
 - **WHEN** guest navigation renders
-- **THEN** Discover, How it works, Membership, and FAQ controls target `/discover`, `/how-it-works`, `/membership`, and `/faq`.
+- **THEN** Discover, How it works, Membership, and FAQ controls target `/[lang]/discover`, `/[lang]/how-it-works`, `/[lang]/membership`, and `/[lang]/faq`.
 
 #### Scenario: Member navigation targets member routes
 - **WHEN** member navigation renders
-- **THEN** Current access, saved events, bookings, and profile controls target `/app`, `/saved`, `/bookings`, and `/profile`.
+- **THEN** Current access, saved events, bookings, and profile controls target `/[lang]/app`, `/[lang]/saved`, `/[lang]/bookings`, and `/[lang]/profile`.
 
 #### Scenario: Operational navigation targets operational routes
 - **WHEN** partner or admin navigation renders
-- **THEN** global operational entry points target `/partner` for partners and `/admin` for admins.
+- **THEN** global operational entry points target `/[lang]/partner` for partners and `/[lang]/admin` for admins.
 
 #### Scenario: Mobile nav renders route controls
 - **WHEN** the shell renders on small screens
@@ -309,12 +310,12 @@ The app shell SHALL render legacy-equivalent German and English copy for shared 
 #### Scenario: Guest shell language persists
 - **WHEN** a guest switches between `DE` and `EN`
 - **THEN** the navigation labels, public shell actions, and shell status messages render in the selected language
-- **AND** the preference persists through the guest language cookie across reloads and public route navigation
+- **AND** the preference is preserved in the URL route and is set in the language cookie across reloads
 
 #### Scenario: Authenticated shell language persists
 - **WHEN** an authenticated viewer switches between `DE` and `EN`
 - **THEN** member navigation labels, credits/saved/bookings/profile controls, and shell status messages render in the selected language
-- **AND** the preference persists to the authenticated profile and is used by subsequent server-rendered shell hydration
+- **AND** the preference is updated in the URL route and saved to the profile
 
 #### Scenario: Shell wrappers use selected language
 - **WHEN** shell-level loading, empty, error, frozen-account, or membership attention states are visible

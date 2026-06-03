@@ -9,7 +9,13 @@ import {
 } from "./helpers";
 
 async function switchToEnglish(page: Page) {
-  await page.getByRole("button", { name: "EN", exact: true }).first().click();
+  if (page.url().includes("/en")) {
+    return;
+  }
+  await expect(async () => {
+    await page.getByRole("button", { name: "EN", exact: true }).first().click();
+    await expect(page).toHaveURL(/\/en/, { timeout: 1500 });
+  }).toPass({ timeout: 10000 });
 }
 
 test.describe("public and member route parity", () => {
@@ -33,15 +39,7 @@ test.describe("public and member route parity", () => {
     await expect(
       page.getByRole("button", { name: "EN", exact: true }).first(),
     ).toBeVisible();
-    await page.context().clearCookies();
-    await page.context().addCookies([
-      {
-        name: "unveiled_lang",
-        value: "EN",
-        url: "http://127.0.0.1:4322",
-      },
-    ]);
-    await page.reload();
+    await switchToEnglish(page);
     await expect(
       page.getByText("Culture before it goes public."),
     ).toBeVisible();
@@ -174,11 +172,12 @@ test.describe("public and member route parity", () => {
         name: "Parity Secret Access",
       }),
     ).toBeVisible();
-    await eventCard.getByRole("button", { name: "Book now" }).click();
-
-    await expect(
-      page.locator("h2").filter({ hasText: "Parity Secret Access" }),
-    ).toBeVisible();
+    await expect(async () => {
+      await eventCard.getByRole("button", { name: "Book now" }).click();
+      await expect(
+        page.locator("h2").filter({ hasText: "Parity Secret Access" }),
+      ).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10000 });
     await page.getByRole("button", { name: "Confirm access" }).click();
 
     await expect(page.getByText("Booking success")).toBeVisible();

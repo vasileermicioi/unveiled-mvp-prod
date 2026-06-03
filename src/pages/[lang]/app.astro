@@ -5,15 +5,24 @@ import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadMemberData } from "@/lib/data-access/loaders";
 import { createMemberInitialSurfaceData } from "@/lib/data-access/surface-data";
+import { normalizeLanguage } from "@/lib/i18n";
 import {
   productRoutes,
   resolveMemberOnboardingRoute,
 } from "@/lib/product-routes";
 
-const viewer = await getViewer(Astro.request);
-const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.saved);
-if (!ownership.ok)
-  return Astro.redirect(ownership.redirectTo, ownership.status);
+const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
+
+const viewer = await getViewer(Astro.request, { guestLanguage: lang });
+viewer.language = lang;
+
+const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.member);
+if (!ownership.ok) {
+  const redirectUrl = ownership.redirectTo.startsWith("/")
+    ? `/${lang.toLowerCase()}${ownership.redirectTo}`
+    : `/${lang.toLowerCase()}/${ownership.redirectTo}`;
+  return Astro.redirect(redirectUrl, ownership.status);
+}
 
 const search = new URL(Astro.request.url).searchParams;
 const filters = {
@@ -21,7 +30,6 @@ const filters = {
   partnerId: search.get("partnerId") ?? undefined,
   startDate: search.get("startDate") ?? undefined,
   endDate: search.get("endDate") ?? undefined,
-  savedOnly: "true",
 };
 const initialShell = createShellFromViewer(
   ownership.viewer,
@@ -34,6 +42,12 @@ const initialDiscovery = createMemberInitialSurfaceData(
 );
 ---
 
-<BaseLayout title="Saved | Unveiled">
-  <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="member" />
+<BaseLayout title="Current access | Unveiled" lang={lang}>
+  <VisualSystemApp
+    client:load
+    initialShell={initialShell}
+    initialDiscovery={initialDiscovery}
+    initialView="member"
+    callbackURL={Astro.url.searchParams.get("callbackURL") ?? `/${lang.toLowerCase()}/`}
+  />
 </BaseLayout>

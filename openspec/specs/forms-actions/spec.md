@@ -182,3 +182,10 @@ The Admin event and partner forms SHALL submit update payloads with unique datab
 - **WHEN** an admin submits the partner form with modified properties for an existing partner ID
 - **THEN** the system SHALL call the save partner server action, display a success notice, and invalidate all associated queries (such as partners list and partner-specific detail queries)
 
+### Requirement: Complete Localization Verification of Form and Action Errors
+All input forms, action responses, and validation constraints SHALL return complete, error-free translations in both German and English without utilizing hardcoded language fallbacks.
+
+#### Scenario: Validation error is translated
+- **WHEN** any server or client input validation fails
+- **THEN** all field-level validation messages and top-level alerts SHALL be rendered in the current route language
+

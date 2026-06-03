@@ -68,7 +68,7 @@ The app SHALL have automated regression coverage for every legacy-visible route 
 
 #### Scenario: Core route landmarks remain visible
 - **WHEN** landing, discover, membership, app discovery, saved, bookings, profile, partner, admin, and venue check-in surfaces render
-- **THEN** the suite asserts the core visible labels, CTA regions, lists, or tables needed to match the legacy-visible route contract.
+- **THEN** the suite asserts the core visible labels, CTA regions, lists, or tables needed to match the legacy-visible route contract under the language-prefixed routes (e.g. `/de/discover` or `/en/discover`).
 
 ### Requirement: Booking Success Calendar UI Parity
 Member-facing booking success surfaces SHALL render the legacy-visible calendar download behavior for confirmed bookings with calendar metadata.
@@ -96,14 +96,14 @@ Member-facing booking success surfaces SHALL render the legacy-visible calendar 
 - **THEN** the suite asserts the visible calendar affordance or records unit-level coverage for calendar generation when browser download verification is not feasible
 
 ### Requirement: Bilingual Route Copy Parity
-Public and member page surfaces SHALL render legacy-equivalent German and English landmarks, CTAs, form copy, empty states, and modal copy according to the selected language.
+Public and member page surfaces SHALL render legacy-equivalent German and English landmarks, CTAs, form copy, empty states, and modal copy according to the language derived from the URL prefix route parameter.
 
 #### Scenario: Public routes render selected language
-- **WHEN** a guest views landing, discovery, how-it-works, membership, FAQ, login, or signup surfaces after selecting `DE` or `EN`
+- **WHEN** a guest views landing, discovery, how-it-works, membership, FAQ, login, or signup surfaces with `/de/` or `/en/` route prefixes
 - **THEN** the visible navigation, headings, CTA labels, form labels, validation copy, and empty-state landmarks render in the selected language
 
 #### Scenario: Member routes render selected language
-- **WHEN** an authenticated member views discovery, saved, bookings, profile, onboarding, or membership-related member surfaces after selecting `DE` or `EN`
+- **WHEN** an authenticated member views discovery, saved, bookings, profile, onboarding, or membership-related member surfaces with `/de/` or `/en/` route prefixes
 - **THEN** the visible route landmarks, controls, form labels, status messages, and empty states render in the selected language
 
 #### Scenario: Booking outcomes render selected language
@@ -152,4 +152,12 @@ The public discover page SHALL allow guest/unauthenticated users to click events
 - **THEN** the page opens a detailed event preview modal showing the event information
 - **AND** the modal displays a premium call-to-action button redirecting the user to sign in
 - **AND** the modal hides all ticket count selection and booking action buttons
+
+### Requirement: Language Route Default Redirection
+The app root route `/` SHALL automatically redirect users to a language-specific page prefix based on cookies or browser headers.
+
+#### Scenario: User visits root without locale
+- **WHEN** a user requests the root `/` page path
+- **THEN** the server detects the browser language preference or `unveiled_lang` cookie
+- **AND** redirects the client to the matching locale-prefixed home route (e.g. `/de/` or `/en/`).
 

@@ -35,7 +35,8 @@ export function routePathFor(itemId: ShellNavItemId) {
 export function routeForPath(
   pathname: string,
 ): ProductRouteDefinition | undefined {
-  return Object.values(productRoutes).find((route) => route.path === pathname);
+  const cleanPath = pathname.replace(/^\/(?:de|en)(?=\/|$)/i, "") || "/";
+  return Object.values(productRoutes).find((route) => route.path === cleanPath);
 }
 
 export function resolveRouteOwnership(

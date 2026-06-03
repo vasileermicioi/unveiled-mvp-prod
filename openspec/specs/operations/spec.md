@@ -172,3 +172,10 @@ The Admin operations panel SHALL support mounting event and partner forms prefil
 - **WHEN** an admin clicks the "Edit" button on a partner row
 - **THEN** the system SHALL update the active tab view to the partner form prefilled with the partner's current properties
 
+### Requirement: Localized Dialogs and Modals
+All confirmation modals, alerts, and feedback banners on admin and partner surfaces SHALL display message copy translated in the active route language.
+
+#### Scenario: Confirmation modal displays translated warning
+- **WHEN** a deletion confirmation dialog is triggered
+- **THEN** all warning copy, body messages, confirm actions, and cancel actions are rendered fully in the language of the active route
+

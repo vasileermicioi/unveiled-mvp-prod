@@ -272,15 +272,20 @@ export async function getViewer(
 export function getAuthRedirectPath(
   viewer: AuthenticatedViewer,
   callbackURL?: string | null,
-) {
+): string {
+  // Normalize the callback path by stripping dynamic locale prefixes
+  const cleanPath = callbackURL
+    ? callbackURL.replace(/^\/(?:de|en)(?=\/|$)/i, "") || "/"
+    : "";
+
   // 1. Context-aware continuation (e.g., venue QR check-in)
   if (
-    callbackURL &&
-    !callbackURL.startsWith("/login") &&
-    !callbackURL.startsWith("/signup") &&
-    callbackURL !== "/"
+    cleanPath &&
+    !cleanPath.startsWith("/login") &&
+    !cleanPath.startsWith("/signup") &&
+    cleanPath !== "/"
   ) {
-    return callbackURL;
+    return callbackURL ?? "/app";
   }
 
   // 2. Onboarding enforcement for members

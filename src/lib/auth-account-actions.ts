@@ -105,7 +105,7 @@ export async function signUpWithEmail(
     const nextPath =
       viewer.kind === "authenticated"
         ? getAuthRedirectPath(viewer, input.callbackURL)
-        : input.callbackURL;
+        : (input.callbackURL ?? undefined);
 
     return {
       ok: true,
@@ -140,7 +140,7 @@ export async function loginWithEmail(
     const nextPath =
       viewer.kind === "authenticated"
         ? getAuthRedirectPath(viewer, input.callbackURL)
-        : (input.callbackURL ?? result.response.url);
+        : (input.callbackURL ?? result.response.url ?? undefined);
 
     return {
       ok: true,

@@ -21,30 +21,31 @@ import { routePathFor } from "@/lib/product-routes";
 
 function publicNavItems(language: AppShellViewModel["language"]["selected"]) {
   const copy = copyFor(language).shell.nav;
+  const prefix = `/${language.toLowerCase()}`;
   return [
     {
       id: "discover",
       itemId: "discover",
       label: copy.discover,
-      targetHref: routePathFor("discover"),
+      targetHref: `${prefix}${routePathFor("discover")}`,
     },
     {
       id: "how",
       itemId: "how",
       label: copy.how,
-      targetHref: routePathFor("how"),
+      targetHref: `${prefix}${routePathFor("how")}`,
     },
     {
       id: "membership",
       itemId: "membership",
       label: copy.membership,
-      targetHref: routePathFor("membership"),
+      targetHref: `${prefix}${routePathFor("membership")}`,
     },
     {
       id: "faq",
       itemId: "faq",
       label: copy.faq,
-      targetHref: routePathFor("faq"),
+      targetHref: `${prefix}${routePathFor("faq")}`,
     },
   ] satisfies AppShellViewModel["navItems"];
 }
@@ -55,26 +56,27 @@ function memberNavItems(
   language: AppShellViewModel["language"]["selected"],
 ) {
   const copy = copyFor(language).shell.nav;
+  const prefix = `/${language.toLowerCase()}`;
   return [
     {
       id: "member",
       itemId: "member",
       label: copy.member,
-      targetHref: routePathFor("member"),
+      targetHref: `${prefix}${routePathFor("member")}`,
       active: activeItem === "member" || activeItem === "saved",
     },
     {
       id: "faq",
       itemId: "faq",
       label: copy.faq,
-      targetHref: routePathFor("faq"),
+      targetHref: `${prefix}${routePathFor("faq")}`,
       active: activeItem === "faq",
     },
     {
       id: "saved",
       itemId: "saved",
       label: copy.saved,
-      targetHref: routePathFor("saved"),
+      targetHref: `${prefix}${routePathFor("saved")}`,
       icon: "bookmark",
       collapseLabel: true,
       count: savedCount,
@@ -84,7 +86,7 @@ function memberNavItems(
       id: "bookings",
       itemId: "bookings",
       label: copy.bookings,
-      targetHref: routePathFor("bookings"),
+      targetHref: `${prefix}${routePathFor("bookings")}`,
       icon: "ticket",
       collapseLabel: true,
       active: activeItem === "bookings",
@@ -93,12 +95,13 @@ function memberNavItems(
 }
 
 function operationalNavItem(viewer: AuthenticatedViewer) {
+  const prefix = `/${viewer.language.toLowerCase()}`;
   return [
     {
       id: viewer.viewerContext,
       itemId: viewer.viewerContext,
       label: viewer.viewerContext === "admin" ? "Admin" : "Partner",
-      targetHref: routePathFor(viewer.viewerContext),
+      targetHref: `${prefix}${routePathFor(viewer.viewerContext)}`,
       icon: "settings",
       active: true,
     },
@@ -113,6 +116,7 @@ export function createShellFromViewer(
   const isMember = viewer.kind === "authenticated" && viewer.role === "USER";
   const copy = copyFor(viewer.language);
   const shellNav = copy.shell.nav;
+  const prefix = `/${viewer.language.toLowerCase()}`;
 
   return {
     viewerContext: viewer.viewerContext,
@@ -136,7 +140,9 @@ export function createShellFromViewer(
               ? shellNav.login
               : shellNav.becomeMember,
           targetHref:
-            activeItem === "membership" ? "/" : routePathFor("membership"),
+            activeItem === "membership"
+              ? `${prefix}/`
+              : `${prefix}${routePathFor("membership")}`,
           variant: activeItem === "membership" ? "secondary" : "primary",
         }
       : undefined,
@@ -154,8 +160,11 @@ export async function createShellFromRequest(
   return createShellFromViewer(await getViewer(request), activeItem);
 }
 
-export function authFailurePageState(failure: AuthFailure): PageShellViewModel {
-  const copy = copyFor("EN").shell.state;
+export function authFailurePageState(
+  failure: AuthFailure,
+  language: import("@/lib/i18n").UiLanguage = "EN",
+): PageShellViewModel {
+  const copy = copyFor(language).shell.state;
   return {
     state: {
       state: failure.code === "forbidden" ? "error" : "empty",
@@ -198,13 +207,16 @@ type PageAccess =
   | { ok: true; viewer: AuthenticatedViewer }
   | { ok: false; page: PageShellViewModel; failure: AuthFailure };
 
-function accessFailure(error: unknown): PageAccess {
+function accessFailure(
+  error: unknown,
+  language?: import("@/lib/i18n").UiLanguage,
+): PageAccess {
   if (error instanceof AuthAccessError) {
     const failure = authFailure(error.code);
     return {
       ok: false,
       failure,
-      page: authFailurePageState(failure),
+      page: authFailurePageState(failure, language),
     };
   }
 
@@ -212,29 +224,36 @@ function accessFailure(error: unknown): PageAccess {
   return {
     ok: false,
     failure,
-    page: authFailurePageState(failure),
+    page: authFailurePageState(failure, language),
   };
 }
 
-export async function requireMemberPage(request: Request): Promise<PageAccess> {
+export async function requireMemberPage(
+  request: Request,
+  language?: import("@/lib/i18n").UiLanguage,
+): Promise<PageAccess> {
   try {
     return { ok: true, viewer: await requireMember(request) };
   } catch (error) {
-    return accessFailure(error);
+    return accessFailure(error, language);
   }
 }
 
-export async function requireAdminPage(request: Request): Promise<PageAccess> {
+export async function requireAdminPage(
+  request: Request,
+  language?: import("@/lib/i18n").UiLanguage,
+): Promise<PageAccess> {
   try {
     return { ok: true, viewer: await requireAdmin(request) };
   } catch (error) {
-    return accessFailure(error);
+    return accessFailure(error, language);
   }
 }
 
 export async function requirePartnerPage(
   request: Request,
   resourcePartnerId: string,
+  language?: import("@/lib/i18n").UiLanguage,
 ): Promise<PageAccess> {
   try {
     return {
@@ -242,16 +261,17 @@ export async function requirePartnerPage(
       viewer: await requirePartnerForResource(request, resourcePartnerId),
     };
   } catch (error) {
-    return accessFailure(error);
+    return accessFailure(error, language);
   }
 }
 
 export async function requireSignedInPage(
   request: Request,
+  language?: import("@/lib/i18n").UiLanguage,
 ): Promise<PageAccess> {
   try {
     return { ok: true, viewer: await requireUser(request) };
   } catch (error) {
-    return accessFailure(error);
+    return accessFailure(error, language);
   }
 }

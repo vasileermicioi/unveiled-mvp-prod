@@ -5,12 +5,21 @@ import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadPublicDiscoveryData } from "@/lib/data-access/loaders";
 import { createPublicInitialSurfaceData } from "@/lib/data-access/surface-data";
+import { normalizeLanguage } from "@/lib/i18n";
 import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
 
-const viewer = await getViewer(Astro.request);
-const ownership = resolveRouteOwnership(viewer, productRoutes.faq);
-if (!ownership.ok)
-  return Astro.redirect(ownership.redirectTo, ownership.status);
+const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
+
+const viewer = await getViewer(Astro.request, { guestLanguage: lang });
+viewer.language = lang;
+
+const ownership = resolveRouteOwnership(viewer, productRoutes.discover);
+if (!ownership.ok) {
+  const redirectUrl = ownership.redirectTo.startsWith("/")
+    ? `/${lang.toLowerCase()}${ownership.redirectTo}`
+    : `/${lang.toLowerCase()}/${ownership.redirectTo}`;
+  return Astro.redirect(redirectUrl, ownership.status);
+}
 
 const initialShell = createShellFromViewer(
   ownership.viewer,
@@ -21,12 +30,12 @@ const initialDiscovery = createPublicInitialSurfaceData(
 );
 ---
 
-<BaseLayout title="FAQ | Unveiled">
+<BaseLayout title="Discover | Unveiled" lang={lang}>
   <VisualSystemApp
     client:load
     initialShell={initialShell}
     initialDiscovery={initialDiscovery}
-    initialView="faq"
-    callbackURL={Astro.url.searchParams.get("callbackURL") ?? "/"}
+    initialView="discover"
+    callbackURL={Astro.url.searchParams.get("callbackURL") ?? `/${lang.toLowerCase()}/`}
   />
 </BaseLayout>

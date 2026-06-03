@@ -9,15 +9,41 @@ import {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, redirect } = context;
 
-  // Skip middleware for API routes and static assets
-  if (url.pathname.startsWith("/api") || url.pathname.includes(".")) {
+  // Skip middleware for API routes, Astro internals, and static assets
+  if (
+    url.pathname.startsWith("/api") ||
+    url.pathname.startsWith("/_") ||
+    url.pathname.includes(".")
+  ) {
     return next();
+  }
+
+  const match = url.pathname.match(/^\/(de|en)(?=\/|$)/i);
+  if (!match) {
+    // Detect language from cookie, header, or default
+    const cookieHeader = request.headers.get("cookie");
+    const acceptLanguage = request.headers.get("accept-language");
+
+    let detectedLang = "EN";
+    const cookieLang = cookieHeader?.match(/unveiled_lang=(DE|EN)/i)?.[1];
+    if (cookieLang) {
+      detectedLang = cookieLang.toUpperCase();
+    } else {
+      const isGerman = acceptLanguage?.toLowerCase().includes("de");
+      detectedLang = isGerman ? "DE" : "EN";
+    }
+
+    const lang = detectedLang.toLowerCase();
+    // Redirect to prefixed URL preserving query params
+    return redirect(`/${lang}${url.pathname}${url.search}`, 302);
   }
 
   const route = routeForPath(url.pathname);
   if (!route) {
     return next();
   }
+
+  const currentLang = match[1].toLowerCase();
 
   try {
     const viewer = await getViewer(request);
@@ -31,11 +57,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const outcome = resolveMemberOnboardingRoute(viewer, route);
 
     if (!outcome.ok) {
-      return redirect(outcome.redirectTo, outcome.status);
+      return redirect(`/${currentLang}${outcome.redirectTo}`, outcome.status);
     }
   } catch (_error) {
     // If there's an auth error (like profile_missing), redirect to landing
-    return redirect("/", 302);
+    return redirect(`/${currentLang}/`, 302);
   }
 
   return next();

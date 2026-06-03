@@ -214,7 +214,10 @@ export function ShellNavigation({
     <nav className="sticky top-0 z-50 border-b-2 border-brand-dark bg-white md:border-b-4">
       <div className="content-shell">
         <div className="flex min-h-16 items-center justify-between gap-3 md:min-h-20 md:gap-4">
-          <a href="/" className="flex min-w-0 items-center gap-3 text-left">
+          <a
+            href={`/${shell.language.selected.toLowerCase()}/`}
+            className="flex min-w-0 items-center gap-3 text-left"
+          >
             <ShellLogo variant={shell.logo.variant} />
             {shell.tagline ? (
               <span className="hidden max-w-56 text-[8px] font-black uppercase tracking-[0.25em] opacity-45 md:block">
@@ -263,6 +266,7 @@ export function ShellNavigation({
                       label: copy.profile,
                       icon: "user",
                       active: shell.activeItem === "profile",
+                      targetHref: `/${shell.language.selected.toLowerCase()}/profile`,
                     }}
                     onAction={onAction}
                     iconOnly
@@ -384,6 +388,7 @@ export function ShellNavigation({
                       label: copy.profile,
                       icon: "user",
                       active: shell.activeItem === "profile",
+                      targetHref: `/${shell.language.selected.toLowerCase()}/profile`,
                     }}
                     onAction={(actionId) => {
                       setDrawerOpen(false);
@@ -700,12 +705,14 @@ export function ModalShell({
   modal,
   children,
   onAction,
+  language = "EN",
 }: {
   modal: ModalShellViewModel;
   children: ReactNode;
   onAction?: ShellActionHandler;
+  language?: import("@/lib/i18n").UiLanguage;
 }) {
-  const copy = copyFor("EN").shell.state;
+  const copy = copyFor(language).shell.state;
   useEffect(() => {
     if (!modal.open) return;
 

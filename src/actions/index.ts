@@ -58,6 +58,7 @@ import {
   type FormActionResult,
   formFailure,
   parseFormInput,
+  translateMessage,
 } from "@/lib/forms/action-result";
 import { queryKeys } from "@/lib/forms/query-keys";
 import {
@@ -91,12 +92,16 @@ const jsonInputSchema = z.record(z.string(), z.unknown());
 
 type ActionContext = ActionAPIContext;
 
+function getRequestLang(context: ActionContext) {
+  return normalizeLanguage(context.cookies.get("unveiled_lang")?.value);
+}
+
 function parseInput<TSchema extends z.ZodType>(
   schema: TSchema,
   input: unknown,
   context: ActionContext,
 ) {
-  const lang = normalizeLanguage(context.cookies.get("unveiled_lang")?.value);
+  const lang = getRequestLang(context);
   return parseFormInput(schema, input, lang);
 }
 
@@ -104,12 +109,21 @@ function newId() {
   return crypto.randomUUID();
 }
 
-function safeActionError(error: unknown) {
-  if (error instanceof AuthAccessError) {
-    return formFailure(error.message);
+function safeActionError(
+  error: unknown,
+  lang: import("@/lib/i18n").UiLanguage = "EN",
+) {
+  if (
+    error instanceof AuthAccessError ||
+    (error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "AuthAccessError")
+  ) {
+    return formFailure((error as any).message, lang);
   }
   console.error("[safeActionError] Caught unexpected action error:", error);
-  return formFailure("The request could not be completed.");
+  return formFailure("The request could not be completed.", lang);
 }
 
 function dataAccessInvalidationKeys(
@@ -120,9 +134,13 @@ function dataAccessInvalidationKeys(
 
 function bookingResultToAction(
   result: BookingTransactionResult,
+  lang: import("@/lib/i18n").UiLanguage = "EN",
 ): FormActionResult<BookingTransactionResult> {
   if (isBookingFailure(result)) {
-    return formFailure(result.message || bookingFailureMessage(result.state));
+    return formFailure(
+      result.message || bookingFailureMessage(result.state),
+      lang,
+    );
   }
 
   return actionSuccess({
@@ -131,8 +149,8 @@ function bookingResultToAction(
       type: "success",
       message:
         result.state === "confirmed"
-          ? "Booking confirmed."
-          : "Waitlist joined.",
+          ? copyFor(lang).action.bookingConfirmed
+          : copyFor(lang).action.waitlistJoined,
     },
     invalidate: [
       queryKeys.bookings,
@@ -151,14 +169,18 @@ function bookingResultToAction(
 
 function creditAdjustmentResultToAction(
   result: CreditAdjustmentResult,
+  lang: import("@/lib/i18n").UiLanguage = "EN",
 ): FormActionResult<CreditAdjustmentResult> {
   if (isBookingFailure(result)) {
-    return formFailure(result.message || bookingFailureMessage(result.state));
+    return formFailure(
+      result.message || bookingFailureMessage(result.state),
+      lang,
+    );
   }
 
   return actionSuccess({
     data: result,
-    notice: { type: "success", message: "Credits adjusted." },
+    notice: { type: "success", message: copyFor(lang).action.creditsAdjusted },
     invalidate: [
       queryKeys.adminMembers,
       queryKeys.profile(result.userId),
@@ -202,9 +224,12 @@ async function authResultToFormAction(
 ): Promise<FormActionResult<{ nextPath?: string; userId?: string }>> {
   applySetCookieHeaders(result.headers, context);
 
+  const lang = getRequestLang(context);
+
   if (!result.ok) {
     return formFailure(
       result.state.message ?? "The request could not be completed.",
+      lang,
     );
   }
 
@@ -216,7 +241,7 @@ async function authResultToFormAction(
   const nextPath =
     viewer.kind === "authenticated"
       ? resolveRedirectPath(viewer, result.nextPath)
-      : result.nextPath;
+      : (result.nextPath ?? undefined);
 
   return actionSuccess({
     data: {
@@ -225,7 +250,9 @@ async function authResultToFormAction(
     },
     notice: {
       type: "success",
-      message: result.state.message ?? "Done.",
+      message: result.state.message
+        ? translateMessage(result.state.message, lang)
+        : translateMessage("Done.", lang),
     },
     invalidate: [queryKeys.authViewer],
   });
@@ -279,6 +306,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(onboardingSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -297,7 +325,10 @@ export const server = {
           .where(eq(userProfiles.userId, viewer.user.id));
 
         return actionSuccess({
-          notice: { type: "success", message: "Preferences saved." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.preferencesSaved,
+          },
           invalidate: [
             queryKeys.profile(viewer.user.id),
             queryKeys.preferences(viewer.user.id),
@@ -310,7 +341,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -319,6 +350,7 @@ export const server = {
     accept: "json",
     input: z.object({ language: z.enum(["DE", "EN"]) }),
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       try {
         const viewer = await getViewer(context.request.headers);
         if (viewer.kind === "authenticated") {
@@ -333,7 +365,7 @@ export const server = {
           });
         }
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
 
       return actionSuccess({
@@ -353,6 +385,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(preferenceSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -368,7 +401,10 @@ export const server = {
           .where(eq(userProfiles.userId, viewer.user.id));
 
         return actionSuccess({
-          notice: { type: "success", message: "Preferences saved." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.preferencesSaved,
+          },
           invalidate: [
             queryKeys.profile(viewer.user.id),
             queryKeys.preferences(viewer.user.id),
@@ -379,7 +415,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -388,6 +424,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(profileSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -406,7 +443,10 @@ export const server = {
           .where(eq(userProfiles.userId, viewer.user.id));
 
         return actionSuccess({
-          notice: { type: "success", message: "Profile saved." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.profileSaved,
+          },
           invalidate: [
             queryKeys.profile(viewer.user.id),
             queryKeys.authViewer,
@@ -416,7 +456,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -425,6 +465,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(savedEventActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -451,7 +492,7 @@ export const server = {
         }
 
         return actionSuccess({
-          notice: { type: "success", message: "Event saved." },
+          notice: { type: "success", message: copyFor(lang).action.eventSaved },
           invalidate: [
             queryKeys.authViewer,
             queryKeys.events,
@@ -464,7 +505,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -473,6 +514,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(savedEventActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -499,7 +541,10 @@ export const server = {
         }
 
         return actionSuccess({
-          notice: { type: "success", message: "Event removed." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.eventRemoved,
+          },
           invalidate: [
             queryKeys.authViewer,
             queryKeys.events,
@@ -512,7 +557,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -521,6 +566,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(membershipSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -535,7 +581,10 @@ export const server = {
 
         return actionSuccess({
           data: checkout,
-          notice: { type: "success", message: "Membership checkout started." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.membershipCheckoutStarted,
+          },
           invalidate: [
             queryKeys.profile(viewer.user.id),
             queryKeys.authViewer,
@@ -554,6 +603,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(partnerFormSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -565,14 +615,17 @@ export const server = {
             ? {
                 ok: false,
                 fieldErrors: result.fieldErrors,
-                formError: result.message,
+                formError: translateMessage(result.message, lang),
               }
-            : formFailure(result.message);
+            : formFailure(result.message, lang);
         }
 
         return actionSuccess({
           data: { partnerId: result.partnerId },
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.partners,
             queryKeys.partner(result.partnerId),
@@ -588,7 +641,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -597,6 +650,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(eventFormSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -608,14 +662,17 @@ export const server = {
             ? {
                 ok: false,
                 fieldErrors: result.fieldErrors,
-                formError: result.message,
+                formError: translateMessage(result.message, lang),
               }
-            : formFailure(result.message);
+            : formFailure(result.message, lang);
         }
 
         return actionSuccess({
           data: { eventId: result.eventIds[0], eventIds: result.eventIds },
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.events,
             ...result.eventIds.map((eventId) => queryKeys.event(eventId)),
@@ -629,7 +686,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -638,6 +695,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(
         z.object({ eventId: z.string().trim().min(1) }),
         input,
@@ -648,10 +706,14 @@ export const server = {
       try {
         await requireAdmin(context.request.headers);
         const result = await deleteAdminEvent(parsed.data.eventId);
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: { eventId: result.eventId },
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.events,
             queryKeys.event(result.eventId),
@@ -665,7 +727,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -674,16 +736,21 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(partnerTokenSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
         await requireAdmin(context.request.headers);
         const result = await rotatePartnerVenueToken(parsed.data.partnerId);
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: result,
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
@@ -695,7 +762,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -704,16 +771,21 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(partnerPortalAccessSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
         await requireAdmin(context.request.headers);
         const result = await provisionPartnerPortalAccess(parsed.data);
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: result,
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
@@ -725,7 +797,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -734,23 +806,28 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(deletePartnerSchema, input, context);
       if (!parsed.ok) return parsed;
 
       try {
         await requireAdmin(context.request.headers);
         const result = await deleteAdminPartner(parsed.data.partnerId);
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: { partnerId: result.partnerId },
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.partners,
             queryKeys.partner(parsed.data.partnerId),
             queryKeys.events,
             ...dataAccessInvalidationKeys([
               { type: "public-discovery" },
-              { type: "partner", partnerId: parsed.data.partnerId },
+              { type: "partner", partnerId: result.partnerId },
               { type: "admin-dashboard" },
               { type: "admin-partners" },
               { type: "admin-events" },
@@ -759,7 +836,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -771,6 +848,7 @@ export const server = {
       pageSize: z.number().int().positive().optional(),
     }),
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       try {
         await requireAdmin(context.request.headers);
         const { members, totalCount, hasMore } = await listAdminMembers({
@@ -785,7 +863,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -794,6 +872,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(memberAdminSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -818,7 +897,7 @@ export const server = {
           });
 
         if (!updated)
-          return formFailure("The requested item is not available.");
+          return formFailure("The requested item is not available.", lang);
 
         if (parsed.data.creditAdjustment !== 0) {
           await db.insert(creditLedgerEntries).values({
@@ -833,7 +912,10 @@ export const server = {
         }
 
         return actionSuccess({
-          notice: { type: "success", message: "Member updated." },
+          notice: {
+            type: "success",
+            message: copyFor(lang).action.memberUpdated,
+          },
           invalidate: [
             queryKeys.adminMembers,
             queryKeys.profile(parsed.data.userId),
@@ -847,7 +929,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -856,6 +938,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(
         z.object({
           userId: z.string().trim().min(1),
@@ -873,10 +956,14 @@ export const server = {
           ...parsed.data,
           actorUserId: viewer.user.id,
         });
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: result,
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.adminMembers,
             queryKeys.profile(parsed.data.userId),
@@ -890,7 +977,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -899,6 +986,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(bookingActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -911,9 +999,10 @@ export const server = {
             ticketQuantity: parsed.data.ticketQuantity,
             idempotencyKey: parsed.data.idempotencyKey,
           }),
+          lang,
         );
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -922,6 +1011,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(waitlistActionSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -933,9 +1023,10 @@ export const server = {
             eventId: parsed.data.eventId,
             ticketQuantity: parsed.data.ticketQuantity,
           }),
+          lang,
         );
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -944,6 +1035,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(adminTicketSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -959,9 +1051,10 @@ export const server = {
             debitCredits: parsed.data.debitCredits,
             idempotencyKey: parsed.data.idempotencyKey,
           }),
+          lang,
         );
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -970,6 +1063,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(creditAdjustmentSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -983,9 +1077,10 @@ export const server = {
             reason: parsed.data.reason,
             idempotencyKey: parsed.data.idempotencyKey,
           }),
+          lang,
         );
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -994,6 +1089,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(checkInSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -1003,11 +1099,15 @@ export const server = {
           bookingId: parsed.data.bookingId,
           viewer,
         });
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
 
         return actionSuccess({
           data: result,
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.booking(parsed.data.bookingId),
             queryKeys.bookings,
@@ -1021,7 +1121,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -1030,6 +1130,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(venueQrCheckInSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -1040,10 +1141,14 @@ export const server = {
           partnerId: parsed.data.partnerId,
           venueToken: parsed.data.venueToken,
         });
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result))
+          return formFailure(result.message, lang);
         return actionSuccess({
           data: result,
-          notice: { type: "success", message: result.message },
+          notice: {
+            type: "success",
+            message: translateMessage(result.message, lang),
+          },
           invalidate: [
             queryKeys.booking(result.bookingId),
             queryKeys.bookings,
@@ -1057,7 +1162,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -1068,10 +1173,11 @@ export const server = {
       eventId: z.string().trim().optional(),
     }),
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       try {
         const viewer = await requireUser(context.request.headers);
         if (viewer.role !== "PARTNER" || !viewer.partnerId) {
-          return formFailure("You do not have access to this resource.");
+          return formFailure("You do not have access to this resource.", lang);
         }
         const rows = await getPartnerGuestExportRows(
           viewer.partnerId,
@@ -1084,7 +1190,7 @@ export const server = {
           ]),
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -1097,6 +1203,7 @@ export const server = {
       pageSize: z.number().int().positive().optional(),
     }),
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       try {
         await requireAdmin(context.request.headers);
         const rows = await getAdminExportRows(
@@ -1109,7 +1216,7 @@ export const server = {
           invalidate: dataAccessInvalidationKeys([{ type: "admin-exports" }]),
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -1118,6 +1225,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(trackEventOpenSchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -1141,7 +1249,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),
@@ -1150,6 +1258,7 @@ export const server = {
     accept: "json",
     input: jsonInputSchema,
     handler: async (input, context) => {
+      const lang = getRequestLang(context);
       const parsed = parseInput(trackFilterApplySchema, input, context);
       if (!parsed.ok) return parsed;
 
@@ -1173,7 +1282,7 @@ export const server = {
           ],
         });
       } catch (error) {
-        return safeActionError(error);
+        return safeActionError(error, lang);
       }
     },
   }),

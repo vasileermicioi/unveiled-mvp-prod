@@ -14,8 +14,8 @@ function databaseDriver(env?: RuntimeEnv): DatabaseDriver {
     env?.DATABASE_DRIVER ??
     process.env.DATABASE_DRIVER ??
     process.env.DB_DRIVER ??
-    "";
-  return value === "neon-http" ? "neon-http" : "neon-serverless";
+    "neon-http";
+  return value === "neon-serverless" ? "neon-serverless" : "neon-http";
 }
 
 function createPool(databaseUrl: string, max = 10) {

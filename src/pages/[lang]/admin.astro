@@ -5,12 +5,21 @@ import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
 import { loadAdminData } from "@/lib/data-access/loaders";
 import { createAdminInitialSurfaceData } from "@/lib/data-access/surface-data";
+import { normalizeLanguage } from "@/lib/i18n";
 import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
 
-const viewer = await getViewer(Astro.request);
+const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
+
+const viewer = await getViewer(Astro.request, { guestLanguage: lang });
+viewer.language = lang;
+
 const ownership = resolveRouteOwnership(viewer, productRoutes.admin);
-if (!ownership.ok)
-  return Astro.redirect(ownership.redirectTo, ownership.status);
+if (!ownership.ok) {
+  const redirectUrl = ownership.redirectTo.startsWith("/")
+    ? `/${lang.toLowerCase()}${ownership.redirectTo}`
+    : `/${lang.toLowerCase()}/${ownership.redirectTo}`;
+  return Astro.redirect(redirectUrl, ownership.status);
+}
 
 const initialShell = createShellFromViewer(
   ownership.viewer,
@@ -34,6 +43,6 @@ const initialTab = [
   : "metrics";
 ---
 
-<BaseLayout title="Admin | Unveiled">
+<BaseLayout title="Admin | Unveiled" lang={lang}>
   <VisualSystemApp client:load initialShell={initialShell} initialDiscovery={initialDiscovery} initialView="admin" initialTab={initialTab} />
 </BaseLayout>

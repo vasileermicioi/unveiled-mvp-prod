@@ -85,7 +85,11 @@ import {
   isInitialSurfaceData,
 } from "@/lib/data-access/surface-data";
 import { readDiscoveryMapProviderConfig } from "@/lib/discovery-map";
-import { actionSuccess, formFailure } from "@/lib/forms/action-result";
+import {
+  actionSuccess,
+  formFailure,
+  translateMessage,
+} from "@/lib/forms/action-result";
 import { applyFormActionResult } from "@/lib/forms/client-action";
 import {
   loginSchema,
@@ -587,13 +591,8 @@ function AdminAssetUploadField({
   );
 }
 
-function LandingPage({
-  setView,
-  callbackURL = "/",
-}: {
-  setView: (view: View) => void;
-  callbackURL?: string;
-}) {
+function LandingPage({ callbackURL = "/" }: { callbackURL?: string }) {
+  const selectedLanguage = useContext(LanguageContext);
   const copy = useCopy().public;
   const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
   const [formMessage, setFormMessage] = useState<string>(
@@ -654,10 +653,16 @@ function LandingPage({
             data: { nextPath: payload.nextPath },
             notice: {
               type: "success",
-              message: payload.state?.message ?? copy.auth.done,
+              message: translateMessage(
+                payload.state?.message ?? copy.auth.done,
+                selectedLanguage,
+              ),
             },
           })
-        : formFailure(payload?.state?.message ?? copy.auth.failed);
+        : formFailure(
+            payload?.state?.message ?? copy.auth.failed,
+            selectedLanguage,
+          );
 
     await applyFormActionResult(actionResult, {
       form,
@@ -671,7 +676,17 @@ function LandingPage({
       if (mode === "recovery") {
         setIsSuccess(true);
       } else if (actionResult.data?.nextPath) {
-        window.location.assign(actionResult.data.nextPath);
+        let nextPath = actionResult.data.nextPath;
+        if (
+          nextPath.startsWith("/") &&
+          !nextPath.startsWith("/de/") &&
+          !nextPath.startsWith("/en/") &&
+          nextPath !== "/de" &&
+          nextPath !== "/en"
+        ) {
+          nextPath = `/${selectedLanguage.toLowerCase()}${nextPath}`;
+        }
+        window.location.assign(nextPath);
       }
     }
   }
@@ -687,17 +702,16 @@ function LandingPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button type="button" size="lg" onClick={() => setView("discover")}>
-            {copy.exploreAccess}
-            <ArrowRight />
+          <Button asChild size="lg">
+            <a href={`/${selectedLanguage.toLowerCase()}/discover`}>
+              {copy.exploreAccess}
+              <ArrowRight />
+            </a>
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="lg"
-            onClick={() => setView("how")}
-          >
-            {copy.howItWorks}
+          <Button asChild variant="secondary" size="lg">
+            <a href={`/${selectedLanguage.toLowerCase()}/how-it-works`}>
+              {copy.howItWorks}
+            </a>
           </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -742,7 +756,7 @@ function LandingPage({
         <div>
           <p className="headline-md">
             {mode === "login"
-              ? "Welcome back"
+              ? copy.auth.welcomeBack
               : mode === "signup"
                 ? copy.auth.createAccess
                 : copy.auth.resetPassword}
@@ -778,12 +792,22 @@ function LandingPage({
             }
           />
         ) : (
-          <form className="grid gap-4" onSubmit={form.handleSubmit(submitAuth)}>
+          <form
+            className="grid gap-4"
+            method="POST"
+            onSubmit={form.handleSubmit(submitAuth)}
+          >
             {mode === "signup" ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label={copy.auth.firstName}
-                  error={form.formState.errors.firstName?.message}
+                  error={
+                    form.formState.errors.firstName?.message &&
+                    translateMessage(
+                      form.formState.errors.firstName.message,
+                      selectedLanguage,
+                    )
+                  }
                 >
                   <TextInput
                     placeholder="Alex"
@@ -792,7 +816,13 @@ function LandingPage({
                 </Field>
                 <Field
                   label={copy.auth.lastName}
-                  error={form.formState.errors.lastName?.message}
+                  error={
+                    form.formState.errors.lastName?.message &&
+                    translateMessage(
+                      form.formState.errors.lastName.message,
+                      selectedLanguage,
+                    )
+                  }
                 >
                   <TextInput
                     placeholder="Morgan"
@@ -803,7 +833,13 @@ function LandingPage({
             ) : null}
             <Field
               label={copy.auth.email}
-              error={form.formState.errors.email?.message}
+              error={
+                form.formState.errors.email?.message &&
+                translateMessage(
+                  form.formState.errors.email.message,
+                  selectedLanguage,
+                )
+              }
             >
               <TextInput
                 type="email"
@@ -814,7 +850,13 @@ function LandingPage({
             {mode !== "recovery" ? (
               <Field
                 label={copy.auth.password}
-                error={form.formState.errors.password?.message}
+                error={
+                  form.formState.errors.password?.message &&
+                  translateMessage(
+                    form.formState.errors.password.message,
+                    selectedLanguage,
+                  )
+                }
                 helper={formContracts.landing.visibleMessages[1]}
               >
                 <TextInput
@@ -826,7 +868,7 @@ function LandingPage({
             ) : null}
             <Button type="submit" className="w-full" loading={isSubmitting}>
               {mode === "login"
-                ? "Login"
+                ? copy.auth.login
                 : mode === "signup"
                   ? copy.auth.startMembership
                   : copy.auth.sendReset}
@@ -1138,13 +1180,16 @@ function HowItWorks() {
   );
 }
 
-function FaqPage({ setView }: { setView: (view: View) => void }) {
+function FaqPage() {
   const copy = useCopy().public.faq;
+  const selectedLanguage = useContext(LanguageContext);
   return (
     <div className="space-y-8 py-8">
-      <Button type="button" variant="ghost" onClick={() => setView("landing")}>
-        <ArrowLeft />
-        {copy.back}
+      <Button asChild variant="ghost">
+        <a href={`/${selectedLanguage.toLowerCase()}/`}>
+          <ArrowLeft />
+          {copy.back}
+        </a>
       </Button>
       <Panel tone="white">
         <Badge tone="yellow">FAQ</Badge>
@@ -1267,7 +1312,7 @@ function OnboardingPage() {
       setMessage,
       () => {
         live.refetchActiveSurface();
-        window.location.assign("/app");
+        window.location.assign(`/${language.toLowerCase()}/app`);
       },
     );
     setSubmitting(false);
@@ -1775,6 +1820,7 @@ function BookingModal({
   event: EventCardView;
   onClose: () => void;
 }) {
+  const language = useContext(LanguageContext);
   const copy = useCopy().booking;
   const live = useLiveData();
   const isGuest = !live.profile.email;
@@ -1804,6 +1850,7 @@ function BookingModal({
         metadata: `${event.category} // ${event.partnerName}`,
         layout: success ? "single" : "split",
       }}
+      language={language}
       onAction={(actionId) => {
         if (actionId === "close-modal") onClose();
       }}
@@ -1949,7 +1996,10 @@ function BookingModal({
                 variant="yellow"
                 className="w-full justify-center"
                 onClick={() => {
-                  window.location.assign(`/?callbackURL=/discover`);
+                  const langLower = language.toLowerCase();
+                  window.location.assign(
+                    `/${langLower}/?callbackURL=${encodeURIComponent(`/${langLower}/discover`)}`,
+                  );
                 }}
               >
                 {live.profile.language === "DE"
@@ -2639,7 +2689,7 @@ function ProfilePage() {
                     )}
                     onClick={() => setSelectedPaymentMethod(method)}
                   >
-                    {method === "CARD" ? "Card" : "SEPA Direct Debit"}
+                    {method === "CARD" ? copy.card : copy.sepaDirectDebit}
                   </button>
                 ))}
               </div>
@@ -2662,7 +2712,7 @@ function ProfilePage() {
             </div>
           </div>
           <Field label={copy.promoCode} className="mt-4">
-            <TextInput name="promoCode" placeholder="Optional" />
+            <TextInput name="promoCode" placeholder={copy.optional} />
           </Field>
           <Button type="submit" variant="secondary" className="mt-6">
             <CreditCard />
@@ -2724,6 +2774,7 @@ function ProfilePage() {
 
 function PartnerPortal() {
   const copy = useCopy().admin;
+  const selectedLanguage = useContext(LanguageContext);
   const live = useLiveData();
   const [checkInMessage, setCheckInMessage] = useState<string>(
     copy.checkInDefault,
@@ -2754,23 +2805,23 @@ function PartnerPortal() {
         className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end"
       >
         <div>
-          <Badge tone="yellow">Partner portal</Badge>
+          <Badge tone="yellow">{copy.partnerPortal}</Badge>
           <h1 className="headline-lg mt-5">
-            {live.partner?.name ?? "Partner portal"}.
+            {live.partner?.name ?? copy.partnerPortal}.
           </h1>
           <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
-            {live.partner?.address ?? "Partner address unavailable"}
+            {live.partner?.address ?? copy.addressUnavailable}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <StatPanel
-            label="Total guests"
+            label={copy.totalGuests}
             value={live.partnerGuestTotal.replace(" guests", "")}
-            caption="Across selected event"
+            caption={copy.acrossSelected}
           />
           <Panel tone="cream" shadow={false} className="p-5">
             <QrCode className="size-8" />
-            <p className="mt-4 unveiled-meta">Venue QR</p>
+            <p className="mt-4 unveiled-meta">{copy.venueQr}</p>
             {live.partner?.venueQrUrl ? (
               <Button
                 type="button"
@@ -2784,7 +2835,7 @@ function PartnerPortal() {
               </Button>
             ) : (
               <Badge tone="white" className="mt-4">
-                Missing token
+                {copy.missingToken}
               </Badge>
             )}
           </Panel>
@@ -2795,19 +2846,19 @@ function PartnerPortal() {
         shadow={false}
         className="grid gap-4 md:grid-cols-[1fr_1fr_auto]"
       >
-        <Field label="Search guests">
+        <Field label={copy.searchGuests}>
           <TextInput
-            placeholder="Name, email, event, or code"
+            placeholder={copy.placeholderSearch}
             value={guestSearch}
             onChange={(event) => setGuestSearch(event.currentTarget.value)}
           />
         </Field>
-        <Field label="Event">
+        <Field label={copy.event}>
           <SelectInput
             value={eventFilter}
             onChange={(event) => setEventFilter(event.currentTarget.value)}
           >
-            <option value="">All events</option>
+            <option value="">{copy.allEvents}</option>
             {live.partnerEventOptions.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title}
@@ -2841,14 +2892,20 @@ function PartnerPortal() {
                   ],
                 );
                 setCheckInMessage(
-                  downloaded ? "CSV export downloaded." : "No export rows.",
+                  downloaded
+                    ? selectedLanguage === "DE"
+                      ? "CSV-Export heruntergeladen."
+                      : "CSV export downloaded."
+                    : selectedLanguage === "DE"
+                      ? "Keine Export-Zeilen."
+                      : "No export rows.",
                 );
               },
             )
           }
         >
           <Download />
-          Download CSV
+          {copy.downloadCsv}
         </Button>
       </Panel>
       <TableShell>
@@ -2860,12 +2917,8 @@ function PartnerPortal() {
           </>
         ) : filteredGuests.length === 0 ? (
           <StatePanel
-            title="No guests"
-            text={
-              live.isError
-                ? "Live partner data could not be loaded."
-                : "Search and event filters can render an empty guest list state."
-            }
+            title={copy.noGuests}
+            text={live.isError ? copy.dataLoadError : copy.emptyStateMessage}
             state={live.isError ? "error" : "empty"}
           />
         ) : (
@@ -2876,7 +2929,7 @@ function PartnerPortal() {
             >
               <div>
                 <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  Guest
+                  {copy.guest}
                 </span>
                 <p className="text-sm font-black uppercase tracking-widest">
                   {guest.name}
@@ -2885,25 +2938,37 @@ function PartnerPortal() {
               </div>
               <div>
                 <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  Event
+                  {copy.event}
                 </span>
                 <p className="text-sm font-bold">{guest.eventTitle}</p>
               </div>
               <div>
                 <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  Status
+                  {copy.status}
                 </span>
                 <div>
                   <Badge
                     tone={guest.statusLabel === "Waitlist" ? "grey" : "yellow"}
                   >
-                    {guest.statusLabel}
+                    {guest.statusLabel === "Waitlist"
+                      ? selectedLanguage === "DE"
+                        ? "Warteliste"
+                        : "Waitlist"
+                      : guest.statusLabel === "Confirmed"
+                        ? selectedLanguage === "DE"
+                          ? "Bestätigt"
+                          : "Confirmed"
+                        : guest.statusLabel === "Cancelled"
+                          ? selectedLanguage === "DE"
+                            ? "Storniert"
+                            : "Cancelled"
+                          : guest.statusLabel}
                   </Badge>
                 </div>
               </div>
               <div>
                 <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
-                  Action
+                  {copy.action}
                 </span>
                 <Button
                   type="button"
@@ -2924,7 +2989,19 @@ function PartnerPortal() {
                     )
                   }
                 >
-                  {guest.checkedInLabel}
+                  {guest.checkedInLabel === "Checked in"
+                    ? selectedLanguage === "DE"
+                      ? "Eingecheckt"
+                      : "Checked in"
+                    : guest.checkedInLabel === "Check-in available"
+                      ? selectedLanguage === "DE"
+                        ? "Check-in verfügbar"
+                        : "Check-in available"
+                      : guest.checkedInLabel === "Closed"
+                        ? selectedLanguage === "DE"
+                          ? "Geschlossen"
+                          : "Closed"
+                        : guest.checkedInLabel}
                 </Button>
               </div>
             </TableRow>
@@ -2932,7 +3009,7 @@ function PartnerPortal() {
         )}
       </TableShell>
       <Panel tone="cream" shadow={false} className="p-4">
-        <p className="unveiled-meta">Check-in status</p>
+        <p className="unveiled-meta">{copy.checkInStatus}</p>
         <p className="mt-2 text-sm font-bold uppercase tracking-widest">
           {checkInMessage}
         </p>
@@ -2972,6 +3049,7 @@ function AdminPanel({
   eventsPageSize,
   setEventsPageSize,
 }: AdminPanelProps) {
+  const selectedLanguage = useContext(LanguageContext);
   const copy = useCopy().admin;
   const live = useLiveData();
   const [adminMessage, setAdminMessage] = useState<string>(
@@ -4784,10 +4862,15 @@ function AdminPanel({
                 : copy.confirmDeletePartnerHeading,
             metadata:
               deleteConfirmTarget.type === "event"
-                ? "Operations // Delete Event"
-                : "Operations // Delete Partner",
+                ? selectedLanguage === "DE"
+                  ? "Operationen // Event löschen"
+                  : "Operations // Delete Event"
+                : selectedLanguage === "DE"
+                  ? "Operationen // Partner löschen"
+                  : "Operations // Delete Partner",
             layout: "single",
           }}
+          language={selectedLanguage}
           onAction={(actionId) => {
             if (actionId === "close-modal" && !deleteSubmitting) {
               setDeleteConfirmTarget(null);
@@ -4815,8 +4898,8 @@ function AdminPanel({
               <div className="border-2 border-brand-dark bg-brand-cream/20 p-4">
                 <span className="font-mono text-xs font-bold uppercase opacity-55">
                   {deleteConfirmTarget.type === "event"
-                    ? "Event title"
-                    : "Partner name"}
+                    ? copy.title
+                    : copy.partner}
                 </span>
                 <p className="headline-sm mt-1">{deleteConfirmTarget.name}</p>
               </div>
@@ -4849,7 +4932,10 @@ function AdminPanel({
                         },
                         (_fieldErrors, formError) => {
                           setDeleteErrorMessage(
-                            formError ?? "The request could not be completed.",
+                            formError ??
+                              (selectedLanguage === "DE"
+                                ? "Die Anfrage konnte nicht abgeschlossen werden."
+                                : "The request could not be completed."),
                           );
                         },
                       );
@@ -4866,7 +4952,10 @@ function AdminPanel({
                         },
                         (_fieldErrors, formError) => {
                           setDeleteErrorMessage(
-                            formError ?? "The request could not be completed.",
+                            formError ??
+                              (selectedLanguage === "DE"
+                                ? "Die Anfrage konnte nicht abgeschlossen werden."
+                                : "The request could not be completed."),
                           );
                         },
                       );
@@ -5145,7 +5234,7 @@ function VisualSystemAppContent({
     view === "member"
       ? memberPageShell
       : view === "partner"
-        ? demoPageShells.partner
+        ? undefined
         : view === "admin"
           ? undefined
           : view === "discover"
@@ -5166,20 +5255,37 @@ function VisualSystemAppContent({
       const language = actionId.slice("language:".length);
       if (language === "DE" || language === "EN") {
         setSelectedLanguage(language);
-        await actions.setLanguage({ language });
-        live.refetchActiveSurface();
+        if (typeof document !== "undefined") {
+          document.cookie = `unveiled_lang=${language}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        actions.setLanguage({ language }).catch((e) => {
+          console.error("Failed to set user language profile:", e);
+        });
+        if (typeof window !== "undefined") {
+          const nextLang = language.toLowerCase();
+          const currentPath = window.location.pathname;
+          const currentSearch = window.location.search;
+          let nextPath = currentPath;
+          if (/^\/(?:de|en)(?=\/|$)/i.test(currentPath)) {
+            nextPath = currentPath.replace(/^\/(?:de|en)/i, `/${nextLang}`);
+          } else {
+            nextPath = `/${nextLang}${currentPath}`;
+          }
+          window.location.assign(nextPath + currentSearch);
+        }
       }
       return;
     }
     const target = shellDemoViews.find((item) => item.id === actionId);
     if (target) setView(target.id as View);
-    if (actionId === "membership") window.location.assign("/membership");
+    if (actionId === "membership")
+      window.location.assign(`/${selectedLanguage.toLowerCase()}/membership`);
     if (actionId === "logo")
       setView(view === "partner" || view === "admin" ? view : "landing");
     if (actionId === "profile") setView("profile");
     if (actionId === "logout") {
       await fetch("/api/account/logout", { method: "POST" });
-      window.location.assign("/");
+      window.location.assign(`/${selectedLanguage.toLowerCase()}/`);
     }
   };
 
@@ -5206,13 +5312,13 @@ function VisualSystemAppContent({
           </div>
           <PageShell page={pageShell} onAction={navigateShell}>
             {view === "landing" ? (
-              <LandingPage setView={setView} callbackURL={callbackURL} />
+              <LandingPage callbackURL={callbackURL} />
             ) : null}
             {view === "discover" ? <PublicDiscover /> : null}
             {view === "how" ? <HowItWorks /> : null}
             {view === "onboarding" ? <OnboardingPage /> : null}
             {view === "membership" ? <MembershipPage /> : null}
-            {view === "faq" ? <FaqPage setView={setView} /> : null}
+            {view === "faq" ? <FaqPage /> : null}
             {view === "member" ? (
               <MemberFeed
                 selectedEvent={selectedEvent}
