@@ -560,7 +560,15 @@ export const server = {
       try {
         await requireAdmin(context.request.headers);
         const result = await saveAdminPartner(parsed.data);
-        if (isOperationFailure(result)) return formFailure(result.message);
+        if (isOperationFailure(result)) {
+          return result.fieldErrors
+            ? {
+                ok: false,
+                fieldErrors: result.fieldErrors,
+                formError: result.message,
+              }
+            : formFailure(result.message);
+        }
 
         return actionSuccess({
           data: { partnerId: result.partnerId },

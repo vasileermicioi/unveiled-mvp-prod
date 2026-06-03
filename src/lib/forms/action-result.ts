@@ -62,6 +62,14 @@ const enToDeMap: Record<string, string> = {
   "Capacity must be greater than zero": "Kapazität muss größer als Null sein.",
   "Enter a valid URL.": "Gib eine gültige URL ein.",
   "Select an available option.": "Wähle eine verfügbare Option.",
+  "Neighborhood is required.": "Stadtteil ist erforderlich.",
+  "Manual secret code is required.": "Einlasscode ist erforderlich.",
+  "Promo code is required for voucher events.":
+    "Promo-Code ist für Voucher-Events erforderlich.",
+  "Event website URL is required for voucher events.":
+    "Event-Website-URL ist für Voucher-Events erforderlich.",
+  "Remaining capacity cannot exceed total capacity.":
+    "Die Restkapazität darf die Gesamtkapazität nicht überschreiten.",
 };
 
 export function fieldPathFromIssue(issue: z.core.$ZodIssue) {

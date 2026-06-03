@@ -316,6 +316,14 @@ export const appCopy = {
       disabled: "Deaktiviert",
       checkInDefault:
         "Check-in-Aktionen erzwingen Partner-Besitz auf dem Server.",
+      confirmDeleteEventHeading: "Event löschen",
+      confirmDeletePartnerHeading: "Partner löschen",
+      confirmDeleteEventBody:
+        "Bist du sicher, dass du dieses Event löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirmDeletePartnerBody:
+        "Bist du sicher, dass du diesen Partner löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirm: "Bestätigen",
+      cancel: "Abbrechen",
     },
     action: {
       saved: "Gespeichert.",
@@ -621,6 +629,14 @@ export const appCopy = {
       disabled: "Disabled",
       checkInDefault:
         "Check-in actions enforce partner ownership on the server.",
+      confirmDeleteEventHeading: "Delete Event",
+      confirmDeletePartnerHeading: "Delete Partner",
+      confirmDeleteEventBody:
+        "Are you sure you want to delete this event? This action cannot be undone.",
+      confirmDeletePartnerBody:
+        "Are you sure you want to delete this partner venue? This action cannot be undone.",
+      confirm: "Confirm",
+      cancel: "Cancel",
     },
     action: {
       saved: "Saved.",

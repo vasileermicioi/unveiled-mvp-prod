@@ -202,19 +202,25 @@ async function runServerAction<TData>(
   action: () => Promise<{
     data?:
       | { ok: true; notice?: { message: string }; data?: TData }
-      | { ok: false; formError?: string };
+      | { ok: false; formError?: string; fieldErrors?: Record<string, string> };
     error?: unknown;
   }>,
   setMessage: (message: string) => void,
   onSuccess?: (data: TData | undefined) => void,
+  onFailure?: (
+    fieldErrors?: Record<string, string>,
+    formError?: string,
+  ) => void,
 ) {
   const result = await action();
   if (result.error || !result.data) {
     setMessage("The request could not be completed.");
+    onFailure?.();
     return;
   }
   if (!result.data.ok) {
     setMessage(result.data.formError ?? "Check the highlighted fields.");
+    onFailure?.(result.data.fieldErrors, result.data.formError);
     return;
   }
   setMessage(result.data.notice?.message ?? "Saved.");
@@ -3011,6 +3017,54 @@ function AdminPanel({
 
   const [eventImageUrl, setEventImageUrl] = useState("");
   const [partnerLogoUrl, setPartnerLogoUrl] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingPartnerId, setEditingPartnerId] = useState<string | null>(null);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<{
+    type: "event" | "partner";
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [eventFieldErrors, setEventFieldErrors] = useState<
+    Record<string, string>
+  >({});
+  const [partnerFieldErrors, setPartnerFieldErrors] = useState<
+    Record<string, string>
+  >({});
+
+  const editingEvent = useMemo(() => {
+    if (!editingEventId) return null;
+    return live.adminEvents.find((e) => e.id === editingEventId) ?? null;
+  }, [live.adminEvents, editingEventId]);
+
+  const editingPartner = useMemo(() => {
+    if (!editingPartnerId) return null;
+    return live.adminPartners.find((p) => p.id === editingPartnerId) ?? null;
+  }, [live.adminPartners, editingPartnerId]);
+
+  useEffect(() => {
+    if (editingEvent) {
+      setEventImageUrl(editingEvent.imageUrl || "");
+      setTicketType(editingEvent.ticketType);
+      setSecretCodeMode(editingEvent.secretCodeMode || "MANUAL");
+    } else {
+      setEventImageUrl("");
+      setTicketType("SECRET_CODE");
+      setSecretCodeMode("MANUAL");
+    }
+  }, [editingEvent]);
+
+  useEffect(() => {
+    if (editingPartner) {
+      setPartnerLogoUrl(editingPartner.logoUrl || "");
+    } else {
+      setPartnerLogoUrl("");
+    }
+  }, [editingPartner]);
+
   const [eventSubmitting, setEventSubmitting] = useState(false);
   const [partnerSubmitting, setPartnerSubmitting] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
@@ -3214,7 +3268,11 @@ function AdminPanel({
             <Button
               type="button"
               variant="yellow"
-              onClick={() => updateTab("add-event")}
+              onClick={() => {
+                setEditingEventId(null);
+                setEventFieldErrors({});
+                updateTab("add-event");
+              }}
             >
               New event
               <Plus />
@@ -3291,19 +3349,33 @@ function AdminPanel({
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex md:justify-end">
+                  <div className="flex flex-wrap gap-2 md:justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="flex-1 md:flex-initial"
+                      onClick={() => {
+                        setEditingEventId(event.id);
+                        setEventFieldErrors({});
+                        updateTab("add-event");
+                      }}
+                    >
+                      Edit
+                    </Button>
                     <Button
                       type="button"
                       size="sm"
                       variant="destructive"
-                      className="w-full md:w-auto"
-                      onClick={() =>
-                        void runServerAction(
-                          () => actions.deleteEvent({ eventId: event.id }),
-                          setAdminMessage,
-                          live.refetchActiveSurface,
-                        )
-                      }
+                      className="flex-1 md:flex-initial"
+                      onClick={() => {
+                        setDeleteErrorMessage(null);
+                        setDeleteConfirmTarget({
+                          type: "event",
+                          id: event.id,
+                          name: event.title,
+                        });
+                      }}
                     >
                       Delete
                     </Button>
@@ -3330,15 +3402,23 @@ function AdminPanel({
         <div className="space-y-8 animate-fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
-              <h2 className="headline-md">New Event</h2>
+              <h2 className="headline-md">
+                {editingEventId ? "Edit Event" : "New Event"}
+              </h2>
               <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-                Create a new drop slot or series of events for members.
+                {editingEventId
+                  ? "Modify an existing drop slot."
+                  : "Create a new drop slot or series of events for members."}
               </p>
             </div>
             <Button
               type="button"
               variant="secondary"
-              onClick={() => updateTab("events")}
+              onClick={() => {
+                setEditingEventId(null);
+                setEventFieldErrors({});
+                updateTab("events");
+              }}
             >
               <ArrowLeft />
               Back to Events
@@ -3346,11 +3426,17 @@ function AdminPanel({
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <Panel
+              key={editingEventId ?? "new"}
               id="admin-event-form"
               tone="white"
               shadow={false}
               className="scroll-mt-24 space-y-5"
               as="form"
+              onChange={() => {
+                if (Object.keys(eventFieldErrors).length > 0) {
+                  setEventFieldErrors({});
+                }
+              }}
               onSubmit={async (event) => {
                 event.preventDefault();
                 if (eventSubmitting) return;
@@ -3361,7 +3447,9 @@ function AdminPanel({
                 }
                 const formData = new FormData(form);
                 setEventSubmitting(true);
-                setAdminMessage("Publishing event...");
+                setAdminMessage(
+                  editingEventId ? "Saving event..." : "Publishing event...",
+                );
 
                 const dateVal = String(formData.get("date") || "2026-05-04");
                 const timeVal = String(formData.get("time") || "19:00");
@@ -3395,6 +3483,7 @@ function AdminPanel({
                 await runServerAction(
                   () =>
                     actions.saveEvent({
+                      id: editingEventId ?? undefined,
                       partnerId: String(
                         formData.get("partnerId") ||
                           live.adminPartners[0]?.id ||
@@ -3449,6 +3538,8 @@ function AdminPanel({
                   setAdminMessage,
                   () => {
                     form.reset();
+                    setEditingEventId(null);
+                    setEventFieldErrors({});
                     setEventImageUrl("");
                     setTicketType("SECRET_CODE");
                     setSecretCodeMode("MANUAL");
@@ -3457,20 +3548,34 @@ function AdminPanel({
                     live.refetchActiveSurface();
                     updateTab("events");
                   },
+                  (errors) => {
+                    setEventFieldErrors(errors ?? {});
+                  },
                 );
                 setEventSubmitting(false);
               }}
             >
-              <p className="headline-md">Event form</p>
+              <p className="headline-md">
+                {editingEventId ? "Edit Event" : "Event form"}
+              </p>
               <p className="text-xs font-bold uppercase tracking-widest opacity-55">
                 {adminMessage}
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Title">
-                  <TextInput name="title" placeholder="Event title" required />
+                <Field label="Title" error={eventFieldErrors.title}>
+                  <TextInput
+                    name="title"
+                    placeholder="Event title"
+                    defaultValue={editingEvent?.title ?? ""}
+                    required
+                  />
                 </Field>
-                <Field label="Partner">
-                  <SelectInput name="partnerId" required>
+                <Field label="Partner" error={eventFieldErrors.partnerId}>
+                  <SelectInput
+                    name="partnerId"
+                    defaultValue={editingEvent?.partnerId ?? ""}
+                    required
+                  >
                     {live.adminPartners.map((partner) => (
                       <option key={partner.id} value={partner.id}>
                         {partner.name}
@@ -3478,42 +3583,54 @@ function AdminPanel({
                     ))}
                   </SelectInput>
                 </Field>
-                <Field label="Date">
+                <Field label="Date" error={eventFieldErrors.dateTime}>
                   <TextInput
                     name="date"
                     type="date"
-                    defaultValue="2026-05-04"
+                    defaultValue={
+                      editingEvent?.dateTime
+                        ? editingEvent.dateTime.split("T")[0]
+                        : "2026-05-04"
+                    }
                     required
                   />
                 </Field>
-                <Field label="Time">
+                <Field label="Time" error={eventFieldErrors.dateTime}>
                   <TextInput
                     name="time"
                     type="time"
-                    defaultValue="19:00"
+                    defaultValue={
+                      editingEvent?.dateTime
+                        ? editingEvent.dateTime.split("T")[1].slice(0, 5)
+                        : "19:00"
+                    }
                     required
                   />
                 </Field>
-                <Field label="Credits">
+                <Field label="Credits" error={eventFieldErrors.creditPrice}>
                   <TextInput
                     name="credits"
                     type="number"
                     min={0}
-                    defaultValue={2}
+                    defaultValue={editingEvent?.creditPrice ?? 2}
                     required
                   />
                 </Field>
-                <Field label="Capacity">
+                <Field label="Capacity" error={eventFieldErrors.totalCapacity}>
                   <TextInput
                     name="capacity"
                     type="number"
                     min={1}
-                    defaultValue={1}
+                    defaultValue={editingEvent?.totalCapacity ?? 1}
                     required
                   />
                 </Field>
-                <Field label="Category">
-                  <SelectInput name="category" required>
+                <Field label="Category" error={eventFieldErrors.category}>
+                  <SelectInput
+                    name="category"
+                    defaultValue={editingEvent?.category ?? "Theater"}
+                    required
+                  >
                     <option value="Theater">Theater</option>
                     <option value="Kino">Kino</option>
                     <option value="Museum">Museum</option>
@@ -3525,7 +3642,7 @@ function AdminPanel({
                     <option value="Talk/Lesung">Talk/Lesung</option>
                   </SelectInput>
                 </Field>
-                <Field label="Ticket Type">
+                <Field label="Ticket Type" error={eventFieldErrors.ticketType}>
                   <SelectInput
                     name="ticketType"
                     value={ticketType}
@@ -3545,18 +3662,26 @@ function AdminPanel({
 
                 {ticketType === "VOUCHER" && (
                   <>
-                    <Field label="Promo Code">
+                    <Field
+                      label="Promo Code"
+                      error={eventFieldErrors.promoCode}
+                    >
                       <TextInput
                         name="promoCode"
                         placeholder="Promo code"
+                        defaultValue={editingEvent?.promoCode ?? ""}
                         required
                       />
                     </Field>
-                    <Field label="Event Website URL">
+                    <Field
+                      label="Event Website URL"
+                      error={eventFieldErrors.eventWebsiteUrl}
+                    >
                       <TextInput
                         name="eventWebsiteUrl"
                         type="url"
                         placeholder="https://..."
+                        defaultValue={editingEvent?.eventWebsiteUrl ?? ""}
                         required
                       />
                     </Field>
@@ -3564,7 +3689,10 @@ function AdminPanel({
                 )}
                 {ticketType === "SECRET_CODE" && (
                   <>
-                    <Field label="Secret Code Mode">
+                    <Field
+                      label="Secret Code Mode"
+                      error={eventFieldErrors.secretCodeMode}
+                    >
                       <SelectInput
                         name="secretCodeMode"
                         value={secretCodeMode}
@@ -3588,10 +3716,14 @@ function AdminPanel({
                       </SelectInput>
                     </Field>
                     {secretCodeMode === "MANUAL" && (
-                      <Field label="Secret Code">
+                      <Field
+                        label="Secret Code"
+                        error={eventFieldErrors.secretCode}
+                      >
                         <TextInput
                           name="secretCode"
                           placeholder="Secret code"
+                          defaultValue={editingEvent?.secretCode ?? ""}
                           required
                         />
                       </Field>
@@ -3599,43 +3731,82 @@ function AdminPanel({
                   </>
                 )}
 
-                <Field label="Address">
+                <Field label="Address" error={eventFieldErrors.address}>
                   <TextInput
                     name="address"
-                    defaultValue="Berlin"
+                    defaultValue={editingEvent?.address ?? "Berlin"}
                     placeholder="Event address"
                     required
                   />
                 </Field>
-                <Field label="Neighborhood">
+                <Field
+                  label="Neighborhood"
+                  error={eventFieldErrors.neighborhood}
+                >
                   <TextInput
                     name="neighborhood"
-                    defaultValue="Mitte"
+                    defaultValue={editingEvent?.neighborhood ?? "Mitte"}
                     placeholder="Neighborhood (e.g. Mitte)"
                     required
                   />
                 </Field>
 
-                <Field label="Languages" className="sm:col-span-2">
+                <Field
+                  label="Languages"
+                  className="sm:col-span-2"
+                  error={eventFieldErrors.languages}
+                >
                   <div className="mt-2 flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                       <input
                         type="checkbox"
                         name="languages"
                         value="DE"
-                        defaultChecked
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.languages.includes("DE")
+                            : true
+                        }
                       />{" "}
                       DE
                     </label>
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <input type="checkbox" name="languages" value="EN" /> EN
+                      <input
+                        type="checkbox"
+                        name="languages"
+                        value="EN"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.languages.includes("EN")
+                            : false
+                        }
+                      />{" "}
+                      EN
                     </label>
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <input type="checkbox" name="languages" value="TR" />{" "}
+                      <input
+                        type="checkbox"
+                        name="languages"
+                        value="TR"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.languages.includes("TR")
+                            : false
+                        }
+                      />{" "}
                       Turki (TR)
                     </label>
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <input type="checkbox" name="languages" value="AR" />{" "}
+                      <input
+                        type="checkbox"
+                        name="languages"
+                        value="AR"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.languages.includes("AR")
+                            : false
+                        }
+                      />{" "}
                       Arabic (AR)
                     </label>
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
@@ -3643,19 +3814,33 @@ function AdminPanel({
                         type="checkbox"
                         name="languages"
                         value="NON_VERBAL"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.languages.includes("NON_VERBAL")
+                            : false
+                        }
                       />{" "}
                       Non-Verbal
                     </label>
                   </div>
                 </Field>
 
-                <Field label="Target Age Groups" className="sm:col-span-2">
+                <Field
+                  label="Target Age Groups"
+                  className="sm:col-span-2"
+                  error={eventFieldErrors.targetAgeGroups}
+                >
                   <div className="mt-2 flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                       <input
                         type="checkbox"
                         name="targetAgeGroups"
                         value="18-25"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.targetAgeGroups.includes("18-25")
+                            : false
+                        }
                       />{" "}
                       18-25
                     </label>
@@ -3664,7 +3849,11 @@ function AdminPanel({
                         type="checkbox"
                         name="targetAgeGroups"
                         value="26-35"
-                        defaultChecked
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.targetAgeGroups.includes("26-35")
+                            : true
+                        }
                       />{" "}
                       26-35
                     </label>
@@ -3673,6 +3862,11 @@ function AdminPanel({
                         type="checkbox"
                         name="targetAgeGroups"
                         value="36-50"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.targetAgeGroups.includes("36-50")
+                            : false
+                        }
                       />{" "}
                       36-50
                     </label>
@@ -3681,16 +3875,22 @@ function AdminPanel({
                         type="checkbox"
                         name="targetAgeGroups"
                         value="50+"
+                        defaultChecked={
+                          editingEvent
+                            ? editingEvent.targetAgeGroups.includes("50+")
+                            : false
+                        }
                       />{" "}
                       50+
                     </label>
                   </div>
                 </Field>
               </div>
-              <Field label="Optional info">
+              <Field label="Optional info" error={eventFieldErrors.description}>
                 <TextArea
                   name="description"
                   placeholder="Door notes, redemption details, image alt text"
+                  defaultValue={editingEvent?.description ?? ""}
                 />
               </Field>
               <AdminAssetUploadField
@@ -3704,7 +3904,7 @@ function AdminPanel({
               />
               <div className="flex justify-end">
                 <Button type="submit" loading={eventSubmitting}>
-                  Publish event
+                  {editingEventId ? "Save event" : "Publish event"}
                 </Button>
               </div>
             </Panel>
@@ -3830,7 +4030,11 @@ function AdminPanel({
               <Button
                 type="button"
                 variant="yellow"
-                onClick={() => updateTab("add-partner")}
+                onClick={() => {
+                  setEditingPartnerId(null);
+                  setPartnerFieldErrors({});
+                  updateTab("add-partner");
+                }}
               >
                 New partner
                 <Plus />
@@ -3887,6 +4091,19 @@ function AdminPanel({
                         size="sm"
                         variant="secondary"
                         className="flex-1 md:flex-initial"
+                        onClick={() => {
+                          setEditingPartnerId(partner.id);
+                          setPartnerFieldErrors({});
+                          updateTab("add-partner");
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 md:flex-initial"
                         onClick={() =>
                           void runServerAction(
                             () =>
@@ -3923,17 +4140,15 @@ function AdminPanel({
                         type="button"
                         size="sm"
                         variant="destructive"
-                        className="w-full md:w-auto"
-                        onClick={() =>
-                          void runServerAction(
-                            () =>
-                              actions.deletePartner({
-                                partnerId: partner.id,
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          )
-                        }
+                        className="flex-1 md:flex-initial"
+                        onClick={() => {
+                          setDeleteErrorMessage(null);
+                          setDeleteConfirmTarget({
+                            type: "partner",
+                            id: partner.id,
+                            name: partner.name,
+                          });
+                        }}
                       >
                         Delete
                       </Button>
@@ -4026,15 +4241,23 @@ function AdminPanel({
         <div className="space-y-8 animate-fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
-              <h2 className="headline-md">New Partner</h2>
+              <h2 className="headline-md">
+                {editingPartnerId ? "Edit Partner" : "New Partner"}
+              </h2>
               <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-                Register a new partner venue.
+                {editingPartnerId
+                  ? "Modify an existing partner venue."
+                  : "Register a new partner venue."}
               </p>
             </div>
             <Button
               type="button"
               variant="secondary"
-              onClick={() => updateTab("partners")}
+              onClick={() => {
+                setEditingPartnerId(null);
+                setPartnerFieldErrors({});
+                updateTab("partners");
+              }}
             >
               <ArrowLeft />
               Back to Partners
@@ -4042,11 +4265,17 @@ function AdminPanel({
           </div>
 
           <Panel
+            key={editingPartnerId ?? "new"}
             id="admin-partner-form"
             tone="white"
             shadow={false}
             className="scroll-mt-24 space-y-5"
             as="form"
+            onChange={() => {
+              if (Object.keys(partnerFieldErrors).length > 0) {
+                setPartnerFieldErrors({});
+              }
+            }}
             onSubmit={async (event) => {
               event.preventDefault();
               if (partnerSubmitting) return;
@@ -4061,6 +4290,7 @@ function AdminPanel({
               await runServerAction(
                 () =>
                   actions.savePartner({
+                    id: editingPartnerId ?? undefined,
                     name: String(formData.get("name") || ""),
                     contactEmail: String(formData.get("contactEmail") || ""),
                     address: String(formData.get("address") || "Berlin"),
@@ -4069,29 +4299,56 @@ function AdminPanel({
                 setAdminMessage,
                 () => {
                   form.reset();
+                  setEditingPartnerId(null);
+                  setPartnerFieldErrors({});
                   setPartnerLogoUrl("");
                   live.refetchActiveSurface();
                   updateTab("partners");
+                },
+                (errors) => {
+                  setPartnerFieldErrors(errors ?? {});
                 },
               );
               setPartnerSubmitting(false);
             }}
           >
-            <p className="headline-md">Add new partner venue</p>
+            <p className="headline-md">
+              {editingPartnerId
+                ? "Edit partner venue"
+                : "Add new partner venue"}
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Venue name">
-                <TextInput name="name" placeholder="Venue name" required />
+              <Field label="Venue name" error={partnerFieldErrors.name}>
+                <TextInput
+                  name="name"
+                  placeholder="Venue name"
+                  defaultValue={editingPartner?.name ?? ""}
+                  required
+                />
               </Field>
-              <Field label="Contact email">
+              <Field
+                label="Contact email"
+                error={partnerFieldErrors.contactEmail}
+              >
                 <TextInput
                   name="contactEmail"
                   type="email"
                   placeholder="partner@example.com"
+                  defaultValue={editingPartner?.contactEmail ?? ""}
                   required
                 />
               </Field>
-              <Field label="Address" className="sm:col-span-2">
-                <TextInput name="address" placeholder="Berlin" required />
+              <Field
+                label="Address"
+                className="sm:col-span-2"
+                error={partnerFieldErrors.address}
+              >
+                <TextInput
+                  name="address"
+                  placeholder="Berlin"
+                  defaultValue={editingPartner?.address ?? ""}
+                  required
+                />
               </Field>
             </div>
             <AdminAssetUploadField
@@ -4514,6 +4771,115 @@ function AdminPanel({
             )}
           </div>
         </div>
+      )}
+      {deleteConfirmTarget && (
+        <ModalShell
+          modal={{
+            open: true,
+            closeAvailable: !deleteSubmitting,
+            logoVariant: "black",
+            heading:
+              deleteConfirmTarget.type === "event"
+                ? copy.confirmDeleteEventHeading
+                : copy.confirmDeletePartnerHeading,
+            metadata:
+              deleteConfirmTarget.type === "event"
+                ? "Operations // Delete Event"
+                : "Operations // Delete Partner",
+            layout: "single",
+          }}
+          onAction={(actionId) => {
+            if (actionId === "close-modal" && !deleteSubmitting) {
+              setDeleteConfirmTarget(null);
+            }
+          }}
+        >
+          <div className="mx-auto w-full max-w-2xl">
+            <Panel tone="white" shadow={false} className="space-y-6">
+              <p className="body-md text-brand-dark/80">
+                {deleteConfirmTarget.type === "event"
+                  ? copy.confirmDeleteEventBody
+                  : copy.confirmDeletePartnerBody}
+              </p>
+              {deleteErrorMessage && (
+                <Panel
+                  tone="cream"
+                  shadow={false}
+                  className="border-brand-destructive bg-brand-destructive/10 p-4"
+                >
+                  <p className="text-sm font-bold text-brand-destructive">
+                    {deleteErrorMessage}
+                  </p>
+                </Panel>
+              )}
+              <div className="border-2 border-brand-dark bg-brand-cream/20 p-4">
+                <span className="font-mono text-xs font-bold uppercase opacity-55">
+                  {deleteConfirmTarget.type === "event"
+                    ? "Event title"
+                    : "Partner name"}
+                </span>
+                <p className="headline-sm mt-1">{deleteConfirmTarget.name}</p>
+              </div>
+              <div className="flex flex-wrap gap-4 justify-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={deleteSubmitting}
+                  onClick={() => setDeleteConfirmTarget(null)}
+                >
+                  {copy.cancel}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  loading={deleteSubmitting}
+                  onClick={async () => {
+                    setDeleteSubmitting(true);
+                    setDeleteErrorMessage(null);
+                    if (deleteConfirmTarget.type === "event") {
+                      await runServerAction(
+                        () =>
+                          actions.deleteEvent({
+                            eventId: deleteConfirmTarget.id,
+                          }),
+                        setAdminMessage,
+                        () => {
+                          live.refetchActiveSurface();
+                          setDeleteConfirmTarget(null);
+                        },
+                        (_fieldErrors, formError) => {
+                          setDeleteErrorMessage(
+                            formError ?? "The request could not be completed.",
+                          );
+                        },
+                      );
+                    } else {
+                      await runServerAction(
+                        () =>
+                          actions.deletePartner({
+                            partnerId: deleteConfirmTarget.id,
+                          }),
+                        setAdminMessage,
+                        () => {
+                          live.refetchActiveSurface();
+                          setDeleteConfirmTarget(null);
+                        },
+                        (_fieldErrors, formError) => {
+                          setDeleteErrorMessage(
+                            formError ?? "The request could not be completed.",
+                          );
+                        },
+                      );
+                    }
+                    setDeleteSubmitting(false);
+                  }}
+                >
+                  {copy.confirm}
+                </Button>
+              </div>
+            </Panel>
+          </div>
+        </ModalShell>
       )}
     </div>
   );

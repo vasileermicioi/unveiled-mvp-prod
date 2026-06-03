@@ -152,6 +152,19 @@ export type DataAccessAdminEventView = {
   exportAvailable: boolean;
   capacityLabel: string;
   statusLabel: string;
+  description: string;
+  category: string;
+  ticketType: "SECRET_CODE" | "VOUCHER";
+  dateTime: string;
+  secretCodeMode?: "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING" | null;
+  secretCode?: string | null;
+  promoCode?: string | null;
+  eventWebsiteUrl?: string | null;
+  languages: string[];
+  targetAgeGroups: string[];
+  address: string;
+  neighborhood: string;
+  totalCapacity: number;
 };
 
 export type DataAccessAdminPartnerView = {
@@ -472,6 +485,22 @@ export function mapAdminEventView(input: {
     exportAvailable: true,
     capacityLabel: `${input.event.remainingCapacity}/${input.event.totalCapacity}`,
     statusLabel: input.event.remainingCapacity <= 0 ? "Sold out" : "Open",
+    description: input.event.description,
+    category: input.event.category,
+    ticketType: input.event.ticketType,
+    dateTime:
+      input.event.dateTime instanceof Date
+        ? input.event.dateTime.toISOString()
+        : new Date(input.event.dateTime).toISOString(),
+    secretCodeMode: input.event.secretCodeMode,
+    secretCode: input.event.secretCode,
+    promoCode: input.event.promoCode,
+    eventWebsiteUrl: input.event.eventWebsiteUrl,
+    languages: input.event.languages as string[],
+    targetAgeGroups: input.event.targetAgeGroups as string[],
+    address: input.event.address,
+    neighborhood: input.event.neighborhood,
+    totalCapacity: input.event.totalCapacity,
   };
 }
 
