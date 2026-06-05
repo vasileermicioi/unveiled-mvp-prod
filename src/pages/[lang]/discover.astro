@@ -3,8 +3,14 @@ import { VisualSystemApp } from "@/components/unveiled/visual-system-app";
 import BaseLayout from "@/layouts/base-layout.astro";
 import { createShellFromViewer } from "@/lib/auth-display";
 import { getViewer } from "@/lib/auth-profile";
-import { loadPublicDiscoveryData } from "@/lib/data-access/loaders";
-import { createPublicInitialSurfaceData } from "@/lib/data-access/surface-data";
+import {
+  loadMemberData,
+  loadPublicDiscoveryData,
+} from "@/lib/data-access/loaders";
+import {
+  createMemberInitialSurfaceData,
+  createPublicInitialSurfaceData,
+} from "@/lib/data-access/surface-data";
 import { normalizeLanguage } from "@/lib/i18n";
 import { productRoutes, resolveRouteOwnership } from "@/lib/product-routes";
 
@@ -25,9 +31,15 @@ const initialShell = createShellFromViewer(
   ownership.viewer,
   ownership.route.id,
 );
-const initialDiscovery = createPublicInitialSurfaceData(
-  await loadPublicDiscoveryData({}, undefined, ownership.viewer.language),
-);
+const initialDiscovery =
+  ownership.viewer.kind === "authenticated" && ownership.viewer.role === "USER"
+    ? createMemberInitialSurfaceData(
+        ownership.viewer,
+        await loadMemberData(ownership.viewer, {}),
+      )
+    : createPublicInitialSurfaceData(
+        await loadPublicDiscoveryData({}, undefined, ownership.viewer.language),
+      );
 ---
 
 <BaseLayout title="Discover | Unveiled" lang={lang}>

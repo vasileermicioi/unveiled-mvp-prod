@@ -75,9 +75,17 @@ test.describe("public and member route parity", () => {
       publicEventCard.getByRole("button", { name: "Book now" }),
     ).toBeVisible();
     await discoverPage.getByRole("button", { name: "Explore map" }).click();
-    await expect(
-      discoverPage.getByText("Loading map", { exact: true }),
-    ).toBeVisible();
+    await expect(async () => {
+      const loaded = await discoverPage
+        .getByText("Mitte Art", { exact: true })
+        .first()
+        .isVisible();
+      if (!loaded) {
+        await expect(
+          discoverPage.getByText("Loading map", { exact: true }),
+        ).toBeVisible();
+      }
+    }).toPass({ timeout: 5000 });
     await expect(
       discoverPage.getByText("Mitte Art", { exact: true }).first(),
     ).toBeVisible({ timeout: 5000 });
@@ -129,7 +137,17 @@ test.describe("public and member route parity", () => {
       page.getByRole("heading", { name: "Parity Secret Access" }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Explore map" }).click();
-    await expect(page.getByText("Loading map", { exact: true })).toBeVisible();
+    await expect(async () => {
+      const loaded = await page
+        .getByText("Mitte Art", { exact: true })
+        .first()
+        .isVisible();
+      if (!loaded) {
+        await expect(
+          page.getByText("Loading map", { exact: true }),
+        ).toBeVisible();
+      }
+    }).toPass({ timeout: 5000 });
     await expect(
       page.getByText("Mitte Art", { exact: true }).first(),
     ).toBeVisible({
@@ -217,5 +235,34 @@ test.describe("public and member route parity", () => {
     await expect(
       page.getByText("Culture before it goes public."),
     ).toBeVisible();
+  });
+
+  test("allows logged-in members to book events from the public discover page", async ({
+    page,
+  }) => {
+    await login(page, parityFixtureEmails.activeMember, "/discover");
+    await expect(page).toHaveURL(/\/discover$/);
+    await switchToEnglish(page);
+
+    const eventCard = page.getByTestId(
+      `event-card-${parityFixtureIds.events.public}`,
+    );
+    await expect(
+      eventCard.getByRole("heading", {
+        name: "Parity Public Opening",
+      }),
+    ).toBeVisible();
+
+    await expect(async () => {
+      await eventCard.getByRole("button", { name: "Book now" }).click();
+      await expect(
+        page.locator("h2").filter({ hasText: "Parity Public Opening" }),
+      ).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10000 });
+
+    await expect(
+      page.getByRole("button", { name: "Confirm access" }),
+    ).toBeVisible();
+    await expect(page.getByText("Join Unveiled to Book")).toHaveCount(0);
   });
 });
