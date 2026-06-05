@@ -91,6 +91,10 @@ export type LiveDataView = {
   isError: boolean;
   refetchActiveSurface: () => void;
   setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  hasMore?: boolean;
 };
 
 export const emptyPublicData: PublicDiscoveryData = {
@@ -120,6 +124,10 @@ export const emptyLiveDataView: LiveDataView = {
   activeFilterCount: 0,
   discoveryFilters: {},
   savedCount: 0,
+  totalCount: 0,
+  page: 1,
+  pageSize: 6,
+  hasMore: false,
   bookings: [],
   creditLedgerEntries: [],
   waitlistEntries: [],
@@ -315,5 +323,10 @@ export function createLiveDataView(input: {
     isError: input.isError,
     refetchActiveSurface: input.refetchActiveSurface,
     setDiscoveryFilters: input.setDiscoveryFilters,
+    totalCount:
+      input.memberData?.discovery.totalCount ?? input.publicData.totalCount,
+    page: input.memberData?.discovery.page ?? input.publicData.page,
+    pageSize: input.memberData?.discovery.pageSize ?? input.publicData.pageSize,
+    hasMore: input.memberData?.discovery.hasMore ?? input.publicData.hasMore,
   };
 }

@@ -902,18 +902,21 @@ function EventCard({
   compact = false,
   onOpen,
   onSave,
+  onClick,
 }: {
   event: EventCardView;
   compact?: boolean;
   onOpen: (event: EventCardView) => void;
   onSave?: (event: EventCardView) => void;
+  onClick?: (event: EventCardView) => void;
 }) {
   const copy = useCopy().event;
   return (
     <Card
       interactive
-      className="group flex h-full flex-col overflow-hidden"
+      className="group flex h-full flex-col overflow-hidden cursor-pointer"
       data-testid={`event-card-${event.id}`}
+      onClick={() => onClick?.(event)}
     >
       <div
         className={cn(
@@ -966,7 +969,10 @@ function EventCard({
               variant={event.saved ? "active" : "outline"}
               size="icon-sm"
               aria-label={event.saved ? copy.saved : copy.save}
-              onClick={() => onSave?.(event)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSave?.(event);
+              }}
             >
               <Bookmark fill={event.saved ? "currentColor" : "none"} />
             </Button>
@@ -974,7 +980,10 @@ function EventCard({
               type="button"
               size="sm"
               variant={event.remainingCapacity === 0 ? "muted" : "primary"}
-              onClick={() => onOpen(event)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen(event);
+              }}
             >
               {event.ctaLabel}
             </Button>
@@ -988,6 +997,7 @@ function EventCard({
 function PublicDiscover() {
   const copy = useCopy();
   const live = useLiveData();
+  const selectedLanguage = useContext(LanguageContext);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
   const [selectedPublicEvent, setSelectedPublicEvent] =
@@ -1022,7 +1032,15 @@ function PublicDiscover() {
   } as const;
 
   return (
-    <>
+    <div className="space-y-6">
+      <Panel tone="white">
+        <Badge tone="yellow">{copy.public.discover.included}</Badge>
+        <h1 className="headline-lg mt-5">{copy.public.discover.title}</h1>
+        <p className="mt-4 max-w-3xl text-lg font-bold leading-relaxed">
+          {copy.public.discover.body}
+        </p>
+      </Panel>
+
       <DiscoveryShell
         discovery={discovery}
         filterPanel={<DiscoveryFilterPanel />}
@@ -1032,6 +1050,7 @@ function PublicDiscover() {
             surface="public"
             providerKey={mapProvider.key}
             actionLabel={copy.discovery.viewEvent}
+            selectedMarkerIdOverride={selectedPublicEvent?.id ?? null}
             onOpenEvent={(event) => {
               setSelectedPublicEvent(event);
             }}
@@ -1054,35 +1073,6 @@ function PublicDiscover() {
         }}
       >
         <div className="space-y-10 py-8">
-          <Panel
-            tone="white"
-            className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end"
-          >
-            <div>
-              <Badge tone="yellow">{copy.public.discover.included}</Badge>
-              <h1 className="headline-lg mt-5">{copy.public.discover.title}</h1>
-              <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed">
-                {copy.public.discover.body}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              {live.publicStats.map((stat) => (
-                <StatPanel key={stat.label} {...stat} />
-              ))}
-            </div>
-          </Panel>
-
-          <section className="grid gap-5 md:grid-cols-3">
-            {live.publicCategories.map((category) => (
-              <Card key={category} interactive className="bg-brand-cream p-6">
-                <p className="headline-md">{category}</p>
-                <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-                  {copy.public.discover.categoryBody}
-                </p>
-              </Card>
-            ))}
-          </section>
-
           <section className="grid gap-5 lg:grid-cols-3">
             {live.events.map((event) => (
               <EventCard
@@ -1090,47 +1080,105 @@ function PublicDiscover() {
                 event={event}
                 compact
                 onOpen={() => setSelectedPublicEvent(event)}
+                onClick={(event) => {
+                  setSelectedPublicEvent(event);
+                  setMapOpen(true);
+                }}
               />
             ))}
           </section>
 
-          <section className="grid gap-5 md:grid-cols-[1fr_1fr]">
-            <Panel tone="dark">
-              <p className="unveiled-meta opacity-60">
-                {copy.public.discover.missingVenue}
-              </p>
-              <p className="headline-md mt-4">
-                {copy.public.discover.wantPartner}
-              </p>
-              <Button type="button" variant="yellow" className="mt-6">
-                {copy.public.discover.tellSupport}
-                <Mail />
+          {live.totalCount &&
+          live.pageSize &&
+          live.totalCount > live.pageSize ? (
+            <div className="flex items-center justify-between border-t-2 border-brand-dark pt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!live.page || live.page <= 1}
+                onClick={() => {
+                  const prevPage = String(Math.max(1, (live.page ?? 1) - 1));
+                  live.setDiscoveryFilters?.({
+                    ...live.discoveryFilters,
+                    page: prevPage,
+                  });
+                }}
+              >
+                <ArrowLeft className="mr-2 size-4" />
+                {selectedLanguage === "DE" ? "Zurück" : "Previous"}
               </Button>
-            </Panel>
-            <Panel tone="white">
-              <p className="unveiled-meta opacity-60">
-                {copy.public.discover.activePartners}
-              </p>
-              <div className="mt-4 grid gap-3">
-                {live.publicPartners.map((partner) => (
-                  <div
-                    key={partner.id}
-                    className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
-                  >
-                    <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
-                      {partner.logoInitial}
-                    </span>
-                    <span>
-                      <span className="block text-xs font-black uppercase tracking-widest">
-                        {partner.name}
+              <span className="text-xs font-black uppercase tracking-widest opacity-60">
+                {selectedLanguage === "DE" ? "Seite" : "Page"} {live.page} /{" "}
+                {Math.ceil(live.totalCount / live.pageSize)}
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!live.hasMore}
+                onClick={() => {
+                  const nextPage = String((live.page ?? 1) + 1);
+                  live.setDiscoveryFilters?.({
+                    ...live.discoveryFilters,
+                    page: nextPage,
+                  });
+                }}
+              >
+                {selectedLanguage === "DE" ? "Weiter" : "Next"}
+                <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </div>
+          ) : null}
+
+          <section className="grid gap-5 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {live.publicStats.map((stat) => (
+                <StatPanel key={stat.label} {...stat} className="h-full" />
+              ))}
+            </div>
+            <Panel tone="white" className="flex flex-col justify-between">
+              <div>
+                <p className="unveiled-meta opacity-60">
+                  {copy.public.discover.activePartners}
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {live.publicPartners.map((partner) => (
+                    <div
+                      key={partner.id}
+                      className="flex items-center gap-3 border-4 border-brand-dark bg-brand-grey p-3"
+                    >
+                      <span className="grid size-10 place-items-center bg-brand-dark font-display text-lg font-black text-white">
+                        {partner.logoInitial}
                       </span>
-                      <span className="block text-xs font-bold opacity-55">
-                        {partner.address}
+                      <span>
+                        <span className="block text-xs font-black uppercase tracking-widest">
+                          {partner.name}
+                        </span>
+                        <span className="block text-xs font-bold opacity-55">
+                          {partner.address}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
+            </Panel>
+            <Panel tone="dark" className="flex flex-col justify-between">
+              <div>
+                <p className="unveiled-meta opacity-60">
+                  {copy.public.discover.missingVenue}
+                </p>
+                <p className="headline-md mt-4">
+                  {copy.public.discover.wantPartner}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="yellow"
+                className="mt-6 w-full justify-center"
+              >
+                {copy.public.discover.tellSupport}
+                <Mail className="ml-2 size-4" />
+              </Button>
             </Panel>
           </section>
         </div>
@@ -1142,7 +1190,7 @@ function PublicDiscover() {
           onClose={() => setSelectedPublicEvent(null)}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -1759,8 +1807,13 @@ function DiscoveryFilterPanel() {
   const [filters, setFilters] = useState<DiscoveryFilters>(
     live.discoveryFilters,
   );
+
+  useEffect(() => {
+    setFilters(live.discoveryFilters);
+  }, [live.discoveryFilters]);
+
   const updateFilter = (patch: DiscoveryFilters) => {
-    const next = { ...filters, ...patch };
+    const next = { ...filters, ...patch, page: undefined };
     setFilters(next);
     live.setDiscoveryFilters?.(next);
   };
@@ -2245,6 +2298,10 @@ function MemberFeed({
                   live.refetchActiveSurface,
                 )
               }
+              onClick={(event) => {
+                setSelectedEvent(event);
+                setMapOpen(true);
+              }}
             />
           ))}
           {visible.length === 0 ? (
@@ -2694,19 +2751,90 @@ function ProfilePage() {
                 ))}
               </div>
               {selectedPaymentMethod === "CARD" ? (
-                <Panel tone="cream" shadow={false} className="mt-3 p-3">
-                  <div
-                    id="stripe-card-element"
-                    className="min-h-[40px] w-full p-2 border-2 border-brand-dark bg-white"
-                  />
+                <Panel
+                  tone="cream"
+                  shadow={false}
+                  className="mt-3 p-4 space-y-4 border-4 border-brand-dark shadow-[4px_4px_0_0_#202621]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {copy.cardDetails}
+                    </span>
+                    <div className="flex gap-1.5">
+                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
+                        Visa
+                      </span>
+                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
+                        MC
+                      </span>
+                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
+                        Amex
+                      </span>
+                    </div>
+                  </div>
+                  <div className="border-4 border-brand-dark bg-white p-3 shadow-[4px_4px_0_0_#202621]">
+                    <div
+                      id="stripe-card-element"
+                      className="min-h-[40px] w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="sync-billing-address"
+                      name="syncBillingAddress"
+                      defaultChecked
+                      className="size-4 accent-brand-dark"
+                    />
+                    <label
+                      htmlFor="sync-billing-address"
+                      className="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-75"
+                    >
+                      {copy.billingSync}
+                    </label>
+                  </div>
                 </Panel>
               ) : null}
               {selectedPaymentMethod === "SEPA" ? (
-                <Panel tone="cream" shadow={false} className="mt-3 p-3">
-                  <div
-                    id="stripe-sepa-element"
-                    className="min-h-[40px] w-full p-2 border-2 border-brand-dark bg-white"
-                  />
+                <Panel
+                  tone="cream"
+                  shadow={false}
+                  className="mt-3 p-4 space-y-4 border-4 border-brand-dark shadow-[4px_4px_0_0_#202621]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {copy.sepaDetails}
+                    </span>
+                    <div className="flex gap-1.5">
+                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
+                        SEPA
+                      </span>
+                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
+                        IBAN
+                      </span>
+                    </div>
+                  </div>
+                  <div className="border-4 border-brand-dark bg-white p-3 shadow-[4px_4px_0_0_#202621]">
+                    <div
+                      id="stripe-sepa-element"
+                      className="min-h-[40px] w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="sync-sepa-billing-address"
+                      name="syncBillingAddress"
+                      defaultChecked
+                      className="size-4 accent-brand-dark"
+                    />
+                    <label
+                      htmlFor="sync-sepa-billing-address"
+                      className="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-75"
+                    >
+                      {copy.billingSync}
+                    </label>
+                  </div>
                 </Panel>
               ) : null}
             </div>
@@ -5230,16 +5358,7 @@ function VisualSystemAppContent({
     )
       ? demoPageShells.member
       : undefined;
-  const pageShell =
-    view === "member"
-      ? memberPageShell
-      : view === "partner"
-        ? undefined
-        : view === "admin"
-          ? undefined
-          : view === "discover"
-            ? demoPageShells.public
-            : undefined;
+  const pageShell = view === "member" ? memberPageShell : undefined;
   const navigateShell = async (actionId: string) => {
     if (actionId === "new-event") {
       if (typeof window !== "undefined") {

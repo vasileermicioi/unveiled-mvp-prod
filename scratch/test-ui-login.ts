@@ -20,7 +20,7 @@ async function run() {
       try {
         const body = await response.json();
         console.log(`[API RESPONSE] Body:`, JSON.stringify(body, null, 2));
-      } catch (err) {
+      } catch (_err) {
         console.log(
           `[API RESPONSE] Failed to parse body:`,
           await response.text(),

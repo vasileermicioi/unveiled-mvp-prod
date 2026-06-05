@@ -1,5 +1,5 @@
 import { AlertTriangle, MapPin, Minus, Plus, RefreshCw, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Panel, StatePanel } from "@/components/ui/unveiled-primitives";
@@ -100,6 +100,49 @@ export function DiscoveryMapPanel({
     startCenterWorld: { x: number; y: number };
   } | null>(null);
 
+  const centerRef = useRef(center);
+  useEffect(() => {
+    centerRef.current = center;
+  }, [center]);
+
+  const animationFrameIdRef = useRef<number | null>(null);
+  const lastPannedIdRef = useRef<string | null>(null);
+
+  const panTo = useCallback((targetLat: number, targetLng: number) => {
+    if (animationFrameIdRef.current !== null) {
+      cancelAnimationFrame(animationFrameIdRef.current);
+    }
+
+    const duration = 400; // ms
+    const startTime = performance.now();
+    const startLat = centerRef.current.lat;
+    const startLng = centerRef.current.lng;
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // easeInOutCubic
+      const ease =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - (-2 * progress + 2) ** 3 / 2;
+
+      setCenter({
+        lat: startLat + (targetLat - startLat) * ease,
+        lng: startLng + (targetLng - startLng) * ease,
+      });
+
+      if (progress < 1) {
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+      } else {
+        animationFrameIdRef.current = null;
+      }
+    };
+
+    animationFrameIdRef.current = requestAnimationFrame(animate);
+  }, []);
+
   useEffect(() => {
     if (loadStateOverride) {
       setInternalLoadState(loadStateOverride);
@@ -134,6 +177,21 @@ export function DiscoveryMapPanel({
       }),
     [events, loadState, selectedMarkerId],
   );
+
+  useEffect(() => {
+    if (!selectedMarkerId) {
+      lastPannedIdRef.current = null;
+      return;
+    }
+    if (selectedMarkerId === lastPannedIdRef.current) return;
+
+    const marker = model.readyMarkers.find((m) => m.id === selectedMarkerId);
+    if (marker) {
+      lastPannedIdRef.current = selectedMarkerId;
+      panTo(marker.lat, marker.lng);
+    }
+  }, [selectedMarkerId, model.readyMarkers, panTo]);
+
   useEffect(() => {
     if (model.readyMarkers.length === 0) return;
 
@@ -174,6 +232,9 @@ export function DiscoveryMapPanel({
     element.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       element.removeEventListener("wheel", handleWheel);
+      if (animationFrameIdRef.current !== null) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
     };
   }, []);
 
@@ -191,12 +252,6 @@ export function DiscoveryMapPanel({
   });
 
   if (loadState !== "ready" || !model.hasMarkers) {
-    const panelState =
-      loadState === "error" || loadState === "missing"
-        ? "error"
-        : loadState === "loading"
-          ? "loading"
-          : "empty";
     const retryAction =
       loadState === "error" ? (
         <Button type="button" variant="secondary" onClick={onRetry}>
@@ -206,12 +261,17 @@ export function DiscoveryMapPanel({
       ) : undefined;
 
     return (
-      <StatePanel
-        title={model.fallbackTitle}
-        text={model.fallbackMessage}
-        state={panelState}
-        action={retryAction}
-      />
+      <Panel tone="cream" shadow={false} className="overflow-hidden p-0">
+        <div className="relative min-h-[26rem] flex items-center justify-center border-[12px] border-brand-cream bg-brand-grey p-5 text-center">
+          <div className="max-w-md space-y-4">
+            <p className="headline-md text-brand-dark">{model.fallbackTitle}</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-brand-dark opacity-60">
+              {model.fallbackMessage}
+            </p>
+            {retryAction}
+          </div>
+        </div>
+      </Panel>
     );
   }
 
@@ -233,6 +293,10 @@ export function DiscoveryMapPanel({
         className="relative min-h-[26rem] overflow-hidden border-[12px] border-brand-cream bg-brand-grey touch-none"
         onPointerDown={(event) => {
           if (event.button !== 0) return;
+          if (animationFrameIdRef.current !== null) {
+            cancelAnimationFrame(animationFrameIdRef.current);
+            animationFrameIdRef.current = null;
+          }
           dragState.current = {
             pointerId: event.pointerId,
             startX: event.clientX,

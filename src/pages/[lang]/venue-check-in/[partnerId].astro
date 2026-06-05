@@ -17,7 +17,7 @@ const copy = copyFor(lang).venueCheckIn;
 
 <BaseLayout title={copy.eyebrow} lang={lang}>
   <main class="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-12">
-    <section class="border-4 border-brand-dark bg-white p-6 shadow-[8px_8px_0_var(--color-brand-dark)]">
+    <section id="check-in-card" class="border-4 border-brand-dark bg-white p-6 shadow-[8px_8px_0_var(--color-brand-dark)]">
       <p class="text-xs font-black uppercase tracking-widest text-brand-dark/60">
         {copy.eyebrow}
       </p>
@@ -40,7 +40,7 @@ const copy = copyFor(lang).venueCheckIn;
             <input name="partnerId" type="hidden" value={partnerId} />
             <input name="venueToken" type="hidden" value={token} />
             <button
-              class="border-4 border-brand-dark bg-brand-dark px-5 py-3 font-black text-sm uppercase tracking-widest text-white"
+              class="border-4 border-brand-dark bg-brand-dark px-5 py-3 font-black text-sm uppercase tracking-widest text-white cursor-pointer hover:bg-brand-dark/90"
               type="submit"
             >
               {copy.checkIn}
@@ -55,15 +55,91 @@ const copy = copyFor(lang).venueCheckIn;
         )
       }
     </section>
+
+    <!-- SUCCESS SCREEN -->
+    <div
+      id="check-in-success-screen"
+      class="hidden flex-col items-center text-center p-8 border-4 border-brand-dark bg-[#35c46b] text-brand-dark space-y-6 shadow-[8px_8px_0_var(--color-brand-dark)]"
+    >
+      <div class="inline-flex size-24 items-center justify-center border-4 border-brand-dark bg-white shadow-[6px_6px_0_0_#202621]">
+        <svg class="size-16 text-[#35c46b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div class="space-y-2">
+        <h2 class="font-display text-4xl font-black uppercase leading-none tracking-wider">
+          VALID TICKET
+        </h2>
+        <p class="text-xs font-black uppercase tracking-[0.2em] opacity-80">
+          Einlass Gewährt / Entry Allowed
+        </p>
+      </div>
+      <p
+        id="success-screen-message"
+        class="w-full border-4 border-brand-dark bg-white px-4 py-3 font-display text-lg font-black uppercase tracking-wider shadow-[4px_4px_0_0_#202621]"
+      >
+      </p>
+    </div>
+
+    <!-- WARNING SCREEN (ALREADY USED) -->
+    <div
+      id="check-in-warning-screen"
+      class="hidden flex-col items-center text-center p-8 border-4 border-brand-dark bg-brand-yellow text-brand-dark space-y-6 shadow-[8px_8px_0_var(--color-brand-dark)]"
+    >
+      <div class="inline-flex size-24 items-center justify-center border-4 border-brand-dark bg-white shadow-[6px_6px_0_0_#202621]">
+        <svg class="size-16 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="space-y-2">
+        <h2 class="font-display text-3xl font-black uppercase leading-none tracking-wider">
+          DOUBLE SCAN
+        </h2>
+        <p class="text-xs font-black uppercase tracking-[0.2em] opacity-80">
+          Doppelt Entwertet / Duplicate Scan
+        </p>
+      </div>
+      <p
+        id="warning-screen-message"
+        class="w-full border-4 border-brand-dark bg-white px-4 py-3 font-display text-lg font-black uppercase tracking-wider shadow-[4px_4px_0_0_#202621]"
+      >
+      </p>
+    </div>
+
+    <!-- FAILED SCREEN (INVALID/EXPIRED) -->
+    <div
+      id="check-in-failed-screen"
+      class="hidden flex-col items-center text-center p-8 border-4 border-brand-dark bg-[#ff5f57] text-brand-dark space-y-6 shadow-[8px_8px_0_var(--color-brand-dark)]"
+    >
+      <div class="inline-flex size-24 items-center justify-center border-4 border-brand-dark bg-white shadow-[6px_6px_0_0_#202621]">
+        <svg class="size-16 text-[#ff5f57]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </div>
+      <div class="space-y-2">
+        <h2 class="font-display text-4xl font-black uppercase leading-none tracking-wider">
+          INVALID TICKET
+        </h2>
+        <p class="text-xs font-black uppercase tracking-[0.2em] opacity-80">
+          Einlass Abgelehnt / Entry Denied
+        </p>
+      </div>
+      <p
+        id="failed-screen-message"
+        class="w-full border-4 border-brand-dark bg-white px-4 py-3 font-display text-lg font-black uppercase tracking-wider shadow-[4px_4px_0_0_#202621]"
+      >
+      </p>
+    </div>
   </main>
   <script is:inline define:vars={{ lang }}>
     const isGerman = lang === "DE";
     const checkingInText = isGerman ? "Checke ein..." : "Checking in...";
-    const checkInFailedText = isGerman ? "Check-in fehlgeschlagen." : "Check-in failed.";
+    const checkInFailedText = isGerman ? "Check-in failed." : "Check-in failed.";
   </script>
   <script>
     import { actions } from "astro:actions";
 
+    const card = document.getElementById("check-in-card");
     const form = document.querySelector("[data-venue-check-in-form]");
     const status = document.querySelector("[data-venue-check-in-status]");
     // Declare dynamic variables compiled from define:vars above
@@ -79,14 +155,42 @@ const copy = copyFor(lang).venueCheckIn;
       void actions
          .checkInWithVenueQr({ partnerId, venueToken })
          .then((result) => {
-           if (status) {
-             status.textContent = result.data?.ok
-               ? (result.data.notice?.message ?? "Checked in.")
-               : (result.data?.formError ?? checkInFailedText);
+           if (card) card.classList.add("hidden");
+
+           if (result.data?.ok) {
+             const data = result.data.data;
+             const isWarning = data?.alreadyCheckedIn;
+             const msg = result.data.notice?.message || "Success";
+
+             if (isWarning) {
+               const warningScreen = document.getElementById("check-in-warning-screen");
+               const warningMsg = document.getElementById("warning-screen-message");
+               if (warningMsg) warningMsg.textContent = msg;
+               warningScreen?.classList.remove("hidden");
+               warningScreen?.classList.add("flex");
+             } else {
+               const successScreen = document.getElementById("check-in-success-screen");
+               const successMsg = document.getElementById("success-screen-message");
+               if (successMsg) successMsg.textContent = msg;
+               successScreen?.classList.remove("hidden");
+               successScreen?.classList.add("flex");
+             }
+           } else {
+             const errorMsg = result.data?.formError || checkInFailedText;
+             const failedScreen = document.getElementById("check-in-failed-screen");
+             const failedText = document.getElementById("failed-screen-message");
+             if (failedText) failedText.textContent = errorMsg;
+             failedScreen?.classList.remove("hidden");
+             failedScreen?.classList.add("flex");
            }
          })
          .catch(() => {
-           if (status) status.textContent = checkInFailedText;
+           if (card) card.classList.add("hidden");
+           const failedScreen = document.getElementById("check-in-failed-screen");
+           const failedText = document.getElementById("failed-screen-message");
+           if (failedText) failedText.textContent = checkInFailedText;
+           failedScreen?.classList.remove("hidden");
+           failedScreen?.classList.add("flex");
          });
     });
   </script>

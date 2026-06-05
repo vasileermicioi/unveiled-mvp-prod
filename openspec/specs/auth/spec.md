@@ -207,6 +207,12 @@ Auth helpers SHALL ensure member-only route data and actions operate only on the
 - **WHEN** a member submits onboarding, saved event, profile, preference, billing, newsletter, language, booking, or waitlist actions
 - **THEN** the action authorizes against the authenticated member identity before mutating data
 
+#### Scenario: Member onboarding preferences are synchronized
+- **WHEN** an authenticated member submits onboarding preferences (including districts, interests, weekdays, and languages)
+- **THEN** the onboarding action validates the inputs against schema constraints
+- **AND** updates the profile language
+- **AND** persists the preferences reliably to the database
+
 ### Requirement: Authorization Regression Coverage
 The app SHALL have automated regression coverage for route and action authorization outcomes across guest, member, partner, and admin roles.
 

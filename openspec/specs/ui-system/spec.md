@@ -71,7 +71,8 @@ Forms SHALL preserve visible field structure, validation message placement, and 
 
 #### Scenario: Stripe payment form mounts active elements
 - **WHEN** a user selects Stripe Card or SEPA payment methods
-- **THEN** the checkout form displays standard container divs for Stripe Elements instead of hardcoded text placeholders (e.g. "Stripe card fields mount here")
+- **THEN** the checkout form displays structured, high-fidelity payment container grids containing credit card or bank details input frames instead of hardcoded text placeholders (e.g. "Stripe card fields mount here")
+- **AND** renders mock card/bank brand icons and billing address sync options
 
 #### Scenario: Event series builder mounts standard selectors
 - **WHEN** an admin views the Event Series Builder input fields
@@ -137,6 +138,7 @@ Map UI SHALL preserve the visible map panel, marker, loading, error, and fallbac
 #### Scenario: Loading and error states render
 - **WHEN** map is loading
 - **THEN** a bordered grey loading panel with compact animated text appears
+- **AND** the panel preserves space with a fixed height to prevent layout shifts of adjacent elements
 - **WHEN** map fails
 - **THEN** a dark error panel with warning icon, explanatory copy, and Retry Connection action appears
 
@@ -145,6 +147,8 @@ Map UI SHALL preserve the visible map panel, marker, loading, error, and fallbac
 - **THEN** an info window shows category, neighborhood, title, formatted time, and an action to open the event details view or booking modal
 - **WHEN** the provider is unavailable or a marker cannot be resolved
 - **THEN** the map shows a safe visible fallback state without blocking the surrounding event list
+- **WHEN** an event card is clicked in the list
+- **THEN** the map smoothly pans to the corresponding marker location
 
 #### Scenario: Data requirements are met
 - **WHEN** map renders
@@ -237,4 +241,15 @@ On viewports below `768px`, data tables (including admin lists and reports) SHAL
 #### Scenario: Administrative table collapses on mobile
 - **WHEN** the viewport width is below 768px
 - **THEN** the admin partners directory table, events registry table, and member registry table render as stackable grid cards with label-value rows instead of horizontal columns.
+
+### Requirement: Venue Check-in Status Panels
+The UI SHALL provide high-visibility, high-contrast check-in status panels for venue door staff environments.
+
+#### Scenario: Successful check-in validation
+- **WHEN** a ticket is successfully validated
+- **THEN** the status screen renders a large green checkmark with clear confirmation text and event/member details
+
+#### Scenario: Failed check-in validation
+- **WHEN** a ticket validation fails (e.g. expired or double-checked ticket)
+- **THEN** the status screen renders a large red warning icon with high-contrast text explaining the failure reason
 

@@ -50,6 +50,10 @@ export type PublicDiscoveryData = {
     activePartnerCount: number;
     membershipCategoryLabels: string[];
   };
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  hasMore?: boolean;
 };
 
 export type MemberData = {
@@ -115,16 +119,26 @@ export async function getPublicDiscoveryData(
   database: Db = db,
   language: UiLanguage = "EN",
 ): Promise<PublicDiscoveryData> {
-  const eventRows = await findEventRows(filters, database);
-  const partnerRows = await database
-    .select()
-    .from(partners)
-    .orderBy(asc(partners.name));
+  const page = Math.max(1, Number(filters.page ?? "1"));
+  const pageSize = 6;
+  const offset = (page - 1) * pageSize;
+
+  const [totalCount, eventRows, partnerRows, allUpcomingEvents] =
+    await Promise.all([
+      countEventRows(filters, database),
+      findEventRows(filters, database, pageSize, offset),
+      database.select().from(partners).orderBy(asc(partners.name)),
+      database
+        .select({ category: events.category })
+        .from(events)
+        .where(gte(events.dateTime, new Date())),
+    ]);
+
   const partnerById = new Map(
     partnerRows.map((partner) => [partner.id, partner]),
   );
   const categories = Array.from(
-    new Set(eventRows.map((row) => row.category)),
+    new Set(allUpcomingEvents.map((row) => row.category)),
   ).sort();
 
   return {
@@ -142,10 +156,14 @@ export async function getPublicDiscoveryData(
       name: partner.name,
     })),
     stats: {
-      upcomingEventCount: eventRows.length,
+      upcomingEventCount: totalCount,
       activePartnerCount: partnerRows.length,
       membershipCategoryLabels: categories,
     },
+    totalCount,
+    page,
+    pageSize,
+    hasMore: offset + eventRows.length < totalCount,
   };
 }
 
@@ -500,7 +518,12 @@ async function getBookingRowsForUser(userId: string, database: Db) {
     .limit(50);
 }
 
-async function findEventRows(filters: DiscoveryFilters, database: Db) {
+async function findEventRows(
+  filters: DiscoveryFilters,
+  database: Db,
+  limit = 24,
+  offset = 0,
+) {
   const conditions = [gte(events.dateTime, new Date())];
   if (filters.category) conditions.push(eq(events.category, filters.category));
   if (filters.partnerId)
@@ -515,5 +538,23 @@ async function findEventRows(filters: DiscoveryFilters, database: Db) {
     .from(events)
     .where(and(...conditions))
     .orderBy(asc(events.dateTime), sql`${events.remainingCapacity} desc`)
-    .limit(24);
+    .limit(limit)
+    .offset(offset);
+}
+
+async function countEventRows(filters: DiscoveryFilters, database: Db) {
+  const conditions = [gte(events.dateTime, new Date())];
+  if (filters.category) conditions.push(eq(events.category, filters.category));
+  if (filters.partnerId)
+    conditions.push(eq(events.partnerId, filters.partnerId));
+  if (filters.startDate)
+    conditions.push(gte(events.dateTime, new Date(filters.startDate)));
+  if (filters.endDate)
+    conditions.push(lte(events.dateTime, new Date(filters.endDate)));
+
+  const result = await database
+    .select({ count: count() })
+    .from(events)
+    .where(and(...conditions));
+  return result[0]?.count ?? 0;
 }
