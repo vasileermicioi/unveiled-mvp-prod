@@ -20,6 +20,7 @@
     "test:parity:contracts": "bun test src/lib/product-routes.test.ts src/lib/data-access/query-layer.test.ts src/lib/parity-fixtures.test.ts src/lib/parity-route-auth.test.ts src/lib/parity-data-access.integration.test.ts src/lib/parity-actions.integration.test.ts src/lib/booking-transactions.integration.test.ts",
     "test:parity:smoke": "bun scripts/run-parity-smoke.ts",
     "test:parity": "bun run test:parity:contracts && bun run test:parity:smoke",
+    "test:e2e": "playwright test tests/parity/e2e-gherkin.spec.ts",
     "test:visual": "VISUAL_TESTS=true bun scripts/run-parity-smoke.ts test tests/visual",
     "test:transactions": "bun run scripts/run-booking-transaction-tests.ts",
     "db:generate": "drizzle-kit generate",

@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import {
   ArrowLeft,
   ArrowRight,

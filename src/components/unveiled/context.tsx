@@ -1,10 +1,5 @@
 import { actions } from "astro:actions";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Upload as UploadIcon,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Upload as UploadIcon } from "lucide-react";
 import {
   createContext,
   useContext,
@@ -18,7 +13,6 @@ import {
   Field,
   Panel,
   SelectInput,
-  StatePanel,
   StatPanel,
   TextInput,
 } from "@/components/ui/unveiled-primitives";
@@ -41,10 +35,7 @@ import {
   type LiveDataView,
 } from "@/lib/data-access/live-view-adapters";
 import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
-import {
-  type InitialSurfaceData,
-  isInitialSurfaceData,
-} from "@/lib/data-access/surface-data";
+import type { InitialSurfaceData } from "@/lib/data-access/surface-data";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 import type { EventCardView } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";

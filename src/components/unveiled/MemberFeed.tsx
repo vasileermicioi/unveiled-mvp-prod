@@ -7,8 +7,6 @@ import {
   Heart,
   Loader2,
   Mail,
-  Minus,
-  Plus,
 } from "lucide-react";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Check } from "lucide-react";
 import { useContext, useState } from "react";
@@ -30,7 +29,6 @@ import {
   passwordRecoverySchema,
   signupSchema,
 } from "@/lib/forms/schemas";
-import type { UiLanguage } from "@/lib/i18n";
 import { formContracts } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./AdminPanel";
