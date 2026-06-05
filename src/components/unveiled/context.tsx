@@ -727,6 +727,23 @@ export function VisualSystemProvider({
       ? (initialDiscovery.filters ?? {})
       : {},
   );
+
+  const setDiscoveryFiltersWrapped = (
+    value: React.SetStateAction<DiscoveryFilters>,
+  ) => {
+    setDiscoveryFilters((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      const hasFilterChanged =
+        next.category !== prev.category ||
+        next.partnerId !== prev.partnerId ||
+        next.startDate !== prev.startDate ||
+        next.endDate !== prev.endDate;
+      if (hasFilterChanged) {
+        return { ...next, page: undefined };
+      }
+      return next;
+    });
+  };
   const [selectedEvent, setSelectedEvent] = useState<EventCardView | null>(
     null,
   );
@@ -764,7 +781,7 @@ export function VisualSystemProvider({
   const live = useLiveDataView(
     initialDiscovery,
     discoveryFilters,
-    setDiscoveryFilters,
+    setDiscoveryFiltersWrapped,
     adminFilters,
   );
 
@@ -895,7 +912,7 @@ export function VisualSystemProvider({
     view,
     setView,
     discoveryFilters,
-    setDiscoveryFilters,
+    setDiscoveryFilters: setDiscoveryFiltersWrapped,
     selectedEvent,
     setSelectedEvent,
     bookingEvent,

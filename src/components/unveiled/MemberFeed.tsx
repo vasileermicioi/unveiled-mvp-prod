@@ -1,5 +1,6 @@
 import { actions } from "astro:actions";
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   Copy,
@@ -592,6 +593,7 @@ export function MemberFeed({
 }) {
   const copy = useCopy();
   const live = useLiveData();
+  const selectedLanguage = useContext(LanguageContext);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
   const visible = useMemo(() => live.events, [live.events]);
@@ -686,60 +688,103 @@ export function MemberFeed({
           }
         }}
       >
-        <div className="grid gap-5 lg:grid-cols-3">
-          {visible.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onOpen={(event) => {
-                setSelectedEvent(event);
-                setBookingEvent(event);
-              }}
-              onSave={(selectedEvent) =>
-                void runServerAction(
-                  () =>
-                    selectedEvent.saved
-                      ? actions.unsaveMemberEvent({
-                          eventId: selectedEvent.id,
-                        })
-                      : actions.saveMemberEvent({
-                          eventId: selectedEvent.id,
-                        }),
-                  setFeedMessage,
-                  live.refetchActiveSurface,
-                )
-              }
-              onClick={(event) => {
-                setSelectedEvent(event);
-                setMapOpen(true);
-              }}
-            />
-          ))}
-          {visible.length === 0 ? (
-            <StatePanel
-              title={
-                live.isLoading
-                  ? copy.discovery.loadingEvents
-                  : copy.discovery.noMatchingEvents
-              }
-              text={
-                live.isError
-                  ? copy.discovery.liveError
-                  : copy.discovery.noMatches
-              }
-              state={
-                live.isLoading ? "loading" : live.isError ? "error" : "empty"
-              }
-              action={
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={live.refetchActiveSurface}
-                >
-                  {copy.discovery.resetAll}
-                </Button>
-              }
-            />
+        <div className="space-y-10 py-8">
+          <div className="grid gap-5 lg:grid-cols-3">
+            {visible.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onOpen={(event) => {
+                  setSelectedEvent(event);
+                  setBookingEvent(event);
+                }}
+                onSave={(selectedEvent) =>
+                  void runServerAction(
+                    () =>
+                      selectedEvent.saved
+                        ? actions.unsaveMemberEvent({
+                            eventId: selectedEvent.id,
+                          })
+                        : actions.saveMemberEvent({
+                            eventId: selectedEvent.id,
+                          }),
+                    setFeedMessage,
+                    live.refetchActiveSurface,
+                  )
+                }
+                onClick={(event) => {
+                  setSelectedEvent(event);
+                  setMapOpen(true);
+                }}
+              />
+            ))}
+            {visible.length === 0 ? (
+              <StatePanel
+                title={
+                  live.isLoading
+                    ? copy.discovery.loadingEvents
+                    : copy.discovery.noMatchingEvents
+                }
+                text={
+                  live.isError
+                    ? copy.discovery.liveError
+                    : copy.discovery.noMatches
+                }
+                state={
+                  live.isLoading ? "loading" : live.isError ? "error" : "empty"
+                }
+                action={
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={live.refetchActiveSurface}
+                  >
+                    {copy.discovery.resetAll}
+                  </Button>
+                }
+              />
+            ) : null}
+          </div>
+
+          {live.totalCount &&
+          live.pageSize &&
+          live.totalCount > live.pageSize ? (
+            <div className="flex items-center justify-between border-t-2 border-brand-dark pt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!live.page || live.page <= 1}
+                onClick={() => {
+                  const prevPage = String(Math.max(1, (live.page ?? 1) - 1));
+                  live.setDiscoveryFilters?.({
+                    ...live.discoveryFilters,
+                    page: prevPage,
+                  });
+                }}
+              >
+                <ArrowLeft className="mr-2 size-4" />
+                {selectedLanguage === "DE" ? "Zurück" : "Previous"}
+              </Button>
+              <span className="text-xs font-black uppercase tracking-widest opacity-60">
+                {selectedLanguage === "DE" ? "Seite" : "Page"} {live.page} /{" "}
+                {Math.ceil(live.totalCount / live.pageSize)}
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!live.hasMore}
+                onClick={() => {
+                  const nextPage = String((live.page ?? 1) + 1);
+                  live.setDiscoveryFilters?.({
+                    ...live.discoveryFilters,
+                    page: nextPage,
+                  });
+                }}
+              >
+                {selectedLanguage === "DE" ? "Weiter" : "Next"}
+                <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </div>
           ) : null}
         </div>
       </DiscoveryShell>
