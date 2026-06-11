@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Badge,
   Card,
@@ -22,7 +23,7 @@ import { readDiscoveryMapProviderConfig } from "@/lib/discovery-map";
 import type { EventCardView } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
 import { BookingModal } from "./BookingModal";
-import { FadeInImage, LanguageContext, useCopy, useLiveData } from "./context";
+import { LanguageContext, useCopy, useLiveData } from "./context";
 import { DiscoveryFilterPanel } from "./DiscoveryFilterPanel";
 
 export function EventCard({
@@ -52,9 +53,11 @@ export function EventCard({
           compact ? "h-48" : "h-64",
         )}
       >
-        <FadeInImage
+        <SafeImage
           src={event.imageUrl || undefined}
           alt={event.title}
+          fallbackKind="event"
+          fadeIn
           className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:scale-110 group-hover:grayscale-0"
         />
         <Badge tone="dark" className="absolute left-3 top-3">

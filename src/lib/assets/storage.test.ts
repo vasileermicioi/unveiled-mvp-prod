@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   ADMIN_ASSET_UPLOAD_MAX_BYTES,
+  getAdminAssetUploadMaxBytes,
   uploadAdminAsset,
   uploadAdminAssetFile,
   validateAdminAssetUploadFile,
@@ -178,6 +179,61 @@ describe("asset storage", () => {
     expect(() =>
       validateRemoteAssetUrl("http://example.com/image.png"),
     ).toThrow();
+  });
+
+  test("uses the documented default cap when R2_MAX_UPLOAD_BYTES is unset", () => {
+    expect(getAdminAssetUploadMaxBytes({})).toBe(ADMIN_ASSET_UPLOAD_MAX_BYTES);
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "x.png",
+        contentType: "image/png",
+        size: ADMIN_ASSET_UPLOAD_MAX_BYTES,
+      }),
+    ).toEqual({ ok: true });
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "x.png",
+        contentType: "image/png",
+        size: ADMIN_ASSET_UPLOAD_MAX_BYTES + 1,
+      }),
+    ).toMatchObject({ ok: false, field: "file" });
+  });
+
+  test("enforces the operator-tuned R2_MAX_UPLOAD_BYTES cap", () => {
+    const env = { R2_MAX_UPLOAD_BYTES: "2097152" };
+    expect(getAdminAssetUploadMaxBytes(env)).toBe(2 * 1024 * 1024);
+
+    expect(
+      validateAdminAssetUploadFile({
+        filename: "x.png",
+        contentType: "image/png",
+        size: 2 * 1024 * 1024,
+        env,
+      }),
+    ).toEqual({ ok: true });
+
+    const rejection = validateAdminAssetUploadFile({
+      filename: "x.png",
+      contentType: "image/png",
+      size: 2 * 1024 * 1024 + 1,
+      env,
+    });
+    expect(rejection.ok).toBe(false);
+    if (!rejection.ok) {
+      expect(rejection.message).toContain("2 MB");
+    }
+  });
+
+  test("falls back to the default cap when R2_MAX_UPLOAD_BYTES is invalid", () => {
+    expect(getAdminAssetUploadMaxBytes({ R2_MAX_UPLOAD_BYTES: "abc" })).toBe(
+      ADMIN_ASSET_UPLOAD_MAX_BYTES,
+    );
+    expect(getAdminAssetUploadMaxBytes({ R2_MAX_UPLOAD_BYTES: "0" })).toBe(
+      ADMIN_ASSET_UPLOAD_MAX_BYTES,
+    );
+    expect(getAdminAssetUploadMaxBytes({ R2_MAX_UPLOAD_BYTES: "-100" })).toBe(
+      ADMIN_ASSET_UPLOAD_MAX_BYTES,
+    );
   });
 });
 

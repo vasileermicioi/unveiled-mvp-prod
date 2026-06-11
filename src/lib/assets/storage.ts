@@ -22,6 +22,20 @@ export const ADMIN_ASSET_UPLOAD_CONTENT_TYPES = [
   "image/gif",
 ] as const;
 
+function resolveMaxUploadBytes(env: RuntimeEnv = {}): number {
+  const raw = getRuntimeEnv(env).R2_MAX_UPLOAD_BYTES;
+  if (!raw) return ADMIN_ASSET_UPLOAD_MAX_BYTES;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return ADMIN_ASSET_UPLOAD_MAX_BYTES;
+  }
+  return parsed;
+}
+
+export function getAdminAssetUploadMaxBytes(env: RuntimeEnv = {}): number {
+  return resolveMaxUploadBytes(env);
+}
+
 export type UploadAssetInput = {
   viewer: Viewer;
   env?: AssetRuntimeEnv;
@@ -84,6 +98,7 @@ export function validateAdminAssetUploadFile(input: {
   filename?: string;
   contentType?: string;
   size?: number;
+  env?: RuntimeEnv;
 }): AssetUploadValidationResult {
   if (!input.filename?.trim()) {
     return {
@@ -114,11 +129,13 @@ export function validateAdminAssetUploadFile(input: {
     };
   }
 
-  if (input.size > ADMIN_ASSET_UPLOAD_MAX_BYTES) {
+  const maxBytes = resolveMaxUploadBytes(input.env);
+  if (input.size > maxBytes) {
+    const maxMb = Math.floor(maxBytes / (1024 * 1024));
     return {
       ok: false,
       field: "file",
-      message: "Image uploads must be 5 MB or smaller.",
+      message: `Image uploads must be ${maxMb} MB or smaller.`,
     };
   }
 

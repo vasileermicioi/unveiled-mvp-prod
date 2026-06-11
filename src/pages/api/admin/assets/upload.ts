@@ -34,6 +34,10 @@ export const POST: APIRoute = async ({ locals, request }) => {
       filename: file.name,
       contentType: file.type,
       size: file.size,
+      env: {
+        ...getCloudflareEnv(locals),
+        ...(cloudflareEnv as Record<string, unknown>),
+      } as Parameters<typeof validateAdminAssetUploadFile>[0]["env"],
     });
 
     if (!validation.ok) {

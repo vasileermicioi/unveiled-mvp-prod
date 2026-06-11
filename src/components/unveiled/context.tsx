@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Field,
   Panel,
@@ -329,34 +330,6 @@ export function GuestRowSkeleton() {
   );
 }
 
-export function FadeInImage({
-  src,
-  alt,
-  className,
-  ...props
-}: React.ImgHTMLAttributes<HTMLImageElement>) {
-  const [loaded, setLoaded] = useState(false);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset loaded state when src changes
-  useEffect(() => {
-    setLoaded(false);
-  }, [src]);
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      onLoad={() => setLoaded(true)}
-      className={cn(
-        "transition-opacity duration-500 ease-in-out",
-        loaded ? "opacity-100" : "opacity-0",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 interface PaginationProps {
   page: number;
   pageSize: number;
@@ -551,9 +524,10 @@ export function AdminAssetUploadField({
       <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
         <div className="grid aspect-video place-items-center overflow-hidden border-4 border-brand-dark bg-brand-grey">
           {visiblePreview ? (
-            <FadeInImage
+            <SafeImage
               src={visiblePreview}
               alt=""
+              fallbackKind={kind === "event" ? "event" : "partner"}
               className="h-full w-full object-cover"
             />
           ) : (

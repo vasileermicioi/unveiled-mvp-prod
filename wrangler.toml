@@ -7,9 +7,9 @@ observability = { enabled = true }
 
 [[kv_namespaces]]
 binding = "SESSION"
-id = "replace-with-cloudflare-kv-namespace-id"
-preview_id = "replace-with-cloudflare-preview-kv-namespace-id"
+id = "b25ac2e3eb4b4df082254d32c7fd6766"
+preview_id = "a970664d170d4d18833718fb6b0cd0ee"
 
 [[r2_buckets]]
 binding = "ASSETS_BUCKET"
-bucket_name = "unveiled-assets"
+bucket_name = "unveiled-dev"

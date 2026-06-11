@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "preview:cloudflare": "bun run build && wrangler dev --config dist/server/wrangler.json",
+    "preview:cloudflare": "bun run build && wrangler dev --config dist/server/wrangler.json --remote",
     "deploy:cloudflare": "bun run build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "astro",

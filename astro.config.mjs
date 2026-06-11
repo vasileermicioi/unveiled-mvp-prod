@@ -12,6 +12,9 @@ export default defineConfig({
     imageService: "compile",
     configPath: "wrangler.toml",
   }),
+  security: {
+    checkOrigin: false,
+  },
   integrations: [react()],
 
   vite: {
