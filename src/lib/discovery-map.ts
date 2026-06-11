@@ -4,8 +4,11 @@ export type DiscoveryMapSurface = "public" | "member";
 
 export type DiscoveryMapLoadState = "loading" | "ready" | "error" | "missing";
 
+export const DEFAULT_DISCOVERY_MAP_TILE_URL =
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
 export type DiscoveryMapProviderConfig = {
-  key?: string;
+  tileUrlTemplate: string;
   available: boolean;
 };
 
@@ -43,12 +46,16 @@ const berlinBounds = {
 };
 
 export function readDiscoveryMapProviderConfig(
-  env: { PUBLIC_GOOGLE_MAPS_API_KEY?: string | undefined } = {},
+  env: { PUBLIC_MAP_TILE_URL?: string | undefined } = {},
 ): DiscoveryMapProviderConfig {
-  const key = env.PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
+  const configured = env.PUBLIC_MAP_TILE_URL?.trim();
+  const tileUrlTemplate = configured || DEFAULT_DISCOVERY_MAP_TILE_URL;
   return {
-    key,
-    available: Boolean(key),
+    tileUrlTemplate,
+    available:
+      tileUrlTemplate.includes("{z}") &&
+      tileUrlTemplate.includes("{x}") &&
+      tileUrlTemplate.includes("{y}"),
   };
 }
 

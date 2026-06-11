@@ -598,7 +598,7 @@ export function MemberFeed({
   const [mapOpen, setMapOpen] = useState(false);
   const visible = useMemo(() => live.events, [live.events]);
   const mapProvider = readDiscoveryMapProviderConfig(
-    import.meta.env as { PUBLIC_GOOGLE_MAPS_API_KEY?: string },
+    import.meta.env as { PUBLIC_MAP_TILE_URL?: string },
   );
   const discovery = {
     ...demoDiscoveryShell,
@@ -663,7 +663,7 @@ export function MemberFeed({
           <DiscoveryMapPanel
             events={visible}
             surface="member"
-            providerKey={mapProvider.key}
+            tileUrlTemplate={mapProvider.tileUrlTemplate}
             actionLabel={copy.discovery.continueBooking}
             selectedMarkerIdOverride={selectedEvent?.id ?? null}
             onOpenEvent={(event) => {

@@ -131,7 +131,7 @@ export function PublicDiscover() {
   const [selectedPublicEvent, setSelectedPublicEvent] =
     useState<EventCardView | null>(null);
   const mapProvider = readDiscoveryMapProviderConfig(
-    import.meta.env as { PUBLIC_GOOGLE_MAPS_API_KEY?: string },
+    import.meta.env as { PUBLIC_MAP_TILE_URL?: string },
   );
   const visible = live.events;
   const discovery = {
@@ -176,7 +176,7 @@ export function PublicDiscover() {
           <DiscoveryMapPanel
             events={visible}
             surface="public"
-            providerKey={mapProvider.key}
+            tileUrlTemplate={mapProvider.tileUrlTemplate}
             actionLabel={copy.discovery.viewEvent}
             selectedMarkerIdOverride={selectedPublicEvent?.id ?? null}
             onOpenEvent={(event) => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Panel, StatePanel } from "@/components/ui/unveiled-primitives";
 import {
   createDiscoveryMapModel,
+  DEFAULT_DISCOVERY_MAP_TILE_URL,
   type DiscoveryMapLoadState,
   hasDiscoveryMapCoordinates,
 } from "@/lib/discovery-map";
@@ -20,7 +21,7 @@ const MAP_DEFAULT_CENTER = { lat: 52.52, lng: 13.405 };
 type DiscoveryMapPanelProps = {
   events: EventCardView[];
   surface: "public" | "member";
-  providerKey?: string;
+  tileUrlTemplate?: string;
   loadStateOverride?: DiscoveryMapLoadState;
   selectedMarkerIdOverride?: string | null;
   actionLabel: string;
@@ -46,8 +47,11 @@ function fromWorldCoordinates(x: number, y: number, zoom: number) {
   return { lat, lng };
 }
 
-function buildTileUrl(x: number, y: number, zoom: number) {
-  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+function buildTileUrl(template: string, x: number, y: number, zoom: number) {
+  return template
+    .replace("{z}", String(zoom))
+    .replace("{x}", String(x))
+    .replace("{y}", String(y));
 }
 
 function clampZoom(value: number) {
@@ -78,20 +82,22 @@ function buildMapTiles(center: { lat: number; lng: number }, zoom: number) {
 export function DiscoveryMapPanel({
   events,
   surface,
-  providerKey,
+  tileUrlTemplate,
   loadStateOverride,
   selectedMarkerIdOverride,
   actionLabel,
   onOpenEvent,
   onRetry,
 }: DiscoveryMapPanelProps) {
+  const resolvedTileUrlTemplate =
+    tileUrlTemplate ?? DEFAULT_DISCOVERY_MAP_TILE_URL;
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(
     selectedMarkerIdOverride ?? null,
   );
   const [center, setCenter] = useState(MAP_DEFAULT_CENTER);
   const [zoom, setZoom] = useState(MAP_DEFAULT_ZOOM);
   const [internalLoadState, setInternalLoadState] =
-    useState<DiscoveryMapLoadState>(providerKey ? "loading" : "missing");
+    useState<DiscoveryMapLoadState>("loading");
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{
     pointerId: number;
@@ -149,18 +155,13 @@ export function DiscoveryMapPanel({
       return;
     }
 
-    if (!providerKey) {
-      setInternalLoadState("missing");
-      return;
-    }
-
     setInternalLoadState("loading");
     const timeout = window.setTimeout(() => {
       setInternalLoadState("ready");
     }, 450);
 
     return () => window.clearTimeout(timeout);
-  }, [loadStateOverride, providerKey]);
+  }, [loadStateOverride]);
 
   const loadState = loadStateOverride ?? internalLoadState;
   useEffect(() => {
@@ -179,18 +180,20 @@ export function DiscoveryMapPanel({
   );
 
   useEffect(() => {
-    if (!selectedMarkerId) {
+    if (!selectedMarkerIdOverride) {
       lastPannedIdRef.current = null;
       return;
     }
-    if (selectedMarkerId === lastPannedIdRef.current) return;
+    if (selectedMarkerIdOverride === lastPannedIdRef.current) return;
 
-    const marker = model.readyMarkers.find((m) => m.id === selectedMarkerId);
+    const marker = model.readyMarkers.find(
+      (m) => m.id === selectedMarkerIdOverride,
+    );
     if (marker) {
-      lastPannedIdRef.current = selectedMarkerId;
+      lastPannedIdRef.current = selectedMarkerIdOverride;
       panTo(marker.lat, marker.lng);
     }
-  }, [selectedMarkerId, model.readyMarkers, panTo]);
+  }, [selectedMarkerIdOverride, model.readyMarkers, panTo]);
 
   useEffect(() => {
     if (model.readyMarkers.length === 0) return;
@@ -225,6 +228,10 @@ export function DiscoveryMapPanel({
 
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
+      if (animationFrameIdRef.current !== null) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
       const delta = event.deltaY < 0 ? 1 : -1;
       setZoom((currentZoom) => clampZoom(currentZoom + delta));
     };
@@ -341,7 +348,12 @@ export function DiscoveryMapPanel({
               key={tile.id}
               alt=""
               aria-hidden="true"
-              src={buildTileUrl(tile.tileX, tile.tileY, zoom)}
+              src={buildTileUrl(
+                resolvedTileUrlTemplate,
+                tile.tileX,
+                tile.tileY,
+                zoom,
+              )}
               className="absolute h-64 w-64 max-w-none select-none object-cover"
               draggable={false}
               onDragStart={(event) => event.preventDefault()}
@@ -368,13 +380,13 @@ export function DiscoveryMapPanel({
               {selectedEvent ? (
                 <>
                   <p className="mt-2 text-[10px] font-black uppercase tracking-[0.22em] opacity-55">
-                    Previewing event
+                    {selectedEvent.category} · {selectedEvent.neighborhood}
                   </p>
                   <p className="mt-1 truncate font-display text-xl font-black uppercase leading-none md:text-2xl">
                     {selectedEvent.title}
                   </p>
                   <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] opacity-65">
-                    {selectedEvent.dateLabel} / {selectedEvent.partnerName}
+                    {selectedEvent.dateLabel}
                   </p>
                 </>
               ) : (

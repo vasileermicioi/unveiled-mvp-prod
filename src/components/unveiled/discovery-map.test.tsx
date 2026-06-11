@@ -32,7 +32,6 @@ describe("DiscoveryMapPanel", () => {
         <DiscoveryMapPanel
           events={[event]}
           surface="public"
-          providerKey="api-key"
           loadStateOverride="loading"
           actionLabel="View event"
           onOpenEvent={() => undefined}
@@ -45,13 +44,43 @@ describe("DiscoveryMapPanel", () => {
         <DiscoveryMapPanel
           events={[event]}
           surface="public"
-          providerKey="api-key"
           loadStateOverride="error"
           actionLabel="View event"
           onOpenEvent={() => undefined}
         />,
       ),
     ).toContain("Map connection failed");
+  });
+
+  test("renders without a proprietary provider key using the default open tile layer", () => {
+    const markup = renderToStaticMarkup(
+      <DiscoveryMapPanel
+        events={[event]}
+        surface="public"
+        loadStateOverride="ready"
+        actionLabel="View event"
+        onOpenEvent={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("tile.openstreetmap.org");
+    expect(markup).toContain("Mitte Art");
+  });
+
+  test("uses a custom open tile template when provided", () => {
+    const markup = renderToStaticMarkup(
+      <DiscoveryMapPanel
+        events={[event]}
+        surface="public"
+        loadStateOverride="ready"
+        tileUrlTemplate="https://tiles.example.com/{z}/{x}/{y}.png"
+        actionLabel="View event"
+        onOpenEvent={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("https://tiles.example.com/13/");
+    expect(markup).not.toContain("tile.openstreetmap.org");
   });
 
   test("derives marker positions when coordinates are missing", () => {
@@ -66,7 +95,6 @@ describe("DiscoveryMapPanel", () => {
           },
         ]}
         surface="member"
-        providerKey="api-key"
         loadStateOverride="ready"
         actionLabel="Continue to booking"
         onOpenEvent={() => undefined}
@@ -76,12 +104,11 @@ describe("DiscoveryMapPanel", () => {
     expect(markup).toContain("Mitte Art");
   });
 
-  test("renders marker labels and selected event details", () => {
+  test("renders marker labels and popup contents with category, neighborhood, title, formatted time, and action", () => {
     const markup = renderToStaticMarkup(
       <DiscoveryMapPanel
         events={[event]}
         surface="member"
-        providerKey="api-key"
         loadStateOverride="ready"
         selectedMarkerIdOverride="event-1"
         actionLabel="Continue to booking"
@@ -92,8 +119,10 @@ describe("DiscoveryMapPanel", () => {
     expect(markup).toContain("Mitte Art");
     expect(markup).toContain("Continue to booking");
     expect(markup).toContain("Parity Public Opening");
+    expect(markup).toContain("Art");
+    expect(markup).toContain("Mitte");
+    expect(markup).toContain("Tomorrow, 18:00");
     expect(markup).toContain("1 event on map");
-    expect(markup).toContain("Previewing event");
-    expect(markup).not.toContain("Mitte Art //");
+    expect(markup).not.toContain("Previewing event");
   });
 });

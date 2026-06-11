@@ -37,3 +37,4 @@ _old_app/
 .tmp/
 .codex 
 .agent/
+.opencode/

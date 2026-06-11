@@ -89,6 +89,12 @@ test.describe("public and member route parity", () => {
     await expect(
       discoverPage.getByText("Mitte Art", { exact: true }).first(),
     ).toBeVisible({ timeout: 5000 });
+    await expect(
+      discoverPage.locator(".touch-none").first(),
+    ).toBeVisible({ timeout: 5000 });
+    await expect(
+      discoverPage.getByRole("button", { name: /Mitte Art marker/ }).first(),
+    ).toBeVisible({ timeout: 5000 });
     await expect(discoverPage.getByLabel("Start date")).toHaveCount(0);
     await expectNoDemoOnlyLabels(discoverPage);
     await discoverPage.close();
@@ -153,6 +159,12 @@ test.describe("public and member route parity", () => {
     ).toBeVisible({
       timeout: 5000,
     });
+    await expect(page.locator(".touch-none").first()).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(
+      page.getByRole("button", { name: /Mitte Art marker/ }).first(),
+    ).toBeVisible({ timeout: 5000 });
 
     await page.goto("/saved");
     await expect(

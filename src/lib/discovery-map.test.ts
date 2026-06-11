@@ -2,22 +2,26 @@ import { describe, expect, test } from "bun:test";
 
 import {
   createDiscoveryMapModel,
+  DEFAULT_DISCOVERY_MAP_TILE_URL,
   hasDiscoveryMapCoordinates,
   projectDiscoveryMapPosition,
   readDiscoveryMapProviderConfig,
 } from "./discovery-map";
 
 describe("discovery map helpers", () => {
-  test("reads browser-safe provider config", () => {
+  test("reads browser-safe open tile provider config", () => {
     expect(
       readDiscoveryMapProviderConfig({
-        PUBLIC_GOOGLE_MAPS_API_KEY: "  api-key  ",
+        PUBLIC_MAP_TILE_URL: "https://tiles.example.com/{z}/{x}/{y}.png",
       }),
-    ).toEqual({ key: "api-key", available: true });
+    ).toEqual({
+      tileUrlTemplate: "https://tiles.example.com/{z}/{x}/{y}.png",
+      available: true,
+    });
 
     expect(readDiscoveryMapProviderConfig({})).toEqual({
-      key: undefined,
-      available: false,
+      tileUrlTemplate: DEFAULT_DISCOVERY_MAP_TILE_URL,
+      available: true,
     });
   });
 
