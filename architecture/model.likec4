@@ -1,0 +1,350 @@
+model {
+  // ---------------------------------------------------------------------------
+  // L1 — System Context
+  // ---------------------------------------------------------------------------
+  guest = actor 'Guest' {
+    #role-actor, #surface-browser, #domain-discover, #spec-likec4-architecture
+    description 'Unauthenticated viewer browsing public discovery and membership landing pages.'
+  }
+  member = actor 'Member' {
+    #role-actor, #surface-browser, #domain-bookings, #spec-likec4-architecture
+    description 'Authenticated subscriber booking cultural access events and managing saved events.'
+  }
+  partner = actor 'Partner' {
+    #role-actor, #surface-browser, #domain-operations, #spec-likec4-architecture
+    description 'Venue manager checking in members and updating venue details.'
+  }
+  admin = actor 'Admin' {
+    #role-actor, #surface-browser, #domain-operations, #spec-likec4-architecture
+    description 'Superuser overseeing users, venues, and global configuration.'
+  }
+
+  browser = container 'Browser' {
+    #role-ui, #surface-browser, #domain-app-shell, #spec-likec4-architecture
+    description 'User agent running the Astro/React client bundle.'
+  }
+
+  unveiled = system 'Unveiled' {
+    #role-process, #surface-system, #domain-app-shell, #spec-likec4-architecture
+    description 'The Unveiled MVP system boundary.'
+  }
+
+  stripe = external 'Stripe' {
+    #role-external, #surface-external, #domain-payments, #spec-likec4-architecture
+    description 'External billing processor (subscriptions, checkout, webhooks).'
+  }
+  r2 = external 'Cloudflare R2' {
+    #role-external, #surface-external, #domain-media, #spec-likec4-architecture
+    description 'Object storage for event banners, partner logos, and avatars.'
+  }
+  cloudflare = external 'Cloudflare Workers/Pages' {
+    #role-external, #surface-external, #domain-deployment, #spec-likec4-architecture
+    description 'Hosting platform for the SSR worker and static assets.'
+  }
+  email = external 'Email Provider' {
+    #role-external, #surface-external, #domain-notifications, #spec-likec4-architecture
+    description 'Transactional email delivery (Resend).'
+  }
+
+  // L1 relationships
+  browser -> guest 'is'
+  browser -> member 'is'
+  browser -> partner 'is'
+  browser -> admin 'is'
+
+  guest -> unveiled 'Browses events & memberships via HTTPS'
+  member -> unveiled 'Manages bookings, payments, saved events via HTTPS'
+  partner -> unveiled 'Checks in members, manages venue details via HTTPS'
+  admin -> unveiled 'Manages users, venues, systems via HTTPS'
+
+  unveiled -> stripe 'API requests / HTTPS'
+  stripe -> unveiled 'Webhook notifications / HTTPS'
+  unveiled -> r2 'Object storage / HTTPS'
+  unveiled -> cloudflare 'Runs on / HTTPS'
+  cloudflare -> unveiled 'Hosts / Serves'
+  unveiled -> email 'Sends notifications / HTTPS'
+
+  // ---------------------------------------------------------------------------
+  // L2 — Containers
+  // ---------------------------------------------------------------------------
+  astroWorker = container 'Astro SSR Worker' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    description 'The Astro SSR application running as a Cloudflare Worker.'
+  }
+  reactIslands = container 'React Islands Bundle' {
+    #role-ui, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    description 'Client-side React components hydrated on demand.'
+  }
+  pglite = store 'PGlite (local)' {
+    #role-store, #surface-data, #domain-domain-data, #spec-likec4-architecture
+    description 'Local in-process Postgres for development and tests.'
+  }
+  neon = store 'Neon Postgres (prod)' {
+    #role-store, #surface-data, #domain-domain-data, #spec-likec4-architecture
+    description 'Serverless Postgres used in production deployments.'
+  }
+  r2Bucket = store 'R2 Bucket' {
+    #role-store, #surface-data, #domain-media, #spec-likec4-architecture
+    description 'R2 bucket used for asset storage.'
+  }
+  stripeClient = container 'Stripe API Client' {
+    #role-process, #surface-runtime, #domain-payments, #spec-likec4-architecture
+    description 'Server-side Stripe SDK wrapper used by Astro Actions.'
+  }
+  emailWorker = container 'Email Worker' {
+    #role-process, #surface-runtime, #domain-notifications, #spec-likec4-architecture
+    description 'Server-side Resend client for transactional email.'
+  }
+  cronTrigger = container 'Cron Trigger' {
+    #role-process, #surface-runtime, #domain-jobs, #spec-likec4-architecture
+    description 'Cloudflare cron handler that runs scheduled jobs.'
+  }
+
+  unveiled -> astroWorker 'is implemented by'
+  astroWorker -> reactIslands 'hydrates'
+  astroWorker -> pglite 'reads/writes (local)'
+  astroWorker -> neon 'reads/writes (prod)'
+  astroWorker -> r2Bucket 'stores objects'
+  astroWorker -> stripeClient 'delegates to'
+  astroWorker -> emailWorker 'delegates to'
+  astroWorker -> cronTrigger 'is triggered by'
+
+  stripeClient -> stripe 'HTTPS'
+  r2Bucket -> r2 'HTTPS'
+  emailWorker -> email 'HTTPS'
+
+  // ---------------------------------------------------------------------------
+  // L3 — Components inside Astro SSR Worker
+  // ---------------------------------------------------------------------------
+  publicDiscover = component 'public-discover' {
+    #role-ui, #surface-public-discover, #domain-discover, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/pages/[lang]'
+    }
+    description 'Public discovery pages: discover, FAQ, how-it-works, membership, onboarding.'
+  }
+  memberApp = component 'member-app' {
+    #role-ui, #surface-member-app, #domain-bookings, #spec-likec4-architecture
+    description 'Member surfaces: app, bookings, saved, profile, onboarding.'
+  }
+  adminPanel = component 'admin-panel' {
+    #role-ui, #surface-admin-panel, #domain-operations, #spec-likec4-architecture
+    description 'Admin surfaces (admin.astro and child routes).'
+  }
+  partnerPortal = component 'partner-portal' {
+    #role-ui, #surface-partner-portal, #domain-operations, #spec-likec4-architecture
+    description 'Partner portal surfaces (partner.astro, venue-check-in).'
+  }
+
+  astroWorker -> publicDiscover 'renders'
+  astroWorker -> memberApp 'renders'
+  astroWorker -> adminPanel 'renders'
+  astroWorker -> partnerPortal 'renders'
+
+  // Lib modules
+  libAuth = component 'lib-auth' {
+    #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/auth.ts'
+    }
+    description 'Better Auth integration and session helpers.'
+  }
+  libAuthAccountActions = component 'lib-auth-account-actions' {
+    #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/auth-account-actions.ts'
+    }
+  }
+  libAuthProfile = component 'lib-auth-profile' {
+    #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/auth-profile.ts'
+    }
+  }
+  libAdminOps = component 'lib-admin-operations' {
+    #role-process, #surface-runtime, #domain-operations, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/admin-operations.ts'
+    }
+  }
+  libAppShell = component 'lib-app-shell-view-models' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/app-shell-view-models.ts'
+    }
+  }
+  libAssets = component 'lib-assets-storage' {
+    #role-process, #surface-runtime, #domain-media, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/assets/storage.ts'
+    }
+  }
+  libBehavior = component 'lib-behavior-tracking' {
+    #role-process, #surface-runtime, #domain-discover, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/behavior-tracking.ts'
+    }
+  }
+  libBookings = component 'lib-booking-transactions' {
+    #role-process, #surface-runtime, #domain-bookings, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/booking-transactions.ts'
+    }
+  }
+  libCalendar = component 'lib-calendar' {
+    #role-process, #surface-runtime, #domain-bookings, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/calendar.ts'
+    }
+  }
+  libDiscoveryMap = component 'lib-discovery-map' {
+    #role-process, #surface-runtime, #domain-discover, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/discovery-map.ts'
+    }
+  }
+  libEnv = component 'lib-env' {
+    #role-process, #surface-runtime, #domain-deployment, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/env.ts'
+    }
+  }
+  libFormsSchemas = component 'lib-forms-schemas' {
+    #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/forms/schemas.ts'
+    }
+  }
+  libFormsClientAction = component 'lib-forms-client-action' {
+    #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/forms/client-action.ts'
+    }
+  }
+  libI18n = component 'lib-i18n' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/i18n.ts'
+    }
+  }
+  libProductRoutes = component 'lib-product-routes' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/product-routes.ts'
+    }
+  }
+  libDataAccessRepos = component 'lib-data-access-repositories' {
+    #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/data-access/repositories.ts'
+    }
+  }
+  libDataAccessLoaders = component 'lib-data-access-loaders' {
+    #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/data-access/loaders.ts'
+    }
+  }
+  libDataAccessFetchers = component 'lib-data-access-fetchers' {
+    #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/data-access/fetchers.ts'
+    }
+  }
+  libDataAccessMappers = component 'lib-data-access-mappers' {
+    #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/data-access/mappers.ts'
+    }
+  }
+  libJobsDailyCodes = component 'lib-jobs-daily-partner-codes' {
+    #role-process, #surface-runtime, #domain-jobs, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/jobs/daily-partner-codes.ts'
+    }
+  }
+  libJobsResend = component 'lib-jobs-resend-client' {
+    #role-process, #surface-runtime, #domain-notifications, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/jobs/resend-client.ts'
+    }
+  }
+
+  astroWorker -> libAuth 'uses'
+  astroWorker -> libAuthAccountActions 'uses'
+  astroWorker -> libAuthProfile 'uses'
+  astroWorker -> libAdminOps 'uses'
+  astroWorker -> libAppShell 'uses'
+  astroWorker -> libAssets 'uses'
+  astroWorker -> libBehavior 'uses'
+  astroWorker -> libBookings 'uses'
+  astroWorker -> libCalendar 'uses'
+  astroWorker -> libDiscoveryMap 'uses'
+  astroWorker -> libEnv 'uses'
+  astroWorker -> libFormsSchemas 'uses'
+  astroWorker -> libFormsClientAction 'uses'
+  astroWorker -> libI18n 'uses'
+  astroWorker -> libProductRoutes 'uses'
+  astroWorker -> libDataAccessRepos 'uses'
+  astroWorker -> libDataAccessLoaders 'uses'
+  astroWorker -> libDataAccessFetchers 'uses'
+  astroWorker -> libDataAccessMappers 'uses'
+  astroWorker -> libJobsDailyCodes 'uses'
+  astroWorker -> libJobsResend 'uses'
+
+  // Astro Action surface
+  astroActions = component 'astro-actions' {
+    #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/actions/index.ts'
+    }
+    description 'Astro Actions handler (`src/actions/index.ts`).'
+  }
+  astroWorker -> astroActions 'exposes'
+
+  // Drizzle repositories (logical view of the schema)
+  drizzleRepos = component 'drizzle-repositories' {
+    #role-store, #surface-data, #domain-domain-data, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/db/schema.ts'
+    }
+    description 'Drizzle schema and repository functions over PGlite/Neon.'
+  }
+  pglite -> drizzleRepos 'is queried by'
+  neon -> drizzleRepos 'is queried by'
+
+  // Better Auth integration
+  betterAuth = component 'better-auth-integration' {
+    #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'src/lib/auth.ts'
+    }
+    description 'Better Auth engine wired through the Drizzle adapter.'
+  }
+  astroWorker -> betterAuth 'delegates to'
+}

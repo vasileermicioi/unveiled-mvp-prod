@@ -1,0 +1,22 @@
+name: architecture
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  arch-check:
+    name: arch:check (model + drift)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Validate the LikeC4 model
+        run: bunx likec4 validate
+      - name: Run the architecture drift check
+        run: bun run arch:drift

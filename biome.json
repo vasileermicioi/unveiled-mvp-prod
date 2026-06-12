@@ -14,7 +14,8 @@
       "!.wrangler",
       "!node_modules",
       "!drizzle",
-      "!_old_app"
+      "!_old_app",
+      "!architecture"
     ]
   },
   "formatter": {

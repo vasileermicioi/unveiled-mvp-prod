@@ -1,0 +1,126 @@
+specification {
+  // Element kinds
+  element actor {
+    style {
+      shape person
+    }
+  }
+  element system {
+    style {
+      color secondary
+    }
+  }
+  element container {
+    style {
+      shape rectangle
+    }
+  }
+  element component {
+    style {
+      shape component
+    }
+  }
+  element store {
+    style {
+      shape storage
+    }
+  }
+  element external {
+    style {
+      color muted
+      border dashed
+    }
+  }
+
+  // Deployment node kinds
+  deploymentNode environment {
+    style {
+      color green
+    }
+  }
+  deploymentNode runtime {
+    style {
+      color blue
+    }
+  }
+  deploymentNode dataplane {
+    style {
+      color amber
+    }
+  }
+
+  // Relationship kinds
+  relationship uses
+  relationship reads
+  relationship writes
+  relationship triggers
+
+  // Tag namespacing: each category is a prefix and each value is a separate
+  // tag (e.g. `#role-actor`, `#domain-discover`). The unit test in
+  // `tests/architecture/model-tags.test.ts` asserts every element carries
+  // exactly one tag from each prefix.
+
+  // Role tags
+  tag role-actor
+  tag role-process
+  tag role-store
+  tag role-external
+  tag role-ui
+
+  // Surface tags
+  tag surface-browser
+  tag surface-external
+  tag surface-system
+  tag surface-runtime
+  tag surface-data
+  tag surface-public-discover
+  tag surface-member-app
+  tag surface-admin-panel
+  tag surface-partner-portal
+  tag surface-deployment-local
+  tag surface-deployment-preview
+  tag surface-deployment-prod
+
+  // Domain tags
+  tag domain-discover
+  tag domain-bookings
+  tag domain-auth
+  tag domain-payments
+  tag domain-media
+  tag domain-forms
+  tag domain-data-access
+  tag domain-domain-data
+  tag domain-operations
+  tag domain-jobs
+  tag domain-notifications
+  tag domain-app-shell
+  tag domain-deployment
+  tag domain-pages
+  tag domain-ui-system
+  tag domain-refactor
+  tag domain-e2e
+  tag domain-display
+
+  // Spec tags (one per openspec capability the element belongs to)
+  tag spec-likec4-architecture
+  tag spec-image-storage
+  tag spec-auth
+  tag spec-booking-transactions
+  tag spec-data-access
+  tag spec-deployment
+  tag spec-discover-filters-pagination
+  tag spec-display-data
+  tag spec-domain-data
+  tag spec-e2e-gherkin-playwright
+  tag spec-forms-actions
+  tag spec-jobs-notifications
+  tag spec-operations
+  tag spec-app-shell
+  tag spec-pages
+  tag spec-payments-subscriptions
+  tag spec-refactor-big-files
+  tag spec-ui-system
+
+  // Path marker tag (the path value is encoded in metadata.path)
+  tag has-path
+}

@@ -1,0 +1,129 @@
+// ---------------------------------------------------------------------------
+// Views — projections of the model from various perspectives.
+//
+// Two top-level folders:
+//
+//   C4            — the canonical C4 hierarchy (Context → Container →
+//                   Component → Deployment → Dynamic).
+//   Domain views  — tag-scoped slices filtered by `domain:` and `surface:`
+//                   so reviewers can pull out a single feature area.
+//
+// Folder titles are set with the common-folder syntax (`views 'C4' { ... }`)
+// so the grouping is visible at a glance in the source AND in the rendered
+// sidebar.
+// ---------------------------------------------------------------------------
+
+views 'C4' {
+  // L1 — System Context
+  view systemContext {
+    title 'L1 / System Context'
+    description 'External actors and systems that interact with the Unveiled platform.'
+    include
+      guest,
+      member,
+      partner,
+      admin,
+      browser,
+      unveiled,
+      stripe,
+      r2,
+      cloudflare,
+      email
+  }
+
+  // L2 — Container
+  view container {
+    title 'L2 / Container'
+    description 'Runtime containers inside the Unveiled system.'
+    include
+      astroWorker,
+      reactIslands,
+      pglite,
+      neon,
+      r2Bucket,
+      stripeClient,
+      emailWorker,
+      cronTrigger
+  }
+
+  // L3 — Component
+  view components {
+    title 'L3 / Component'
+    description 'Astro page groups, lib modules, Astro Actions, Drizzle repositories, and Better Auth.'
+    include
+      publicDiscover,
+      memberApp,
+      adminPanel,
+      partnerPortal,
+      libAuth,
+      libAuthAccountActions,
+      libAuthProfile,
+      libAdminOps,
+      libAppShell,
+      libAssets,
+      libBehavior,
+      libBookings,
+      libCalendar,
+      libDiscoveryMap,
+      libEnv,
+      libFormsSchemas,
+      libFormsClientAction,
+      libI18n,
+      libProductRoutes,
+      libDataAccessRepos,
+      libDataAccessLoaders,
+      libDataAccessFetchers,
+      libDataAccessMappers,
+      libJobsDailyCodes,
+      libJobsResend,
+      astroActions,
+      drizzleRepos,
+      betterAuth
+  }
+
+  // L4 — Deployment (one view per environment).
+  //
+  // The deployment views live in `architecture/deployment.likec4` next to
+  // the deployment model they project.
+
+  // L5 — Dynamic: Booking lifecycle
+  dynamic view bookingLifecycle {
+    title 'L5 / Booking Lifecycle'
+    description 'Member books an event, transaction adjusts the credit ledger, email is sent, optional receipt is stored.'
+
+    member -> astroActions 'Submits booking via form'
+    astroActions -> libBookings 'Invokes booking transaction'
+    libBookings -> libDataAccessRepos 'Adjusts credit ledger'
+    libBookings -> libJobsResend 'Sends confirmation'
+    libBookings -> libAssets 'Stores optional receipt artifact'
+    libAssets -> r2Bucket 'Writes object'
+  }
+}
+
+views 'Domain views' {
+  // Tag-scoped slices filtered by `domain:` and `surface:`.
+
+  view publicDiscoverOnly {
+    title 'Public Discover'
+    description 'Components tagged with surface-public-discover.'
+    include publicDiscover, libDiscoveryMap, libBehavior, libI18n
+  }
+
+  view bookingsPaths {
+    title 'Bookings'
+    description 'Components tagged with domain-bookings.'
+    include libBookings, libCalendar, drizzleRepos, memberApp
+  }
+
+  view paymentsPaths {
+    title 'Payments'
+    description 'Components tagged with domain-payments.'
+    include stripeClient, stripe
+  }
+
+  view operationsPaths {
+    title 'Operations'
+    description 'Components tagged with domain-operations.'
+    include adminPanel, partnerPortal, libAdminOps
+  }
+}

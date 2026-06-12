@@ -1,0 +1,64 @@
+// ---------------------------------------------------------------------------
+// L4 — Deployment
+// ---------------------------------------------------------------------------
+deployment {
+  environment local 'Local Bun Dev' {
+    #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
+    technology 'Bun + Astro SSR'
+    runtime dev {
+      #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
+      instanceOf astroWorker
+    }
+    dataplane pglite {
+      #surface-deployment-local, #domain-domain-data, #spec-likec4-architecture
+      instanceOf pglite
+    }
+    dev -> pglite 'reads/writes'
+  }
+
+  environment preview 'Cloudflare Pages Preview' {
+    #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
+    technology 'Cloudflare Pages'
+    runtime pages {
+      #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
+      instanceOf astroWorker
+    }
+    dataplane previewDb {
+      #surface-deployment-preview, #domain-domain-data, #spec-likec4-architecture
+      instanceOf neon
+    }
+    pages -> previewDb 'reads/writes'
+  }
+
+  environment prod 'Cloudflare Workers Production' {
+    #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
+    technology 'Cloudflare Workers'
+    runtime workers {
+      #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
+      instanceOf astroWorker
+    }
+    dataplane prodDb {
+      #surface-deployment-prod, #domain-domain-data, #spec-likec4-architecture
+      instanceOf neon
+    }
+    workers -> prodDb 'reads/writes'
+  }
+}
+
+views 'C4' {
+  deployment view deploymentLocal {
+    title 'L4 / Deployment / Local Bun Dev'
+    description 'Local development deployment with PGlite.'
+    include local.**
+  }
+  deployment view deploymentPreview {
+    title 'L4 / Deployment / Cloudflare Pages Preview'
+    description 'Preview deployment using Neon Postgres.'
+    include preview.**
+  }
+  deployment view deploymentProd {
+    title 'L4 / Deployment / Cloudflare Workers Production'
+    description 'Production deployment using Neon Postgres.'
+    include prod.**
+  }
+}
