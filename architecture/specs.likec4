@@ -43,7 +43,6 @@ global {
 //   domain:pages        -> openspec/specs/pages
 //   domain:ui-system    -> openspec/specs/ui-system
 //   domain:refactor     -> openspec/specs/refactor-big-files
-//   domain:e2e          -> openspec/specs/e2e-gherkin-playwright
 //   domain:display      -> openspec/specs/display-data
 //
 // New domains MUST be added to the closed enum in

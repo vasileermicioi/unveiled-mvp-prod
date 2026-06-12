@@ -24,7 +24,6 @@ export const SPEC_TAGS = [
   "discover-filters-pagination",
   "display-data",
   "domain-data",
-  "e2e-gherkin-playwright",
   "forms-actions",
   "jobs-notifications",
   "operations",

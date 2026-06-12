@@ -111,7 +111,6 @@ specification {
   tag spec-discover-filters-pagination
   tag spec-display-data
   tag spec-domain-data
-  tag spec-e2e-gherkin-playwright
   tag spec-forms-actions
   tag spec-jobs-notifications
   tag spec-operations

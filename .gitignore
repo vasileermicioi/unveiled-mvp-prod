@@ -39,3 +39,10 @@ _old_app/
 .agent/
 .opencode/
 .development-plan/
+
+# typespec emitters — only `openapi.yaml` is the source of truth, the rest
+# (per-model JSON Schemas, the JSON copy of openapi.yaml) is regenerated
+# on demand by `bun run specs:gen`.
+typespec/output/
+!typespec/output/openapi.yaml
+!typespec/output/.gitkeep

@@ -1,0 +1,2139 @@
+openapi: 3.1.0
+info:
+  title: Unveiled API
+  version: 0.0.0
+tags: []
+paths:
+  /api/account/login:
+    post:
+      operationId: AccountRoutes_login
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AuthResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth.LoginRequest'
+  /api/account/logout:
+    post:
+      operationId: AccountRoutes_logout
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AuthResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth.LogoutRequest'
+  /api/account/password-recovery:
+    post:
+      operationId: AccountRoutes_passwordRecovery
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AuthResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth.PasswordRecoveryRequest'
+  /api/account/signup:
+    post:
+      operationId: AccountRoutes_signup
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AuthResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth.SignupRequest'
+  /api/admin/assets/upload:
+    post:
+      operationId: AdminRoutes_uploadAsset
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Admin.AssetUploadResult'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Admin.AdminError'
+      requestBody:
+        required: true
+        content:
+          '*/*':
+            schema:
+              contentMediaType: '*/*'
+  /api/data-access/{surface}.json:
+    get:
+      operationId: DataAccessRoutes_querySurface
+      parameters:
+        - name: surface
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema: {}
+  /api/health.json:
+    get:
+      operationId: HealthRoutes_health
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/System.HealthResult'
+  /api/me:
+    get:
+      operationId: MeRoutes_getMe
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AccountMe'
+    delete:
+      operationId: MeRoutes_deleteAccount
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AuthResult'
+  /api/me/profile:
+    patch:
+      operationId: MeRoutes_updateProfile
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.AccountMe'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth.UpdateProfileRequest'
+  /api/partner/check-in:
+    post:
+      operationId: PartnerRoutes_checkIn
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partner.PartnerCheckInResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Partner.PartnerCheckInRequest'
+  /api/partner/export/bookings:
+    get:
+      operationId: PartnerRoutes_exportBookings
+      parameters:
+        - name: eventId
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Common.Id'
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Partner.PartnerExportRow'
+  /api/partner/portal:
+    get:
+      operationId: PartnerRoutes_getPortal
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partner.PartnerPortal'
+  /api/partner/venue-qr/check-in:
+    post:
+      operationId: PartnerRoutes_venueQrCheckIn
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partner.VenueQrCheckInResult'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Partner.VenueQrCheckInRequest'
+  /api/readiness.json:
+    get:
+      operationId: ReadinessRoutes_readiness
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/System.ReadinessResult'
+  /api/stripe/webhook:
+    post:
+      operationId: StripeRoutes_stripeWebhook
+      parameters:
+        - name: stripe-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                required:
+                  - received
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhooks.WebhookError'
+      requestBody:
+        required: true
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/Webhooks.StripeEvent'
+  /api/surface/admin:
+    post:
+      operationId: SurfaceRoutes_admin
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member.AdminSurface'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Surfaces.AdminInput'
+  /api/surface/member:
+    post:
+      operationId: SurfaceRoutes_member
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member.MemberSurface'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Surfaces.MemberInput'
+  /api/surface/partner:
+    post:
+      operationId: SurfaceRoutes_partner
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member.PartnerSurface'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Surfaces.PartnerInput'
+  /api/surface/public-discovery:
+    post:
+      operationId: SurfaceRoutes_publicDiscovery
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member.PublicDiscoverySurface'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Surfaces.PublicDiscoveryInput'
+components:
+  schemas:
+    Admin.AdminError:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        fieldErrors:
+          type: object
+          unevaluatedProperties:
+            type: string
+      description: Admin error envelope.
+    Admin.AssetUploadResult:
+      type: object
+      required:
+        - url
+        - key
+        - kind
+        - size
+        - contentType
+      properties:
+        url:
+          type: string
+          description: Public URL of the stored asset.
+        key:
+          type: string
+          description: Object key inside the R2 bucket.
+        kind:
+          allOf:
+            - $ref: '#/components/schemas/Common.AssetKind'
+          description: Asset kind discriminator.
+        size:
+          type: integer
+          format: int64
+          description: Byte size of the uploaded object.
+        contentType:
+          type: string
+          description: Validated content type.
+      description: Asset upload success result.
+    Admin.Event:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - ticketType
+        - startAt
+        - capacity
+        - remainingCapacity
+        - ageGroups
+        - languages
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        ticketType:
+          $ref: '#/components/schemas/Common.TicketType'
+        startAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        endAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          $ref: '#/components/schemas/Common.CountryCode'
+        neighborhood:
+          type: string
+        imageUrl:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        remainingCapacity:
+          type: integer
+          format: int32
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        partnerName:
+          type: string
+        ageGroups:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        promoCode:
+          type: string
+        secretCode:
+          type: string
+        secretCodeMode:
+          type: string
+          enum:
+            - PASSWORD
+            - CODE
+        eventWebsiteUrl:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Event record exposed over the wire.
+    Admin.Partner:
+      type: object
+      required:
+        - id
+        - name
+        - contactEmail
+        - portalAccessEnabled
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        name:
+          type: string
+        contactEmail:
+          $ref: '#/components/schemas/Common.Email'
+        contactPhone:
+          $ref: '#/components/schemas/Common.PhoneNumber'
+        websiteUrl:
+          type: string
+        logoUrl:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          $ref: '#/components/schemas/Common.CountryCode'
+        description:
+          type: string
+        portalAccessEnabled:
+          type: boolean
+        venueToken:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Partner record exposed over the wire.
+    AstroActions.AdminTicketInput:
+      type: object
+      required:
+        - userId
+        - eventId
+        - ticketQuantity
+        - consumeCapacity
+        - debitCredits
+        - idempotencyKey
+      properties:
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        ticketQuantity:
+          type: integer
+          format: int32
+        consumeCapacity:
+          type: boolean
+        debitCredits:
+          type: boolean
+        idempotencyKey:
+          type: string
+    AstroActions.BookingActionInput:
+      type: object
+      required:
+        - eventId
+        - ticketQuantity
+        - idempotencyKey
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        ticketQuantity:
+          type: integer
+          format: int32
+        idempotencyKey:
+          type: string
+    AstroActions.CheckInInput:
+      type: object
+      required:
+        - bookingId
+      properties:
+        bookingId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.CreditAdjustmentInput:
+      type: object
+      required:
+        - userId
+        - amount
+        - reason
+        - idempotencyKey
+      properties:
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        amount:
+          type: integer
+          format: int32
+        reason:
+          type: string
+        idempotencyKey:
+          type: string
+    AstroActions.DeleteEventInput:
+      type: object
+      required:
+        - eventId
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.DeletePartnerInput:
+      type: object
+      required:
+        - partnerId
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.EventFormInput:
+      type: object
+      required:
+        - title
+        - category
+        - ticketType
+        - startAt
+        - capacity
+        - ageGroups
+        - languages
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        ticketType:
+          $ref: '#/components/schemas/Common.TicketType'
+        startAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        endAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          $ref: '#/components/schemas/Common.CountryCode'
+        neighborhood:
+          type: string
+        imageUrl:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        ageGroups:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        promoCode:
+          type: string
+        secretCode:
+          type: string
+        secretCodeMode:
+          type: string
+        eventWebsiteUrl:
+          type: string
+        seriesLength:
+          type: integer
+          format: int32
+        seriesIntervalDays:
+          type: integer
+          format: int32
+    AstroActions.GetAdminExportRowsInput:
+      type: object
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        page:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+    AstroActions.GetPartnerBookingExportRowsInput:
+      type: object
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.ListUsersInput:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+    AstroActions.LoginInput:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Common.Email'
+        password:
+          type: string
+        callbackURL:
+          type: string
+    AstroActions.LogoutInput:
+      type: object
+      properties:
+        _placeholder:
+          type: string
+    AstroActions.MemberAdminInput:
+      type: object
+      required:
+        - userId
+        - role
+        - subscriptionStatus
+        - creditAdjustment
+      properties:
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        role:
+          $ref: '#/components/schemas/Common.Role'
+        subscriptionStatus:
+          $ref: '#/components/schemas/Common.SubscriptionStatus'
+        creditAdjustment:
+          type: integer
+          format: int32
+        reason:
+          type: string
+    AstroActions.MembershipInput:
+      type: object
+      properties:
+        promoCode:
+          type: string
+    AstroActions.OnboardingInput:
+      type: object
+      required:
+        - interests
+        - moods
+        - districts
+        - maxDistance
+        - timing
+        - days
+        - preferredLanguages
+        - ageGroup
+        - accessibility
+        - onboardingComplete
+      properties:
+        interests:
+          type: array
+          items:
+            type: string
+        moods:
+          type: array
+          items:
+            type: string
+        districts:
+          type: array
+          items:
+            type: string
+        maxDistance:
+          type: integer
+          format: int32
+        timing:
+          type: string
+        days:
+          type: array
+          items:
+            type: string
+        preferredLanguages:
+          type: array
+          items:
+            type: string
+        ageGroup:
+          type: string
+        accessibility:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+    AstroActions.PartnerFormInput:
+      type: object
+      required:
+        - name
+        - contactEmail
+        - portalAccessEnabled
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        name:
+          type: string
+        contactEmail:
+          $ref: '#/components/schemas/Common.Email'
+        contactPhone:
+          $ref: '#/components/schemas/Common.PhoneNumber'
+        websiteUrl:
+          type: string
+        logoUrl:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          $ref: '#/components/schemas/Common.CountryCode'
+        description:
+          type: string
+        portalAccessEnabled:
+          type: boolean
+    AstroActions.PartnerPortalAccessInput:
+      type: object
+      required:
+        - partnerId
+        - email
+        - name
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        email:
+          $ref: '#/components/schemas/Common.Email'
+        name:
+          type: string
+    AstroActions.PartnerTokenInput:
+      type: object
+      required:
+        - partnerId
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.PasswordRecoveryInput:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: '#/components/schemas/Common.Email'
+        redirectTo:
+          type: string
+    AstroActions.PreferencesInput:
+      type: object
+      required:
+        - interests
+        - moods
+        - districts
+        - maxDistance
+        - timing
+        - days
+        - preferredLanguages
+        - ageGroup
+        - accessibility
+      properties:
+        interests:
+          type: array
+          items:
+            type: string
+        moods:
+          type: array
+          items:
+            type: string
+        districts:
+          type: array
+          items:
+            type: string
+        maxDistance:
+          type: integer
+          format: int32
+        timing:
+          type: string
+        days:
+          type: array
+          items:
+            type: string
+        preferredLanguages:
+          type: array
+          items:
+            type: string
+        ageGroup:
+          type: string
+        accessibility:
+          type: array
+          items:
+            type: string
+    AstroActions.ProfileInput:
+      type: object
+      required:
+        - language
+        - newsletterOptIn
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        language:
+          $ref: '#/components/schemas/Common.Language'
+        billingAddress:
+          $ref: '#/components/schemas/Auth.BillingAddress'
+        newsletterOptIn:
+          type: boolean
+    AstroActions.SavedEventActionInput:
+      type: object
+      required:
+        - eventId
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+    AstroActions.SetLanguageInput:
+      type: object
+      required:
+        - language
+      properties:
+        language:
+          $ref: '#/components/schemas/Common.Language'
+    AstroActions.SignupInput:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          $ref: '#/components/schemas/Common.Email'
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        callbackURL:
+          type: string
+    AstroActions.ToggleUserFreezeInput:
+      type: object
+      required:
+        - userId
+        - frozen
+      properties:
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        frozen:
+          type: boolean
+        reason:
+          type: string
+    AstroActions.TrackEventOpenInput:
+      type: object
+      required:
+        - eventId
+        - viewName
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        viewName:
+          type: string
+    AstroActions.TrackFilterApplyInput:
+      type: object
+      required:
+        - filters
+        - viewName
+      properties:
+        filters:
+          type: object
+          unevaluatedProperties:
+            type: string
+        viewName:
+          type: string
+    AstroActions.VenueQrCheckInInput:
+      type: object
+      required:
+        - partnerId
+        - venueToken
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        venueToken:
+          type: string
+    AstroActions.WaitlistActionInput:
+      type: object
+      required:
+        - eventId
+        - ticketQuantity
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        ticketQuantity:
+          type: integer
+          format: int32
+    Auth.AccountMe:
+      type: object
+      required:
+        - user
+        - profile
+      properties:
+        user:
+          allOf:
+            - $ref: '#/components/schemas/Auth.User'
+          description: The authenticated user.
+        profile:
+          allOf:
+            - $ref: '#/components/schemas/Auth.Profile'
+          description: The user's profile.
+      description: Account me response (placeholder for 09-iteration).
+    Auth.AuthResult:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          allOf:
+            - $ref: '#/components/schemas/Auth.AuthState'
+          description: Auth state envelope.
+        user:
+          allOf:
+            - $ref: '#/components/schemas/Auth.User'
+          description: Authenticated user, when login/signup succeeded.
+        session:
+          allOf:
+            - $ref: '#/components/schemas/Auth.Session'
+          description: Newly created session, when login/signup succeeded.
+        nextPath:
+          type: string
+          description: Path to navigate to after success.
+      description: Generic auth result with optional user/session and next path.
+    Auth.AuthState:
+      type: object
+      required:
+        - ok
+        - status
+      properties:
+        ok:
+          type: boolean
+          description: True when authentication succeeded.
+        status:
+          type: string
+          enum:
+            - idle
+            - loading
+            - success
+            - error
+            - unauthenticated
+            - forbidden
+          description: State discriminator.
+        message:
+          type: string
+          description: Top-level error message.
+        fieldErrors:
+          type: object
+          unevaluatedProperties:
+            type: string
+          description: Optional field-level error map.
+        nextPath:
+          type: string
+          description: Redirect target after success.
+      description: Auth state used in API responses.
+    Auth.BillingAddress:
+      type: object
+      properties:
+        name:
+          type: string
+        country:
+          $ref: '#/components/schemas/Common.CountryCode'
+        postalCode:
+          type: string
+        city:
+          type: string
+        line1:
+          type: string
+        line2:
+          type: string
+      description: Billing address fields stored on the profile.
+    Auth.LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Common.Email'
+          description: User email.
+        password:
+          type: string
+          description: User password (min 8 characters).
+        callbackURL:
+          type: string
+          description: Optional URL to redirect to after success.
+      description: Login request body.
+    Auth.LogoutRequest:
+      type: object
+      properties:
+        _placeholder:
+          type: string
+          description: Empty marker for the logout endpoint.
+      description: Logout request body (empty).
+    Auth.PasswordRecoveryRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Common.Email'
+          description: Email address to send the recovery link to.
+        redirectTo:
+          type: string
+          description: Optional URL the recovery link redirects to.
+      description: Password recovery request body.
+    Auth.Profile:
+      type: object
+      required:
+        - userId
+        - language
+        - newsletterOptIn
+        - credits
+      properties:
+        userId:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Profile id (matches user id).
+        firstName:
+          type: string
+          description: First name, may be empty.
+        lastName:
+          type: string
+          description: Last name, may be empty.
+        language:
+          allOf:
+            - $ref: '#/components/schemas/Common.Language'
+          description: Preferred UI language.
+        avatarUrl:
+          type: string
+          description: Optional display avatar URL.
+        newsletterOptIn:
+          type: boolean
+          description: Whether the user opted into the newsletter.
+        credits:
+          type: integer
+          format: int32
+          description: Available booking credits, may be negative when frozen.
+      description: Localized user-facing profile fields.
+    Auth.Session:
+      type: object
+      required:
+        - id
+        - userId
+        - createdAt
+        - expiresAt
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Session id.
+        userId:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Session owner user id.
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Common.Timestamp'
+          description: Session creation timestamp.
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/Common.Timestamp'
+          description: Session expiry timestamp.
+      description: Active session summary.
+    Auth.SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Common.Email'
+          description: User email.
+        password:
+          type: string
+          description: User password (min 8 characters).
+        firstName:
+          type: string
+          description: User first name.
+        lastName:
+          type: string
+          description: User last name.
+        callbackURL:
+          type: string
+          description: Optional URL to redirect to after success.
+      description: Signup request body.
+    Auth.UpdateProfileRequest:
+      type: object
+      required:
+        - language
+        - newsletterOptIn
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        language:
+          $ref: '#/components/schemas/Common.Language'
+        newsletterOptIn:
+          type: boolean
+        billingAddress:
+          $ref: '#/components/schemas/Auth.BillingAddress'
+      description: Profile update request (placeholder for 09-iteration).
+    Auth.User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - frozen
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Stable user identifier.
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Common.Email'
+          description: Primary email address.
+        name:
+          type: string
+          description: Display name derived from the user profile.
+        role:
+          allOf:
+            - $ref: '#/components/schemas/Common.Role'
+          description: Account role.
+        frozen:
+          type: boolean
+          description: True when the account is frozen by an admin override.
+      description: Account identity record exposed over the wire.
+    Common.ApiError:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Top-level error message, safe to display.
+        fieldErrors:
+          type: object
+          unevaluatedProperties: {}
+          description: Optional field-level error map for form submissions.
+      description: Generic API error envelope returned for any non-2xx response.
+    Common.AssetKind:
+      type: string
+      enum:
+        - EVENT
+        - PARTNER
+        - AVATAR
+      description: Asset upload kind discriminator.
+    Common.BookingState:
+      type: string
+      enum:
+        - CONFIRMED
+        - WAITLIST
+        - REJECTED
+      description: Booking confirmation state.
+    Common.CountryCode:
+      type: string
+      description: Country code (ISO 3166-1 alpha-2).
+    Common.CreditLedgerEntryType:
+      type: string
+      enum:
+        - PLAN_REFILL
+        - BOOKING_DEBIT
+        - ADMIN_ADJUST
+        - REFUND
+        - EXPIRY
+      description: Credit ledger entry type.
+    Common.Email:
+      type: string
+      format: email
+      description: Email address (RFC 5322).
+    Common.Id:
+      type: string
+      description: Generic ID type (UUID v4).
+    Common.Language:
+      type: string
+      enum:
+        - DE
+        - EN
+      description: ISO-639-1 language code with custom DE/EN enum.
+    Common.LocalizedString:
+      type: object
+      required:
+        - DE
+        - EN
+      properties:
+        DE:
+          type: string
+          description: German translation.
+        EN:
+          type: string
+          description: English translation.
+      description: Localized text values for DE and EN.
+    Common.PaginationInput:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 1
+          description: 1-indexed page number.
+          default: 1
+        pageSize:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Page size, capped at 100 by the handler.
+          default: 20
+      description: Pagination request parameters for list endpoints.
+    Common.PaginationMeta:
+      type: object
+      required:
+        - totalCount
+        - hasMore
+      properties:
+        totalCount:
+          type: integer
+          format: int64
+          description: Total row count matching the query.
+        hasMore:
+          type: boolean
+          description: True when more pages are available after the current page.
+      description: Pagination metadata returned with paginated responses.
+    Common.PhoneNumber:
+      type: string
+      description: E.164 phone number or empty string when not provided.
+    Common.Role:
+      type: string
+      enum:
+        - GUEST
+        - MEMBER
+        - PARTNER
+        - ADMIN
+      description: User role within the application.
+    Common.SubscriptionStatus:
+      type: string
+      enum:
+        - NONE
+        - ACTIVE
+        - TRIALING
+        - PAST_DUE
+        - CANCELED
+        - INCOMPLETE
+        - UNPAID
+      description: Subscription status reported by the billing provider.
+    Common.TicketType:
+      type: string
+      enum:
+        - PUBLIC
+        - INVITE_ONLY
+        - VOUCHER
+        - SECRET_CODE
+        - FREE
+      description: Event ticket type.
+    Common.Timestamp:
+      type: string
+      description: ISO-8601 timestamp string.
+    Common.WaitlistStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROMOTED
+        - EXPIRED
+        - CANCELLED
+      description: Waitlist entry status.
+    Member.AdminSurface:
+      type: object
+      required:
+        - events
+        - partners
+        - members
+        - dashboardCounts
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin.Event'
+        partners:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin.Partner'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Auth.User'
+        dashboardCounts:
+          type: object
+          properties:
+            bookings:
+              type: integer
+              format: int32
+            waitlist:
+              type: integer
+              format: int32
+            saved:
+              type: integer
+              format: int32
+            activeMembers:
+              type: integer
+              format: int32
+          required:
+            - bookings
+            - waitlist
+            - saved
+            - activeMembers
+      description: Admin surface result.
+    Member.Booking:
+      type: object
+      required:
+        - id
+        - userId
+        - eventId
+        - eventTitle
+        - eventStartAt
+        - ticketQuantity
+        - status
+        - createdAt
+        - creditsSpent
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        eventTitle:
+          type: string
+        eventStartAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        eventAddress:
+          type: string
+        ticketQuantity:
+          type: integer
+          format: int32
+        status:
+          $ref: '#/components/schemas/Common.BookingState'
+        redemptionCode:
+          type: string
+        redemptionUrl:
+          type: string
+        checkedInAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        creditsSpent:
+          type: integer
+          format: int32
+      description: Booking record exposed over the wire.
+    Member.CreditLedgerEntry:
+      type: object
+      required:
+        - id
+        - userId
+        - amount
+        - type
+        - balanceAfter
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        amount:
+          type: integer
+          format: int32
+        type:
+          $ref: '#/components/schemas/Common.CreditLedgerEntryType'
+        description:
+          type: string
+        balanceAfter:
+          type: integer
+          format: int32
+        relatedEventId:
+          $ref: '#/components/schemas/Common.Id'
+        relatedBookingId:
+          $ref: '#/components/schemas/Common.Id'
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Credit ledger entry.
+    Member.MemberSurface:
+      type: object
+      required:
+        - user
+        - profile
+        - bookings
+        - waitlist
+        - savedEvents
+        - ledger
+      properties:
+        user:
+          $ref: '#/components/schemas/Auth.User'
+        profile:
+          $ref: '#/components/schemas/Auth.Profile'
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member.Booking'
+        waitlist:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member.WaitlistEntry'
+        savedEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member.SavedEvent'
+        ledger:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member.CreditLedgerEntry'
+      description: Member surface result.
+    Member.PartnerSurface:
+      type: object
+      required:
+        - partner
+        - events
+        - guestList
+        - qrPath
+        - qrTokenStatus
+        - exportAvailable
+      properties:
+        partner:
+          $ref: '#/components/schemas/Admin.Partner'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin.Event'
+        guestList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member.Booking'
+        qrPath:
+          type: string
+        qrTokenStatus:
+          type: string
+        exportAvailable:
+          type: boolean
+      description: Partner surface result.
+    Member.PublicDiscoverySurface:
+      type: object
+      required:
+        - events
+        - categories
+        - districts
+        - languages
+        - totalCount
+        - hasMore
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin.Event'
+        categories:
+          type: array
+          items:
+            type: string
+        districts:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        totalCount:
+          type: integer
+          format: int64
+        hasMore:
+          type: boolean
+      description: Public discovery surface result.
+    Member.SavedEvent:
+      type: object
+      required:
+        - userId
+        - eventId
+        - eventTitle
+        - savedAt
+      properties:
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        eventTitle:
+          type: string
+        savedAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Saved event reference.
+    Member.WaitlistEntry:
+      type: object
+      required:
+        - id
+        - userId
+        - eventId
+        - eventTitle
+        - eventStartAt
+        - ticketQuantity
+        - status
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Common.Id'
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+        eventTitle:
+          type: string
+        eventStartAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        ticketQuantity:
+          type: integer
+          format: int32
+        status:
+          $ref: '#/components/schemas/Common.WaitlistStatus'
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Waitlist entry exposed over the wire.
+    Partner.PartnerCheckInRequest:
+      type: object
+      required:
+        - bookingId
+      properties:
+        bookingId:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Booking id to check in.
+      description: Partner check-in request.
+    Partner.PartnerCheckInResult:
+      type: object
+      required:
+        - bookingId
+        - partnerId
+        - message
+      properties:
+        bookingId:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Booking id that was checked in.
+        partnerId:
+          allOf:
+            - $ref: '#/components/schemas/Common.Id'
+          description: Partner id that owns the check-in.
+        message:
+          type: string
+          description: Localized success message.
+      description: Partner check-in result.
+    Partner.PartnerExportInput:
+      type: object
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Common.Id'
+      description: Partner export filter input.
+    Partner.PartnerExportRow:
+      type: object
+      required:
+        - bookingId
+        - userShortId
+        - eventTitle
+        - status
+        - ticketQuantity
+        - createdAt
+      properties:
+        bookingId:
+          $ref: '#/components/schemas/Common.Id'
+        userShortId:
+          type: string
+        eventTitle:
+          type: string
+        redemptionCode:
+          type: string
+        status:
+          $ref: '#/components/schemas/Common.BookingState'
+        ticketQuantity:
+          type: integer
+          format: int32
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        checkedInAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+      description: Partner export row.
+    Partner.PartnerGuestRow:
+      type: object
+      required:
+        - bookingId
+        - guestShortId
+        - userShortId
+        - eventTitle
+        - status
+        - ticketQuantity
+        - createdAt
+        - checkInAvailable
+      properties:
+        bookingId:
+          $ref: '#/components/schemas/Common.Id'
+        guestShortId:
+          type: string
+        userShortId:
+          type: string
+        eventTitle:
+          type: string
+        redemptionCode:
+          type: string
+        status:
+          $ref: '#/components/schemas/Common.BookingState'
+        ticketQuantity:
+          type: integer
+          format: int32
+        createdAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        checkedInAt:
+          $ref: '#/components/schemas/Common.Timestamp'
+        checkInAvailable:
+          type: boolean
+      description: Guest row for the partner portal guest list.
+    Partner.PartnerPortal:
+      type: object
+      required:
+        - partner
+        - events
+        - guestList
+        - qrPath
+        - venueToken
+        - aggregateGuests
+        - exportAvailable
+      properties:
+        partner:
+          $ref: '#/components/schemas/Admin.Partner'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin.Event'
+        guestList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partner.PartnerGuestRow'
+        qrPath:
+          type: string
+        venueToken:
+          type: string
+        aggregateGuests:
+          type: integer
+          format: int32
+        exportAvailable:
+          type: boolean
+      description: Partner portal home data.
+    Partner.VenueQrCheckInRequest:
+      type: object
+      required:
+        - partnerId
+        - venueToken
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        venueToken:
+          type: string
+      description: Venue QR check-in request.
+    Partner.VenueQrCheckInResult:
+      type: object
+      required:
+        - bookingId
+        - partnerId
+        - userId
+        - message
+      properties:
+        bookingId:
+          $ref: '#/components/schemas/Common.Id'
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+        userId:
+          $ref: '#/components/schemas/Common.Id'
+        message:
+          type: string
+      description: Venue QR check-in result.
+    Surfaces.AdminInput:
+      type: object
+      properties:
+        membersPage:
+          type: integer
+          format: int32
+        membersPageSize:
+          type: integer
+          format: int32
+        partnersPage:
+          type: integer
+          format: int32
+        partnersPageSize:
+          type: integer
+          format: int32
+        eventsPage:
+          type: integer
+          format: int32
+        eventsPageSize:
+          type: integer
+          format: int32
+      description: Admin surface input.
+    Surfaces.MemberInput:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+      description: Member surface input.
+    Surfaces.PartnerInput:
+      type: object
+      required:
+        - partnerId
+      properties:
+        partnerId:
+          $ref: '#/components/schemas/Common.Id'
+      description: Partner surface input.
+    Surfaces.PublicDiscoveryInput:
+      type: object
+      properties:
+        q:
+          type: string
+          description: Search query string.
+        category:
+          type: string
+          description: Category filter.
+        district:
+          type: string
+          description: District filter.
+        date:
+          type: string
+          description: Date filter (ISO-8601).
+        page:
+          type: integer
+          format: int32
+          description: Page number (1-indexed).
+        pageSize:
+          type: integer
+          format: int32
+          description: Page size.
+      description: Public discovery surface input.
+    Surfaces.Surface:
+      anyOf:
+        - $ref: '#/components/schemas/Surfaces.PublicDiscoveryInput'
+        - $ref: '#/components/schemas/Surfaces.MemberInput'
+        - $ref: '#/components/schemas/Surfaces.PartnerInput'
+        - $ref: '#/components/schemas/Surfaces.AdminInput'
+      description: Closed union of registered data-access surfaces (one per loader in `src/lib/data-access/loaders.ts`).
+    System.HealthResult:
+      type: object
+      required:
+        - status
+        - now
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+          description: '`ok` when the worker is responsive.'
+        now:
+          allOf:
+            - $ref: '#/components/schemas/Common.Timestamp'
+          description: Server timestamp.
+      description: Liveness probe result.
+    System.ReadinessResult:
+      type: object
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+            - degraded
+          description: '`ready` when dependencies are reachable.'
+        checks:
+          type: object
+          unevaluatedProperties:
+            type: object
+            properties:
+              ok:
+                type: boolean
+              message:
+                type: string
+            required:
+              - ok
+          description: Per-dependency status map.
+      description: Readiness probe result.
+    Webhooks.ProviderEvent:
+      type: object
+      required:
+        - provider
+        - eventId
+        - type
+        - payload
+        - receivedAt
+        - processed
+      properties:
+        provider:
+          type: string
+          description: Provider identifier (e.g. `stripe`).
+        eventId:
+          type: string
+          description: Provider event id (e.g. `evt_...`).
+        type:
+          type: string
+          description: Event type reported by the provider.
+        payload:
+          description: Raw event payload as received from the provider.
+        receivedAt:
+          allOf:
+            - $ref: '#/components/schemas/Common.Timestamp'
+          description: Receipt timestamp.
+        processed:
+          type: boolean
+          description: True once the event has been processed.
+      description: Provider event record persisted for idempotency.
+    Webhooks.StripeCustomer:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        email:
+          $ref: '#/components/schemas/Common.Email'
+        name:
+          type: string
+        address:
+          type: object
+          properties:
+            country:
+              $ref: '#/components/schemas/Common.CountryCode'
+            postal_code:
+              type: string
+            city:
+              type: string
+            line1:
+              type: string
+            line2:
+              type: string
+        default_payment_method:
+          type: string
+        invoice_settings:
+          type: object
+          properties:
+            default_payment_method:
+              type: string
+      description: Stripe customer (subset of Stripe API response).
+    Webhooks.StripeEvent:
+      anyOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - invoice.payment_succeeded
+                - invoice.payment_failed
+            data:
+              type: object
+              properties:
+                object:
+                  $ref: '#/components/schemas/Webhooks.StripeInvoice'
+              required:
+                - object
+          required:
+            - type
+            - data
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - customer.subscription.created
+                - customer.subscription.updated
+                - customer.subscription.deleted
+            data:
+              type: object
+              properties:
+                object:
+                  $ref: '#/components/schemas/Webhooks.StripeSubscription'
+              required:
+                - object
+          required:
+            - type
+            - data
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - payment_method.attached
+                - payment_method.detached
+            data:
+              type: object
+              properties:
+                object:
+                  $ref: '#/components/schemas/Webhooks.StripePaymentMethod'
+              required:
+                - object
+          required:
+            - type
+            - data
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - customer.updated
+            data:
+              type: object
+              properties:
+                object:
+                  $ref: '#/components/schemas/Webhooks.StripeCustomer'
+              required:
+                - object
+          required:
+            - type
+            - data
+      description: Discriminated union of supported Stripe event types.
+    Webhooks.StripeInvoice:
+      type: object
+      required:
+        - id
+        - customer
+        - subscription
+        - amount_paid
+        - status
+        - metadata
+      properties:
+        id:
+          type: string
+        customer:
+          type: string
+        subscription:
+          type: string
+        amount_paid:
+          type: integer
+          format: int64
+        status:
+          type: string
+        metadata:
+          type: object
+          unevaluatedProperties:
+            type: string
+      description: Stripe invoice record (subset of Stripe API response).
+    Webhooks.StripePaymentMethod:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        card:
+          type: object
+          properties:
+            brand:
+              type: string
+            last4:
+              type: string
+            exp_month:
+              type: integer
+              format: int32
+            exp_year:
+              type: integer
+              format: int32
+          required:
+            - brand
+            - last4
+            - exp_month
+            - exp_year
+        sepa_debit:
+          type: object
+          properties:
+            last4:
+              type: string
+            bank_code:
+              type: string
+          required:
+            - last4
+      description: Stripe payment method (subset of Stripe API response).
+    Webhooks.StripeSubscription:
+      type: object
+      required:
+        - id
+        - customer
+        - status
+        - current_period_start
+        - current_period_end
+        - cancel_at_period_end
+        - items
+      properties:
+        id:
+          type: string
+        customer:
+          type: string
+        status:
+          type: string
+        current_period_start:
+          type: integer
+          format: int64
+        current_period_end:
+          type: integer
+          format: int64
+        cancel_at_period_end:
+          type: boolean
+        canceled_at:
+          type: integer
+          format: int64
+        items:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  price:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                    required:
+                      - id
+                required:
+                  - id
+                  - price
+          required:
+            - data
+      description: Stripe subscription record (subset of Stripe API response).
+    Webhooks.WebhookError:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+      description: Webhook error envelope.
+servers:
+  - url: https://api.unveiled.app
+    description: Production
+    variables: {}

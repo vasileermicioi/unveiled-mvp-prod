@@ -1,3 +1,23 @@
+/**
+ * Hand-written Zod fall-back for the action request/response envelope builders.
+ *
+ * NOTE: as of the `typespec-openapi-contract` change (openspec/changes/typespec-openapi-contract),
+ * the canonical source of truth for every action's input shape is `typespec/astro-actions.tsp`
+ * and the generated validators live in `@/lib/generated/actions` (re-exported from
+ * `request-validators.ts`). The generated Zod validators are currently *weaker* than the
+ * hand-written ones in `src/lib/forms/schemas.ts` because `json-schema-to-zod` does not
+ * resolve `$ref` to scalar formats (e.g. an `Email` field becomes `z.any()`).
+ *
+ * This file remains the source of truth for:
+ *   - The result envelope builders (`bookingActionResult`, `creditAdjustmentActionSuccess`, ...)
+ *     used by the Astro Action handlers.
+ *   - The hand-written input schemas re-exported by `@/lib/forms/schemas.ts`.
+ *
+ * The migration to the generated validators will land incrementally: once a
+ * future iteration upgrades the JSON-Schema → Zod build step to resolve `$ref`,
+ * the hand-written schemas in `forms/schemas.ts` will be replaced one by one
+ * with `import { XxxInputSchema } from "@/lib/generated/actions"`.
+ */
 import type { AuthAccessError } from "@/lib/auth-profile";
 import {
   type BookingTransactionResult,
@@ -16,6 +36,38 @@ import {
   formFailure,
 } from "@/lib/forms/action-result";
 import { queryKeys } from "@/lib/forms/query-keys";
+
+export {
+  AdminTicketInputSchema,
+  BookingActionInputSchema,
+  CheckInInputSchema,
+  CreditAdjustmentInputSchema,
+  DeleteEventInputSchema,
+  DeletePartnerInputSchema,
+  EventFormInputSchema,
+  GetAdminExportRowsInputSchema,
+  GetPartnerBookingExportRowsInputSchema,
+  ListUsersInputSchema,
+  LoginInputSchema,
+  LogoutInputSchema,
+  MemberAdminInputSchema,
+  MembershipInputSchema,
+  OnboardingInputSchema,
+  PartnerFormInputSchema,
+  PartnerPortalAccessInputSchema,
+  PartnerTokenInputSchema,
+  PasswordRecoveryInputSchema,
+  PreferencesInputSchema,
+  ProfileInputSchema,
+  SavedEventActionInputSchema,
+  SetLanguageInputSchema,
+  SignupInputSchema,
+  ToggleUserFreezeInputSchema,
+  TrackEventOpenInputSchema,
+  TrackFilterApplyInputSchema,
+  VenueQrCheckInInputSchema,
+  WaitlistActionInputSchema,
+} from "@/lib/generated/actions";
 
 function dataAccessInvalidationKeys(
   scopes: Parameters<typeof invalidationHintsForScopes>[0],

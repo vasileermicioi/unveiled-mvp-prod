@@ -15,7 +15,8 @@
       "!node_modules",
       "!drizzle",
       "!_old_app",
-      "!architecture"
+      "!architecture",
+      "!src/lib/generated"
     ]
   },
   "formatter": {

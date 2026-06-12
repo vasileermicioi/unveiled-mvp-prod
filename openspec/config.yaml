@@ -8,6 +8,22 @@ schema: spec-driven
 #     Tech stack: TypeScript, React, Node.js
 #     We use conventional commits
 #     Domain: e-commerce platform
+context: |
+  Tech stack: Astro 6 (Cloudflare Workers adapter), React 19 islands, Drizzle ORM (Neon Postgres),
+  TanStack Query, Better Auth, Stripe Billing, Zod 4, Biome, TypeSpec (openapi3 + json-schema emitters).
+
+  Architecture: SSR pages under `src/pages/`, typed server actions under `src/actions/index.ts`,
+  HTTP endpoints under `src/pages/api/`, data-access layer under `src/lib/data-access/`,
+  domain models under `drizzle/` and `src/db/schema.ts`, display view models under
+  `src/lib/unveiled-view-models.ts` and `src/lib/app-shell-view-models.ts`.
+
+  TypeSpec contract: the `typespec/` directory is the source of truth for every HTTP route and
+  Astro Action. Generated output lives under `typespec/output/` (committed) and `src/lib/generated/`
+  (committed Zod validators + type-only TypeScript). Drift is detected by `bun run specs:check`
+  (wired into `bun run check`). The OpenAPI document is served at `/api/openapi.json`.
+
+  When adding or changing a route, update the matching TypeSpec file under `typespec/**` and run
+  `bun run specs:gen` to regenerate the committed artifacts. Do not edit generated files by hand.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
@@ -18,3 +34,4 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+

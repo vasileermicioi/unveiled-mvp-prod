@@ -8,9 +8,8 @@ The app deploys Astro SSR to Cloudflare with the `@astrojs/cloudflare` adapter. 
 - Local Cloudflare preview: `bun run preview:cloudflare` (runs against the real Cloudflare network with `--remote` so R2/KV bindings hit the actual resources; requires `CLOUDFLARE_API_TOKEN` in `.env`)
 - Production app deploy: `bun run deploy:cloudflare`
 - Scheduled job deploy: `bun run deploy:jobs`
-- Manual partner code job verification: `bun run jobs:daily-partner-codes`
 
-The scheduled worker runs the daily partner code job on `59 23 * * *` from `wrangler.jobs.toml`. It calls the same domain job used by the manual command and writes only safe status fields such as job name, window, counts, and skip/failure category.
+The scheduled worker runs the daily partner code job on `59 23 * * *` from `wrangler.jobs.toml` and writes only safe status fields such as job name, window, counts, and skip/failure category.
 
 ## Required Secrets and Variables
 
