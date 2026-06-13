@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./generated/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -45,41 +46,38 @@
 }
 
 :root {
-  --brand-yellow: #faff86;
-  --brand-cream: #feffe2;
-  --brand-grey: #f5f5f5;
-  --brand-dark: #202621;
-  --brand-white: #ffffff;
-  --brand-error: #ff5f57;
-  --brand-success: #35c46b;
-  --background: var(--brand-grey);
-  --foreground: var(--brand-dark);
-  --card: var(--brand-white);
-  --card-foreground: var(--brand-dark);
-  --popover: var(--brand-white);
-  --popover-foreground: var(--brand-dark);
-  --primary: var(--brand-dark);
-  --primary-foreground: var(--brand-white);
-  --secondary: var(--brand-yellow);
-  --secondary-foreground: var(--brand-dark);
-  --muted: var(--brand-cream);
-  --muted-foreground: rgb(32 38 33 / 0.62);
-  --accent: var(--brand-yellow);
-  --accent-foreground: var(--brand-dark);
-  --destructive: var(--brand-error);
-  --border: var(--brand-dark);
-  --input: var(--brand-dark);
-  --ring: var(--brand-dark);
-  --font-body:
-    "Work Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display:
-    "EK Notice Sans", Impact, Haettenschweiler, "Arial Black", sans-serif;
-  --shadow-unveiled-sm: 4px 4px 0 0 var(--brand-dark);
-  --shadow-unveiled: 6px 6px 0 0 var(--brand-dark);
-  --shadow-unveiled-lg: 12px 12px 0 0 var(--brand-dark);
-  --border-unveiled: 3px solid var(--brand-dark);
-  --border-unveiled-lg: 4px solid var(--brand-dark);
+  --brand-yellow: var(--unveiled-color-brand-yellow);
+  --brand-cream: var(--unveiled-color-brand-cream);
+  --brand-grey: var(--unveiled-color-brand-grey);
+  --brand-dark: var(--unveiled-color-brand-dark);
+  --brand-white: var(--unveiled-color-brand-white);
+  --brand-error: var(--unveiled-color-brand-error);
+  --brand-success: var(--unveiled-color-brand-success);
+  --background: var(--unveiled-color-semantic-background);
+  --foreground: var(--unveiled-color-semantic-foreground);
+  --card: var(--unveiled-color-semantic-card);
+  --card-foreground: var(--unveiled-color-semantic-card-foreground);
+  --popover: var(--unveiled-color-semantic-popover);
+  --popover-foreground: var(--unveiled-color-semantic-popover-foreground);
+  --primary: var(--unveiled-color-semantic-primary);
+  --primary-foreground: var(--unveiled-color-semantic-primary-foreground);
+  --secondary: var(--unveiled-color-semantic-secondary);
+  --secondary-foreground: var(--unveiled-color-semantic-secondary-foreground);
+  --muted: var(--unveiled-color-semantic-muted);
+  --muted-foreground: var(--unveiled-color-semantic-muted-foreground);
+  --accent: var(--unveiled-color-semantic-accent);
+  --accent-foreground: var(--unveiled-color-semantic-accent-foreground);
+  --destructive: var(--unveiled-color-semantic-destructive);
+  --border: var(--unveiled-color-semantic-border);
+  --input: var(--unveiled-color-semantic-input);
+  --ring: var(--unveiled-color-semantic-ring);
+  --font-body: var(--unveiled-typography-font-family-body);
+  --font-display: var(--unveiled-typography-font-family-display);
+  --shadow-unveiled-sm: var(--unveiled-shadow-unveiled-sm);
+  --shadow-unveiled: var(--unveiled-shadow-unveiled);
+  --shadow-unveiled-lg: var(--unveiled-shadow-unveiled-lg);
+  --border-unveiled: var(--unveiled-border-unveiled) solid var(--brand-dark);
+  --border-unveiled-lg: var(--unveiled-border-unveiled-lg) solid var(--brand-dark);
 }
 
 @layer base {

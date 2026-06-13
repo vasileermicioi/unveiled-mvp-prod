@@ -1,0 +1,153 @@
+{
+  "$description": "Single source of truth for the Unveiled design system. W3C Design Tokens Community Group format (https://design-tokens.github.io/community-group/format/).",
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "color": {
+    "$description": "Color tokens grouped by brand palette, semantic roles, and status. All hex values are preserved from the pre-migration :root block in src/styles/global.css.",
+    "brand": {
+      "$description": "Brand palette colors. Use these for hero sections, brand surfaces, and any direct brand expression.",
+      "yellow": { "$description": "Primary brand yellow used as the page background and primary accent.", "$value": "#faff86", "$type": "color" },
+      "cream": { "$description": "Muted brand cream used for muted surfaces and inputs.", "$value": "#feffe2", "$type": "color" },
+      "grey": { "$description": "Light grey used for subtle surfaces and the default body background fallback.", "$value": "#f5f5f5", "$type": "color" },
+      "dark": { "$description": "Brand dark used for text, borders, shadows, and primary fills.", "$value": "#202621", "$type": "color" },
+      "white": { "$description": "Pure white used for card and popover surfaces.", "$value": "#ffffff", "$type": "color" },
+      "error": { "$description": "Brand error red used for destructive actions and error badges.", "$value": "#ff5f57", "$type": "color" },
+      "success": { "$description": "Brand success green used for success badges and check-in validations.", "$value": "#35c46b", "$type": "color" }
+    },
+    "semantic": {
+      "$description": "Semantic color roles consumed by shadcn-style primitives and Tailwind utilities. Each role maps to a brand color or derived value.",
+      "background": { "$description": "Default app background.", "$value": "{color.brand.grey}", "$type": "color" },
+      "foreground": { "$description": "Default foreground (text) color.", "$value": "{color.brand.dark}", "$type": "color" },
+      "card": { "$description": "Card surface background.", "$value": "{color.brand.white}", "$type": "color" },
+      "card-foreground": { "$description": "Card surface foreground.", "$value": "{color.brand.dark}", "$type": "color" },
+      "popover": { "$description": "Popover surface background.", "$value": "{color.brand.white}", "$type": "color" },
+      "popover-foreground": { "$description": "Popover surface foreground.", "$value": "{color.brand.dark}", "$type": "color" },
+      "primary": { "$description": "Primary fill for buttons and controls.", "$value": "{color.brand.dark}", "$type": "color" },
+      "primary-foreground": { "$description": "Foreground for primary-filled controls.", "$value": "{color.brand.white}", "$type": "color" },
+      "secondary": { "$description": "Secondary fill (brand yellow accent).", "$value": "{color.brand.yellow}", "$type": "color" },
+      "secondary-foreground": { "$description": "Foreground for secondary-filled controls.", "$value": "{color.brand.dark}", "$type": "color" },
+      "muted": { "$description": "Muted surface (brand cream).", "$value": "{color.brand.cream}", "$type": "color" },
+      "muted-foreground": { "$description": "Muted foreground (62% opacity dark).", "$value": "rgb(32 38 33 / 0.62)", "$type": "color" },
+      "accent": { "$description": "Accent surface (brand yellow).", "$value": "{color.brand.yellow}", "$type": "color" },
+      "accent-foreground": { "$description": "Foreground for accent surfaces.", "$value": "{color.brand.dark}", "$type": "color" },
+      "destructive": { "$description": "Destructive surface (brand error).", "$value": "{color.brand.error}", "$type": "color" },
+      "border": { "$description": "Default border (brand dark).", "$value": "{color.brand.dark}", "$type": "color" },
+      "input": { "$description": "Input border (brand dark).", "$value": "{color.brand.dark}", "$type": "color" },
+      "ring": { "$description": "Focus ring (brand dark).", "$value": "{color.brand.dark}", "$type": "color" }
+    },
+    "status": {
+      "$description": "Status colors for badges, banners, and check-in screens.",
+      "error": { "$description": "Destructive status color used by error badges and failed check-in screens.", "$value": "{color.brand.error}", "$type": "color" },
+      "success": { "$description": "Positive status color used by success badges and successful check-in screens.", "$value": "{color.brand.success}", "$type": "color" }
+    }
+  },
+  "typography": {
+    "$description": "Font families, sizes, weights, letter spacing, line heights, and text cases used by headlines, body text, and meta labels.",
+    "font-family": {
+      "display": { "$description": "Display font used by headlines, h1-h3, and editorial typography.", "$value": "\"EK Notice Sans\", Impact, Haettenschweiler, \"Arial Black\", sans-serif", "$type": "fontFamily" },
+      "body": { "$description": "Body font used by paragraphs, inputs, and general content.", "$value": "\"Work Sans\", \"Inter\", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif", "$type": "fontFamily" }
+    },
+    "font-weight": {
+      "regular": { "$value": 400, "$type": "fontWeight" },
+      "bold": { "$value": 700, "$type": "fontWeight" },
+      "black": { "$value": 900, "$type": "fontWeight" }
+    },
+    "font-size": {
+      "xs": { "$description": "10px, used by the .unveiled-meta utility.", "$value": "0.625rem", "$type": "dimension" },
+      "sm": { "$value": "0.875rem", "$type": "dimension" },
+      "base": { "$value": "1rem", "$type": "dimension" },
+      "lg": { "$value": "1.125rem", "$type": "dimension" },
+      "xl": { "$value": "1.25rem", "$type": "dimension" },
+      "2xl": { "$value": "1.5rem", "$type": "dimension" },
+      "3xl": { "$value": "1.875rem", "$type": "dimension" },
+      "4xl": { "$value": "2.25rem", "$type": "dimension" },
+      "6xl": { "$value": "3.75rem", "$type": "dimension" },
+      "headline-md": { "$description": "Clamp 2rem / 5vw / 3.75rem; line-height 0.9; uppercase.", "$value": "clamp(2rem, 5vw, 3.75rem)", "$type": "dimension" },
+      "headline-lg": { "$description": "Clamp 2.75rem / 8vw / 5.5rem; line-height 0.86; uppercase.", "$value": "clamp(2.75rem, 8vw, 5.5rem)", "$type": "dimension" },
+      "headline-xl": { "$description": "Clamp 3.5rem / 11vw / 7.5rem; line-height 0.82; uppercase.", "$value": "clamp(3.5rem, 11vw, 7.5rem)", "$type": "dimension" }
+    },
+    "letter-spacing": {
+      "tight": { "$value": "-0.01em", "$type": "dimension" },
+      "normal": { "$value": "0", "$type": "dimension" },
+      "wide": { "$value": "0.18em", "$type": "dimension" },
+      "wider": { "$value": "0.25em", "$type": "dimension" }
+    },
+    "line-height": {
+      "tight": { "$value": 0.82, "$type": "number" },
+      "snug": { "$value": 0.86, "$type": "number" },
+      "display": { "$value": 0.9, "$type": "number" },
+      "body": { "$value": 1.2, "$type": "number" },
+      "relaxed": { "$value": 1.5, "$type": "number" }
+    },
+    "text-case": {
+      "uppercase": { "$value": "uppercase", "$type": "string" }
+    }
+  },
+  "spacing": {
+    "$description": "Spacing scale on a 4 px (0.25rem) grid. Use these for padding, margin, and gap.",
+    "1": { "$value": "0.25rem", "$type": "dimension" },
+    "2": { "$value": "0.5rem", "$type": "dimension" },
+    "3": { "$value": "0.75rem", "$type": "dimension" },
+    "4": { "$value": "1rem", "$type": "dimension" },
+    "5": { "$value": "1.25rem", "$type": "dimension" },
+    "6": { "$value": "1.5rem", "$type": "dimension" },
+    "8": { "$value": "2rem", "$type": "dimension" },
+    "10": { "$value": "2.5rem", "$type": "dimension" },
+    "12": { "$value": "3rem", "$type": "dimension" },
+    "14": { "$value": "3.5rem", "$type": "dimension" },
+    "16": { "$value": "4rem", "$type": "dimension" }
+  },
+  "radius": {
+    "$description": "Border radius scale.",
+    "none": { "$value": "0", "$type": "dimension" },
+    "sm": { "$description": "2 px - small controls.", "$value": "2px", "$type": "dimension" },
+    "md": { "$description": "4 px - default controls.", "$value": "4px", "$type": "dimension" },
+    "lg": { "$description": "8 px - large controls and panels.", "$value": "8px", "$type": "dimension" },
+    "full": { "$value": "9999px", "$type": "dimension" }
+  },
+  "border": {
+    "$description": "Border width tokens. Unveiled is the signature thick dark border; the lg variant is 4 px on desktop (3 px on mobile).",
+    "unveiled": { "$description": "3 px solid brand dark - mobile signature border.", "$value": "3px", "$type": "dimension" },
+    "unveiled-lg": { "$description": "4 px solid brand dark - desktop signature border.", "$value": "4px", "$type": "dimension" },
+    "input": { "$description": "Default input border width.", "$value": "1px", "$type": "dimension" },
+    "card": { "$description": "Default card border width.", "$value": "1px", "$type": "dimension" }
+  },
+  "shadow": {
+    "$description": "Unveiled signature offset shadows. All use brand dark as the shadow color.",
+    "unveiled-sm": { "$description": "4 px offset shadow.", "$value": "4px 4px 0 0 {color.brand.dark}", "$type": "shadow" },
+    "unveiled": { "$description": "6 px offset shadow (mobile default).", "$value": "6px 6px 0 0 {color.brand.dark}", "$type": "shadow" },
+    "unveiled-lg": { "$description": "12 px offset shadow (desktop default).", "$value": "12px 12px 0 0 {color.brand.dark}", "$type": "shadow" },
+    "unveiled-hover": { "$description": "8 px offset shadow used on hover for .unveiled-card-hover.", "$value": "8px 8px 0 0 {color.brand.dark}", "$type": "shadow" },
+    "unveiled-hover-lg": { "$description": "16 px offset shadow used on hover at desktop breakpoint.", "$value": "16px 16px 0 0 {color.brand.dark}", "$type": "shadow" }
+  },
+  "motion": {
+    "$description": "Motion durations, easings, and transitions used by interactive surfaces.",
+    "duration": {
+      "fast": { "$description": "120 ms - micro interactions.", "$value": "120ms", "$type": "duration" },
+      "base": { "$description": "180 ms - default UI transitions.", "$value": "180ms", "$type": "duration" },
+      "slow": { "$description": "240 ms - larger state changes.", "$value": "240ms", "$type": "duration" }
+    },
+    "easing": {
+      "easeOut": { "$description": "Default ease-out curve.", "$value": "ease-out", "$type": "cubicBezier" },
+      "easeInOut": { "$description": "Default ease-in-out curve used by .unveiled-card-hover.", "$value": "ease", "$type": "cubicBezier" }
+    },
+    "transition": {
+      "card-hover": { "$description": "Composite transition used by .unveiled-card-hover.", "$value": "box-shadow {motion.duration.base} {motion.easing.easeInOut}, transform {motion.duration.base} {motion.easing.easeInOut}, background-color {motion.duration.base} {motion.easing.easeInOut}, color {motion.duration.base} {motion.easing.easeInOut}", "$type": "transition" }
+    }
+  },
+  "breakpoint": {
+    "$description": "Tailwind v4 breakpoint values in px.",
+    "sm": { "$value": "640px", "$type": "dimension" },
+    "md": { "$value": "768px", "$type": "dimension" },
+    "lg": { "$value": "1024px", "$type": "dimension" },
+    "xl": { "$value": "1280px", "$type": "dimension" },
+    "2xl": { "$value": "1536px", "$type": "dimension" }
+  },
+  "z-index": {
+    "$description": "Stacking context layers.",
+    "base": { "$description": "0 - base content.", "$value": 0, "$type": "number" },
+    "dropdown": { "$description": "1000 - dropdowns and selects.", "$value": 1000, "$type": "number" },
+    "sticky": { "$description": "1100 - sticky headers and toolbars.", "$value": 1100, "$type": "number" },
+    "modal": { "$description": "1300 - full-screen modals.", "$value": 1300, "$type": "number" },
+    "toast": { "$description": "1400 - toasts and popovers.", "$value": 1400, "$type": "number" }
+  }
+}

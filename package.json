@@ -13,7 +13,7 @@
     "deploy:cloudflare": "bun run build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "astro",
-    "check": "astro check && biome check . && bun run specs:check",
+    "check": "astro check && biome check . && bun run specs:check && bun run tokens:check",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "specs:gen": "tsp compile typespec/main.tsp && bun run scripts/specs-gen.ts",
@@ -21,7 +21,9 @@
     "specs:client:sdk": "echo 'specs:client:sdk reserved for 09-iteration (no-op stub)'",
     "db:seed:operations-smoke": "bun scripts/seed-operations-smoke.ts",
     "arch:check": "likec4 validate && bun run scripts/check-architecture-drift.ts",
-    "arch:drift": "bun run scripts/check-architecture-drift.ts"
+    "arch:drift": "bun run scripts/check-architecture-drift.ts",
+    "tokens:gen": "bun run scripts/generate-design-tokens.ts",
+    "tokens:check": "bun run scripts/check-design-tokens.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.3.1",

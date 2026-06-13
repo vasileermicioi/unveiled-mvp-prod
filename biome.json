@@ -16,7 +16,8 @@
       "!drizzle",
       "!_old_app",
       "!architecture",
-      "!src/lib/generated"
+      "!src/lib/generated",
+      "!src/styles/generated"
     ]
   },
   "formatter": {

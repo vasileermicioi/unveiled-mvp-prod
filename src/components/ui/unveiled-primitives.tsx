@@ -1,5 +1,6 @@
 import type * as React from "react";
 
+import { StatusColor } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 export function Panel({
@@ -66,8 +67,8 @@ export function Badge({
         tone === "yellow" && "bg-brand-yellow text-brand-dark",
         tone === "white" && "bg-white text-brand-dark",
         tone === "grey" && "bg-brand-grey text-brand-dark",
-        tone === "success" && "bg-[#35c46b] text-brand-dark",
-        tone === "error" && "bg-[#ff5f57] text-brand-dark",
+        tone === "success" && `bg-[${StatusColor.Success}] text-brand-dark`,
+        tone === "error" && `bg-[${StatusColor.Error}] text-brand-dark`,
         className,
       )}
       {...props}
@@ -119,6 +120,7 @@ export function Field({
       <span className="unveiled-meta">{label}</span>
       {children}
       {error ? (
+        // TODO: port to a typed `destructive-text` token from `design-tokens` once added
         <span className="text-[10px] font-black uppercase tracking-widest text-[#b21d17]">
           {error}
         </span>
