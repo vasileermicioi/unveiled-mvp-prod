@@ -13,7 +13,7 @@
     "deploy:cloudflare": "bun run build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "astro",
-    "check": "astro check && biome check . && bun run specs:check && bun run tokens:check && bun run storybook:coverage && bun run scripts/check-no-console.ts",
+    "check": "astro check && biome check . && bun run specs:check && bun run tokens:check && bun run storybook:coverage && bun run lint:viewport && bun run scripts/check-no-console.ts",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "specs:gen": "tsp compile typespec/main.tsp && bun run scripts/specs-gen.ts",
@@ -29,7 +29,8 @@
     "arch:check": "likec4 validate && bun run scripts/check-architecture-drift.ts",
     "arch:drift": "bun run scripts/check-architecture-drift.ts",
     "tokens:gen": "bun run scripts/generate-design-tokens.ts",
-    "tokens:check": "bun run scripts/check-design-tokens.ts"
+    "tokens:check": "bun run scripts/check-design-tokens.ts",
+    "lint:viewport": "bun run scripts/check-viewport-meta.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.3.1",

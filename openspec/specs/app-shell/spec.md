@@ -297,7 +297,12 @@ Shell navigation SHALL navigate to stable route URLs for product surfaces prefix
 The app shell SHALL use route display data as the source of truth
 for active navigation state. The shell SHALL also expose accessible
 attributes on the language toggle, the hamburger button, and the
-mobile drawer so assistive technology can navigate them.
+mobile drawer so assistive technology can navigate them. The shell
+SHALL be selector-disciplinable: every interactive control SHALL be
+reachable through proximity (`getFieldNearestTo`, `getButtonNearestTo`,
+`getLinkNearestTo`) or layout (`getByRole`, `getByLabel`, `getByLandmark`,
+`getInside`) selectors, and SHALL NOT rely on `data-testid` or CSS class
+selectors.
 
 #### Scenario: Current route is public
 
@@ -331,7 +336,9 @@ mobile drawer so assistive technology can navigate them.
 - **WHEN** the shell renders on a viewport below 1024px
 - **THEN** the hamburger button has `aria-expanded` set to `false`
   when the drawer is closed and `true` when the drawer is open
-- **AND** it has `aria-controls` set to the drawer's stable id.
+- **AND** it has `aria-controls` set to the drawer's stable id
+- **AND** it has a localized `aria-label` drawn from the
+  `shell.nav.openMenu` / `shell.nav.closeMenu` i18n keys.
 
 #### Scenario: Mobile drawer is announced as a modal dialog
 
@@ -340,6 +347,18 @@ mobile drawer so assistive technology can navigate them.
 - **AND** it has `aria-modal="true"`
 - **AND** it has `aria-labelledby` pointing at the drawer's
   localized heading element.
+
+#### Scenario: Shell controls are selector-disciplinable
+
+- **WHEN** a contributor writes a gherkin scenario that selects any
+  shell control (header link, language toggle, hamburger, drawer
+  close, status banner, page top-bar action)
+- **THEN** the scenario can be expressed using only proximity
+  selectors (e.g. `getLinkNearestTo`, `getButtonNearestTo`) and
+  layout selectors (e.g. `getByRole`, `getByLabel`,
+  `getByLandmark`, `getInside` with a semantic landmark parent)
+- **AND** the selector-discipline lint at
+  `tests/steps/lint/selectors.ts` does not flag the scenario.
 
 ### Requirement: Bilingual Shell Copy Parity
 
@@ -397,15 +416,196 @@ The app shell SHALL provide a responsive mobile header on narrow
 screens containing a hamburger toggle button that reveals a
 collapsible slide-in navigation drawer. The hamburger button and
 the drawer SHALL expose the disclosure + dialog relationship
-described by the "Accessible Mobile Navigation Drawer" requirement
-in the `shell-aria-i18n` capability.
+described in the "Hamburger button is announced as a disclosure"
+and "Mobile drawer is announced as a modal dialog" scenarios above,
+and SHALL use only the `aria-*` attributes and stable ids declared
+by the `app-shell` capability.
 
 #### Scenario: Mobile drawer is toggled
 
 - **WHEN** the viewer is on a viewport below 1024px and clicks the
   hamburger menu button
 - **THEN** the navigation drawer transitions into view from the
-  side using a smooth CSS transition
+  side using a smooth CSS transition that honors
+  `prefers-reduced-motion: reduce`
 - **AND** displaying all role-relevant navigation links, language
-  selector, and logout controls.
+  selector, and logout controls
+- **AND** the hamburger button's `aria-expanded` flips to `true`
+- **AND** the drawer element exposes `role="dialog"` and
+  `aria-modal="true"`.
+
+#### Scenario: Mobile drawer is closed via close control
+
+- **WHEN** the mobile drawer is open and the localized close
+  control is selected (via a proximity selector against the
+  drawer's `aria-labelledby` heading)
+- **THEN** the drawer transitions out of view
+- **AND** the hamburger button's `aria-expanded` returns to
+  `false`
+- **AND** keyboard focus returns to the hamburger button.
+
+### Requirement: Selector-Disciplinable Discovery Shell
+
+The discovery shell SHALL be selector-disciplinable end-to-end:
+filters, map, grid, empty state, and pagination SHALL all be
+reachable through proximity + layout selectors, and SHALL expose
+the `aria-*` attributes, labels, and landmark wrappers required
+for selector-disciplinable selection. The discovery shell SHALL NOT
+introduce a parallel visual system, additional `data-testid`
+attributes, or copy that bypasses the `shell.*` i18n bundle.
+
+#### Scenario: Discovery shell exposes filter form landmark
+
+- **WHEN** the discovery shell renders
+- **THEN** the filter controls are wrapped in a `<form
+  role="search">` landmark with a localized `aria-label`
+- **AND** each filter field is reachable via `getFieldNearestTo` or
+  `getByLabel` selectors
+- **AND** the filter toggle and map toggle expose `aria-expanded`
+  state tied to their collapsible panels.
+
+#### Scenario: Discovery shell exposes map landmark
+
+- **WHEN** the discovery map is visible
+- **THEN** the map container has a localized `aria-label`
+  (e.g. "Event map" / "Veranstaltungskarte")
+- **AND** map controls are reachable via layout selectors scoped to
+  the map landmark.
+
+#### Scenario: Discovery grid and empty state are landmarked
+
+- **WHEN** the event grid renders
+- **THEN** the grid has a localized `aria-label` and a
+  `role="region"` wrapper
+- **AND** when the grid is empty, the empty state uses a
+  `role="status"` wrapper with a localized message.
+
+#### Scenario: Discovery pagination is landmarked and labeled
+
+- **WHEN** pagination is visible
+- **THEN** the pagination control has a localized `aria-label`
+- **AND** individual page buttons are reachable via proximity
+  selectors (e.g. `getButtonNearestTo`) without relying on text
+  content or CSS classes.
+
+#### Scenario: Discovery shell copy is bilingual
+
+- **WHEN** the discovery shell renders
+- **THEN** filter labels, map toggle label, empty state title, and
+  pagination labels are sourced from
+  `copyFor(shell.language.selected).shell.*` (or the
+  `discover-filters-pagination` i18n bundle, whichever owns the
+  key)
+- **AND** the i18n parity unit test covers every new key in both
+  DE and EN.
+
+### Requirement: Skeleton Loaders On Every List Surface
+
+The app shell MUST render a typed `<ListSkeleton variant="…">`
+primitive on every list surface it owns (events grid, saved events,
+bookings, operations tables, member table) while the list data is
+loading. The primitive MUST expose `aria-busy="true"`, `role="status"`,
+and `aria-live="polite"` so assistive technology announces the
+loading state, and it MUST be reachable via a
+`getInside(getByLandmark("main"))` or
+`getByRole("status", { name: localized skeleton label })` selector.
+
+#### Scenario: List skeleton is announced to assistive tech
+
+- **WHEN** a list surface enters its loading state
+- **THEN** the rendered skeleton has `aria-busy="true"`
+- **AND** it has `role="status"`
+- **AND** it has `aria-live="polite"`
+- **AND** it has a localized `aria-label` drawn from
+  `copyFor(shell.language.selected).shell.skeleton.<variant>`.
+
+#### Scenario: Skeleton variant matches the eventual list shape
+
+- **WHEN** a list surface enters its loading state
+- **THEN** the skeleton variant matches the visual shape of the
+  eventual list (e.g. `events-grid`, `saved-events`,
+  `bookings-list`, `operations-table`, `member-table`)
+- **AND** the count of skeleton rows matches the typical count
+  for that surface (e.g. 8 for the events grid, 5 for bookings).
+
+#### Scenario: Skeleton is removed when the list resolves
+
+- **WHEN** the list data resolves and the actual list renders
+- **THEN** the skeleton is removed from the DOM
+- **AND** the list container's `aria-busy` returns to `false`.
+
+### Requirement: Reduced Motion Honored
+
+The app shell SHALL honor the user's `prefers-reduced-motion` setting
+on every motion-bearing shell surface: the mobile drawer transition,
+the skeleton loader fade-in, the navigation hover/focus state, and
+any other CSS transition or animation declared by a shell component.
+The guard SHALL be implemented as a single `@media
+(prefers-reduced-motion: reduce)` block in the global stylesheet, with
+no client-side JavaScript required.
+
+#### Scenario: Reduced motion disables drawer transition
+
+- **WHEN** the user has `prefers-reduced-motion: reduce` enabled and
+  toggles the mobile drawer
+- **THEN** the drawer appears / disappears without a slide-in
+  transition
+- **AND** the open / close behavior is otherwise identical.
+
+#### Scenario: Reduced motion disables skeleton fade-in
+
+- **WHEN** the user has `prefers-reduced-motion: reduce` enabled and
+  a list surface enters its loading state
+- **THEN** the skeleton renders without a fade-in or pulse
+  animation
+- **AND** the screen-reader announcement (the
+  `role="status"` + `aria-live="polite"` wrapper) is still
+  emitted.
+
+#### Scenario: Reduced motion disables nav hover transition
+
+- **WHEN** the user has `prefers-reduced-motion: reduce` enabled
+  and hovers or focuses a shell navigation control
+- **THEN** the active / hover state is applied instantly without
+  a color or transform transition.
+
+#### Scenario: Motion guard is a single global block
+
+- **WHEN** the umbrella ships
+- **THEN** every shell motion surface is covered by a single
+  `@media (prefers-reduced-motion: reduce)` block in
+  `src/styles/global.css`
+- **AND** no per-component `useReducedMotion()` hook is
+  introduced.
+
+### Requirement: Viewport Meta Audited
+
+Every Astro route page SHALL declare a
+`<meta name="viewport" content="width=device-width, initial-scale=1">`
+tag, sourced from `src/layouts/base-layout.astro`. A lint script
+SHALL fail the build if any route page does not import the layout or
+emits a viewport meta with a non-canonical `content` attribute.
+
+#### Scenario: Route page renders a viewport meta
+
+- **WHEN** any Astro route page (under `src/pages/`) is rendered
+- **THEN** the rendered HTML includes a
+  `<meta name="viewport" content="width=device-width,
+  initial-scale=1">` tag in the `<head>`
+- **AND** the tag is sourced from `src/layouts/base-layout.astro`.
+
+#### Scenario: Viewport lint catches forgotten routes
+
+- **WHEN** a contributor adds a new Astro route page that does not
+  import `BaseLayout`
+- **THEN** the viewport-meta lint script reports a failure
+- **AND** `bun run check` fails until the route is updated.
+
+#### Scenario: Viewport meta content is canonical
+
+- **WHEN** the lint audits the layout
+- **THEN** the viewport meta `content` attribute MUST be exactly
+  `width=device-width, initial-scale=1`
+- **AND** any deviation (e.g. `user-scalable=no`, missing
+  `initial-scale`) is reported as a failure.
 

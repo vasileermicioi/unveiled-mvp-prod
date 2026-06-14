@@ -77,7 +77,8 @@
   --shadow-unveiled: var(--unveiled-shadow-unveiled);
   --shadow-unveiled-lg: var(--unveiled-shadow-unveiled-lg);
   --border-unveiled: var(--unveiled-border-unveiled) solid var(--brand-dark);
-  --border-unveiled-lg: var(--unveiled-border-unveiled-lg) solid var(--brand-dark);
+  --border-unveiled-lg: var(--unveiled-border-unveiled-lg) solid
+    var(--brand-dark);
 }
 
 @layer base {
@@ -226,5 +227,16 @@
     .content-shell {
       padding-inline: 1.5rem;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

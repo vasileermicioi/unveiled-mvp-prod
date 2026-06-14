@@ -51,6 +51,27 @@ export const appCopy = {
         loading: "Lädt",
         modalLoading: "Modalinhalt wird vorbereitet.",
       },
+      skeleton: {
+        "events-grid": "Events werden geladen",
+        "saved-events": "Gemerkte Events werden geladen",
+        "bookings-list": "Tickets werden geladen",
+        "operations-table": "Operations-Tabelle wird geladen",
+        "member-table": "Mitgliederliste wird geladen",
+      },
+      discovery: {
+        filters: "Filter",
+        map: "Karte",
+        grid: "Eventliste",
+        empty: "Keine passenden Events",
+        pagination: "Seitennavigation",
+      },
+      motion: {
+        reduced: "Animationen sind deaktiviert",
+      },
+      viewport: {
+        auditOk: "Viewport Meta korrekt",
+        auditFail: "Viewport Meta fehlt oder ist nicht kanonisch",
+      },
     },
     public: {
       landingBadge: "Berlin Membership Access",
@@ -401,6 +422,27 @@ export const appCopy = {
         login: "Log in",
         loading: "Loading",
         modalLoading: "Preparing modal content.",
+      },
+      skeleton: {
+        "events-grid": "Loading events",
+        "saved-events": "Loading saved events",
+        "bookings-list": "Loading bookings",
+        "operations-table": "Loading operations table",
+        "member-table": "Loading member table",
+      },
+      discovery: {
+        filters: "Filters",
+        map: "Map",
+        grid: "Event grid",
+        empty: "No matching events",
+        pagination: "Pagination",
+      },
+      motion: {
+        reduced: "Animations are disabled",
+      },
+      viewport: {
+        auditOk: "Viewport meta is correct",
+        auditFail: "Viewport meta is missing or non-canonical",
       },
     },
     public: {

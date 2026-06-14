@@ -176,12 +176,24 @@ contract for "how we are changing it."
 
 The repo follows a numbered iteration plan under
 [`.development-plan/0N-iteration/`](./.development-plan/) (one folder per
-iteration, e.g. `09-iteration/`). Each iteration contains a `00-summary.md`
+iteration, e.g. `10-iteration/`). Each iteration contains a `00-summary.md`
 that lists the proposed changes for that cycle, and one or more
-`*.tasks.md` files that drive the work. The 09-iteration folder is a
-catalog (planning only); its entry point
-[`.development-plan/09-iteration/00-summary.md`](./.development-plan/09-iteration/00-summary.md)
-is what 10-iteration contributors read first.
+`*.tasks.md` files that drive the work.
+
+The iteration plan to date:
+
+- **`08-iteration/`** — the spec-driven foundation (LikeC4, TypeSpec, design
+  tokens, gherkin, AGENTS.md, the 09-iteration hub). All proposals are
+  shipped.
+- **`09-iteration/`** — the catalog. No implementation; just two
+  Markdown tables (improvements and net-new features) that 10-iteration
+  fulfils. Entry point: [`09-iteration/00-summary.md`](./.development-plan/09-iteration/00-summary.md).
+- **`10-iteration/`** — the implementation iteration. Every catalog row
+  becomes a per-feature folder at `10-iteration/features/<kind>/<slug>/`
+  with `proposal.md` + `tasks.md` + `feature.feature` +
+  `<component>.stories.tsx` + `specs.md`, plus the matching OpenSpec
+  change. The seed `proposal.md` for every row is already on disk.
+  Entry point: [`10-iteration/00-summary.md`](./.development-plan/10-iteration/00-summary.md).
 
 For every iteration, an agent should:
 
