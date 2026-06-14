@@ -86,6 +86,7 @@ import {
   waitlistActionSchema,
 } from "@/lib/forms/schemas";
 import { copyFor, normalizeLanguage } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 import { initializeBasicBerlinCheckout } from "@/lib/payments/subscriptions";
 
 const jsonInputSchema = z.record(z.string(), z.unknown());
@@ -122,7 +123,7 @@ function safeActionError(
   ) {
     return formFailure((error as any).message, lang);
   }
-  console.error("[safeActionError] Caught unexpected action error:", error);
+  logger.error("action_unexpected_error", { err: error });
   return formFailure("The request could not be completed.", lang);
 }
 

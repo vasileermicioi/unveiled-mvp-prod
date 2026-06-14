@@ -1,13 +1,23 @@
 import { defineMiddleware } from "astro:middleware";
 import { getViewer } from "@/lib/auth-profile";
 import { trackSessionInDb } from "@/lib/behavior-tracking";
+import { logger } from "@/lib/logger";
 import {
   resolveMemberOnboardingRoute,
   routeForPath,
 } from "@/lib/product-routes";
 
+export const PENDING_TRACE_ID = "pending-trace-id";
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, redirect } = context;
+  const route = routeForPath(url.pathname);
+  const traceId = PENDING_TRACE_ID;
+  context.locals.traceId = traceId;
+  context.locals.logger = logger.child({
+    traceId,
+    route: route?.id ?? "unknown",
+  });
 
   // Skip middleware for API routes, Astro internals, and static assets
   if (
@@ -38,7 +48,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect(`/${lang}${url.pathname}${url.search}`, 302);
   }
 
-  const route = routeForPath(url.pathname);
   if (!route) {
     return next();
   }
@@ -51,7 +60,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       try {
         await trackSessionInDb(viewer.user.id);
       } catch (err) {
-        console.error("Failed to track session:", err);
+        context.locals.logger.error("session_track_failed", { err });
       }
     }
     const outcome = resolveMemberOnboardingRoute(viewer, route);

@@ -13,7 +13,7 @@
     "deploy:cloudflare": "bun run build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "astro",
-    "check": "astro check && biome check . && bun run specs:check && bun run tokens:check",
+    "check": "astro check && biome check . && bun run specs:check && bun run tokens:check && bun run scripts/check-no-console.ts",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "specs:gen": "tsp compile typespec/main.tsp && bun run scripts/specs-gen.ts",

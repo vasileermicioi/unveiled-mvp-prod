@@ -8,6 +8,7 @@ import {
   type ResendEmailResult,
   sendResendEmail,
 } from "@/lib/jobs/resend-client";
+import type { Logger } from "@/lib/logger";
 
 export const DAILY_PARTNER_CODES_JOB = "daily-partner-codes";
 const BERLIN_TIME_ZONE = "Europe/Berlin";
@@ -467,7 +468,7 @@ export async function runDailyPartnerCodeJob(
     config?: JobsConfig;
     repository?: PartnerCodeRepository;
     fetcher?: EmailFetch;
-    logger?: Pick<Console, "log" | "error">;
+    logger?: Pick<Logger, "info" | "warn" | "error">;
   } = {},
 ): Promise<DailyPartnerCodeJobResult> {
   const config = input.config ?? getJobsConfig();
@@ -481,7 +482,9 @@ export async function runDailyPartnerCodeJob(
 
   if (!config.RESEND_API_KEY) {
     details.push({ status: "skipped", reason: "missing_resend_api_key" });
-    input.logger?.error("daily-partner-codes skipped: RESEND_API_KEY missing");
+    input.logger?.error("daily-partner-codes skipped", {
+      reason: "missing_resend_api_key",
+    });
     return {
       jobName: DAILY_PARTNER_CODES_JOB,
       window: {
@@ -501,7 +504,9 @@ export async function runDailyPartnerCodeJob(
   const rows = await repository.fetchPartnerCodeRows(window);
   if (rows.length === 0) {
     details.push({ status: "skipped", reason: "no_sendable_rows" });
-    input.logger?.log("daily-partner-codes skipped: no sendable rows");
+    input.logger?.info("daily-partner-codes skipped", {
+      reason: "no_sendable_rows",
+    });
     return {
       jobName: DAILY_PARTNER_CODES_JOB,
       window: {

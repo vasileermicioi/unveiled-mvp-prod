@@ -50,6 +50,26 @@
       "linter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["src/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/lib/logger.ts", "src/lib/logger.test.ts", "src/components/**", "src/layouts/**", "**/*.test.ts", "**/*.integration.test.ts", "**/*.stories.tsx", "**/*.stories.ts", "scripts/**", "tests/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ]
 }
