@@ -178,7 +178,10 @@ The repo follows a numbered iteration plan under
 [`.development-plan/0N-iteration/`](./.development-plan/) (one folder per
 iteration, e.g. `09-iteration/`). Each iteration contains a `00-summary.md`
 that lists the proposed changes for that cycle, and one or more
-`*.tasks.md` files that drive the work.
+`*.tasks.md` files that drive the work. The 09-iteration folder is a
+catalog (planning only); its entry point
+[`.development-plan/09-iteration/00-summary.md`](./.development-plan/09-iteration/00-summary.md)
+is what 10-iteration contributors read first.
 
 For every iteration, an agent should:
 
