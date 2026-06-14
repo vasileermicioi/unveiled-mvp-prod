@@ -19,6 +19,7 @@
     "specs:gen": "tsp compile typespec/main.tsp && bun run scripts/specs-gen.ts",
     "specs:check": "bun run scripts/specs-check.ts",
     "specs:client:sdk": "echo 'specs:client:sdk reserved for 09-iteration (no-op stub)'",
+    "test:e2e": "playwright test tests/parity/gherkin.spec.ts",
     "db:seed:operations-smoke": "bun scripts/seed-operations-smoke.ts",
     "arch:check": "likec4 validate && bun run scripts/check-architecture-drift.ts",
     "arch:drift": "bun run scripts/check-architecture-drift.ts",

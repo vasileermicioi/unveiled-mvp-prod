@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define authorized loader and query models for partner and admin operations UI, along with invalidation scopes.
-## Requirements
 ### Requirement: Gherkin Coverage For A Data-Access Surface Query
 The data-access layer SHALL be exercised by at least one Gherkin scenario that loads a surface query and asserts that the returned read model is role-scoped, and the scenario id SHALL be referenced from this capability spec.
 

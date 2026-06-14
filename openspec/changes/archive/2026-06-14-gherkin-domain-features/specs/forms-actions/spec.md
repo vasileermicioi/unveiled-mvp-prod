@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define typed form and server-action behavior for user, partner, and admin mutations.
-## Requirements
 ### Requirement: Gherkin Coverage For A Form Submission Through A Server Action
 The forms-actions layer SHALL be exercised by at least one Gherkin scenario that submits a form through a server action and asserts the action result envelope, and the scenario id SHALL be referenced from this capability spec.
 
@@ -22,7 +20,9 @@ The forms-actions layer SHALL be exercised by at least one Gherkin scenario that
 - **THEN** at least one scenario submits a protected form as the wrong role (e.g. a Member submitting an admin form)
 - **AND** asserts that the action returns a safe authorization failure with no committed mutation side effect
 
+## Purpose
 Define typed form and server-action behavior for user, partner, and admin mutations.
+## Requirements
 ### Requirement: Operations UI Forms Submit Existing Actions
 Admin and partner operation forms SHALL submit through typed server actions and preserve the existing action result envelope.
 

@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define the canonical /[lang]/... route table, the public/member/partner/admin surface map, the middleware guard order, and the rules for adding a new route.
-## Requirements
 ### Requirement: Gherkin Coverage For The /[lang]/... Route Table
 The routing spec SHALL be exercised by at least one Gherkin scenario per surface (public, member, partner, admin), and the scenario id SHALL be referenced from this capability spec.
 

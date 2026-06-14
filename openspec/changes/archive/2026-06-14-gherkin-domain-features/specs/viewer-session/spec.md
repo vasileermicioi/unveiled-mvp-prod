@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define the canonical Viewer discriminated union, the Better Auth + Drizzle hydration matrix, the role/permission matrix, and the redirect-after-login table.
-## Requirements
 ### Requirement: Gherkin Coverage For The Viewer Hydration Matrix
 The viewer-session module SHALL be exercised by at least one Gherkin scenario per variant of the `Viewer` discriminated union (`Guest`, `Member`, `Partner`, `Admin`), and the scenario id SHALL be referenced from this capability spec.
 

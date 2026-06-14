@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define the i18n.ts dictionary shape, the URL → cookie → DB preference resolution order, the DE/EN parity rules, and the missing-key fallback contract.
-## Requirements
 ### Requirement: Gherkin Coverage For The Language Toggle And Missing-Key Fallback
 The i18n-copy spec SHALL be exercised by at least one Gherkin scenario for the language toggle and one for the missing-key fallback, and the scenario id SHALL be referenced from this capability spec.
 
