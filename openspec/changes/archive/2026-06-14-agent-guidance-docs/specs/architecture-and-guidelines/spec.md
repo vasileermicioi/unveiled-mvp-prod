@@ -1,11 +1,5 @@
-# architecture-and-guidelines Specification
+## MODIFIED Requirements
 
-## Purpose
-Defines the C4 architecture documentation, the code/style guidelines, and the
-epic-level feature taxonomy. The C4 model is a code-first LikeC4 model under
-`architecture/`; this spec requires the model and forbids hand-edited Mermaid
-diagrams outside the model source.
-## Requirements
 ### Requirement: C4 Architecture Documentation
 The project SHALL include a C4 architecture specification mapping system context, runtime containers, and component relationships, sourced from a code-first LikeC4 model under `architecture/`.
 
@@ -52,4 +46,3 @@ Features SHALL be grouped under business domains at the Epic level without detai
 - **WHEN** reviewing the feature specifications
 - **THEN** Epics are grouped by functional domains (e.g., Discovery Feed, Member Payments, Media Storage, Venue Check-in)
 - **AND** each domain specifies overall capabilities and boundaries without detailed task breakdowns
-

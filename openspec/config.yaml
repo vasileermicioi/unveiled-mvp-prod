@@ -25,6 +25,13 @@ context: |
   When adding or changing a route, update the matching TypeSpec file under `typespec/**` and run
   `bun run specs:gen` to regenerate the committed artifacts. Do not edit generated files by hand.
 
+  Project entrypoint: `AGENTS.md` at the repo root is the canonical contributor manual
+  (tech stack, file layout, conventions, OpenSpec workflow, iteration cycle, toolchain
+  commands, definition of done). `CONTRIBUTING.md` mirrors it for humans with the
+  PR / review / release specifics. This `context:` block is a compact machine summary —
+  read `AGENTS.md` for full detail. Update `AGENTS.md` first whenever the stack, file
+  layout, iteration cycle, or definition of done changes.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:

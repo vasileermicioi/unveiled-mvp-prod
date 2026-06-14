@@ -1,5 +1,12 @@
 # Unveiled MVP Coding & Styling Guidelines
 
+> **Canonical entrypoint:** [`AGENTS.md`](../AGENTS.md) is the first doc every
+> contributor (human or agent) reads. It points here for the detailed style
+> rules and to the other long-form docs (`docs/architecture.md`,
+> `openspec/specs/`, `.development-plan/0N-iteration/`). This file is the
+> source of truth for the rules summarized in §4 of `AGENTS.md`; update
+> `AGENTS.md` first if the stack or iteration cycle changes.
+
 This document specifies the code standards, architecture requirements, styling principles, and automated verification rules for Unveiled MVP. All contributors (humans and agents) must adhere to these guidelines.
 
 ---
