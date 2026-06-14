@@ -39,6 +39,10 @@ export const appCopy = {
         credits: "Credits",
         login: "Login",
         becomeMember: "Mitglied werden",
+        openMenu: "Navigationsmenü öffnen",
+        closeMenu: "Navigationsmenü schließen",
+        menuHeading: "Menü",
+        languageGroup: "Sprache",
       },
       state: {
         accessUnavailable: "Zugang nicht verfügbar",
@@ -386,6 +390,10 @@ export const appCopy = {
         credits: "credits",
         login: "Login",
         becomeMember: "Become a member",
+        openMenu: "Open navigation menu",
+        closeMenu: "Close navigation menu",
+        menuHeading: "Menu",
+        languageGroup: "Language",
       },
       state: {
         accessUnavailable: "Access unavailable",
@@ -718,3 +726,4 @@ export const appCopy = {
 } as const;
 
 export type AppCopy = (typeof appCopy)["EN"];
+export type ShellCopy = AppCopy["shell"];

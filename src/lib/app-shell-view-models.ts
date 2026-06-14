@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { copyFor } from "@/lib/i18n";
+
 export type ShellViewerContext = "guest" | "member" | "partner" | "admin";
 export type ShellLanguage = "DE" | "EN";
 export type ShellNavItemId =
@@ -219,7 +221,7 @@ export function createDemoShellViewModel(
     activeItem,
     logo: { variant: "black", alt: "Unveiled" },
     language: { selected: "EN", options: ["DE", "EN"] },
-    tagline: isGuest ? "Curated cultural access in Berlin" : undefined,
+    tagline: isGuest ? copyFor("EN").shell.tagline : undefined,
     navItems,
     primaryAction: isGuest
       ? {

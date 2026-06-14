@@ -17,7 +17,8 @@
       "!_old_app",
       "!architecture",
       "!src/lib/generated",
-      "!src/styles/generated"
+      "!src/styles/generated",
+      "!.storybook"
     ]
   },
   "formatter": {

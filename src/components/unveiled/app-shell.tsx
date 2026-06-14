@@ -159,28 +159,36 @@ function LanguageToggle({
   onAction?: ShellActionHandler;
   className?: string;
 }) {
+  const copy = copyFor(shell.language.selected).shell.nav;
   return (
+    // biome-ignore lint/a11y/useSemanticElements: <fieldset> would add a visible legend/border that conflicts with the segmented-button visual treatment; role="group" is the correct ARIA pattern for a non-form grouping of toggle buttons.
     <div
+      role="group"
+      aria-label={copy.languageGroup}
       className={cn(
         "flex shrink-0 overflow-hidden border-2 border-brand-dark bg-brand-grey",
         className,
       )}
     >
-      {shell.language.options.map((language) => (
-        <button
-          key={language}
-          type="button"
-          className={cn(
-            "px-2 py-1 text-[9px] font-black uppercase transition-colors md:px-3 md:text-[10px]",
-            shell.language.selected === language
-              ? "bg-brand-dark text-white"
-              : "text-brand-dark/45 hover:text-brand-dark",
-          )}
-          onClick={() => onAction?.(`language:${language}`)}
-        >
-          {language}
-        </button>
-      ))}
+      {shell.language.options.map((language) => {
+        const isActive = shell.language.selected === language;
+        return (
+          <button
+            key={language}
+            type="button"
+            aria-pressed={isActive}
+            className={cn(
+              "px-2 py-1 text-[9px] font-black uppercase transition-colors md:px-3 md:text-[10px]",
+              isActive
+                ? "bg-brand-dark text-white"
+                : "text-brand-dark/45 hover:text-brand-dark",
+            )}
+            onClick={() => onAction?.(`language:${language}`)}
+          >
+            {language}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -305,7 +313,9 @@ export function ShellNavigation({
               type="button"
               className="lg:hidden flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
               onClick={() => setDrawerOpen(true)}
-              aria-label="Open navigation menu"
+              aria-label={copy.openMenu}
+              aria-expanded={drawerOpen}
+              aria-controls="shell-mobile-drawer"
             >
               <Menu className="size-5 md:size-6" />
             </button>
@@ -325,6 +335,10 @@ export function ShellNavigation({
 
       {/* Mobile Drawer Panel */}
       <div
+        id="shell-mobile-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shell-mobile-drawer-heading"
         className={cn(
           "fixed inset-y-0 right-0 z-[101] w-80 max-w-full bg-white border-l-4 border-brand-dark p-6 transition-transform duration-300 ease-in-out transform lg:hidden flex flex-col justify-between",
           drawerOpen ? "translate-x-0" : "translate-x-full",
@@ -337,11 +351,15 @@ export function ShellNavigation({
               type="button"
               className="flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
               onClick={() => setDrawerOpen(false)}
-              aria-label="Close navigation menu"
+              aria-label={copy.closeMenu}
             >
               <X className="size-5 md:size-6" />
             </button>
           </div>
+
+          <h2 id="shell-mobile-drawer-heading" className="sr-only">
+            {copy.menuHeading}
+          </h2>
 
           <nav className="flex flex-col gap-2">
             {shell.navItems

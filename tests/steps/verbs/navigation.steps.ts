@@ -9,11 +9,7 @@ export function registerNavigationSteps(registry: StepRegistry): void {
     "the user navigates to <route>",
     routeSchema,
     async (page, { route }) => {
-      const target = new URL(
-        route,
-        page.url() || "http://localhost:4321",
-      ).toString();
-      await page.goto(target, { waitUntil: "domcontentloaded" });
+      await page.goto(route, { waitUntil: "domcontentloaded" });
     },
   );
 }

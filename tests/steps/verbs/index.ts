@@ -1,4 +1,5 @@
 import type { StepRegistry } from "../dsl";
+import { registerA11ySteps } from "./a11y.steps";
 import { registerAuthSteps } from "./auth.steps";
 import { registerDataSteps } from "./data.steps";
 import { registerFormsSteps } from "./forms.steps";
@@ -16,14 +17,16 @@ export function registerAllSteps(registry: StepRegistry): void {
   registerFormsSteps(registry);
   registerListsSteps(registry);
   registerModalsSteps(registry);
-  registerVisualSteps(registry);
   registerNetworkSteps(registry);
   registerDataSteps(registry);
   registerI18nSteps(registry);
   registerTimeSteps(registry);
+  registerA11ySteps(registry);
+  registerVisualSteps(registry);
 }
 
 export {
+  registerA11ySteps,
   registerAuthSteps,
   registerDataSteps,
   registerFormsSteps,
