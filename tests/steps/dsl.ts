@@ -52,6 +52,46 @@ export function matchesPattern(pattern: string, text: string): boolean {
   return regex.test(text);
 }
 
+export function stepArgsFromText<Args extends StepArgs>(
+  def: StepDefinition<Args>,
+  stepText: string,
+): Args {
+  const regex = new RegExp(`^${def.pattern.replace(/<(\w+)>/g, "(.+)")}$`);
+  const match = regex.exec(stepText);
+  if (!match) {
+    throw new Error(
+      `Pattern "${def.pattern}" did not match step "${stepText}"`,
+    );
+  }
+  const keys = [...def.pattern.matchAll(/<(\w+)>/g)].map((m) => m[1]);
+  const raw: Record<string, string> = {};
+  keys.forEach((key, idx) => {
+    raw[key] = match[idx + 1];
+  });
+  return def.args.parse(raw);
+}
+
+/**
+ * Resolve a step to a registered definition, parse its arguments, and
+ * invoke it against the supplied page. Both the real-route runner and
+ * the storybook runner dispatch through this function so the same
+ * verb surface handles real routes and storybook pages.
+ */
+export async function dispatch(
+  registry: StepRegistry,
+  page: Page,
+  kind: StepDefinition<StepArgs>["kind"],
+  stepText: string,
+): Promise<void> {
+  const normalized = stepText.trim();
+  const def = registry.resolve(kind, normalized);
+  if (!def) {
+    throw new Error(`No step registered for ${kind} "${normalized}"`);
+  }
+  const args = stepArgsFromText(def, normalized);
+  await def.run(page, args);
+}
+
 export function defineStep<Args extends StepArgs>(
   registry: StepRegistry,
   kind: StepDefinition<Args>["kind"],

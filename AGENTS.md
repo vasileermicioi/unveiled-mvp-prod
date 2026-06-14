@@ -220,6 +220,10 @@ All commands are run with `bun` from the repo root.
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
 | `bun run test:e2e` | Playwright runs the gherkin parity suite. |
+| `bun run test:storybook` | Playwright runs the gherkin scenarios that carry a `@story(...)` tag against the storybook project. |
+| `bun run storybook` | Storybook 8 dev server on port 6006. |
+| `bun run storybook:build` | Static storybook build at `public/storybook/`. |
+| `bun run storybook:coverage` | Assert every `@story(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + run with `wrangler dev --remote`. |
 | `bun run deploy:cloudflare` | Build + `wrangler deploy` for the app. |
@@ -232,6 +236,8 @@ A change is *done* only when all of the following are true:
 - [ ] Every task in the change's `tasks.md` is checked off.
 - [ ] `bun run check` passes locally.
 - [ ] `bun run test:e2e` passes (gherkin parity suite).
+- [ ] `bun run test:storybook` passes for any feature spec that adds a new component.
+- [ ] `bun run storybook:coverage` shows no drift.
 - [ ] `bun run specs:check` shows no drift (TypeSpec artifacts in sync).
 - [ ] `bun run arch:check` shows no drift (LikeC4 model in sync).
 - [ ] `bun run tokens:check` shows no drift (design tokens in sync).

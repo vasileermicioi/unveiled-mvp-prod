@@ -9,6 +9,9 @@ const meta: Meta<typeof AppShell> = {
   component: AppShell,
   parameters: {
     layout: "fullscreen",
+    storybook: {
+      skipCoverage: true,
+    },
   },
   args: {
     shell: createDemoShellViewModel("discover", {
