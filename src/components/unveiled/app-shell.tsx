@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge, Panel, StatePanel } from "@/components/ui/unveiled-primitives";
@@ -647,6 +647,9 @@ export function DiscoveryShell({
   children: ReactNode;
   onAction?: ShellActionHandler;
 }) {
+  const deferredResultCountLabel = useDeferredValue(discovery.resultCountLabel);
+  const settledResultCountLabel =
+    deferredResultCountLabel ?? discovery.resultCountLabel;
   return (
     <div className="space-y-6">
       <Panel
@@ -659,8 +662,13 @@ export function DiscoveryShell({
             {discovery.activeRangeLabel}
           </p>
         </div>
-        <p className="text-right text-[10px] font-black uppercase tracking-widest opacity-55">
-          {discovery.resultCountLabel}
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-right text-[10px] font-black uppercase tracking-widest opacity-55"
+        >
+          {settledResultCountLabel}
         </p>
       </Panel>
 

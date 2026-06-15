@@ -128,3 +128,19 @@ export function downloadCalendarFile(metadata: CalendarEventMetadata) {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
+export type CalendarFileObjectUrl = {
+  href: string;
+  filename: string;
+};
+
+export function createIcsObjectUrl(
+  metadata: CalendarEventMetadata,
+): CalendarFileObjectUrl {
+  const content = createIcsContent(metadata);
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  return {
+    href: window.URL.createObjectURL(blob),
+    filename: calendarFilename(metadata.title),
+  };
+}

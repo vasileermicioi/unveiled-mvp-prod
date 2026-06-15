@@ -19,7 +19,7 @@ export function registerFormsSteps(registry: StepRegistry): void {
       for (const pair of pairs) {
         const [label, value] = pair.split("=").map((entry) => entry.trim());
         if (!label || value === undefined) continue;
-        const field = getFieldNearestTo(page, label);
+        const field = await getFieldNearestTo(page, label);
         const tag = await field.evaluate((node) => node.tagName.toLowerCase());
         if (tag === "select") {
           await field.selectOption(value);

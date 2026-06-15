@@ -702,6 +702,49 @@ export function VisualSystemProvider({
       : {},
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (initialDiscovery && "filters" in initialDiscovery) return;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl: DiscoveryFilters = {};
+    const category = params.get("category");
+    const partnerId = params.get("partnerId");
+    const startDate = params.get("startDate");
+    const endDate = params.get("endDate");
+    const page = params.get("page");
+    if (category) fromUrl.category = category;
+    if (partnerId) fromUrl.partnerId = partnerId;
+    if (startDate) fromUrl.startDate = startDate;
+    if (endDate) fromUrl.endDate = endDate;
+    if (page) fromUrl.page = page;
+    if (Object.keys(fromUrl).length > 0) {
+      setDiscoveryFilters((prev) => ({ ...prev, ...fromUrl }));
+    }
+  }, [initialDiscovery]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    const apply = (key: "category" | "partnerId" | "startDate" | "endDate" | "page", value: string | undefined) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    };
+    apply("category", discoveryFilters.category);
+    apply("partnerId", discoveryFilters.partnerId);
+    apply("startDate", discoveryFilters.startDate);
+    apply("endDate", discoveryFilters.endDate);
+    apply("page", discoveryFilters.page);
+    const next = `${url.pathname}?${params.toString()}${url.hash}`;
+    const current = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== current) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [discoveryFilters]);
+
   const setDiscoveryFiltersWrapped = (
     value: React.SetStateAction<DiscoveryFilters>,
   ) => {

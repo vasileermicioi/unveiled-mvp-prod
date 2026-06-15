@@ -8,6 +8,8 @@ import {
 import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import { useCopy, useLiveData } from "./context";
 
+const SEARCH_LANDMARK_ID = "discover-filter-search";
+
 export function DiscoveryFilterPanel() {
   const copy = useCopy().discovery;
   const live = useLiveData();
@@ -31,44 +33,59 @@ export function DiscoveryFilterPanel() {
       shadow={false}
       className="grid gap-4 p-4 md:grid-cols-4"
     >
-      <Field label={copy.startDate}>
-        <TextInput
-          type="date"
-          value={filters.startDate ?? ""}
-          onChange={(event) => updateFilter({ startDate: event.target.value })}
-        />
-      </Field>
-      <Field label={copy.endDate}>
-        <TextInput
-          type="date"
-          value={filters.endDate ?? ""}
-          onChange={(event) => updateFilter({ endDate: event.target.value })}
-        />
-      </Field>
-      <Field label={copy.category}>
-        <SelectInput
-          value={filters.category ?? ""}
-          onChange={(event) => updateFilter({ category: event.target.value })}
-        >
-          <option value="">{copy.allCategories}</option>
-          {live.publicCategories.map((category) => (
-            <option key={category}>{category}</option>
-          ))}
-        </SelectInput>
-      </Field>
-      <Field label={copy.partner}>
-        <SelectInput
-          value={filters.partnerId ?? ""}
-          onChange={(event) => updateFilter({ partnerId: event.target.value })}
-        >
-          <option value="">{copy.allPartners}</option>
-          {live.publicPartnerOptions.map((partner) => (
-            <option key={partner.id} value={partner.id}>
-              {partner.name}
-            </option>
-          ))}
-        </SelectInput>
-      </Field>
+      <form
+        role="search"
+        id={SEARCH_LANDMARK_ID}
+        aria-labelledby={`${SEARCH_LANDMARK_ID}-heading`}
+        onSubmit={(event) => event.preventDefault()}
+        className="contents"
+      >
+        <h2 id={`${SEARCH_LANDMARK_ID}-heading`} className="sr-only">
+          {copy.filterLandmark}
+        </h2>
+        <Field label={copy.startDate} htmlFor="discover-filter-start-date">
+          <TextInput
+            id="discover-filter-start-date"
+            type="date"
+            value={filters.startDate ?? ""}
+            onChange={(event) => updateFilter({ startDate: event.target.value })}
+          />
+        </Field>
+        <Field label={copy.endDate} htmlFor="discover-filter-end-date">
+          <TextInput
+            id="discover-filter-end-date"
+            type="date"
+            value={filters.endDate ?? ""}
+            onChange={(event) => updateFilter({ endDate: event.target.value })}
+          />
+        </Field>
+        <Field label={copy.category} htmlFor="discover-filter-category">
+          <SelectInput
+            id="discover-filter-category"
+            value={filters.category ?? ""}
+            onChange={(event) => updateFilter({ category: event.target.value })}
+          >
+            <option value="">{copy.allCategories}</option>
+            {live.publicCategories.map((category) => (
+              <option key={category}>{category}</option>
+            ))}
+          </SelectInput>
+        </Field>
+        <Field label={copy.partner} htmlFor="discover-filter-partner">
+          <SelectInput
+            id="discover-filter-partner"
+            value={filters.partnerId ?? ""}
+            onChange={(event) => updateFilter({ partnerId: event.target.value })}
+          >
+            <option value="">{copy.allPartners}</option>
+            {live.publicPartnerOptions.map((partner) => (
+              <option key={partner.id} value={partner.id}>
+                {partner.name}
+              </option>
+            ))}
+          </SelectInput>
+        </Field>
+      </form>
     </Panel>
   );
 }

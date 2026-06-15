@@ -8,13 +8,13 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Divider, Panel } from "@/components/ui/unveiled-primitives";
 import { ModalShell } from "@/components/unveiled/app-shell";
 import { demoModalShell } from "@/lib/app-shell-view-models";
 import {
-  downloadCalendarFile,
+  createIcsObjectUrl,
   isBookingCalendarActionAvailable,
 } from "@/lib/calendar";
 import type { EventCardView } from "@/lib/unveiled-view-models";
@@ -48,6 +48,16 @@ export function BookingModal({
     result?.state,
     calendarMetadata,
   );
+  const calendarFile = useMemo(
+    () => (calendarAvailable && calendarMetadata ? createIcsObjectUrl(calendarMetadata) : null),
+    [calendarAvailable, calendarMetadata],
+  );
+  useEffect(() => {
+    if (!calendarFile) return;
+    return () => {
+      window.URL.revokeObjectURL(calendarFile.href);
+    };
+  }, [calendarFile]);
 
   return (
     <ModalShell
@@ -111,7 +121,7 @@ export function BookingModal({
                   </p>
                 </Panel>
               )}
-              {calendarAvailable && calendarMetadata ? (
+              {calendarAvailable && calendarMetadata && calendarFile ? (
                 <Panel
                   tone="dark"
                   className="flex flex-col justify-between gap-8"
@@ -120,15 +130,15 @@ export function BookingModal({
                     <p className="unveiled-meta opacity-55">{copy.saveDate}</p>
                     <p className="headline-md mt-5">{copy.markMoment}</p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="yellow"
-                    data-testid="booking-calendar-download"
-                    onClick={() => downloadCalendarFile(calendarMetadata)}
+                  <a
+                    href={calendarFile.href}
+                    download={calendarFile.filename}
+                    aria-label={copy.addToCalendar(event.title)}
+                    className="inline-flex items-center justify-center gap-2 border-4 border-brand-dark bg-brand-yellow px-5 py-3 text-sm font-black uppercase tracking-widest text-brand-dark shadow-[4px_4px_0_0_#202621] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#202621]"
                   >
                     <Calendar />
                     {copy.sync}
-                  </Button>
+                  </a>
                 </Panel>
               ) : null}
             </div>

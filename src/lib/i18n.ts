@@ -188,6 +188,11 @@ export const appCopy = {
       partner: "Partner",
       allCategories: "Alle Kategorien",
       allPartners: "Alle Partner",
+      filterLandmark: "Entdecken-Filter",
+      mapLandmark: "Entdecken-Karte",
+      filterChipsLandmark: "Entdecken-Filter-Chips",
+      resultCountAnnouncement: (label: string) =>
+        `${label} verfügbare Events`,
     },
     event: {
       credits: "Credits",
@@ -228,6 +233,7 @@ export const appCopy = {
       requestFailed: "Die Anfrage konnte nicht abgeschlossen werden.",
       checkFields: "Prüfe die markierten Felder.",
       membershipRequired: "Eine aktive Mitgliedschaft ist erforderlich.",
+      addToCalendar: (title: string) => `${title} zum Kalender hinzufügen`,
     },
     member: {
       feedBadge: "Member Feed",
@@ -560,6 +566,11 @@ export const appCopy = {
       partner: "Partner",
       allCategories: "All categories",
       allPartners: "All partners",
+      filterLandmark: "Discover filters",
+      mapLandmark: "Discover map",
+      filterChipsLandmark: "Discover filter chips",
+      resultCountAnnouncement: (label: string) =>
+        `${label} events available`,
     },
     event: {
       credits: "Credits",
@@ -599,6 +610,7 @@ export const appCopy = {
       requestFailed: "The request could not be completed.",
       checkFields: "Check the highlighted fields.",
       membershipRequired: "An active membership is required.",
+      addToCalendar: (title: string) => `Add ${title} to your calendar`,
     },
     member: {
       feedBadge: "Member feed",

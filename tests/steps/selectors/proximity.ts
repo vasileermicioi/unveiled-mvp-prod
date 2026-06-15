@@ -2,37 +2,57 @@ import type { Locator, Page } from "@playwright/test";
 
 /**
  * Resolve a label node to the nearest form control.
- * Mirrors the existing pattern in legacy `step-definitions.ts`:
- * find the label whose text matches `label`, then return the field
- * (input, textarea, select) that is the closest sibling within the
- * same `<label>` element, or the first such field beneath the label
- * if it wraps the field.
+ * Supports two patterns:
+ * - Legacy: the label wraps the input. `getByText(label)` finds the
+ *   text node; the nearest `<label>` ancestor contains the field.
+ * - Modern: the label uses `for` to point at an input `id`. The
+ *   `for` value is read off the label and used to look up the
+ *   matching field on the page.
  */
-function resolveFieldByLabel(
+async function resolveFieldByLabel(
   page: Page,
   label: string,
   control: "input" | "textarea" | "select" | "input, textarea, select",
-): Locator {
-  const labelLocator = page.getByText(label, { exact: true }).first();
-  return labelLocator
+): Promise<Locator> {
+  const textNode = page.getByText(label, { exact: true }).first();
+  const labelFor = await textNode
+    .locator(`xpath=ancestor::label[1]`)
+    .getAttribute("for")
+    .catch(() => null);
+  if (labelFor) {
+    return page.locator(`${control}#${labelFor}`).first();
+  }
+  return textNode
     .locator(`xpath=ancestor::label[1]`)
     .locator(control)
     .first();
 }
 
-export function getFieldNearestTo(page: Page, label: string): Locator {
+export async function getFieldNearestTo(
+  page: Page,
+  label: string,
+): Promise<Locator> {
   return resolveFieldByLabel(page, label, "input, textarea, select");
 }
 
-export function getInputNearestTo(page: Page, label: string): Locator {
+export async function getInputNearestTo(
+  page: Page,
+  label: string,
+): Promise<Locator> {
   return resolveFieldByLabel(page, label, "input");
 }
 
-export function getTextareaNearestTo(page: Page, label: string): Locator {
+export async function getTextareaNearestTo(
+  page: Page,
+  label: string,
+): Promise<Locator> {
   return resolveFieldByLabel(page, label, "textarea");
 }
 
-export function getSelectNearestTo(page: Page, label: string): Locator {
+export async function getSelectNearestTo(
+  page: Page,
+  label: string,
+): Promise<Locator> {
   return resolveFieldByLabel(page, label, "select");
 }
 

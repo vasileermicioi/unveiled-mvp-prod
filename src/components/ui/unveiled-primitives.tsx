@@ -104,12 +104,14 @@ export function StatPanel({
 
 export function Field({
   label,
+  htmlFor,
   error,
   helper,
   children,
   className,
 }: {
   label: string;
+  htmlFor?: string;
   error?: string;
   helper?: string;
   children: React.ReactNode;
@@ -117,7 +119,12 @@ export function Field({
 }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      <span className="unveiled-meta">{label}</span>
+      <label
+        htmlFor={htmlFor}
+        className="unveiled-meta"
+      >
+        {label}
+      </label>
       {children}
       {error ? (
         // TODO: port to a typed `destructive-text` token from `design-tokens` once added

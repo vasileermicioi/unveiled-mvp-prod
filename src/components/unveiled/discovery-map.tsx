@@ -292,11 +292,19 @@ export function DiscoveryMapPanel({
     model.readyMarkers.length === 1
       ? "1 event on map"
       : `${model.readyMarkers.length} events on map`;
+  const mapHeadingId = `discovery-map-heading-${surface}`;
+  const mapRegionLabel =
+    surface === "public" ? "Public discovery map" : "Member discovery map";
 
   return (
     <Panel tone="cream" shadow={false} className="overflow-hidden p-0">
+      <h2 id={mapHeadingId} className="sr-only">
+        {mapRegionLabel}
+      </h2>
       <div
         ref={mapViewportRef}
+        role="region"
+        aria-labelledby={mapHeadingId}
         className="relative min-h-[26rem] overflow-hidden border-[12px] border-brand-cream bg-brand-grey touch-none"
         onPointerDown={(event) => {
           if (event.button !== 0) return;
@@ -496,7 +504,7 @@ export function DiscoveryMapPanel({
                 event.stopPropagation();
                 setSelectedMarkerId(marker.id);
               }}
-              aria-label={`${marker.mapLabel} marker`}
+              aria-label={`${marker.title} — ${marker.neighborhood}`}
               title={marker.mapLabel}
             >
               <span className="grid size-11 place-items-center border-4 border-brand-dark bg-brand-dark text-brand-yellow shadow-[5px_5px_0_0_#202621]">
