@@ -39,8 +39,8 @@ architecture change.
   is the source of truth for viewer identity.
 - **Validation:** Zod 4 (pinned `4.3.6`). All action input/output goes
   through Zod schemas; do not hand-roll validators.
-- **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus shadcn/ui
-  conventions driven by `components.json`. Design tokens are generated from
+- **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus Hero UI
+  component library. Design tokens are generated from
   `design-tokens.json` via Style Dictionary (`bun run tokens:gen`).
 - **Lint / format:** Biome 2.4 — see `biome.json`. CI runs `bun run check`,
   which combines `astro check`, `biome check .`, `bun run specs:check`, and
@@ -72,7 +72,7 @@ architecture change.
 ├── README.md                # one-screen visitor quickstart
 ├── astro.config.mjs         # Astro + Cloudflare adapter config
 ├── biome.json               # Biome lint/format rules
-├── components.json          # shadcn/ui convention config
+├── components.json          # Hero UI convention config
 ├── design-tokens.json       # Style Dictionary source of truth
 ├── drizzle/                 # Drizzle migrations + schema snapshots
 ├── drizzle.config.ts        # Drizzle Kit config
@@ -232,10 +232,10 @@ All commands are run with `bun` from the repo root.
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
 | `bun run test:e2e` | Playwright runs the gherkin parity suite. |
-| `bun run test:storybook` | Playwright runs the gherkin scenarios that carry a `@story(...)` tag against the storybook project. |
-| `bun run storybook` | Storybook 8 dev server on port 6006. |
-| `bun run storybook:build` | Static storybook build at `public/storybook/`. |
-| `bun run storybook:coverage` | Assert every `@story(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
+| `bun run test:ladle` | Playwright runs the gherkin scenarios that carry a `@story(...)` tag against the Ladle project. |
+| `bun run ladle` | Ladle dev server on port 6006. |
+| `bun run ladle:build` | Static Ladle build at `public/storybook/` (Ladle default; migration may adjust path). |
+| `bun run ladle:coverage` | Assert every `@story(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + run with `wrangler dev --remote`. |
 | `bun run deploy:cloudflare` | Build + `wrangler deploy` for the app. |
@@ -248,8 +248,8 @@ A change is *done* only when all of the following are true:
 - [ ] Every task in the change's `tasks.md` is checked off.
 - [ ] `bun run check` passes locally.
 - [ ] `bun run test:e2e` passes (gherkin parity suite).
-- [ ] `bun run test:storybook` passes for any feature spec that adds a new component.
-- [ ] `bun run storybook:coverage` shows no drift.
+- [ ] `bun run test:ladle` passes for any feature spec that adds a new component.
+- [ ] `bun run ladle:coverage` shows no drift.
 - [ ] `bun run specs:check` shows no drift (TypeSpec artifacts in sync).
 - [ ] `bun run arch:check` shows no drift (LikeC4 model in sync).
 - [ ] `bun run tokens:check` shows no drift (design tokens in sync).
