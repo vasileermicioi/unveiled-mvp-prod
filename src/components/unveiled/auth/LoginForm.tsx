@@ -7,6 +7,7 @@ import { copyFor, type UiLanguage } from "@/lib/i18n";
 export interface LoginFormValues {
   email: string;
   password: string;
+  redirect: string | null;
 }
 
 export interface LoginFormProps {
@@ -14,21 +15,31 @@ export interface LoginFormProps {
   isSubmitting?: boolean;
   onSubmit?: (values: LoginFormValues) => void | Promise<void>;
   errorMessage?: string | null;
+  redirectTarget?: string | null;
+  fallbackDestination?: string;
+  onCancelRedirect?: () => void;
 }
 
-const initialValues: LoginFormValues = { email: "", password: "" };
+const initialValues: LoginFormValues = { email: "", password: "", redirect: null };
 
 export function LoginForm({
   language,
   isSubmitting = false,
   onSubmit,
   errorMessage,
+  redirectTarget = null,
+  fallbackDestination = "/",
+  onCancelRedirect,
 }: LoginFormProps) {
   const formId = useId();
   const emailId = `${formId}-email`;
   const passwordId = `${formId}-password`;
   const alertId = `${formId}-alert`;
+  const deepLinkId = `${formId}-deep-link`;
+  const cancelId = `${formId}-deep-link-cancel`;
+  const redirectInputId = `${formId}-redirect-input`;
   const copy = copyFor(language).auth.forms.login;
+  const deepLinkCopy = copyFor(language).routing.deepLink;
   const [values, setValues] = useState<LoginFormValues>(initialValues);
 
   function update<K extends keyof LoginFormValues>(
@@ -40,8 +51,13 @@ export function LoginForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void onSubmit?.(values);
+    void onSubmit?.({ ...values, redirect: redirectTarget });
   }
+
+  const showDeepLink = redirectTarget !== null;
+  const previewText = showDeepLink
+    ? deepLinkCopy.preview.replace("{destination}", redirectTarget)
+    : "";
 
   return (
     <form
@@ -50,6 +66,31 @@ export function LoginForm({
       className="grid gap-4"
       onSubmit={handleSubmit}
     >
+      {showDeepLink ? (
+        <div
+          id={deepLinkId}
+          role="note"
+          className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+        >
+          <p>{previewText}</p>
+          <input
+            id={redirectInputId}
+            type="hidden"
+            name="redirect"
+            value={redirectTarget ?? ""}
+            readOnly
+          />
+          <Button
+            id={cancelId}
+            type="button"
+            variant="ghost"
+            className="mt-2 p-0 h-auto underline"
+            onClick={onCancelRedirect ?? (() => undefined)}
+          >
+            {deepLinkCopy.cancel} {fallbackDestination}
+          </Button>
+        </div>
+      ) : null}
       <Field label={copy.email} htmlFor={emailId}>
         <TextInput
           id={emailId}
@@ -97,3 +138,4 @@ export function LoginForm({
     </form>
   );
 }
+

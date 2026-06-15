@@ -1,0 +1,60 @@
+## 1. Umbrella Setup
+
+- [x] 1.1 Confirm the dependency: `openspec/changes/archive/2026-06-15-auth-aria-and-i18n/` has been merged so the typed `AuthFormCopy` / `ShellCopy` shape and the selector discipline are already in place; the login form refactor in this umbrella reuses the same shape pattern.
+- [x] 1.2 Create the per-feature folder at `10-iteration/features/improvements/routing-deep-link-and-redirect/` and seed the umbrella `proposal.md` (mirrors `openspec/changes/routing-deep-link-and-redirect/proposal.md`), umbrella `tasks.md` (this file), and umbrella `specs.md` (pointer to the OpenSpec capability delta).
+- [x] 1.3 Add two per-row sub-folders at `10-iteration/features/improvements/routing-deep-link-and-redirect/{deep-link-preservation,redirect-after-login-table}/` and seed each with `proposal.md` + `tasks.md` + `feature.feature` + `<component>.stories.tsx` + `specs.md` (one absorbed row per folder).
+- [x] 1.4 Update `09-iteration/01-review-existing-features.md` rows 55 (Redirect-after-login table) and 56 (Deep-link preservation) to `status: specced` and fill in the `openspec-change` column with `openspec/changes/routing-deep-link-and-redirect/`.
+- [x] 1.5 Confirm the umbrella change is `applyRequires: [tasks]` ready and run `openspec validate routing-deep-link-and-redirect`.
+
+## 2. i18n Dictionary Extension
+
+- [x] 2.1 Extend `src/lib/i18n.ts` with the `routing.deepLink.*` bundle in DE and EN, covering every visible string on the deep-link preview (`preview` template, `cancel` link text, `fallbackDestination` for `guest` / `member` / `partner` / `admin` viewer kinds).
+- [x] 2.2 Extend `src/lib/i18n.ts` with the `routing.redirectAfterLogin.*` bundle in DE and EN, covering the table-cell copy used by the storybook story (per-cell label for `Member × admin`, `Partner × admin`, `Admin × partner`, etc.).
+- [x] 2.3 Export the typed `RoutingCopy` shape from `src/lib/i18n.ts` so the type checker enforces DE/EN parity of the new keys; mirror the `AuthFormCopy` precedent from the auth umbrella.
+- [x] 2.4 Extend the i18n parity unit test (`src/lib/i18n.test.ts`) to assert that every key in `RoutingCopy` is defined in both DE and EN.
+- [x] 2.5 Run `bun run check` to confirm the new typed shape passes the type check and the parity test passes.
+
+## 3. Routing Helpers
+
+- [x] 3.1 Add `parseSafeRedirectTarget(input, viewer)` to `src/lib/product-routes.ts`. The helper rejects (a) absolute URLs (`http://…`, `https://…`), (b) protocol-relative URLs (`//evil.example/x`), (c) any path not in `productRoutes`, (d) any path whose language prefix disagrees with the active viewer's language, and (e) the empty string. It returns either a `ProductRouteDefinition` (safe target) or `null` (caller falls back to the `routing.deepLink.fallbackDestination` for the active viewer kind).
+- [x] 3.2 Add `redirectAfterLoginFor(viewer, owner)` to `src/lib/product-routes.ts`. The function is a pure `(AuthenticatedViewer, ProductRouteOwner) => string | undefined` that returns the safe destination for the `viewer.kind × viewer.role × owner` cell, computed from `productRoutes` and `routePathFor`. It replaces the in-line `redirectForAuthenticatedViewer` branch (which is then removed).
+- [x] 3.3 Update `src/middleware.ts:67-69` so the cross-surface redirect branch calls `redirectAfterLoginFor(viewer, route.owner)` and uses the returned destination (or falls back to `/[lang]/` for a `null` return).
+- [ ] 3.4 Update `src/middleware.ts:51-69` so the Guest-guard branch appends `?redirect=<safe-relative-path>` (URL-encoded, including the language prefix and original query string) to the login URL, where the safe relative path is the original `url.pathname + url.search` normalized to the resolved language prefix. — **DEFERRED**: see implementation note in `design.md`; activation is gated on a future login page mount at `/[lang]/login`. The `parseSafeRedirectTarget` helper and the `RoutingCopy` i18n bundle are wired so the form can consume the param once the page exists.
+- [x] 3.5 Add a unit test (`src/lib/product-routes.test.ts` or extend the existing file) covering `parseSafeRedirectTarget` for: a valid in-table path with matching language prefix, an absolute URL, a protocol-relative URL, an off-table path, a cross-language prefix, an empty string, and a percent-decoded bypass attempt.
+- [x] 3.6 Add a unit test covering `redirectAfterLoginFor` for every cell: `Member × member` → `undefined`, `Member × partner` → `/` (or the documented fallback), `Member × admin` → `member` safe destination, `Partner × partner` → `undefined`, `Partner × admin` → `partner` safe destination, `Admin × partner` → `admin` safe destination, `Admin × admin` → `undefined`.
+
+## 4. Row 1 — Deep-Link Preservation (`deep-link-preservation`)
+
+- [x] 4.1 Refactor the login form (`src/components/unveiled/auth/LoginForm.tsx` or the current login island location) to read the `?redirect=` query parameter at mount, validate it through `parseSafeRedirectTarget`, and render the safe destination as a hidden `<input name="redirect">` (or pass it to the typed server action payload).
+- [x] 4.2 Render the deep-link preview line as a `<p role="note">` with the text `i18n.routing.deepLink.preview` interpolated with the safe destination; render the cancel link as a `<button type="button">` with the text `i18n.routing.deepLink.cancel` that navigates to the `routing.deepLink.fallbackDestination` for the active viewer kind.
+- [x] 4.3 Update the login form's typed server action envelope so the post-login redirect path uses the validated safe destination (or the fallback destination when validation fails). The action result envelope (`safe` / `data` / `error`) is unchanged; only the post-login redirect logic is rewired.
+- [x] 4.4 Localize any new copy on the login form (preview template, cancel button text, fallback destination label) in DE and EN through `i18n.routing.deepLink.*`. Confirm the typed `RoutingCopy` shape covers every new key.
+- [x] 4.5 Add `tests/features/identity/deep-link-preservation.feature` with one happy-path scenario and one edge-case scenario. The gherkin drives the login form directly with a `?redirect=` parameter (since the middleware branch is activation-gated on a public login page); use only proximity + layout selectors.
+- [x] 4.6 Add `DeepLinkPreservation.stories.tsx` with a "happy path" story and a "poisoned redirect" story; both carry a `play` interaction test and are tagged with `@story(component=DeepLinkPreservation, story=…)` referencing the scenario id from `feature.feature`.
+- [x] 4.7 Add the per-row sub-folder at `10-iteration/features/improvements/routing-deep-link-and-redirect/deep-link-preservation/` with `proposal.md` + `tasks.md` (this row's checklist) + `feature.feature` + `DeepLinkPreservation.stories.tsx` + `specs.md` (pointing at the `routing` capability delta).
+
+## 5. Row 2 — Redirect-After-Login Table (`redirect-after-login-table`)
+
+- [x] 5.1 Confirm `redirectAfterLoginFor` is the only call site in `src/middleware.ts` that returns a cross-surface fallback destination. Inline string literals under `src/middleware.ts` that name a fallback destination for a `member`, `partner`, or `admin` route are removed.
+- [x] 5.2 Add a `RedirectAfterLoginTable` display component (under `src/components/unveiled/routing/`) that renders a read-only table of the `viewer.kind × viewer.role × owner` cells; the component reads from the typed `redirectAfterLoginFor` function and the `i18n.routing.redirectAfterLogin.*` bundles.
+- [x] 5.3 Localize every cell label in DE and EN through `i18n.routing.redirectAfterLogin.*`. Confirm the typed `RoutingCopy` shape covers every new key.
+- [x] 5.4 Add `tests/features/identity/redirect-after-login-table.feature` with one happy-path scenario and one edge-case scenario. The gherkin asserts the table cell label via a proximity + layout selector.
+- [x] 5.5 Add `RedirectAfterLoginTable.stories.tsx` with a "Member × admin" story and a "Partner × admin" story; both stories render the table with mock auth context and mock i18n, and carry a `play` interaction test that drives the same flow as the gherkin scenario. Tag both stories with `@story(component=RedirectAfterLoginTable, story=…)` referencing the scenario id from `feature.feature`.
+- [x] 5.6 Add the per-row sub-folder at `10-iteration/features/improvements/routing-deep-link-and-redirect/redirect-after-login-table/` with `proposal.md` + `tasks.md` (this row's checklist) + `feature.feature` + `RedirectAfterLoginTable.stories.tsx` + `specs.md` (pointing at the `routing` capability delta).
+
+## 6. Selector Discipline Migration
+
+- [x] 6.1 Audit every gherkin step and storybook `play` test added by this umbrella against `tests/steps/lint/selectors.ts` to confirm the proximity + layout selector discipline is preserved.
+- [x] 6.2 Confirm no `data-testid`, no `getByText` chains, no CSS class selectors, no XPath, no `nth-child` / `nth-of-type`, and no positional selectors are used in any of the new files.
+- [x] 6.3 Run `bun run check` (which runs the selector lint) and confirm it passes. (The 6 pre-existing errors in `astro.config.mjs`, `scripts/specs-shared.ts`, `src/components/unveiled/list-skeleton.tsx`, and `tests/architecture/drift-script.test.ts` are unchanged and not caused by this umbrella.)
+
+## 7. Verification
+
+- [x] 7.1 Run `bun run check` and confirm it passes (`astro check` + `biome check .` + `bun run specs:check` + `bun run tokens:check`). The 6 pre-existing errors in `astro.config.mjs`, `scripts/specs-shared.ts`, `src/components/unveiled/list-skeleton.tsx`, and `tests/architecture/drift-script.test.ts` are unchanged and not caused by this umbrella.
+- [ ] 7.2 Run the gherkin parity suite (`bun run test:e2e`) and confirm the 4 new scenarios (2 per absorbed row × 2 rows) pass. — **DEFERRED**: the 4 new gherkin scenarios are written and committed; their e2e execution depends on a real `/[lang]/login` page (same activation gate as task 3.4). The 8 pre-existing pass / 1 pre-existing fail (`Guest hitting a member route is redirected to login`) baseline is unchanged by this umbrella; the umbrella's 4 new scenarios fail for the same activation reason.
+- [ ] 7.3 Run `bun run test:storybook` and confirm the new stories' `play` interaction tests pass. — **DEFERRED**: this umbrella unblocked one piece of the runner (the `parseFeature` tag-attachment bug in `tests/steps/storybook-helpers.ts`, fixed by buffering pre-scenario tags and using `currentScenario.steps.length === 0` to disambiguate), but the runner is still incomplete: the storybook iframe does not expose the `<main>` landmark the registered step pattern relies on, several of the umbrella's gherkin assertions reference step patterns that are not in the registry, and the `--project=storybook` Playwright project is gated on `RUN_STORYBOOK=1` or `STORYBOOK_URL`. The auth umbrella is archived with the same gaps. The umbrella's stories are written, tagged, and pass `bun run storybook:build` and `bun run storybook:coverage`; running the full `bun run test:storybook` against the new `@story(...)` scenarios requires completing the runner in a follow-up iteration.
+- [x] 7.4 Run `bun run storybook:coverage` and confirm no drift for every new `@story(...)` tag. — `OK — 23 feature files, 5 story files, no drift`.
+- [x] 7.5 Run the i18n parity unit test (`bun run test:unit src/lib/i18n.test.ts` or the wired-in test runner) and confirm the new `RoutingCopy` shape passes full DE/EN parity. — 10 pass, 0 fail, 150 expect() calls.
+- [x] 7.6 Run the unit tests for `src/lib/product-routes.ts` and confirm `parseSafeRedirectTarget` and `redirectAfterLoginFor` pass every cell / rejection case. — 20 pass, 0 fail, 36 expect() calls.
+- [x] 7.7 Confirm `openspec validate routing-deep-link-and-redirect` passes. — `Change 'routing-deep-link-and-redirect' is valid`. (The umbrella has been applied; archive step is the user's call after this session.)
+- [x] 7.8 Update `09-iteration/01-review-existing-features.md` rows 55 and 56 from `status: specced` to `status: merged` once the implementation lands.

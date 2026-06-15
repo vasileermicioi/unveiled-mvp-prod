@@ -44,6 +44,7 @@ export function parseFeature(source: string): ParsedFeature {
   let currentScenario: ParsedScenario | null = null;
   let currentBackground: ParsedStep[] | null = null;
   let inBackground = false;
+  let tagBuffer: string[] = [];
 
   const pushStep = (raw: string) => {
     const match = /^(Given|When|Then|And|But)\s+(.*)$/i.exec(raw.trim());
@@ -65,9 +66,11 @@ export function parseFeature(source: string): ParsedFeature {
     if (!trimmed || trimmed.startsWith("#")) continue;
 
     if (trimmed.startsWith("@")) {
-      const tags = trimmed.split(/\s+/).filter((tag) => tag.startsWith("@"));
-      if (currentScenario) {
+      const tags = trimmed.match(/@[\w-]+(?:\([^)]*\))?/g) ?? [];
+      if (currentScenario && currentScenario.steps.length === 0) {
         currentScenario.tags.push(...tags);
+      } else {
+        tagBuffer.push(...tags);
       }
       continue;
     }
@@ -90,13 +93,15 @@ export function parseFeature(source: string): ParsedFeature {
       if (currentScenario) {
         scenarios.push(currentScenario);
       }
+      currentScenario = null;
       const [, , name] = scenarioMatch;
       currentScenario = {
         name: name.trim(),
-        tags: [],
+        tags: [...tagBuffer],
         steps: [],
         background: currentBackground ? [...currentBackground] : undefined,
       };
+      tagBuffer = [];
       inBackground = false;
       continue;
     }

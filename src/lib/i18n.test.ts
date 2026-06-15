@@ -81,6 +81,25 @@ describe("bilingual copy dictionary", () => {
     }
   });
 
+  test("RoutingCopy is type-enforced and complete in DE and EN", () => {
+    const de = copyFor("DE").routing;
+    const en = copyFor("EN").routing;
+    expect(Object.keys(de)).toEqual(Object.keys(en));
+    for (const group of Object.keys(de) as Array<keyof typeof de>) {
+      expect(Object.keys(de[group])).toEqual(Object.keys(en[group]));
+      for (const key of Object.keys(de[group])) {
+        expect(
+          (de[group] as Record<string, string>)[key],
+          `DE routing.${group}.${key} is empty`,
+        ).toBeTruthy();
+        expect(
+          (en[group] as Record<string, string>)[key],
+          `EN routing.${group}.${key} is empty`,
+        ).toBeTruthy();
+      }
+    }
+  });
+
   test("mapAuthError returns the localized entry for a known code", () => {
     expect(mapAuthError("INVALID_EMAIL", "DE")).toBe(
       copyFor("DE").auth.errors.INVALID_EMAIL,

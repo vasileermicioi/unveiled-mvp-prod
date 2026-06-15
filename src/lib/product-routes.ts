@@ -1,5 +1,6 @@
 import type { ShellNavItemId } from "@/lib/app-shell-view-models";
 import type { AuthenticatedViewer, Viewer } from "@/lib/auth-profile";
+import type { UiLanguage } from "@/lib/i18n";
 
 export type ProductRouteOwner = "public" | "member" | "partner" | "admin";
 
@@ -51,7 +52,7 @@ export function resolveRouteOwnership(
     return { ok: false, redirectTo: "/", status: 302 };
   }
 
-  const redirectTo = redirectForAuthenticatedViewer(viewer, route.owner);
+  const redirectTo = redirectAfterLoginFor(viewer, route.owner);
   if (redirectTo) {
     return { ok: false, redirectTo, status: 302 };
   }
@@ -83,25 +84,65 @@ export function resolveMemberOnboardingRoute(
   return ownership;
 }
 
-function redirectForAuthenticatedViewer(
+export function redirectAfterLoginFor(
   viewer: AuthenticatedViewer,
   owner: ProductRouteOwner,
-) {
+): string | undefined {
   if (owner === "member") {
-    return viewer.role === "USER"
-      ? undefined
-      : routePathFor(viewer.viewerContext);
+    if (viewer.role === "USER") return undefined;
+    if (viewer.role === "PARTNER") return routePathFor("partner");
+    if (viewer.role === "ADMIN") return routePathFor("admin");
+    return "/";
   }
 
   if (owner === "partner") {
     if (viewer.role === "PARTNER" && viewer.partnerId) return undefined;
-    return viewer.role === "ADMIN" ? routePathFor("admin") : "/";
+    if (viewer.role === "ADMIN") return routePathFor("admin");
+    return "/";
   }
 
   if (owner === "admin") {
     if (viewer.role === "ADMIN") return undefined;
-    return viewer.role === "PARTNER" ? routePathFor("partner") : "/";
+    if (viewer.role === "PARTNER" && viewer.partnerId)
+      return routePathFor("partner");
+    if (viewer.role === "PARTNER") return routePathFor("partner");
+    if (viewer.role === "USER") return routePathFor("member");
+    return "/";
   }
 
   return undefined;
 }
+
+export function parseSafeRedirectTarget(
+  input: string | null | undefined,
+  viewerLanguage: UiLanguage,
+): ProductRouteDefinition | null {
+  if (typeof input !== "string") return null;
+  if (input.length === 0) return null;
+
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(input);
+  } catch {
+    return null;
+  }
+
+  if (/^\s*[a-z][a-z0-9+.-]*:/i.test(decoded)) return null;
+  if (decoded.startsWith("//")) return null;
+  if (decoded.startsWith("/\\")) return null;
+
+  const match = decoded.match(/^(\/(de|en))(?=\/|$)/i);
+  const pathLang = match
+    ? (match[1].slice(1).toUpperCase() as UiLanguage)
+    : undefined;
+  const remainder = match ? decoded.slice(match[1].length) || "/" : decoded;
+  if (!remainder.startsWith("/")) return null;
+
+  const pathOnly = remainder.split("?")[0] || "/";
+  const route = routeForPath(pathOnly);
+  if (!route) return null;
+  if (pathLang && pathLang !== viewerLanguage) return null;
+
+  return route;
+}
+

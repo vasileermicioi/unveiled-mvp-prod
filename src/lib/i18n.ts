@@ -459,6 +459,27 @@ export const appCopy = {
       checkIn: "Einchecken",
       ready: "Bereit",
     },
+    routing: {
+      deepLink: {
+        preview: "Nach der Anmeldung wirst du weitergeleitet zu {destination}.",
+        cancel: "Abbrechen und zur Startseite",
+        invalidTarget: "Der Weiterleitungs-Zielort ist ungültig.",
+        fallbackDestination: "/",
+      },
+      redirectAfterLogin: {
+        tableHeading: "Weiterleitungs-Tabelle nach Login",
+        cellMemberOnAdmin: "Mitglied auf Admin-Route",
+        cellMemberOnPartner: "Mitglied auf Partner-Route",
+        cellPartnerOnAdmin: "Partner auf Admin-Route",
+        cellPartnerOnMember: "Partner auf Mitglieder-Route",
+        cellAdminOnPartner: "Admin auf Partner-Route",
+        cellAdminOnMember: "Admin auf Mitglieder-Route",
+        memberSafeDestination: "Mitgliedsbereich",
+        partnerSafeDestination: "Partner-Bereich",
+        adminSafeDestination: "Admin-Bereich",
+        publicSafeDestination: "Startseite",
+      },
+    },
   },
   EN: {
     auth: {
@@ -894,6 +915,27 @@ export const appCopy = {
       checkIn: "Check in",
       ready: "Ready",
     },
+    routing: {
+      deepLink: {
+        preview: "After signing in you will be redirected to {destination}.",
+        cancel: "Cancel and go to the landing page",
+        invalidTarget: "The redirect target is not valid.",
+        fallbackDestination: "/",
+      },
+      redirectAfterLogin: {
+        tableHeading: "Redirect-after-login table",
+        cellMemberOnAdmin: "Member on admin route",
+        cellMemberOnPartner: "Member on partner route",
+        cellPartnerOnAdmin: "Partner on admin route",
+        cellPartnerOnMember: "Partner on member route",
+        cellAdminOnPartner: "Admin on partner route",
+        cellAdminOnMember: "Admin on member route",
+        memberSafeDestination: "Member area",
+        partnerSafeDestination: "Partner area",
+        adminSafeDestination: "Admin area",
+        publicSafeDestination: "Landing page",
+      },
+    },
   },
 } as const;
 
@@ -906,6 +948,9 @@ export type AuthLogoutCopy = AuthFormCopy["logout"];
 export type AuthPasswordRecoveryCopy = AuthFormCopy["passwordRecovery"];
 export type AuthErrorCopy = AppCopy["auth"]["errors"];
 export type AuthErrorCode = keyof AuthErrorCopy;
+export type RoutingCopy = AppCopy["routing"];
+export type DeepLinkCopy = RoutingCopy["deepLink"];
+export type RedirectAfterLoginCopy = RoutingCopy["redirectAfterLogin"];
 
 export const missingKeyPlaceholder = (key: string) =>
   `{i18n.missing:${key}}` as const;

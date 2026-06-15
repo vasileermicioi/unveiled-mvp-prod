@@ -2,6 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import { getViewer } from "@/lib/auth-profile";
 import { trackSessionInDb } from "@/lib/behavior-tracking";
 import { logger } from "@/lib/logger";
+import { normalizeLanguage, type UiLanguage } from "@/lib/i18n";
 import {
   resolveMemberOnboardingRoute,
   routeForPath,
@@ -34,10 +35,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const cookieHeader = request.headers.get("cookie");
     const acceptLanguage = request.headers.get("accept-language");
 
-    let detectedLang = "EN";
+    let detectedLang: UiLanguage = "EN";
     const cookieLang = cookieHeader?.match(/unveiled_lang=(DE|EN)/i)?.[1];
     if (cookieLang) {
-      detectedLang = cookieLang.toUpperCase();
+      detectedLang = normalizeLanguage(cookieLang);
     } else {
       const isGerman = acceptLanguage?.toLowerCase().includes("de");
       detectedLang = isGerman ? "DE" : "EN";
@@ -52,7 +53,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const currentLang = match[1].toLowerCase();
+  const currentLang = match[1].toLowerCase() as UiLanguage;
+  const langPrefix = `/${currentLang.toLowerCase()}`;
+
+  if (route.owner === "public") {
+    return next();
+  }
 
   try {
     const viewer = await getViewer(request);
@@ -66,11 +72,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const outcome = resolveMemberOnboardingRoute(viewer, route);
 
     if (!outcome.ok) {
-      return redirect(`/${currentLang}${outcome.redirectTo}`, outcome.status);
+      return redirect(`${langPrefix}${outcome.redirectTo}`, outcome.status);
     }
   } catch (_error) {
     // If there's an auth error (like profile_missing), redirect to landing
-    return redirect(`/${currentLang}/`, 302);
+    return redirect(`${langPrefix}/`, 302);
   }
 
   return next();
