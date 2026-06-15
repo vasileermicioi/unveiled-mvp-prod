@@ -5,6 +5,8 @@ import {
   copyFor,
   defaultLanguage,
   languageFromCookieHeader,
+  mapAuthError,
+  missingKeyPlaceholder,
   normalizeLanguage,
   supportedLanguages,
 } from "@/lib/i18n";
@@ -41,6 +43,83 @@ describe("bilingual copy dictionary", () => {
       expect(booking.requestFailed).toBeTruthy();
       expect(booking.membershipRequired).toBeTruthy();
       expect(booking.copyCode).toBeTruthy();
+    }
+  });
+
+  test("AuthFormCopy is type-enforced and complete in DE and EN", () => {
+    const de = copyFor("DE").auth.forms;
+    const en = copyFor("EN").auth.forms;
+    expect(Object.keys(de)).toEqual(Object.keys(en));
+    for (const formName of Object.keys(de) as Array<keyof typeof de>) {
+      expect(Object.keys(de[formName])).toEqual(Object.keys(en[formName]));
+      for (const key of Object.keys(de[formName])) {
+        expect(
+          (de[formName] as Record<string, string>)[key],
+          `DE auth.forms.${formName}.${key} is empty`,
+        ).toBeTruthy();
+        expect(
+          (en[formName] as Record<string, string>)[key],
+          `EN auth.forms.${formName}.${key} is empty`,
+        ).toBeTruthy();
+      }
+    }
+  });
+
+  test("AuthErrorCopy is type-enforced and complete in DE and EN", () => {
+    const de = copyFor("DE").auth.errors;
+    const en = copyFor("EN").auth.errors;
+    expect(Object.keys(de)).toEqual(Object.keys(en));
+    for (const code of Object.keys(de)) {
+      expect(
+        de[code as keyof typeof de],
+        `DE auth.errors.${code} is empty`,
+      ).toBeTruthy();
+      expect(
+        en[code as keyof typeof en],
+        `EN auth.errors.${code} is empty`,
+      ).toBeTruthy();
+    }
+  });
+
+  test("mapAuthError returns the localized entry for a known code", () => {
+    expect(mapAuthError("INVALID_EMAIL", "DE")).toBe(
+      copyFor("DE").auth.errors.INVALID_EMAIL,
+    );
+    expect(mapAuthError("INVALID_EMAIL", "EN")).toBe(
+      copyFor("EN").auth.errors.INVALID_EMAIL,
+    );
+    expect(mapAuthError("INVALID_EMAIL_OR_PASSWORD", "EN")).toBe(
+      copyFor("EN").auth.errors.INVALID_EMAIL_OR_PASSWORD,
+    );
+  });
+
+  test("mapAuthError falls back to the missing-key placeholder for an unknown code", () => {
+    const warn = console.warn;
+    console.warn = () => {};
+    try {
+      expect(mapAuthError("SOMETHING_NEW", "EN")).toBe(
+        missingKeyPlaceholder("auth.errors.SOMETHING_NEW"),
+      );
+    } finally {
+      console.warn = warn;
+    }
+  });
+
+  test("mapAuthError renders the missing-key placeholder for a non-empty unmapped code", () => {
+    const warn = console.warn;
+    console.warn = () => {};
+    try {
+      expect(mapAuthError("SOMETHING_NEW", "EN")).toBe(
+        missingKeyPlaceholder("auth.errors.SOMETHING_NEW"),
+      );
+      expect(mapAuthError(null, "EN")).toBe(
+        copyFor("EN").auth.errors.unknown,
+      );
+      expect(mapAuthError(undefined, "DE")).toBe(
+        copyFor("DE").auth.errors.unknown,
+      );
+    } finally {
+      console.warn = warn;
     }
   });
 });

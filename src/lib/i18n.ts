@@ -24,6 +24,65 @@ export function copyFor(language: string | null | undefined) {
 
 export const appCopy = {
   DE: {
+    auth: {
+      forms: {
+        signup: {
+          title: "Zugang erstellen",
+          firstName: "Vorname",
+          firstNamePlaceholder: "Alex",
+          lastName: "Nachname",
+          lastNamePlaceholder: "Morgan",
+          email: "Email",
+          emailPlaceholder: "du@beispiel.de",
+          password: "Passwort",
+          passwordPlaceholder: "••••••••",
+          submit: "Mitgliedschaft starten",
+          switchToLogin: "Login",
+          helper: "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
+        },
+        login: {
+          title: "Willkommen zurück",
+          email: "Email",
+          emailPlaceholder: "du@beispiel.de",
+          password: "Passwort",
+          passwordPlaceholder: "••••••••",
+          submit: "Login",
+          forgotPassword: "Passwort vergessen?",
+          createAccount: "Zugang erstellen",
+          switchToSignup: "Registrieren",
+          helper: "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
+        },
+        logout: {
+          trigger: "Abmelden",
+          menuLabel: "Konto-Menü",
+          profile: "Profil öffnen",
+          logOut: "Abmelden",
+          logOutEverywhere: "Aus allen Sitzungen abmelden",
+        },
+        passwordRecovery: {
+          title: "Passwort zurücksetzen",
+          email: "Email",
+          emailPlaceholder: "du@beispiel.de",
+          submit: "Reset-Link senden",
+          backToLogin: "Zurück zum Login",
+          helper:
+            "Gib deine Email ein, um Recovery-Anweisungen zu erhalten.",
+          success: "Falls ein Konto für diese Email existiert, wurden Recovery-Anweisungen gesendet.",
+        },
+      },
+      errors: {
+        USER_ALREADY_EXISTS: "Ein Konto mit dieser Email existiert bereits.",
+        INVALID_EMAIL: "Bitte gib eine gültige E-Mail-Adresse ein.",
+        INVALID_PASSWORD:
+          "Das Passwort muss mindestens 8 Zeichen enthalten.",
+        INVALID_EMAIL_OR_PASSWORD: "Email oder Passwort ist falsch.",
+        TOO_MANY_REQUESTS:
+          "Zu viele Versuche. Bitte versuche es in wenigen Minuten erneut.",
+        EMAIL_NOT_VERIFIED:
+          "Bitte bestätige zuerst deine Email-Adresse.",
+        unknown: "Die Anfrage konnte nicht abgeschlossen werden.",
+      },
+    },
     shell: {
       tagline: "Kuratierter Kulturzugang in Berlin",
       nav: {
@@ -402,6 +461,65 @@ export const appCopy = {
     },
   },
   EN: {
+    auth: {
+      forms: {
+        signup: {
+          title: "Create access",
+          firstName: "First name",
+          firstNamePlaceholder: "Alex",
+          lastName: "Last name",
+          lastNamePlaceholder: "Morgan",
+          email: "Email",
+          emailPlaceholder: "you@example.com",
+          password: "Password",
+          passwordPlaceholder: "••••••••",
+          submit: "Start membership",
+          switchToLogin: "Login",
+          helper:
+            "Visible validation and notice panels match the legacy auth surface.",
+        },
+        login: {
+          title: "Welcome back",
+          email: "Email",
+          emailPlaceholder: "you@example.com",
+          password: "Password",
+          passwordPlaceholder: "••••••••",
+          submit: "Login",
+          forgotPassword: "Forgot password?",
+          createAccount: "Create access",
+          switchToSignup: "Register",
+          helper:
+            "Visible validation and notice panels match the legacy auth surface.",
+        },
+        logout: {
+          trigger: "Log out",
+          menuLabel: "Account menu",
+          profile: "Open profile",
+          logOut: "Log out",
+          logOutEverywhere: "Log out of all sessions",
+        },
+        passwordRecovery: {
+          title: "Reset password",
+          email: "Email",
+          emailPlaceholder: "you@example.com",
+          submit: "Send reset link",
+          backToLogin: "Back to login",
+          helper: "Enter your email to receive recovery instructions.",
+          success:
+            "If an account exists for that email, recovery instructions have been sent.",
+        },
+      },
+      errors: {
+        USER_ALREADY_EXISTS: "An account with that email already exists.",
+        INVALID_EMAIL: "Enter a valid email address.",
+        INVALID_PASSWORD: "Password must be at least 8 characters.",
+        INVALID_EMAIL_OR_PASSWORD: "Email or password is incorrect.",
+        TOO_MANY_REQUESTS:
+          "Too many attempts. Please try again in a few minutes.",
+        EMAIL_NOT_VERIFIED: "Please verify your email address first.",
+        unknown: "The request could not be completed.",
+      },
+    },
     shell: {
       tagline: "Curated cultural access in Berlin",
       nav: {
@@ -781,3 +899,37 @@ export const appCopy = {
 
 export type AppCopy = (typeof appCopy)["EN"];
 export type ShellCopy = AppCopy["shell"];
+export type AuthFormCopy = AppCopy["auth"]["forms"];
+export type AuthSignupCopy = AuthFormCopy["signup"];
+export type AuthLoginCopy = AuthFormCopy["login"];
+export type AuthLogoutCopy = AuthFormCopy["logout"];
+export type AuthPasswordRecoveryCopy = AuthFormCopy["passwordRecovery"];
+export type AuthErrorCopy = AppCopy["auth"]["errors"];
+export type AuthErrorCode = keyof AuthErrorCopy;
+
+export const missingKeyPlaceholder = (key: string) =>
+  `{i18n.missing:${key}}` as const;
+
+export function mapAuthError(
+  code: string | null | undefined,
+  language: string | null | undefined,
+): string {
+  const bundle = copyFor(language).auth.errors;
+  if (!code) {
+    return bundle.unknown;
+  }
+  if (Object.prototype.hasOwnProperty.call(bundle, code)) {
+    return bundle[code as AuthErrorCode];
+  }
+  if (
+    typeof console !== "undefined" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.warn(
+      `[i18n] missing auth.errors.${code} for language ${normalizeLanguage(
+        language,
+      )}; rendering the missing-key placeholder.`,
+    );
+  }
+  return missingKeyPlaceholder(`auth.errors.${code}`);
+}

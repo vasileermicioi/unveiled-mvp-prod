@@ -11,6 +11,7 @@ import {
   getViewer,
 } from "@/lib/auth-profile";
 import type { RuntimeEnv } from "@/lib/env";
+import { mapAuthError } from "@/lib/i18n";
 
 export type AuthActionSuccess = {
   ok: true;
@@ -39,6 +40,16 @@ function safeErrorState(message = "The request could not be completed.") {
       message,
     },
   } satisfies AuthActionFailure;
+}
+
+export function readAuthErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const candidate = error as {
+    body?: { code?: unknown; message?: unknown };
+    code?: unknown;
+  };
+  const code = candidate.body?.code ?? candidate.code;
+  return typeof code === "string" ? code : null;
 }
 
 function successState(message: string, nextPath?: string) {
@@ -80,6 +91,7 @@ export function headersWithSetCookieAsCookie(headers: Headers) {
 export async function signUpWithEmail(
   input: SignupInput,
   env?: RuntimeEnv,
+  language?: string,
 ): Promise<AuthActionResult> {
   try {
     const auth = createAuth(env);
@@ -114,14 +126,15 @@ export async function signUpWithEmail(
       nextPath,
       state: successState("Account created.", nextPath),
     };
-  } catch {
-    return safeErrorState("Unable to create an account with those details.");
+  } catch (error) {
+    return safeErrorState(mapAuthError(readAuthErrorCode(error), language));
   }
 }
 
 export async function loginWithEmail(
   input: LoginInput,
   env?: RuntimeEnv,
+  language?: string,
 ): Promise<AuthActionResult> {
   try {
     const auth = createAuth(env);
@@ -149,14 +162,15 @@ export async function loginWithEmail(
       nextPath,
       state: successState("Logged in.", nextPath),
     };
-  } catch {
-    return safeErrorState("Email or password is incorrect.");
+  } catch (error) {
+    return safeErrorState(mapAuthError(readAuthErrorCode(error), language));
   }
 }
 
 export async function logout(
   headers: Headers,
   env?: RuntimeEnv,
+  language?: string,
 ): Promise<AuthActionResult> {
   try {
     const auth = createAuth(env);
@@ -171,8 +185,8 @@ export async function logout(
       state: successState("Logged out.", "/"),
       nextPath: "/",
     };
-  } catch {
-    return safeErrorState("Unable to log out.");
+  } catch (error) {
+    return safeErrorState(mapAuthError(readAuthErrorCode(error), language));
   }
 }
 
