@@ -22,6 +22,9 @@ import {
   TableRow,
   TextInput,
 } from "@/components/ui/unveiled-primitives";
+import { StripeCheckoutRedirectButton } from "@/components/payments/StripeCheckoutRedirectButton";
+import { CreditLedgerViewTableSemantics } from "@/components/payments/CreditLedgerViewTableSemantics";
+import { SubscriptionPortalLink } from "@/components/payments/SubscriptionPortalLink";
 import { DiscoveryShell } from "@/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "@/lib/app-shell-view-models";
@@ -512,70 +515,35 @@ export function MembershipPage() {
         </div>
       </Panel>
 
-      <Panel tone="cream" className="space-y-5">
-        <div>
-          <p className="unveiled-meta">{copy.paymentMethod}</p>
-          <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
-            {copy.paymentHelper}
-          </p>
-        </div>
-        <div className="grid gap-3">
-          {[
-            ["EXPRESS", "Apple Pay / Google Pay"],
-            ["PAYPAL", "PayPal"],
-            ["CARD", "Card"],
-            ["SEPA", "SEPA Direct Debit"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={cn(
-                "flex items-center justify-between border-4 border-brand-dark bg-white px-4 py-4 text-left text-xs font-black uppercase tracking-widest",
-                selectedPaymentMethod === id && "bg-brand-dark text-white",
-              )}
-              onClick={() =>
-                setSelectedPaymentMethod(
-                  id as "EXPRESS" | "PAYPAL" | "CARD" | "SEPA",
-                )
-              }
-            >
-              {label}
-              <CreditCard className="size-4" />
-            </button>
-          ))}
-        </div>
-        <Field label={copy.promoCode}>
-          <TextInput
-            name="promoCode"
-            placeholder={copy.optional}
-            value={checkoutPromoCode}
-            onChange={(e) => setCheckoutPromoCode(e.target.value)}
-          />
-        </Field>
-        <Button
-          type="button"
-          className="w-full"
-          onClick={() =>
-            void runServerAction(
-              () =>
-                actions.updateMembership({
-                  paymentMethod: selectedPaymentMethod,
-                  promoCode: checkoutPromoCode,
-                  isFrozen: false,
-                  isActive:
-                    live.billingDisplay.subscriptionStatusLabel === "Active",
-                }),
-              setMessage,
-              live.refetchActiveSurface,
-            )
-          }
-        >
-          {copy.continueCheckout}
-        </Button>
-        <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-          {message}
-        </p>
-      </Panel>
+      <StripeCheckoutRedirectButton
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentMethodChange={setSelectedPaymentMethod}
+        promoCode={checkoutPromoCode}
+        onPromoCodeChange={setCheckoutPromoCode}
+        message={message}
+        onSubmit={() =>
+          runServerAction(
+            () =>
+              actions.updateMembership({
+                paymentMethod: selectedPaymentMethod,
+                promoCode: checkoutPromoCode,
+                isFrozen: false,
+                isActive:
+                  live.billingDisplay.subscriptionStatusLabel === "Active",
+              }),
+            setMessage,
+            live.refetchActiveSurface,
+          )
+        }
+      />
+      <SubscriptionPortalLink
+        active={live.billingDisplay.subscriptionStatusLabel === "Active"}
+        url={
+          live.billingDisplay.subscriptionStatusLabel === "Active"
+            ? "https://billing.stripe.com/p/login/test_customer_portal"
+            : null
+        }
+      />
     </div>
   );
 }
@@ -880,32 +848,13 @@ export function BookingsPage() {
       </div>
       <Panel tone="white">
         <Badge tone="yellow">{copy.creditLedger}</Badge>
-        <div className="mt-5 space-y-3">
-          {live.creditLedgerEntries.map((entry) => (
-            <TableRow key={entry.id}>
-              <span className="font-black uppercase">
-                {entry.reasonLabel}
-                {entry.relatedLabel ? ` // ${entry.relatedLabel}` : ""}
-              </span>
-              <span>{entry.createdLabel}</span>
-              <span>
-                {entry.actorLabel
-                  ? `Actor: ${entry.actorLabel}`
-                  : copy.memberActor}
-              </span>
-              <span className="font-black">
-                {entry.amount > 0 ? "+" : ""}
-                {entry.amount} credits
-              </span>
-            </TableRow>
-          ))}
-          {live.creditLedgerEntries.length === 0 ? (
-            <StatePanel
-              title={copy.noCreditHistory}
-              text={copy.ledgerEmpty}
-              state="empty"
-            />
-          ) : null}
+        <div className="mt-5">
+          <CreditLedgerViewTableSemantics
+            entries={live.creditLedgerEntries}
+            noHistoryLabel={copy.creditLedger}
+            emptyLabel={copy.ledgerEmpty}
+            memberActorLabel={copy.memberActor}
+          />
         </div>
       </Panel>
       {live.bookings.length === 0 ? (

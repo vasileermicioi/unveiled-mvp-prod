@@ -100,6 +100,27 @@ describe("bilingual copy dictionary", () => {
     }
   });
 
+  test("PaymentsCopy is type-enforced and complete in DE and EN", () => {
+    const de = copyFor("DE").payments;
+    const en = copyFor("EN").payments;
+    expect(Object.keys(de)).toEqual(Object.keys(en));
+    for (const group of Object.keys(de) as Array<keyof typeof de>) {
+      expect(Object.keys(de[group])).toEqual(Object.keys(en[group]));
+      for (const key of Object.keys(de[group])) {
+        const deValue = (de[group] as Record<string, string>)[key];
+        const enValue = (en[group] as Record<string, string>)[key];
+        expect(
+          deValue,
+          `DE payments.${group}.${key} is empty`,
+        ).toBeTruthy();
+        expect(
+          enValue,
+          `EN payments.${group}.${key} is empty`,
+        ).toBeTruthy();
+      }
+    }
+  });
+
   test("mapAuthError returns the localized entry for a known code", () => {
     expect(mapAuthError("INVALID_EMAIL", "DE")).toBe(
       copyFor("DE").auth.errors.INVALID_EMAIL,

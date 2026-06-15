@@ -360,7 +360,7 @@ export const StripeCustomerSchema = z.object({ "id": z.string(), "email": z.any(
 
 // Auto-generated from OpenAPI schema Webhooks.StripeEvent. Do not edit.
 
-export const StripeEventSchema = z.union([z.object({ "type": z.enum(["invoice.payment_succeeded","invoice.payment_failed"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.enum(["customer.subscription.created","customer.subscription.updated","customer.subscription.deleted"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.enum(["payment_method.attached","payment_method.detached"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.literal("customer.updated"), "data": z.object({ "object": z.any() }) })]).describe("Discriminated union of supported Stripe event types.");
+export const StripeEventSchema = z.union([z.object({ "type": z.enum(["invoice.paid","invoice.payment_succeeded","invoice.payment_failed","invoice.payment_action_required"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.enum(["customer.subscription.created","customer.subscription.updated","customer.subscription.deleted"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.enum(["payment_method.attached","payment_method.detached"]), "data": z.object({ "object": z.any() }) }), z.object({ "type": z.literal("customer.updated"), "data": z.object({ "object": z.any() }) })]).describe("Discriminated union of supported Stripe event types.");
 
 // Auto-generated from OpenAPI schema Webhooks.StripeInvoice. Do not edit.
 

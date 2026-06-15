@@ -93,7 +93,7 @@ model StripeCustomer {
 @doc("Discriminated union of supported Stripe event types.")
 union StripeEvent {
   invoice: {
-    type: "invoice.payment_succeeded" | "invoice.payment_failed";
+    type: "invoice.paid" | "invoice.payment_succeeded" | "invoice.payment_failed" | "invoice.payment_action_required";
     data: { object: StripeInvoice };
   },
   subscription: {

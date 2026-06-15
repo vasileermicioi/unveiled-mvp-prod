@@ -21,6 +21,7 @@ import {
   TextArea,
   TextInput,
 } from "@/components/ui/unveiled-primitives";
+import { AdminFreezeUnfreezeForm } from "@/components/payments/AdminFreezeUnfreezeForm";
 import { ModalShell } from "@/components/unveiled/app-shell";
 import { cn } from "@/lib/utils";
 import {
@@ -1571,50 +1572,47 @@ export function AdminPanel({
                         {member.historySummary}
                       </p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          void runServerAction(
-                            () =>
-                              actions.adjustMemberCredits({
-                                userId: member.userId,
-                                amount: 1,
-                                reason: "Admin panel adjustment",
-                                idempotencyKey: crypto.randomUUID(),
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          )
-                        }
-                      >
-                        + Credit
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        onClick={() =>
-                          void runServerAction(
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            void runServerAction(
+                              () =>
+                                actions.adjustMemberCredits({
+                                  userId: member.userId,
+                                  amount: 1,
+                                  reason: "Admin panel adjustment",
+                                  idempotencyKey: crypto.randomUUID(),
+                                }),
+                              setAdminMessage,
+                              live.refetchActiveSurface,
+                            )
+                          }
+                        >
+                          + Credit
+                        </Button>
+                      </div>
+                      <AdminFreezeUnfreezeForm
+                        userId={member.userId}
+                        isFrozen={member.billingOverrideActions.includes(
+                          "freeze",
+                        )}
+                        resultMessage={adminMessage}
+                        onSubmit={async (input) => {
+                          await runServerAction(
                             () =>
                               actions.toggleUserFreeze({
-                                userId: member.userId,
-                                frozen:
-                                  member.billingOverrideActions.includes(
-                                    "freeze",
-                                  ),
+                                userId: input.userId,
+                                frozen: input.frozen,
                               }),
                             setAdminMessage,
                             live.refetchActiveSurface,
-                          )
-                        }
-                      >
-                        {member.billingOverrideActions.includes("freeze")
-                          ? "Freeze"
-                          : "Unfreeze"}
-                      </Button>
+                          );
+                        }}
+                      />
                     </div>
                   </div>
 

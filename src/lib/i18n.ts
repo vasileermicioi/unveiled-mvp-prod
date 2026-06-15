@@ -480,6 +480,49 @@ export const appCopy = {
         publicSafeDestination: "Startseite",
       },
     },
+    payments: {
+      checkout: {
+        landmarkLabel: "Stripe-Checkout starten",
+        submit: "Weiter zum Stripe-Checkout",
+        helper: "Wähle eine Zahlungsmethode und starte den Stripe-Checkout.",
+      },
+      portal: {
+        landmarkLabel: "Mitgliedschaft verwalten",
+        linkLabel: "Stripe-Kundenportal öffnen (extern)",
+        linkHint: "Öffnet das Stripe-Kundenportal in einem neuen Tab.",
+        missingFallback:
+          "Das Stripe-Kundenportal ist momentan nicht verfügbar.",
+      },
+      ledger: {
+        landmarkLabel: "Credit-Ledger",
+        columnReason: "Anlass",
+        columnDate: "Datum",
+        columnActor: "Akteur",
+        columnAmount: "Credits",
+        empty: "Das Credit-Ledger ist leer.",
+      },
+      admin: {
+        freezeFormLabel: "Mitglied einfrieren oder freigeben",
+        freezeSubmit: "Mitglied einfrieren",
+        unfreezeSubmit: "Mitglied freigeben",
+        reasonLabel: "Begründung",
+        reasonPlaceholder: "z.B. unbezahlte Rechnung",
+        errorRegionLabel: "Admin-Aktion Ergebnis",
+        errorDefault: "Die Admin-Aktion konnte nicht ausgeführt werden.",
+        errorUnauthorized:
+          "Nicht autorisiert. Nur Admins dürfen Mitglieder einfrieren oder freigeben.",
+        errorInvalidReason: "Eine Begründung ist erforderlich.",
+        successFreeze: "Mitglied wurde eingefroren.",
+        successUnfreeze: "Mitglied wurde freigegeben.",
+      },
+      webhook: {
+        errorSignature: "Stripe-Signatur fehlt oder ist ungültig.",
+        errorContract:
+          "Die Stripe-Payload entspricht nicht dem generierten Vertrag.",
+        errorUnhandled:
+          "Der Stripe-Event-Typ wird vom Vertrag nicht unterstützt.",
+      },
+    },
   },
   EN: {
     auth: {
@@ -934,6 +977,47 @@ export const appCopy = {
         partnerSafeDestination: "Partner area",
         adminSafeDestination: "Admin area",
         publicSafeDestination: "Landing page",
+      },
+    },
+    payments: {
+      checkout: {
+        landmarkLabel: "Start Stripe checkout",
+        submit: "Continue to Stripe checkout",
+        helper: "Pick a payment method and start the Stripe checkout.",
+      },
+      portal: {
+        landmarkLabel: "Manage subscription",
+        linkLabel: "Open Stripe customer portal (external)",
+        linkHint: "Opens the Stripe customer portal in a new tab.",
+        missingFallback: "The Stripe customer portal is currently unavailable.",
+      },
+      ledger: {
+        landmarkLabel: "Credit ledger",
+        columnReason: "Reason",
+        columnDate: "Date",
+        columnActor: "Actor",
+        columnAmount: "Credits",
+        empty: "The credit ledger is empty.",
+      },
+      admin: {
+        freezeFormLabel: "Freeze or unfreeze a member",
+        freezeSubmit: "Freeze member",
+        unfreezeSubmit: "Unfreeze member",
+        reasonLabel: "Reason",
+        reasonPlaceholder: "e.g. unpaid invoice",
+        errorRegionLabel: "Admin action result",
+        errorDefault: "The admin action could not be completed.",
+        errorUnauthorized:
+          "Unauthorized. Only admins may freeze or unfreeze members.",
+        errorInvalidReason: "A reason is required.",
+        successFreeze: "Member has been frozen.",
+        successUnfreeze: "Member has been unfrozen.",
+      },
+      webhook: {
+        errorSignature: "Stripe signature is missing or invalid.",
+        errorContract:
+          "The Stripe payload does not match the generated contract.",
+        errorUnhandled: "The Stripe event type is not supported by the contract.",
       },
     },
   },

@@ -1,8 +1,7 @@
-# payments-subscriptions Specification
+# payments-subscriptions Specification Deltas
 
-## Purpose
-TBD - created by archiving change migrate-payments-subscriptions. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: Stripe Subscription Lifecycle
 The app SHALL maintain member subscription state and booking credit availability from Stripe subscription and invoice events plus authorized admin overrides, and SHALL expose the lifecycle controls through selector-disciplinable, bilingual UI surfaces with the required `aria-*` attributes, labels, and landmark wrappers.
 
@@ -38,28 +37,6 @@ The app SHALL maintain member subscription state and booking credit availability
 - **AND** the link exposes a localized, accessible name via its text content or `aria-label`
 - **AND** the link communicates its external destination (`target="_blank"`) through `aria-label` text in both EN and DE
 
-### Requirement: Subscription Data Model
-The app SHALL persist provider-linked subscription records in Postgres without making Stripe payloads the primary domain model, and SHALL surface the persisted records in the credit ledger view using selector-disciplinable, accessible table semantics.
-
-#### Scenario: Subscription is stored
-- **WHEN** a member starts or syncs a Stripe subscription
-- **THEN** the app stores the member ID, provider name, Stripe customer ID, Stripe subscription ID, Stripe price ID, local plan code, local status, current period bounds, cancellation timestamps when present, billing email, and last provider sync timestamp
-
-#### Scenario: Payment method is stored
-- **WHEN** Stripe provides a default or most recent payment method for the member subscription
-- **THEN** the app stores display-safe payment method data such as type, brand, last four digits when available, expiry when available, SEPA bank display data when available, wallet type when available, and provider payment method ID
-
-#### Scenario: Billing address is stored
-- **WHEN** Stripe or checkout input provides billing address fields
-- **THEN** the app stores display-safe billing name, country, postal code, city, line fields, and provider customer association
-
-#### Scenario: Credit ledger view is a single accessible region
-- **WHEN** a member or admin views the credit ledger
-- **THEN** the ledger is rendered inside a single table landmark (`<table>` with an accessible caption or `aria-label`)
-- **AND** column headers are `<th scope="col">` cells so screen readers announce the column name with each row
-- **AND** each row is reachable through a proximity+layout selector anchored on a stable, localized row label (e.g. invoice ID or entry ID) so gherkin can target rows without `getByText` chains
-- **AND** the table is announced as a single region (e.g. `<section aria-labelledby="...">`) with a localized heading
-
 ### Requirement: Provider Event Processing
 The app SHALL verify, store, and process Stripe webhook events idempotently, and SHALL describe the webhook HTTP surface in TypeSpec so the contract is the source of truth for handler validation.
 
@@ -89,36 +66,27 @@ The app SHALL verify, store, and process Stripe webhook events idempotently, and
 - **AND** the failure is recorded in the provider event log with the schema validation error
 - **AND** the handler returns a 4xx response whose body is described by the TypeSpec contract
 
-### Requirement: Credit Refill Policy
-The app SHALL apply monthly subscription credits from paid provider invoices with explicit idempotency and no automatic rollover.
+### Requirement: Subscription Data Model
+The app SHALL persist provider-linked subscription records in Postgres without making Stripe payloads the primary domain model, and SHALL surface the persisted records in the credit ledger view using selector-disciplinable, accessible table semantics.
 
-#### Scenario: Monthly refill applies
-- **WHEN** a paid Stripe invoice is eligible for the `BASIC_BERLIN` plan
-- **THEN** the app refills the member to the configured monthly plan allowance
-- **AND** writes the refill as a credit ledger entry with provider invoice metadata
+#### Scenario: Subscription is stored
+- **WHEN** a member starts or syncs a Stripe subscription
+- **THEN** the app stores the member ID, provider name, Stripe customer ID, Stripe subscription ID, Stripe price ID, local plan code, local status, current period bounds, cancellation timestamps when present, billing email, and last provider sync timestamp
 
-#### Scenario: Credits do not roll over automatically
-- **WHEN** a monthly refill is applied to a member with unused plan credits
-- **THEN** the app does not accumulate an additional full monthly allowance on top of unused plan credits
-- **AND** the ledger records the actual adjustment required to reach the plan allowance
+#### Scenario: Payment method is stored
+- **WHEN** Stripe provides a default or most recent payment method for the member subscription
+- **THEN** the app stores display-safe payment method data such as type, brand, last four digits when available, expiry when available, SEPA bank display data when available, wallet type when available, and provider payment method ID
 
-#### Scenario: Admin adjustment remains auditable
-- **WHEN** an authorized admin manually adjusts member credits
-- **THEN** the adjustment is written as a separate ledger entry with admin actor metadata and reason
-- **AND** provider refill processing does not delete or rewrite the admin adjustment entry
+#### Scenario: Billing address is stored
+- **WHEN** Stripe or checkout input provides billing address fields
+- **THEN** the app stores display-safe billing name, country, postal code, city, line fields, and provider customer association
 
-### Requirement: Plan And Provider Mapping
-The app SHALL map the visible `BASIC_BERLIN` membership plan to configured Stripe Billing records.
-
-#### Scenario: Basic Berlin plan is configured
-- **WHEN** checkout initializes for the membership plan
-- **THEN** the app uses the configured Stripe recurring price for `BASIC_BERLIN`
-- **AND** displays the plan as `Basic Berlin` priced at `29€/mo`
-
-#### Scenario: Promo code is submitted
-- **WHEN** a member submits a promo code during checkout
-- **THEN** the app validates and applies it through Stripe promotion or coupon configuration when supported
-- **AND** the promo code does not change the monthly credit allowance unless a configured plan policy explicitly says so
+#### Scenario: Credit ledger view is a single accessible region
+- **WHEN** a member or admin views the credit ledger
+- **THEN** the ledger is rendered inside a single table landmark (`<table>` with an accessible caption or `aria-label`)
+- **AND** column headers are `<th scope="col">` cells so screen readers announce the column name with each row
+- **AND** each row is reachable through a proximity+layout selector anchored on a stable, localized row label (e.g. invoice ID or entry ID) so gherkin can target rows without `getByText` chains
+- **AND** the table is announced as a single region (e.g. `<section aria-labelledby="...">`) with a localized heading
 
 ### Requirement: Admin Billing Overrides
 The app SHALL allow authorized admins to inspect and override billing-related booking eligibility through selector-disciplinable, accessible forms, and SHALL surface the action affordances through localized labels and `aria-*` wrappers.
@@ -146,38 +114,3 @@ The app SHALL allow authorized admins to inspect and override billing-related bo
 - **WHEN** a freeze or unfreeze submission is rejected by the server
 - **THEN** the error is announced through an `aria-live` region or by associating the message with the relevant field via `aria-describedby`
 - **AND** the form retains the entered reason so the admin can correct the input without retyping
-
-### Requirement: Member Membership Gate State
-Payment and subscription data SHALL expose member membership gate state needed by discovery, booking, and membership pages.
-
-#### Scenario: Active membership allows booking checks to proceed
-- **WHEN** a member has an active membership state and enough credits for the requested ticket quantity
-- **THEN** booking surfaces can proceed to capacity and event-state checks
-
-#### Scenario: Non-active membership blocks booking
-- **WHEN** a member has unpaid, past-due, canceled, missing, or admin-frozen membership state
-- **THEN** discovery and booking surfaces show the visible membership gate
-- **AND** booking transactions reject the booking safely
-
-#### Scenario: Membership page uses existing checkout state
-- **WHEN** a member opens the membership page
-- **THEN** the page displays subscription, checkout, credit, unpaid, past-due, or frozen state using existing payment and subscription data
-
-### Requirement: Webhook Payload Is Validated Against The Generated Contract
-The Stripe webhook handler SHALL validate the parsed payload against the Zod schema emitted by the TypeSpec build for `WebhookService.stripe` before mutating any subscription, credit, or ledger state.
-
-#### Scenario: Verified webhook passes schema validation
-- **WHEN** a webhook request passes `Stripe-Signature` verification
-- **THEN** the parsed payload is validated against the generated Zod schema
-- **AND** the handler processes the event only if the schema matches
-
-#### Scenario: Schema validation failure rejects the request
-- **WHEN** a verified webhook payload does not match the generated Zod schema
-- **THEN** the handler rejects the request without mutating subscription, credit, or ledger state
-- **AND** records the failure in the provider event log for audit
-
-#### Scenario: Stripe payload types live in the contract
-- **WHEN** the TypeSpec project is compiled
-- **THEN** the `WebhookService.stripe` operation's input model describes the supported `StripeEvent` variants (subscription, invoice, payment method, billing address) and their payload shapes
-- **AND** the Stripe API client response shapes (Subscription, Invoice, PaymentMethod, Customer) are typed in TypeSpec and imported by the webhook handler
-
