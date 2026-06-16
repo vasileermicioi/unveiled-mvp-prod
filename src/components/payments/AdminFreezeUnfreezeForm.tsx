@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Panel, TextInput } from "@/components/ui/unveiled-primitives";
 import { copyFor } from "@/lib/i18n";
 
-import { LanguageContext } from "@/components/unveiled/context";
+import { LanguageContext } from "@/components/unveiled/context-primitives";
 
 export type AdminFreezeUnfreezeFormProps = {
   userId: string;

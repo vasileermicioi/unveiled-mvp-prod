@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "./generated/tokens.css";
 
+@source "../**/*.{ts,tsx}";
+@source "../../tests/features/**/*.{ts,tsx}";
+@source "../../tests/ladle/**/*.{ts,tsx}";
+
 @custom-variant dark (&:is(.dark *));
 
 @font-face {

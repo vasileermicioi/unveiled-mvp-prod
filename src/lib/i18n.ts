@@ -38,7 +38,8 @@ export const appCopy = {
           passwordPlaceholder: "••••••••",
           submit: "Mitgliedschaft starten",
           switchToLogin: "Login",
-          helper: "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
+          helper:
+            "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
         },
         login: {
           title: "Willkommen zurück",
@@ -50,7 +51,8 @@ export const appCopy = {
           forgotPassword: "Passwort vergessen?",
           createAccount: "Zugang erstellen",
           switchToSignup: "Registrieren",
-          helper: "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
+          helper:
+            "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
         },
         logout: {
           trigger: "Abmelden",
@@ -65,21 +67,19 @@ export const appCopy = {
           emailPlaceholder: "du@beispiel.de",
           submit: "Reset-Link senden",
           backToLogin: "Zurück zum Login",
-          helper:
-            "Gib deine Email ein, um Recovery-Anweisungen zu erhalten.",
-          success: "Falls ein Konto für diese Email existiert, wurden Recovery-Anweisungen gesendet.",
+          helper: "Gib deine Email ein, um Recovery-Anweisungen zu erhalten.",
+          success:
+            "Falls ein Konto für diese Email existiert, wurden Recovery-Anweisungen gesendet.",
         },
       },
       errors: {
         USER_ALREADY_EXISTS: "Ein Konto mit dieser Email existiert bereits.",
         INVALID_EMAIL: "Bitte gib eine gültige E-Mail-Adresse ein.",
-        INVALID_PASSWORD:
-          "Das Passwort muss mindestens 8 Zeichen enthalten.",
+        INVALID_PASSWORD: "Das Passwort muss mindestens 8 Zeichen enthalten.",
         INVALID_EMAIL_OR_PASSWORD: "Email oder Passwort ist falsch.",
         TOO_MANY_REQUESTS:
           "Zu viele Versuche. Bitte versuche es in wenigen Minuten erneut.",
-        EMAIL_NOT_VERIFIED:
-          "Bitte bestätige zuerst deine Email-Adresse.",
+        EMAIL_NOT_VERIFIED: "Bitte bestätige zuerst deine Email-Adresse.",
         unknown: "Die Anfrage konnte nicht abgeschlossen werden.",
       },
     },
@@ -250,8 +250,7 @@ export const appCopy = {
       filterLandmark: "Entdecken-Filter",
       mapLandmark: "Entdecken-Karte",
       filterChipsLandmark: "Entdecken-Filter-Chips",
-      resultCountAnnouncement: (label: string) =>
-        `${label} verfügbare Events`,
+      resultCountAnnouncement: (label: string) => `${label} verfügbare Events`,
     },
     event: {
       credits: "Credits",
@@ -751,8 +750,7 @@ export const appCopy = {
       filterLandmark: "Discover filters",
       mapLandmark: "Discover map",
       filterChipsLandmark: "Discover filter chips",
-      resultCountAnnouncement: (label: string) =>
-        `${label} events available`,
+      resultCountAnnouncement: (label: string) => `${label} events available`,
     },
     event: {
       credits: "Credits",
@@ -1017,7 +1015,8 @@ export const appCopy = {
         errorSignature: "Stripe signature is missing or invalid.",
         errorContract:
           "The Stripe payload does not match the generated contract.",
-        errorUnhandled: "The Stripe event type is not supported by the contract.",
+        errorUnhandled:
+          "The Stripe event type is not supported by the contract.",
       },
     },
   },
@@ -1050,10 +1049,7 @@ export function mapAuthError(
   if (Object.prototype.hasOwnProperty.call(bundle, code)) {
     return bundle[code as AuthErrorCode];
   }
-  if (
-    typeof console !== "undefined" &&
-    process.env.NODE_ENV !== "production"
-  ) {
+  if (typeof console !== "undefined" && process.env.NODE_ENV !== "production") {
     console.warn(
       `[i18n] missing auth.errors.${code} for language ${normalizeLanguage(
         language,

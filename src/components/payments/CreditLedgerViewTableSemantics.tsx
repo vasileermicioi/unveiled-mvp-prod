@@ -4,7 +4,7 @@ import { Panel } from "@/components/ui/unveiled-primitives";
 import { copyFor } from "@/lib/i18n";
 import type { CreditLedgerEntryView } from "@/lib/unveiled-view-models";
 
-import { LanguageContext } from "@/components/unveiled/context";
+import { LanguageContext } from "@/components/unveiled/context-primitives";
 
 export type CreditLedgerViewTableSemanticsProps = {
   entries: ReadonlyArray<CreditLedgerEntryView>;
@@ -23,14 +23,10 @@ export function CreditLedgerViewTableSemantics(
   const noHistoryLabel = props.noHistoryLabel ?? copy.landmarkLabel;
   const emptyLabel = props.emptyLabel ?? copy.empty;
   const memberActorLabel =
-    props.memberActorLabel ??
-    (language === "DE" ? "Mitglied" : "Member");
+    props.memberActorLabel ?? (language === "DE" ? "Mitglied" : "Member");
 
   return (
-    <section
-      aria-labelledby={regionLabelId}
-      className="space-y-3"
-    >
+    <section aria-labelledby={regionLabelId} className="space-y-3">
       <h3 id={regionLabelId} className="sr-only">
         {noHistoryLabel}
       </h3>

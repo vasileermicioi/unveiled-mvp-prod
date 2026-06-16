@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Panel, TextInput } from "@/components/ui/unveiled-primitives";
 import { copyFor } from "@/lib/i18n";
 
-import { LanguageContext } from "@/components/unveiled/context";
+import { LanguageContext } from "@/components/unveiled/context-primitives";
 
 export type StripeCheckoutPaymentMethod =
   | "EXPRESS"
@@ -27,7 +27,11 @@ const paymentMethodOptions: Array<{
   labelDE: string;
   labelEN: string;
 }> = [
-  { id: "EXPRESS", labelDE: "Apple Pay / Google Pay", labelEN: "Apple Pay / Google Pay" },
+  {
+    id: "EXPRESS",
+    labelDE: "Apple Pay / Google Pay",
+    labelEN: "Apple Pay / Google Pay",
+  },
   { id: "PAYPAL", labelDE: "PayPal", labelEN: "PayPal" },
   { id: "CARD", labelDE: "Kreditkarte", labelEN: "Card" },
   { id: "SEPA", labelDE: "SEPA-Lastschrift", labelEN: "SEPA Direct Debit" },

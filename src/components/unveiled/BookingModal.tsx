@@ -49,7 +49,10 @@ export function BookingModal({
     calendarMetadata,
   );
   const calendarFile = useMemo(
-    () => (calendarAvailable && calendarMetadata ? createIcsObjectUrl(calendarMetadata) : null),
+    () =>
+      calendarAvailable && calendarMetadata
+        ? createIcsObjectUrl(calendarMetadata)
+        : null,
     [calendarAvailable, calendarMetadata],
   );
   useEffect(() => {

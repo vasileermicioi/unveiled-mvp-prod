@@ -1,1 +1,0 @@
-var e={parameters:{layout:`fullscreen`},decorators:[e=>(typeof document<`u`&&(document.documentElement.lang=`en`),e())]};export{e as default};

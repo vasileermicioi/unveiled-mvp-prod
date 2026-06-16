@@ -25,10 +25,10 @@ The project SHALL maintain a folder at `.development-plan/09-iteration/` whose s
 
 The folder SHALL contain a `00-summary.md` file that is the entry point for any contributor (human or agent) picking up a 10-iteration task. The summary SHALL be no more than 200 lines, SHALL link to the two catalog files, and SHALL document all of the following:
 
-- The per-feature folder format (`10-iteration/features/<kind>/<slug>/{proposal.md, tasks.md, feature.feature, <component>.stories.tsx, specs.md}`).
+- The per-feature folder format (`tests/features/<domain>/<surface>/{feature.feature, <component>.ladle.tsx}`).
 - The 10-item definition of done that every 10-iteration feature spec must satisfy.
 - The selector discipline (proximity + layout only; `data-testid` and CSS class selectors forbidden).
-- The storybook-is-per-feature rule (no shared storybook runner; one story per feature; a thin runner extension is implemented once, in the first 10-iteration spec that needs it).
+- The ladle-is-per-feature rule (no shared ladle runner; one story per feature; a thin runner extension is implemented once, in the first 10-iteration spec that needs it).
 - The out-of-scope list (native mobile, new billing provider, marketing site rebuild, brand redesign, new map provider, new email provider, multi-region Cloudflare, A/B testing, feature flags, i18n beyond DE/EN).
 - The recommended work order (runner extension → improvements top-to-bottom → new features top-to-bottom → close the loop).
 - A "Next step" section that points at the two catalog files.
@@ -91,21 +91,21 @@ The folder SHALL contain a `discovered-during-10-iteration.md` file as an empty 
 
 ### Requirement: Per-feature folder format
 
-The summary SHALL document the per-feature folder format that 10-iteration will use to author one spec per feature. The format SHALL be `10-iteration/features/<kind>/<slug>/` where `<kind>` is `improvements/` (refactor of an existing feature) or `new/` (net-new feature) and `<slug>` is a short kebab-case identifier from the catalog's `expected-slug` column. Each per-feature folder SHALL contain exactly five files: `proposal.md`, `tasks.md`, `feature.feature`, `<component>.stories.tsx`, and `specs.md`.
+The summary SHALL document the per-feature folder format that 10-iteration will use to author one BDD spec per feature. The format SHALL be `tests/features/<domain>/<surface>/` where `<domain>` is the epic from `docs/epics.md` and `<surface>` is the specific surface the feature covers. Each per-feature folder SHALL contain exactly two files: `feature.feature` (the gherkin scenarios) and `<component>.ladle.tsx` (the Ladle harness referenced by the scenarios' `@ladle(component=…, story=…)` tags). The OpenSpec proposal (`openspec/changes/<change-name>/proposal.md` + `tasks.md`) is the single source of truth for intent and tasks; no per-feature `proposal.md`, `tasks.md`, or `specs.md` is duplicated under `tests/features/`.
 
 #### Scenario: A 10-iteration spec creates the per-feature folder
 - **WHEN** a contributor picks up a row from either catalog in 10-iteration
-- **THEN** the contributor creates `10-iteration/features/<kind>/<expected-slug>/` with `proposal.md`, `tasks.md`, `feature.feature`, `<component>.stories.tsx`, and `specs.md`
-- **AND** no other files are added in 09-iteration (the folder is created in 10-iteration)
+- **THEN** the contributor creates `tests/features/<domain>/<surface>/` with `feature.feature` and `<component>.ladle.tsx`
+- **AND** the corresponding OpenSpec change (`openspec/changes/<change-name>/`) carries the umbrella `proposal.md` + `tasks.md` and the per-capability `specs/.../spec.md` delta
 
-#### Scenario: The kind matches the catalog
+#### Scenario: The domain matches the catalog
 - **WHEN** a 10-iteration spec is created
-- **THEN** a row from `01-review-existing-features.md` lands in `10-iteration/features/improvements/<slug>/`
-- **AND** a row from `02-remaining-features-to-prod.md` lands in `10-iteration/features/new/<slug>/`
+- **THEN** a row from `01-review-existing-features.md` lands in `tests/features/<epic-domain>/<slug>/`
+- **AND** a row from `02-remaining-features-to-prod.md` lands in `tests/features/<epic-domain>/<slug>/`
 
 ### Requirement: Selector discipline binding for every 10-iteration spec
 
-The summary SHALL document the selector discipline inherited from the `gherkin-domain-features` capability: gherkin scenarios and storybook interaction tests SHALL use only proximity (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`, `getTextNearestTo`) and layout (`getByRole`, `getByLabel`, `getByLandmark`, `getInside` with a semantic landmark parent) selectors. The summary SHALL explicitly forbid `data-testid`, `getByText` chains, CSS class selectors, XPath, `nth-child` / `nth-of-type`, and positional selectors that depend on copy.
+The summary SHALL document the selector discipline inherited from the `gherkin-domain-features` capability: gherkin scenarios and Ladle interaction tests SHALL use only proximity (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`, `getTextNearestTo`) and layout (`getByRole`, `getByLabel`, `getByLandmark`, `getInside` with a semantic landmark parent) selectors. The summary SHALL explicitly forbid `data-testid`, `getByText` chains, CSS class selectors, XPath, `nth-child` / `nth-of-type`, and positional selectors that depend on copy.
 
 #### Scenario: A feature is impossible to specify without UI changes
 - **WHEN** a 10-iteration spec for a row cannot be expressed with proximity + layout selectors

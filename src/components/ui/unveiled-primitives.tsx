@@ -119,10 +119,7 @@ export function Field({
 }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      <label
-        htmlFor={htmlFor}
-        className="unveiled-meta"
-      >
+      <label htmlFor={htmlFor} className="unveiled-meta">
         {label}
       </label>
       {children}

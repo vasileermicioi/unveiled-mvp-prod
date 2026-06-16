@@ -98,7 +98,10 @@ describe("product route ownership", () => {
 
 describe("parseSafeRedirectTarget", () => {
   test("accepts a known product route with the matching language prefix", () => {
-    const target = parseSafeRedirectTarget("/en/bookings?status=upcoming", "EN");
+    const target = parseSafeRedirectTarget(
+      "/en/bookings?status=upcoming",
+      "EN",
+    );
     expect(target).toEqual({
       id: "bookings",
       path: "/bookings",
@@ -142,7 +145,10 @@ describe("parseSafeRedirectTarget", () => {
 describe("redirectAfterLoginFor", () => {
   test("returns undefined when the viewer is allowed on the requested owner", () => {
     expect(
-      redirectAfterLoginFor(authenticatedViewer("USER", "member", null), "member"),
+      redirectAfterLoginFor(
+        authenticatedViewer("USER", "member", null),
+        "member",
+      ),
     ).toBeUndefined();
     expect(
       redirectAfterLoginFor(
@@ -151,7 +157,10 @@ describe("redirectAfterLoginFor", () => {
       ),
     ).toBeUndefined();
     expect(
-      redirectAfterLoginFor(authenticatedViewer("ADMIN", "admin", null), "admin"),
+      redirectAfterLoginFor(
+        authenticatedViewer("ADMIN", "admin", null),
+        "admin",
+      ),
     ).toBeUndefined();
   });
 

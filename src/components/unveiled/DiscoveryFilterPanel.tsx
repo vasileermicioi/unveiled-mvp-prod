@@ -48,7 +48,9 @@ export function DiscoveryFilterPanel() {
             id="discover-filter-start-date"
             type="date"
             value={filters.startDate ?? ""}
-            onChange={(event) => updateFilter({ startDate: event.target.value })}
+            onChange={(event) =>
+              updateFilter({ startDate: event.target.value })
+            }
           />
         </Field>
         <Field label={copy.endDate} htmlFor="discover-filter-end-date">
@@ -75,7 +77,9 @@ export function DiscoveryFilterPanel() {
           <SelectInput
             id="discover-filter-partner"
             value={filters.partnerId ?? ""}
-            onChange={(event) => updateFilter({ partnerId: event.target.value })}
+            onChange={(event) =>
+              updateFilter({ partnerId: event.target.value })
+            }
           >
             <option value="">{copy.allPartners}</option>
             {live.publicPartnerOptions.map((partner) => (

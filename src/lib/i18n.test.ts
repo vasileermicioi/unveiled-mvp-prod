@@ -109,14 +109,8 @@ describe("bilingual copy dictionary", () => {
       for (const key of Object.keys(de[group])) {
         const deValue = (de[group] as Record<string, string>)[key];
         const enValue = (en[group] as Record<string, string>)[key];
-        expect(
-          deValue,
-          `DE payments.${group}.${key} is empty`,
-        ).toBeTruthy();
-        expect(
-          enValue,
-          `EN payments.${group}.${key} is empty`,
-        ).toBeTruthy();
+        expect(deValue, `DE payments.${group}.${key} is empty`).toBeTruthy();
+        expect(enValue, `EN payments.${group}.${key} is empty`).toBeTruthy();
       }
     }
   });
@@ -152,9 +146,7 @@ describe("bilingual copy dictionary", () => {
       expect(mapAuthError("SOMETHING_NEW", "EN")).toBe(
         missingKeyPlaceholder("auth.errors.SOMETHING_NEW"),
       );
-      expect(mapAuthError(null, "EN")).toBe(
-        copyFor("EN").auth.errors.unknown,
-      );
+      expect(mapAuthError(null, "EN")).toBe(copyFor("EN").auth.errors.unknown);
       expect(mapAuthError(undefined, "DE")).toBe(
         copyFor("DE").auth.errors.unknown,
       );

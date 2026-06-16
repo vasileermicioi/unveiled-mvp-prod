@@ -61,7 +61,14 @@ architecture change.
   truth for the C4 diagrams. Hand-edited Mermaid outside that directory is
   forbidden.
 - **Feature tests:** Gherkin feature files under `tests/features/<domain>/`
-  drive Playwright parity coverage via `bun run test:e2e`.
+  drive Playwright parity coverage via `bun run test:e2e`. Each per-feature
+  folder at `tests/features/<domain>/<surface>/` holds the gherkin
+  `feature.feature` plus a co-located `<component>.ladle.tsx` Ladle harness
+  referenced by the scenarios' `@ladle(component=…, story=…)` tags. The
+  OpenSpec change (`openspec/changes/<change-name>/`) is the single source
+  of truth for the umbrella's `proposal.md` + `tasks.md`; per-feature
+  proposals, task lists, and `specs.md` are not duplicated under
+  `tests/features/`.
 
 ## 3. File layout
 
@@ -102,10 +109,12 @@ architecture change.
 │   ├── specs/               # current capability specs (what the system does)
 │   └── changes/             # active + archived change proposals
 ├── tests/
-│   ├── features/<domain>/   # gherkin .feature files
+│   ├── features/<domain>/   # gherkin .feature + co-located <component>.ladle.tsx
 │   ├── parity/              # Playwright spec(s) driving the gherkin
 │   ├── visual/              # visual regression baselines
-│   └── unit/                # vitest-style unit tests where used
+│   ├── unit/                # vitest-style unit tests where used
+│   ├── steps/               # shared gherkin step registry + selectors
+│   └── ladle/               # Ladle harness + coverage script + smoke stories
 ├── docs/                    # long-form docs (guidelines, architecture, etc.)
 ├── scripts/                 # Bun-runnable CLIs (specs-gen, tokens-gen, etc.)
 ├── public/                  # static assets served at site root
@@ -175,34 +184,20 @@ contract for "how we are changing it."
 ## 6. Iteration cycle
 
 The repo follows a numbered iteration plan under
-[`.development-plan/0N-iteration/`](./.development-plan/) (one folder per
-iteration, e.g. `10-iteration/`). Each iteration contains a `00-summary.md`
-that lists the proposed changes for that cycle, and one or more
-`*.tasks.md` files that drive the work.
+[`.development-plan/0N-iteration/`](./.development-plan/) — the maintainer's
+private planning space. **Agents MUST NOT modify or rely on it**; the
+authoritative artifacts for any change are always under `openspec/`. The
+plan exists so the maintainer can stage multiple specs across cycles; the
+public contract is the OpenSpec change.
 
-The iteration plan to date:
+For every change, an agent should:
 
-- **`08-iteration/`** — the spec-driven foundation (LikeC4, TypeSpec, design
-  tokens, gherkin, AGENTS.md, the 09-iteration hub). All proposals are
-  shipped.
-- **`09-iteration/`** — the catalog. No implementation; just two
-  Markdown tables (improvements and net-new features) that 10-iteration
-  fulfils. Entry point: [`09-iteration/00-summary.md`](./.development-plan/09-iteration/00-summary.md).
-- **`10-iteration/`** — the implementation iteration. Every catalog row
-  becomes a per-feature folder at `10-iteration/features/<kind>/<slug>/`
-  with `proposal.md` + `tasks.md` + `feature.feature` +
-  `<component>.stories.tsx` + `specs.md`, plus the matching OpenSpec
-  change. The seed `proposal.md` for every row is already on disk.
-  Entry point: [`10-iteration/00-summary.md`](./.development-plan/10-iteration/00-summary.md).
-
-For every iteration, an agent should:
-
-1. Read the latest `0N-iteration/00-summary.md` and the matching
-   `*.tasks.md` files top to bottom.
-2. For each task, open the OpenSpec change named in the iteration summary
-   (`openspec/changes/<change-name>/`) and follow its `tasks.md`.
-3. Implement the change, mark each checkbox as it completes, and update any
-   dependency specs as you go.
+1. Read the active change's `openspec/changes/<change-name>/proposal.md`
+   and `tasks.md` top to bottom.
+2. Implement the change, mark each checkbox as it completes, and update any
+   dependency specs (`openspec/specs/<capability>/spec.md`) as you go.
+3. Add per-feature BDD specs under
+   `tests/features/<domain>/<surface>/{feature.feature, <component>.ladle.tsx}`.
 4. Run the full check (`bun run check`) and any test/gherkin commands named
    in the proposal.
 5. Update `AGENTS.md` if the stack, file layout, toolchain commands, or
@@ -232,10 +227,10 @@ All commands are run with `bun` from the repo root.
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
 | `bun run test:e2e` | Playwright runs the gherkin parity suite. |
-| `bun run test:ladle` | Playwright runs the gherkin scenarios that carry a `@story(...)` tag against the Ladle project. |
+| `bun run test:ladle` | Playwright runs the gherkin scenarios that carry a `@ladle(...)` tag against the Ladle project. |
 | `bun run ladle` | Ladle dev server on port 6006. |
-| `bun run ladle:build` | Static Ladle build at `public/storybook/` (Ladle default; migration may adjust path). |
-| `bun run ladle:coverage` | Assert every `@story(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
+| `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
+| `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + run with `wrangler dev --remote`. |
 | `bun run deploy:cloudflare` | Build + `wrangler deploy` for the app. |
@@ -283,7 +278,7 @@ A change is *done* only when all of the following are true:
 - **Architecture questions:** [`docs/architecture.md`](./docs/architecture.md) and
   the LikeC4 model under `architecture/`.
 - **What the system does / does not do:** [`openspec/specs/`](./openspec/specs/).
-- **What we are changing next:** the latest
-  [`.development-plan/0N-iteration/00-summary.md`](./.development-plan/).
+- **What we are changing next:** the active OpenSpec change proposals in
+  [`openspec/changes/`](./openspec/changes/).
 - **Archived changes (worked examples):**
   [`openspec/changes/archive/`](./openspec/changes/archive/).

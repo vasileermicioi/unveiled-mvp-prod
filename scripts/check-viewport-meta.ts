@@ -43,7 +43,8 @@ for (const file of files) {
   if (!importsBaseLayout) {
     findings.push({
       file: rel,
-      issue: "does not import BaseLayout (and does not declare the canonical viewport meta directly)",
+      issue:
+        "does not import BaseLayout (and does not declare the canonical viewport meta directly)",
     });
     continue;
   }

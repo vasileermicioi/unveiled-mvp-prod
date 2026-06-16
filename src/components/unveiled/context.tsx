@@ -17,6 +17,7 @@ import {
   StatPanel,
   TextInput,
 } from "@/components/ui/unveiled-primitives";
+import { LanguageContext, LiveDataContext } from "@/components/unveiled/context-primitives";
 import {
   type AppShellViewModel,
   createDemoShellViewModel,
@@ -31,7 +32,6 @@ import {
 } from "@/lib/data-access/hooks";
 import {
   createLiveDataView,
-  emptyLiveDataView,
   emptyPublicData,
   type LiveDataView,
 } from "@/lib/data-access/live-view-adapters";
@@ -40,6 +40,15 @@ import type { InitialSurfaceData } from "@/lib/data-access/surface-data";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 import type { EventCardView } from "@/lib/unveiled-view-models";
 import { cn } from "@/lib/utils";
+
+export {
+  LanguageContext,
+  LiveDataContext,
+  emptyLiveDataView,
+  useCopy,
+  useLiveData,
+} from "@/components/unveiled/context-primitives";
+export type { LiveDataView } from "@/components/unveiled/context-primitives";
 
 export { StatPanel };
 
@@ -140,9 +149,6 @@ export type AdminAssetUploadResponse =
       fieldErrors?: Record<string, string>;
     };
 
-export const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
-export const LanguageContext = createContext<UiLanguage>("DE");
-
 export interface VisualSystemContextProps {
   view: View;
   setView: React.Dispatch<React.SetStateAction<View>>;
@@ -184,14 +190,6 @@ export function useVisualSystem() {
   if (!ctx)
     throw new Error("useVisualSystem must be used within VisualSystemProvider");
   return ctx;
-}
-
-export function useLiveData() {
-  return useContext(LiveDataContext);
-}
-
-export function useCopy() {
-  return copyFor(useContext(LanguageContext));
 }
 
 // Utility Helpers
@@ -726,7 +724,10 @@ export function VisualSystemProvider({
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     const params = url.searchParams;
-    const apply = (key: "category" | "partnerId" | "startDate" | "endDate" | "page", value: string | undefined) => {
+    const apply = (
+      key: "category" | "partnerId" | "startDate" | "endDate" | "page",
+      value: string | undefined,
+    ) => {
       if (value) {
         params.set(key, value);
       } else {

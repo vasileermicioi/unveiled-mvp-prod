@@ -1,7 +1,4 @@
-import {
-  type AuthenticatedViewer,
-  type Viewer,
-} from "@/lib/auth-profile";
+import { type AuthenticatedViewer, type Viewer } from "@/lib/auth-profile";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 import {
   redirectAfterLoginFor,

@@ -20,7 +20,11 @@ export interface LoginFormProps {
   onCancelRedirect?: () => void;
 }
 
-const initialValues: LoginFormValues = { email: "", password: "", redirect: null };
+const initialValues: LoginFormValues = {
+  email: "",
+  password: "",
+  redirect: null,
+};
 
 export function LoginForm({
   language,
@@ -138,4 +142,3 @@ export function LoginForm({
     </form>
   );
 }
-

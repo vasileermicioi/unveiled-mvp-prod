@@ -22,10 +22,7 @@ async function resolveFieldByLabel(
   if (labelFor) {
     return page.locator(`${control}#${labelFor}`).first();
   }
-  return textNode
-    .locator(`xpath=ancestor::label[1]`)
-    .locator(control)
-    .first();
+  return textNode.locator(`xpath=ancestor::label[1]`).locator(control).first();
 }
 
 export async function getFieldNearestTo(

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const storybookUrl = process.env.STORYBOOK_URL ?? "http://localhost:4321/storybook/";
-const hasStorybook = !!process.env.STORYBOOK_URL || !!process.env.RUN_STORYBOOK;
+const ladleUrl = process.env.LADLE_URL ?? "http://localhost:4321/ladle/";
+const hasLadle = !!process.env.LADLE_URL || !!process.env.RUN_LADLE;
 
 export default defineConfig({
   testDir: "./tests",
@@ -31,13 +31,13 @@ export default defineConfig({
       testDir: "./tests/parity",
       use: { ...devices["Desktop Chrome"] },
     },
-    ...(hasStorybook
+    ...(hasLadle
       ? [
           {
-            name: "storybook",
-            testDir: "./tests/storybook",
+            name: "ladle",
+            testDir: "./tests/ladle",
             use: {
-              baseURL: storybookUrl,
+              baseURL: ladleUrl,
               ...devices["Desktop Chrome"],
             },
           },

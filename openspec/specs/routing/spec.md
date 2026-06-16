@@ -182,9 +182,9 @@ The routing spec SHALL declare a single typed source of truth, `redirectAfterLog
 - **AND** at least one edge-case scenario asserts a Partner-visit-admin redirect lands on the partner safe destination
 - **AND** every step uses only proximity + layout selectors (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`, `getByRole`, `getByLabel`, `getInside`)
 
-#### Scenario: The table is storybook-disciplined
-- **WHEN** a contributor reads `10-iteration/features/RedirectAfterLoginTable.stories.tsx`
-- **THEN** at least one story renders the table with a `Member × admin` cell and carries a `play` interaction test
-- **AND** at least one story renders the table with a `Partner × admin` cell and carries a `play` interaction test
-- **AND** every story is tagged with `@story(component=RedirectAfterLoginTable, story=…)` referencing the scenario id from `feature.feature`
+#### Scenario: The table is ladle-disciplined
+- **WHEN** a contributor reads `tests/features/identity/redirect-after-login-table.ladle.tsx`
+- **THEN** at least one story renders the table with a `Member × admin` cell
+- **AND** at least one story renders the table with a `Partner × admin` cell
+- **AND** every story is tagged with `@ladle(component=RedirectAfterLoginTable, story=…)` referencing the scenario id from `feature.feature`
 

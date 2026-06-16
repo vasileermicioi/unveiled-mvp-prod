@@ -2,10 +2,7 @@ import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/unveiled-primitives";
-import {
-  copyFor,
-  type UiLanguage,
-} from "@/lib/i18n";
+import { copyFor, type UiLanguage } from "@/lib/i18n";
 
 export interface SignupFormValues {
   firstName: string;
@@ -65,11 +62,7 @@ export function SignupForm({
 
   if (success) {
     return (
-      <div
-        role="status"
-        aria-live="polite"
-        className="grid gap-3 p-4"
-      >
+      <div role="status" aria-live="polite" className="grid gap-3 p-4">
         <p>{copy.helper}</p>
       </div>
     );

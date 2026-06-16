@@ -6,13 +6,13 @@ import { dispatch } from "../steps/dsl";
 import { emailForRole, type Role } from "../steps/seed";
 import {
   coalesceKind,
-  findStoryTag,
+  findLadleTag,
   parseFeature,
   type ParsedScenario,
   sharedRegistry,
-  STORY_TAG,
+  LADLE_TAG,
   walkFeatures,
-} from "../steps/storybook-helpers";
+} from "../steps/ladle-helpers";
 
 const FEATURE_ROOT = "tests/features";
 
@@ -22,13 +22,13 @@ async function runScenario(
   featurePath: string,
   testInfo: TestInfo,
 ): Promise<void> {
-  const storyTag = findStoryTag(scenario);
+  const storyTag = findLadleTag(scenario);
   if (storyTag) {
-    const body = STORY_TAG.exec(storyTag)?.groups?.body;
+    const body = LADLE_TAG.exec(storyTag)?.groups?.body;
     if (body) {
       test.skip(
         true,
-        `@story(${body}) tag dispatched to storybook project (scenario "${scenario.name}", feature ${relative(
+        `@ladle(${body}) tag dispatched to storybook project (scenario "${scenario.name}", feature ${relative(
           ".",
           featurePath,
         )})`,

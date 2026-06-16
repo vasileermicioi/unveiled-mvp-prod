@@ -11,15 +11,15 @@
  * edit `design-tokens.json` and run `bun run tokens:gen`.
  */
 import {
-	Border as _Border,
-	Breakpoint as _Breakpoint,
-	Color as _Color,
-	Motion as _Motion,
-	Radius as _Radius,
-	Shadow as _Shadow,
-	Spacing as _Spacing,
-	Typography as _Typography,
-	ZIndex as _ZIndex,
+  Border as _Border,
+  Breakpoint as _Breakpoint,
+  Color as _Color,
+  Motion as _Motion,
+  Radius as _Radius,
+  Shadow as _Shadow,
+  Spacing as _Spacing,
+  Typography as _Typography,
+  ZIndex as _ZIndex,
 } from "@/lib/design-tokens.types";
 
 export const Color = _Color;
@@ -33,91 +33,91 @@ export const Typography = _Typography;
 export const ZIndex = _ZIndex;
 
 export const BrandColor = {
-	Yellow: Color.BrandYellow,
-	Cream: Color.BrandCream,
-	Grey: Color.BrandGrey,
-	Dark: Color.BrandDark,
-	White: Color.BrandWhite,
-	Error: Color.BrandError,
-	Success: Color.BrandSuccess,
+  Yellow: Color.BrandYellow,
+  Cream: Color.BrandCream,
+  Grey: Color.BrandGrey,
+  Dark: Color.BrandDark,
+  White: Color.BrandWhite,
+  Error: Color.BrandError,
+  Success: Color.BrandSuccess,
 } as const;
 export type BrandColor = (typeof BrandColor)[keyof typeof BrandColor];
 
 export const SemanticColor = {
-	Background: Color.SemanticBackground,
-	Foreground: Color.SemanticForeground,
-	Card: Color.SemanticCard,
-	CardForeground: Color.SemanticCardForeground,
-	Popover: Color.SemanticPopover,
-	PopoverForeground: Color.SemanticPopoverForeground,
-	Primary: Color.SemanticPrimary,
-	PrimaryForeground: Color.SemanticPrimaryForeground,
-	Secondary: Color.SemanticSecondary,
-	SecondaryForeground: Color.SemanticSecondaryForeground,
-	Muted: Color.SemanticMuted,
-	MutedForeground: Color.SemanticMutedForeground,
-	Accent: Color.SemanticAccent,
-	AccentForeground: Color.SemanticAccentForeground,
-	Destructive: Color.SemanticDestructive,
-	Border: Color.SemanticBorder,
-	Input: Color.SemanticInput,
-	Ring: Color.SemanticRing,
+  Background: Color.SemanticBackground,
+  Foreground: Color.SemanticForeground,
+  Card: Color.SemanticCard,
+  CardForeground: Color.SemanticCardForeground,
+  Popover: Color.SemanticPopover,
+  PopoverForeground: Color.SemanticPopoverForeground,
+  Primary: Color.SemanticPrimary,
+  PrimaryForeground: Color.SemanticPrimaryForeground,
+  Secondary: Color.SemanticSecondary,
+  SecondaryForeground: Color.SemanticSecondaryForeground,
+  Muted: Color.SemanticMuted,
+  MutedForeground: Color.SemanticMutedForeground,
+  Accent: Color.SemanticAccent,
+  AccentForeground: Color.SemanticAccentForeground,
+  Destructive: Color.SemanticDestructive,
+  Border: Color.SemanticBorder,
+  Input: Color.SemanticInput,
+  Ring: Color.SemanticRing,
 } as const;
 export type SemanticColor = (typeof SemanticColor)[keyof typeof SemanticColor];
 
 export const StatusColor = {
-	Error: Color.StatusError,
-	Success: Color.StatusSuccess,
+  Error: Color.StatusError,
+  Success: Color.StatusSuccess,
 } as const;
 export type StatusColor = (typeof StatusColor)[keyof typeof StatusColor];
 
 export const FontFamily = {
-	Display: Typography.FontFamilyDisplay,
-	Body: Typography.FontFamilyBody,
+  Display: Typography.FontFamilyDisplay,
+  Body: Typography.FontFamilyBody,
 } as const;
 export type FontFamily = (typeof FontFamily)[keyof typeof FontFamily];
 
 export const FontWeight = {
-	Regular: Typography.FontWeightRegular,
-	Bold: Typography.FontWeightBold,
-	Black: Typography.FontWeightBlack,
+  Regular: Typography.FontWeightRegular,
+  Bold: Typography.FontWeightBold,
+  Black: Typography.FontWeightBlack,
 } as const;
 export type FontWeight = (typeof FontWeight)[keyof typeof FontWeight];
 
 export const FontSize = {
-	Xs: Typography.FontSizeXs,
-	Sm: Typography.FontSizeSm,
-	Base: Typography.FontSizeBase,
-	Lg: Typography.FontSizeLg,
-	Xl: Typography.FontSizeXl,
-	"2xl": Typography.FontSize2xl,
-	"3xl": Typography.FontSize3xl,
-	"4xl": Typography.FontSize4xl,
-	"6xl": Typography.FontSize6xl,
-	HeadlineMd: Typography.FontSizeHeadlineMd,
-	HeadlineLg: Typography.FontSizeHeadlineLg,
-	HeadlineXl: Typography.FontSizeHeadlineXl,
+  Xs: Typography.FontSizeXs,
+  Sm: Typography.FontSizeSm,
+  Base: Typography.FontSizeBase,
+  Lg: Typography.FontSizeLg,
+  Xl: Typography.FontSizeXl,
+  "2xl": Typography.FontSize2xl,
+  "3xl": Typography.FontSize3xl,
+  "4xl": Typography.FontSize4xl,
+  "6xl": Typography.FontSize6xl,
+  HeadlineMd: Typography.FontSizeHeadlineMd,
+  HeadlineLg: Typography.FontSizeHeadlineLg,
+  HeadlineXl: Typography.FontSizeHeadlineXl,
 } as const;
 export type FontSize = (typeof FontSize)[keyof typeof FontSize];
 
 export const LetterSpacing = {
-	Tight: Typography.LetterSpacingTight,
-	Normal: Typography.LetterSpacingNormal,
-	Wide: Typography.LetterSpacingWide,
-	Wider: Typography.LetterSpacingWider,
+  Tight: Typography.LetterSpacingTight,
+  Normal: Typography.LetterSpacingNormal,
+  Wide: Typography.LetterSpacingWide,
+  Wider: Typography.LetterSpacingWider,
 } as const;
 export type LetterSpacing = (typeof LetterSpacing)[keyof typeof LetterSpacing];
 
 export const LineHeight = {
-	Tight: Typography.LineHeightTight,
-	Snug: Typography.LineHeightSnug,
-	Display: Typography.LineHeightDisplay,
-	Body: Typography.LineHeightBody,
-	Relaxed: Typography.LineHeightRelaxed,
+  Tight: Typography.LineHeightTight,
+  Snug: Typography.LineHeightSnug,
+  Display: Typography.LineHeightDisplay,
+  Body: Typography.LineHeightBody,
+  Relaxed: Typography.LineHeightRelaxed,
 } as const;
 export type LineHeight = (typeof LineHeight)[keyof typeof LineHeight];
 
 export const TextCase = {
-	Uppercase: Typography.TextCaseUppercase,
+  Uppercase: Typography.TextCaseUppercase,
 } as const;
 export type TextCase = (typeof TextCase)[keyof typeof TextCase];

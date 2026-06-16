@@ -1,6 +1,7 @@
 # build output
 dist/
 storybook-static/
+public/ladle/
 # generated types
 .astro/
 # Cloudflare local/generated output
