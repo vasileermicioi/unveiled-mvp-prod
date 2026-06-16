@@ -41,6 +41,7 @@ _old_app/
 .agent/
 .opencode/
 .development-plan/
+.agents/
 
 # typespec emitters — only `openapi.yaml` is the source of truth, the rest
 # (per-model JSON Schemas, the JSON copy of openapi.yaml) is regenerated

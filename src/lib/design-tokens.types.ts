@@ -34,10 +34,8 @@ export const Color = {
 export type Color = (typeof Color)[keyof typeof Color];
 
 export const Typography = {
-  FontFamilyDisplay:
-    '"EK Notice Sans", Impact, Haettenschweiler, "Arial Black", sans-serif',
-  FontFamilyBody:
-    '"Work Sans", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  FontFamilyDisplay: "\"EK Notice Sans\", Impact, Haettenschweiler, \"Arial Black\", sans-serif",
+  FontFamilyBody: "\"Work Sans\", \"Inter\", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
   FontWeightRegular: 400,
   FontWeightBold: 700,
   FontWeightBlack: 900,
@@ -113,8 +111,7 @@ export const Motion = {
   DurationSlow: "240ms",
   EasingEaseOut: "ease-out",
   EasingEaseInOut: "ease",
-  TransitionCardHover:
-    "box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease, color 180ms ease",
+  TransitionCardHover: "box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease, color 180ms ease",
 } as const;
 export type Motion = (typeof Motion)[keyof typeof Motion];
 
