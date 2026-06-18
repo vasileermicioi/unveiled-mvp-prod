@@ -1,11 +1,13 @@
 #!/usr/bin/env bun
 // @ladle-only
-// HeroUI design-system replica gate. Asserts co-location, theme coverage,
-// no new hex literals, overview completeness, and import isolation.
+// HeroUI design-system replica gate. Asserts co-location, theme coverage
+// (sourced from the production module), no new hex literals, overview
+// completeness, and import isolation.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const REPLICA_DIR = resolve("src/components/ui/heroui-replica");
+const THEME_PATH = resolve("src/lib/heroui-theme.ts");
 const PRODUCTION_ROOTS = [
   "src/components",
   "src/pages",
@@ -95,8 +97,7 @@ function checkHexLiterals() {
 }
 
 function checkThemeCoverage() {
-  const themePath = join(REPLICA_DIR, "theme.ts");
-  const source = readFileSync(themePath, "utf8");
+  const source = readFileSync(THEME_PATH, "utf8");
   const requiredColors = [
     "yellow",
     "cream",
@@ -150,7 +151,6 @@ function checkOverview() {
       f.endsWith(".tsx") &&
       !f.endsWith(".ladle.tsx") &&
       f !== "provider.tsx" &&
-      f !== "theme.ts" &&
       f !== "story-backdrop.tsx" &&
       f !== "index.ts",
   );
@@ -169,7 +169,6 @@ function checkColocatedStories() {
       f.endsWith(".tsx") &&
       !f.endsWith(".ladle.tsx") &&
       f !== "provider.tsx" &&
-      f !== "theme.ts" &&
       f !== "story-backdrop.tsx" &&
       f !== "index.ts",
   );

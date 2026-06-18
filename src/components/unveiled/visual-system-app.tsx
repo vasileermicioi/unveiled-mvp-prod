@@ -4,6 +4,7 @@ import { useContext, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 
 import { QueryProvider } from "@/components/providers/query-provider";
+import { HeroUIProvider } from "@/components/providers/heroui-provider";
 import { Button } from "@/components/ui/button";
 import {
   Badge,
@@ -467,16 +468,18 @@ export function VisualSystemApp({
     : undefined;
 
   return (
-    <QueryProvider>
-      <VisualSystemProvider
-        initialShell={initialShell}
-        initialDiscovery={initialSurface}
-        initialView={initialView}
-        callbackURL={callbackURL}
-        initialTab={initialTab}
-      >
-        <VisualSystemAppContent hasInitialShell={Boolean(initialShell)} />
-      </VisualSystemProvider>
-    </QueryProvider>
+    <HeroUIProvider>
+      <QueryProvider>
+        <VisualSystemProvider
+          initialShell={initialShell}
+          initialDiscovery={initialSurface}
+          initialView={initialView}
+          callbackURL={callbackURL}
+          initialTab={initialTab}
+        >
+          <VisualSystemAppContent hasInitialShell={Boolean(initialShell)} />
+        </VisualSystemProvider>
+      </QueryProvider>
+    </HeroUIProvider>
   );
 }

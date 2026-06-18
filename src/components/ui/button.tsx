@@ -1,6 +1,6 @@
+import { Button as HeroUIButton } from "@nextui-org/react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -53,30 +53,48 @@ function Button({
   loading = false,
   children,
   disabled,
+  type,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     loading?: boolean;
   }) {
-  const Comp = asChild ? Slot : "button";
+  const composedClassName = cn(buttonVariants({ variant, size, className }));
+
+  if (asChild) {
+    return (
+      <Slot
+        data-slot="button"
+        className={composedClassName}
+        {...({ type, ...props } as React.ComponentProps<typeof Slot>)}
+      >
+        {children}
+      </Slot>
+    );
+  }
 
   return (
-    <Comp
+    <HeroUIButton
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      disabled={disabled || loading}
-      {...props}
+      className={composedClassName}
+      isDisabled={disabled || loading}
+      isLoading={loading}
+      disableRipple
+      type={type}
+      spinner={
+        <span
+          aria-hidden="true"
+          className="inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+        />
+      }
+      classNames={{
+        spinner: "mr-1",
+      }}
+      {...(props as unknown as React.ComponentProps<typeof HeroUIButton>)}
     >
-      {asChild ? (
-        children
-      ) : (
-        <>
-          {loading ? <Loader2 className="animate-spin" /> : null}
-          {children}
-        </>
-      )}
-    </Comp>
+      {children}
+    </HeroUIButton>
   );
 }
 

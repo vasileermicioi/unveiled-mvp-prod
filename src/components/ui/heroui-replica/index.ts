@@ -26,4 +26,4 @@ export { HeroTextArea } from "./HeroTextArea";
 export { HeroTextInput } from "./HeroTextInput";
 export { HeroToast } from "./HeroToast";
 export { HeroUIReplicaProvider } from "./provider";
-export { heroUITokens } from "./theme";
+export { heroUITokens } from "@/lib/heroui-theme";

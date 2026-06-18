@@ -24,63 +24,31 @@ The UI SHALL preserve the visible Unveiled brand language.
 - **THEN** required display data is logo text/asset variant, localized tagline when shown, and active/inactive visual state tokens from the `design-tokens` spec
 
 ### Requirement: Buttons And Controls
-This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/Navbar.tsx`, `_old_app/components/CheckoutView.tsx`.
 
-Buttons, segmented controls, toggles, and icon controls SHALL match legacy visible states.
+Buttons, segmented controls, toggles, and icon controls SHALL match legacy visible states and SHALL be implemented as HeroUI-backed wrappers that preserve the existing public prop surface.
 
-#### Scenario: Visible elements render
-- **WHEN** a control appears
-- **THEN** it has compact uppercase text (using the typography tokens from the `design-tokens` spec), strong border or filled surface (using the color and border tokens), clear hover treatment, and lucide-style icon where the legacy UI shows one
+#### Scenario: Button is a HeroUI-backed wrapper
 
-#### Scenario: User interactions render
-- **WHEN** a segmented option is active
-- **THEN** it uses the dark-fill and light-text tokens from the `design-tokens` spec
-- **WHEN** an action is disabled
-- **THEN** it appears muted and non-primary (using the muted color tokens)
-- **WHEN** an action is loading
-- **THEN** it shows a spinner or loading label
-- **WHEN** copy succeeds
-- **THEN** text or icon changes to Copied/check temporarily
+- **WHEN** `src/components/ui/button.tsx` is rendered
+- **THEN** it composes HeroUI's `Button` as the base element
+- **AND** it accepts the existing `variant` matrix (`default`, `primary`, `secondary`, `yellow`, `active`, `copied`, `destructive`, `ghost`, `outline`, `muted`, `link`)
+- **AND** it accepts the existing `size` matrix (`default`, `sm`, `lg`, `icon`, `icon-sm`)
+- **AND** it accepts the `loading` and `asChild` props
+- **AND** the rendered DOM and className match the approved Ladle story for the same props
 
-#### Scenario: Visual parity is preserved
-- **WHEN** primary and secondary actions render together
-- **THEN** primary actions are visually dominant and secondary actions retain dark-bordered brand styling
-- **AND** every color, radius, and shadow value is sourced from the typed enums in `src/lib/design-tokens.ts` (the `design-tokens` spec), not from a magic string or raw hex
-
-#### Scenario: Data requirements are met
-- **WHEN** controls render
-- **THEN** required display data is label, optional icon, active/disabled/loading/copied state, and optional count badge
+> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2d ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
 
 ### Requirement: Forms
-This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/Onboarding.tsx`, `_old_app/components/CheckoutView.tsx`, `_old_app/components/ProfileView.tsx`, `_old_app/components/AdminPanel.tsx`.
 
-Forms SHALL preserve visible field structure, validation message placement, and responsive grouping. Payment integration and builder forms MUST mount interactive components without static mock text placeholders.
+Forms SHALL preserve visible field structure, validation message placement, and responsive grouping. Payment integration and builder forms MUST mount interactive components without static mock text placeholders. Form fields SHALL be HeroUI-backed wrappers that preserve the existing public prop surface.
 
-#### Scenario: Visible elements render
-- **WHEN** a form renders
-- **THEN** it shows compact uppercase labels, bordered inputs/selects/textareas, clear focus states, and primary submit actions
-- **AND** paired fields stack on mobile and align in columns on larger screens
+#### Scenario: Form primitives are HeroUI-backed
 
-#### Scenario: Validation messages render
-- **WHEN** a user-visible validation message exists
-- **THEN** it appears near the related field or form section in compact high-contrast text
-
-#### Scenario: User interactions render
-- **WHEN** a selectable chip, toggle, day button, language button, or payment method is selected
-- **THEN** selected state is visually distinct
-
-#### Scenario: Data requirements are met
-- **WHEN** forms render
-- **THEN** required display data is field label, current value, placeholder where shown, validation message, selected state, disabled state, and submit/loading label
-
-#### Scenario: Stripe payment form mounts active elements
-- **WHEN** a user selects Stripe Card or SEPA payment methods
-- **THEN** the checkout form displays structured, high-fidelity payment container grids containing credit card or bank details input frames instead of hardcoded text placeholders (e.g. "Stripe card fields mount here")
-- **AND** renders mock card/bank brand icons and billing address sync options
-
-#### Scenario: Event series builder mounts standard selectors
-- **WHEN** an admin views the Event Series Builder input fields
-- **THEN** the builder displays standard date picker and day selection inputs rather than hardcoded "defaultValue" range string prompts (e.g. "04 May - 30 May")
+- **WHEN** any of `Field`, `TextInput`, `SelectInput`, or `TextArea` from `src/components/ui/unveiled-primitives.tsx` is rendered
+- **THEN** the input/select/textarea element composes the corresponding HeroUI component
+- **AND** it accepts the existing `label`, `hint`, `error`, `value`, `onChange`, and `disabled` props
+- **AND** the rendered DOM and className match the approved Ladle story for the same props
+- **AND** `data-testid` and the proximity + layout selector contract used by the gherkin suite are preserved
 
 ### Requirement: Event Card Component
 This requirement SHALL use legacy reference path: `_old_app/components/EventCard.tsx`.
@@ -107,27 +75,17 @@ Event cards SHALL preserve the visible event browsing experience.
 - **THEN** required display data is image URL, image alt/title, category, partner name, date label, neighborhood, credit price, remaining capacity, ticket type, saved state, and CTA label
 
 ### Requirement: Modal And Dialog Components
-This requirement SHALL use legacy reference path: `_old_app/components/BookingModal.tsx`.
 
-Modal UI SHALL visually take over the screen for booking and redemption states.
+Modal UI SHALL visually take over the screen for booking and redemption states and SHALL be implemented as HeroUI-backed wrappers that preserve the existing public prop surface.
 
-#### Scenario: Visible elements render
-- **WHEN** the modal opens
-- **THEN** it uses a full-screen brand-yellow surface, logo header, large close icon, scrollable content, and large editorial event typography
+#### Scenario: Modal primitives are HeroUI-backed
 
-#### Scenario: User interactions render
-- **WHEN** close is selected
-- **THEN** the modal closes visibly
-- **WHEN** copy code is selected
-- **THEN** copied feedback appears
+- **WHEN** a `Modal` or `Drawer` primitive is rendered
+- **THEN** the underlying element composes HeroUI's `Modal` / `Drawer`
+- **AND** the focus trap, `aria-modal`, and close-on-escape behavior match the approved Ladle story
+- **AND** the public `open`, `onClose`, `title`, and `children` props are preserved
 
-#### Scenario: Visual parity is preserved
-- **WHEN** success content renders
-- **THEN** code panels use dark/yellow or white/dark contrast, large display code text, and strong bordered calendar/support actions
-
-#### Scenario: Data requirements are met
-- **WHEN** modal states render
-- **THEN** required display data is event detail fields, ticket count, total credits, redemption type, redemption code, redemption URL, support email, loading state, and copied state
+> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2f ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
 
 ### Requirement: Map Component
 This requirement SHALL use legacy reference path: `_old_app/components/EventMap.tsx`.
@@ -166,27 +124,17 @@ Map UI SHALL render through Leaflet and an open tile provider (such as CartoDB V
 - **THEN** required display data is event latitude, longitude, category, neighborhood, title, formatted time, selected marker state, and action target
 
 ### Requirement: Empty, Loading, And Error States
-This requirement SHALL use legacy reference path: `_old_app/App.tsx`, `_old_app/components/BookingsView.tsx`, `_old_app/components/PartnerPortal.tsx`, `_old_app/components/AdminPanel.tsx`.
 
-Empty, loading, and error states SHALL be explicit and visually intentional.
+Empty, loading, and error states SHALL be explicit and visually intentional and SHALL be implemented as HeroUI-backed wrappers that preserve the existing public prop surface.
 
-#### Scenario: Visible elements render
-- **WHEN** there is no discovery result
-- **THEN** a large dashed no-results panel appears
-- **WHEN** bookings are empty
-- **THEN** a centered ticket empty state with CTA appears
-- **WHEN** partner guests are empty
-- **THEN** a centered muted no-guests message appears
-- **WHEN** admin member data is loading or empty
-- **THEN** a bordered loading/no-members message appears
+#### Scenario: State primitives are HeroUI-backed
 
-#### Scenario: Visual parity is preserved
-- **WHEN** these states render
-- **THEN** they keep the legacy contrast, dashed/bordered treatment, icon scale, compact uppercase copy, and generous empty-state spacing
+- **WHEN** `Panel`, `Card`, `Badge`, `StatPanel`, `Divider`, or `StatePanel` is rendered
+- **THEN** the element composes the corresponding HeroUI component (or a thin HeroUI-styled wrapper where HeroUI has no direct equivalent)
+- **AND** the public `variant`, `tone`, `shadow`, `interactive`, and `state` props are preserved and translate to HeroUI style props internally
+- **AND** the rendered DOM and className match the approved Ladle story for the same props
 
-#### Scenario: Data requirements are met
-- **WHEN** state UI renders
-- **THEN** required display data is state type, localized message, optional icon, optional CTA label, and optional retry action
+> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2e ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
 
 ### Requirement: Responsive Layout
 This requirement SHALL use legacy reference path: all UI component paths listed in this spec.
@@ -240,11 +188,19 @@ Migrated UI primitives, forms, interactive controls, and modal states SHALL main
 - **THEN** their layout grid alignments, responsive wraps, margins, and padding match approved baselines
 
 ### Requirement: Skeleton Loading Primitives
-The UI SHALL provide reusable `<Skeleton>` pulse containers representing loading state skeletons for textual elements, buttons, and card content.
+
+The UI SHALL provide reusable `<Skeleton>` pulse containers representing loading state skeletons for textual elements, buttons, and card content. The `<Skeleton>` primitive SHALL be implemented on top of the HeroUI `Skeleton` (or a thin HeroUI-styled wrapper) so the visual contract matches the approved Ladle story.
 
 #### Scenario: Skeleton pulse animation is active
+
 - **WHEN** a `<Skeleton>` container renders during data loading phases
 - **THEN** it displays a pulse animation (`animate-pulse`) using muted grey background blocks matching card and text dimensions.
+
+#### Scenario: Skeleton is HeroUI-backed
+
+- **WHEN** a `<Skeleton>` primitive is rendered
+- **THEN** the element composes HeroUI's `Skeleton` (or a thin HeroUI-styled wrapper) as the base
+- **AND** the `className` and `aria-*` attributes used by the gherkin suite are preserved
 
 ### Requirement: Responsive Table-to-Card Structures
 On viewports below `768px`, data tables (including admin lists and reports) SHALL collapse their row structures into self-contained vertical card blocks.
@@ -263,4 +219,76 @@ The UI SHALL provide high-visibility, high-contrast check-in status panels for v
 #### Scenario: Failed check-in validation
 - **WHEN** a ticket validation fails (e.g. expired or double-checked ticket)
 - **THEN** the status screen renders a large red warning icon with high-contrast text explaining the failure reason
+
+### Requirement: Production HeroUI Theme Module
+
+The HeroUI theme configuration SHALL be exported from a production module at `src/lib/heroui-theme.ts` so that both the Ladle replica and the production provider can consume it without crossing the Ladle-only gate.
+
+#### Scenario: Theme is importable from the production module
+
+- **WHEN** any code (replica or production) imports the theme
+- **THEN** the import path is `@/lib/heroui-theme` (or an explicit re-export)
+- **AND** the export shape is unchanged from the previous replica-owned `src/components/ui/heroui-replica/theme.ts`
+
+> The full capability deltas for `app-shell` and `ui-system` are owned by slices 2c, 2d, 2e, 2f, and the umbrella `replace-shadcn-with-heroui`. This slice ships the theme relocation those later slices require.
+
+### Requirement: Consumer Migration Completes The HeroUI Switchover
+
+Every consumer file in `src/components/unveiled/`, `src/components/payments/`, `src/components/providers/`, `src/pages/`, and `src/layouts/` that previously imported a shadcn-backed primitive or a shadcn-specific pattern SHALL now import the HeroUI-backed equivalent and pass the matching prop surface. This is the implementation step that makes the umbrella's capability deltas observable in the running app.
+
+#### Scenario: No consumer imports the old primitive paths
+
+- **WHEN** `rg "@/components/ui/(button|unveiled-primitives)" src/` is run after the consumer walk completes
+- **THEN** every remaining hit is inside `src/components/ui/` itself (i.e. the primitives' own source files)
+- **AND** no consumer file in the audited directories imports a shadcn-specific helper
+
+#### Scenario: Prop mismatches are resolved at the call site
+
+- **WHEN** a call site previously used `tone`, `shadow`, `interactive`, or `state` props
+- **THEN** the call site maps those props to the new style-prop surface exposed by the HeroUI-backed wrapper
+- **AND** the wrapper's public prop surface is preserved (call sites do not need to be rewritten to use HeroUI's native prop names)
+
+> The full capability deltas for `app-shell` and `ui-system` are owned by slices 2c, 2d, 2e, 2f, and the umbrella `replace-shadcn-with-heroui`. This slice is the implementation step that makes those deltas observable in the running app.
+
+### Requirement: Shadcn Scaffolding Is Removed
+
+The shadcn-specific scaffolding (`@radix-ui/react-slot`, `class-variance-authority`, possibly `clsx` and `tailwind-merge`) SHALL be removed from `package.json` once the consumer audit confirms no remaining production-code importer. `components.json` SHALL no longer advertise shadcn as the component source.
+
+#### Scenario: shadcn packages are removed from the dependency tree
+
+- **WHEN** the audit (`rg "<package>" src/`) confirms no production consumer imports the package
+- **THEN** the package is removed from `package.json`
+- **AND** `bun install` regenerates `bun.lock` without the package
+- **AND** `bun run check` is non-breaking after the removal
+
+#### Scenario: components.json no longer points at shadcn
+
+- **WHEN** `components.json` exists after the teardown
+- **THEN** it does not reference shadcn as the component source
+- **OR** the file is removed entirely
+
+> The full capability deltas for `app-shell` and `ui-system` are owned by earlier slices and the umbrella `replace-shadcn-with-heroui`. This slice is the dependency + config cleanup that completes the switchover.
+
+### Requirement: Umbrella Verification And Archival
+
+The umbrella change `replace-shadcn-with-heroui` SHALL pass its full check matrix end-to-end, and SHALL be archived via `openspec archive` once the PR merges. The umbrella's `proposal.md` SHALL be updated (or superseded) if any public prop signature changed during slices 2d, 2e, or 2f.
+
+#### Scenario: Full check matrix is green
+
+- **WHEN** `bun run check`, `bun run check:heroui-replica`, `bun run test:e2e`, `bun run test:ladle`, and `bun run build` are run
+- **THEN** every command exits 0
+- **AND** the production bundle is within the existing performance budget
+
+#### Scenario: Umbrella proposal is updated if a prop signature changed
+
+- **WHEN** slices 2d, 2e, or 2f shipped a public prop signature change
+- **THEN** the umbrella's `proposal.md` records the change
+- **AND** `openspec validate replace-shadcn-with-heroui` passes after the update
+
+#### Scenario: Umbrella is archived after merge
+
+- **WHEN** the umbrella's PR merges to main
+- **THEN** `openspec archive replace-shadcn-with-heroui` moves the change to `openspec/changes/archive/<date>-replace-shadcn-with-heroui/`
+
+> The capability deltas for `app-shell` and `ui-system` are owned by earlier slices and the umbrella `replace-shadcn-with-heroui`. This slice is the closing gate.
 

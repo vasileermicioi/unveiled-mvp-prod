@@ -261,3 +261,29 @@
     scroll-behavior: auto !important;
   }
 }
+
+[data-slot="base"][data-focus-visible="true"],
+[data-slot="base"][data-focus-visible="true"] *,
+[data-slot="base"][data-focus="true"],
+[data-slot="base"][data-focus="true"] * {
+  outline: none !important;
+  outline-style: none !important;
+  --tw-outline-style: none !important;
+  box-shadow: none !important;
+  --tw-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+
+[data-slot="input-wrapper"][data-focus-visible="true"],
+[data-slot="input-wrapper"][data-focus="true"],
+[data-slot="trigger"][data-focus-visible="true"],
+[data-slot="trigger"][data-focus="true"] {
+  outline: none !important;
+  outline-style: none !important;
+  --tw-outline-style: none !important;
+  box-shadow: none !important;
+  --tw-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
