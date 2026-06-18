@@ -2,9 +2,23 @@
 @import "tw-animate-css";
 @import "./generated/tokens.css";
 
+@theme {
+  --animate-spinner-ease-spin: spinner-spin 0.8s ease infinite;
+  --animate-spinner-linear-spin: spinner-spin 0.8s linear infinite;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @source "../**/*.{ts,tsx}";
 @source "../../tests/features/**/*.{ts,tsx}";
 @source "../../tests/ladle/**/*.{ts,tsx}";
+@source inline("animate-spinner-ease-spin");
+@source inline("animate-spinner-linear-spin");
+@source inline("flex-none w-9 h-9 rounded-full place-items-center border-1 shadow-small translate-x-1 -translate-y-1 min-h-10 border-b-current end-1 end-3 end-2 start-1 start-4 ms-2 ms-1 me-1 me-2 border-t-transparent border-l-transparent border-r-transparent border-b-current opacity-75 border-dotted border-solid focus-visible:z-10 translate-y-0 translate-x-0 w-4 h-4 transition-transform duration-150 ease motion-reduce:transition-none rotate-180 data-open-true:rotate-180 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -42,6 +56,9 @@
   --color-brand-cream: var(--brand-cream);
   --color-brand-grey: var(--brand-grey);
   --color-brand-dark: var(--brand-dark);
+  --color-brand-white: var(--brand-white);
+  --color-brand-error: var(--brand-error);
+  --color-brand-success: var(--brand-success);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --radius-sm: 2px;

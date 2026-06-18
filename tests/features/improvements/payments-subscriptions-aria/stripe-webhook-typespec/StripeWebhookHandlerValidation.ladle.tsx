@@ -36,7 +36,10 @@ const SchemaProbe = ({ payload }: { payload: Record<string, unknown> }) => {
       {result.success ? null : (
         <pre className="mt-2 overflow-x-auto border-2 border-brand-dark bg-brand-cream p-2 text-[10px]">
           {result.error.issues
-            .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+            .map(
+              (issue) =>
+                `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+            )
             .join("\n")}
         </pre>
       )}

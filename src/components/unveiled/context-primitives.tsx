@@ -1,5 +1,8 @@
 import { createContext, useContext } from "react";
-import { emptyLiveDataView, type LiveDataView } from "@/lib/data-access/live-view-adapters";
+import {
+  emptyLiveDataView,
+  type LiveDataView,
+} from "@/lib/data-access/live-view-adapters";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 
 export const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);

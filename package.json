@@ -30,8 +30,8 @@
     "tokens:gen": "bun run scripts/generate-design-tokens.ts",
     "tokens:check": "bun run scripts/check-design-tokens.ts",
     "lint:viewport": "bun run scripts/check-viewport-meta.ts",
-    "design-system-replica:check": "bun run scripts/check-design-system-replica.ts",
-    "check:replica": "bun run design-system-replica:check && bun run ladle:coverage && bun run check"
+    "heroui-design-system-replica:check": "bun run scripts/check-heroui-design-system-replica.ts",
+    "check:heroui-replica": "bun run heroui-design-system-replica:check && bun run ladle:coverage && bun run check"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.3.1",
@@ -66,9 +66,7 @@
     "@cloudflare/vite-plugin": "1.40.2",
     "@cloudflare/workers-types": "^4.20260506.1",
     "@ladle/react": "^5.1.1",
-    "@mantine/core": "9.3.1",
-    "@mantine/hooks": "9.3.1",
-    "@mantine/notifications": "9.3.1",
+    "@nextui-org/react": "^2.6.0",
     "@types/bun": "^1.3.13",
     "@types/node": "^25.6.0",
     "@typespec/compiler": "^1.13.0",

@@ -41,7 +41,10 @@ architecture change.
   through Zod schemas; do not hand-roll validators.
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus Hero UI
   component library. Design tokens are generated from
-  `design-tokens.json` via Style Dictionary (`bun run tokens:gen`).
+  `design-tokens.json` via Style Dictionary (`bun run tokens:gen`). The
+  Hero UI library is kept in `devDependencies` for the Ladle-only design
+  replica under `src/components/ui/heroui-replica/` and MUST NOT be
+  imported by production code (gate: `bun run heroui-design-system-replica:check`).
 - **Lint / format:** Biome 2.4 — see `biome.json`. CI runs `bun run check`,
   which combines `astro check`, `biome check .`, `bun run specs:check`, and
   `bun run tokens:check`.
@@ -94,6 +97,7 @@ architecture change.
 │   ├── pages/               # SSR routes (.astro) + HTTP endpoints (api/)
 │   ├── actions/index.ts     # typed server actions (the only mutation surface)
 │   ├── components/          # Astro + React components (PascalCase .tsx, kebab-case .astro)
+│   │   ├── ui/              # production primitives (shadcn) + Ladle-only heroui-replica/ (gated)
 │   ├── layouts/             # Astro layouts (e.g. base-layout.astro)
 │   ├── lib/
 │   │   ├── auth.ts          # Better Auth setup
@@ -138,6 +142,9 @@ short version:
   and 2-space indent. Run `bun run format` before committing.
 - **No comments unless asked.** The codebase policy is no inline comments
   unless a reviewer explicitly asks for one. Self-documenting names preferred.
+  The single permitted exception is the `// @ladle-only` header on every file
+  under `src/components/ui/heroui-replica/`, which is enforced by
+  `bun run heroui-design-system-replica:check`.
 - **Server actions are the only mutation surface.** Page-level forms call
   actions in `src/actions/index.ts`; they do not call HTTP endpoints directly.
 - **No `_old_app/` imports.** If a legacy file is the only source of an
@@ -231,6 +238,8 @@ All commands are run with `bun` from the repo root.
 | `bun run ladle` | Ladle dev server on port 6006. |
 | `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
+| `bun run heroui-design-system-replica:check` | Gate the `src/components/ui/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
+| `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + run with `wrangler dev --remote`. |
 | `bun run deploy:cloudflare` | Build + `wrangler deploy` for the app. |

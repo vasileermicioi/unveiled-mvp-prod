@@ -17,7 +17,10 @@ import {
   StatPanel,
   TextInput,
 } from "@/components/ui/unveiled-primitives";
-import { LanguageContext, LiveDataContext } from "@/components/unveiled/context-primitives";
+import {
+  LanguageContext,
+  LiveDataContext,
+} from "@/components/unveiled/context-primitives";
 import {
   type AppShellViewModel,
   createDemoShellViewModel,
