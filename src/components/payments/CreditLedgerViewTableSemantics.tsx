@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { Panel } from "@/components/ui/unveiled-primitives";
+import { Panel } from "@unveiled/design-system";
 import { copyFor } from "@/lib/i18n";
 import type { CreditLedgerEntryView } from "@/lib/unveiled-view-models";
 

@@ -1,7 +1,7 @@
 import { actions } from "astro:actions";
 import { Check, Download, QrCode } from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@unveiled/design-system";
 import {
   Badge,
   Field,
@@ -11,7 +11,7 @@ import {
   TableRow,
   TableShell,
   TextInput,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import {
   downloadCsv,
   GuestRowSkeleton,

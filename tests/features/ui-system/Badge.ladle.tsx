@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Badge } from "@/components/ui/unveiled-primitives";
+import { Badge } from "@unveiled/design-system";
 
 export const ToneMatrix: Story = () => (
   <div className="flex flex-wrap items-center gap-4 bg-brand-grey p-8">

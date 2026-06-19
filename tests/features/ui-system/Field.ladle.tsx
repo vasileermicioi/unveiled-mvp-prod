@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Field } from "@/components/ui/unveiled-primitives";
+import { Field } from "@unveiled/design-system";
 
 export const LabelWithHint: Story = () => (
   <div className="grid max-w-md gap-2 bg-brand-grey p-8">

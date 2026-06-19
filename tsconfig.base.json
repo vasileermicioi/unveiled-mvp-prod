@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@unveiled/design-system": ["packages/design-system/src/index.ts"],
+      "@unveiled/design-system/*": ["packages/design-system/src/*"],
       "@unveiled/api": ["packages/api/src/index.ts"],
       "@unveiled/app": ["packages/app/src/index.ts"],
       "@unveiled/landing": ["packages/landing/src/index.ts"],

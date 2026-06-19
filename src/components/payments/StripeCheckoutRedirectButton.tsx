@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Field, Panel, TextInput } from "@/components/ui/unveiled-primitives";
+import { Button } from "@unveiled/design-system";
+import { Field, Panel, TextInput } from "@unveiled/design-system";
 import { copyFor } from "@/lib/i18n";
 
 import { LanguageContext } from "@/components/unveiled/context-primitives";

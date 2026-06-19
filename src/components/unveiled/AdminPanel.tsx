@@ -7,7 +7,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@unveiled/design-system";
 import {
   Badge,
   Card,
@@ -20,10 +20,10 @@ import {
   TableShell,
   TextArea,
   TextInput,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import { AdminFreezeUnfreezeForm } from "@/components/payments/AdminFreezeUnfreezeForm";
 import { ModalShell } from "@/components/unveiled/app-shell";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 import {
   AdminAssetUploadField,
   downloadCsv,

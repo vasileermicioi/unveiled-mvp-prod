@@ -4,12 +4,25 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo \"@unveiled/design-system dev: see change 01\"",
-    "build": "echo \"@unveiled/design-system build: see change 01\"",
+    "dev": "ladle dev -p 6006",
+    "build": "ladle build -o dist/ladle --base /ladle/",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome check .",
-    "test:unit": "echo \"@unveiled/design-system test:unit: no tests yet (see change 01)\""
+    "test:unit": "bun test src/**/*.test.ts src/**/*.test.tsx",
+    "ladle": "ladle dev -p 6006",
+    "ladle:build": "ladle build -o dist/ladle --base /ladle/",
+    "ladle:coverage": "bun scripts/coverage.ts",
+    "heroui-design-system-replica:check": "bun scripts/check-heroui-design-system-replica.ts",
+    "tokens:gen": "bun scripts/generate-design-tokens.ts",
+    "tokens:check": "bun scripts/check-design-tokens.ts"
   },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {},
+  "exports": {
+    ".": "./src/index.ts",
+    "./heroui-replica": "./src/heroui-replica/index.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./styles/generated/tokens.css": "./src/styles/generated/tokens.css",
+    "./styles/global.css": "./src/styles/global.css"
+  }
 }

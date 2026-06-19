@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Tab, Tabs } from "@/components/ui/tabs";
+import { Tab, Tabs } from "@unveiled/design-system";
 
 export const KeyboardArrowNavigation: Story = () => (
   <div className="bg-brand-grey p-8">

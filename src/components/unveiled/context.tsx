@@ -8,15 +8,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { Button } from "@/components/ui/button";
-import { SafeImage } from "@/components/ui/safe-image";
+import { Button } from "@unveiled/design-system";
+import { SafeImage } from "@unveiled/design-system";
 import {
   Field,
   Panel,
   SelectInput,
   StatPanel,
   TextInput,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import {
   LanguageContext,
   LiveDataContext,
@@ -42,7 +42,7 @@ import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import type { InitialSurfaceData } from "@/lib/data-access/surface-data";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 import type { EventCardView } from "@/lib/unveiled-view-models";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 
 export {
   LanguageContext,

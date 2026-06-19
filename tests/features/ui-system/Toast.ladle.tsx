@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Toast } from "@/components/ui/toast";
+import { Toast } from "@unveiled/design-system";
 
 export const SuccessTone: Story = () => (
   <div className="grid gap-4 bg-brand-grey p-8">

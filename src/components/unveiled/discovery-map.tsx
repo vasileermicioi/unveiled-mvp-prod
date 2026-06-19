@@ -1,8 +1,8 @@
 import { AlertTriangle, MapPin, Minus, Plus, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Panel, StatePanel } from "@/components/ui/unveiled-primitives";
+import { Button } from "@unveiled/design-system";
+import { Panel, StatePanel } from "@unveiled/design-system";
 import {
   createDiscoveryMapModel,
   DEFAULT_DISCOVERY_MAP_TILE_URL,
@@ -10,7 +10,7 @@ import {
   hasDiscoveryMapCoordinates,
 } from "@/lib/discovery-map";
 import type { EventCardView } from "@/lib/unveiled-view-models";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 
 const MAP_MIN_ZOOM = 10;
 const MAP_MAX_ZOOM = 17;

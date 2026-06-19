@@ -19,8 +19,8 @@ import {
 import type { ComponentType, ReactNode } from "react";
 import { useDeferredValue, useEffect, useState } from "react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge, Panel, StatePanel } from "@/components/ui/unveiled-primitives";
+import { Button, buttonVariants } from "@unveiled/design-system";
+import { Badge, Panel, StatePanel } from "@unveiled/design-system";
 import type {
   AppShellViewModel,
   DiscoveryShellViewModel,
@@ -32,7 +32,7 @@ import type {
   ShellStatusBannerView,
 } from "@/lib/app-shell-view-models";
 import { copyFor } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 
 type ShellActionHandler = (actionId: string) => void;
 
