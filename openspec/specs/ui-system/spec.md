@@ -36,8 +36,6 @@ Buttons, segmented controls, toggles, and icon controls SHALL match legacy visib
 - **AND** it accepts the `loading` and `asChild` props
 - **AND** the rendered DOM and className match the approved Ladle story for the same props
 
-> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2d ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
-
 ### Requirement: Forms
 
 Forms SHALL preserve visible field structure, validation message placement, and responsive grouping. Payment integration and builder forms MUST mount interactive components without static mock text placeholders. Form fields SHALL be HeroUI-backed wrappers that preserve the existing public prop surface.
@@ -85,8 +83,6 @@ Modal UI SHALL visually take over the screen for booking and redemption states a
 - **AND** the focus trap, `aria-modal`, and close-on-escape behavior match the approved Ladle story
 - **AND** the public `open`, `onClose`, `title`, and `children` props are preserved
 
-> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2f ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
-
 ### Requirement: Map Component
 This requirement SHALL use legacy reference path: `_old_app/components/EventMap.tsx`.
 
@@ -133,8 +129,6 @@ Empty, loading, and error states SHALL be explicit and visually intentional and 
 - **THEN** the element composes the corresponding HeroUI component (or a thin HeroUI-styled wrapper where HeroUI has no direct equivalent)
 - **AND** the public `variant`, `tone`, `shadow`, `interactive`, and `state` props are preserved and translate to HeroUI style props internally
 - **AND** the rendered DOM and className match the approved Ladle story for the same props
-
-> The full delta for the `ui-system` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2e ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
 
 ### Requirement: Responsive Layout
 This requirement SHALL use legacy reference path: all UI component paths listed in this spec.
@@ -222,25 +216,23 @@ The UI SHALL provide high-visibility, high-contrast check-in status panels for v
 
 ### Requirement: Production HeroUI Theme Module
 
-The HeroUI theme configuration SHALL be exported from a production module at `src/lib/heroui-theme.ts` so that both the Ladle replica and the production provider can consume it without crossing the Ladle-only gate.
+The HeroUI theme configuration SHALL be exported from a production module at `src/lib/heroui-theme.ts` so that both the Ladle-only design replica and the production provider can consume it without crossing the Ladle-only gate.
 
 #### Scenario: Theme is importable from the production module
 
 - **WHEN** any code (replica or production) imports the theme
 - **THEN** the import path is `@/lib/heroui-theme` (or an explicit re-export)
-- **AND** the export shape is unchanged from the previous replica-owned `src/components/ui/heroui-replica/theme.ts`
-
-> The full capability deltas for `app-shell` and `ui-system` are owned by slices 2c, 2d, 2e, 2f, and the umbrella `replace-shadcn-with-heroui`. This slice ships the theme relocation those later slices require.
+- **AND** the theme tokens are sourced exclusively from `design-tokens.json` via Style Dictionary, with no hex literals introduced in the production theme module
 
 ### Requirement: Consumer Migration Completes The HeroUI Switchover
 
-Every consumer file in `src/components/unveiled/`, `src/components/payments/`, `src/components/providers/`, `src/pages/`, and `src/layouts/` that previously imported a shadcn-backed primitive or a shadcn-specific pattern SHALL now import the HeroUI-backed equivalent and pass the matching prop surface. This is the implementation step that makes the umbrella's capability deltas observable in the running app.
+Every consumer file in `src/components/unveiled/`, `src/components/payments/`, `src/components/providers/`, `src/pages/`, and `src/layouts/` SHALL import the HeroUI-backed primitive in `src/components/ui/` and SHALL NOT import a Mantine replica, a Ladle-only replica folder, or any pre-HeroUI shadcn-style helper.
 
 #### Scenario: No consumer imports the old primitive paths
 
-- **WHEN** `rg "@/components/ui/(button|unveiled-primitives)" src/` is run after the consumer walk completes
+- **WHEN** `rg "@/components/ui/(button|unveiled-primitives|modal|drawer|tabs|menu|toast)" src/` is run after the consumer walk completes
 - **THEN** every remaining hit is inside `src/components/ui/` itself (i.e. the primitives' own source files)
-- **AND** no consumer file in the audited directories imports a shadcn-specific helper
+- **AND** no consumer file in the audited directories imports a Ladle-only or Mantine-era helper
 
 #### Scenario: Prop mismatches are resolved at the call site
 
@@ -248,47 +240,56 @@ Every consumer file in `src/components/unveiled/`, `src/components/payments/`, `
 - **THEN** the call site maps those props to the new style-prop surface exposed by the HeroUI-backed wrapper
 - **AND** the wrapper's public prop surface is preserved (call sites do not need to be rewritten to use HeroUI's native prop names)
 
-> The full capability deltas for `app-shell` and `ui-system` are owned by slices 2c, 2d, 2e, 2f, and the umbrella `replace-shadcn-with-heroui`. This slice is the implementation step that makes those deltas observable in the running app.
+### Requirement: UI-System Parity Suite Locks HeroUI Behavior
 
-### Requirement: Shadcn Scaffolding Is Removed
+The gherkin parity suite under `tests/features/ui-system/` SHALL lock
+the visible, accessible, and keyboard behavior of every HeroUI-backed
+primitive exported from `src/components/ui/`. The Ladle coverage gate
+SHALL be the contract that proves every `@ladle(…)` tag in the suite
+resolves to a co-located production primitive story.
 
-The shadcn-specific scaffolding (`@radix-ui/react-slot`, `class-variance-authority`, possibly `clsx` and `tailwind-merge`) SHALL be removed from `package.json` once the consumer audit confirms no remaining production-code importer. `components.json` SHALL no longer advertise shadcn as the component source.
+#### Scenario: Coverage gate is the parity contract
 
-#### Scenario: shadcn packages are removed from the dependency tree
+- **WHEN** `bun run ladle:coverage` runs against the post-migration
+  suite
+- **THEN** every scenario tagged with
+  `@ladle(component=…, story=…)` resolves to a Ladle story backed by a
+  HeroUI primitive module under `src/components/ui/` (no replica
+  folder).
 
-- **WHEN** the audit (`rg "<package>" src/`) confirms no production consumer imports the package
-- **THEN** the package is removed from `package.json`
-- **AND** `bun install` regenerates `bun.lock` without the package
-- **AND** `bun run check` is non-breaking after the removal
+#### Scenario: Selector discipline is preserved
 
-#### Scenario: components.json no longer points at shadcn
+- **WHEN** a parity scenario is added or edited under
+  `tests/features/ui-system/`
+- **THEN** it expresses selections using only proximity selectors
+  (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`) or
+  layout selectors (`getByRole`, `getByLabel`, `getByLandmark`,
+  `getInside`)
+- **AND** the selector-discipline lint at
+  `tests/steps/lint/selectors.ts` does not flag the scenario.
 
-- **WHEN** `components.json` exists after the teardown
-- **THEN** it does not reference shadcn as the component source
-- **OR** the file is removed entirely
+### Requirement: Visual Regression Baselines Cover HeroUI Primitives
 
-> The full capability deltas for `app-shell` and `ui-system` are owned by earlier slices and the umbrella `replace-shadcn-with-heroui`. This slice is the dependency + config cleanup that completes the switchover.
+`tests/visual/` SHALL contain approved visual regression baselines for
+every HeroUI-backed primitive the suite ships, so pixel-level
+regressions introduced by future primitive swaps are caught by the
+suite rather than by manual review.
 
-### Requirement: Umbrella Verification And Archival
+#### Scenario: HeroUI primitives have a baseline snapshot
 
-The umbrella change `replace-shadcn-with-heroui` SHALL pass its full check matrix end-to-end, and SHALL be archived via `openspec archive` once the PR merges. The umbrella's `proposal.md` SHALL be updated (or superseded) if any public prop signature changed during slices 2d, 2e, or 2f.
+- **WHEN** the visual regression suite runs against any HeroUI-backed
+  primitive (`Button`, `Panel`, `Card`, `Badge`, `Field`, `TextInput`,
+  `SelectInput`, `TextArea`, `Modal`, `Drawer`, `Tabs`, `Menu`,
+  `Toast`, `Notification`, `Skeleton`, `StatePanel`)
+- **THEN** it has an approved baseline under `tests/visual/` and any
+  pixel diff above the agreed threshold fails the run.
 
-#### Scenario: Full check matrix is green
+#### Scenario: Baselines were refreshed for the HeroUI migration
 
-- **WHEN** `bun run check`, `bun run check:heroui-replica`, `bun run test:e2e`, `bun run test:ladle`, and `bun run build` are run
-- **THEN** every command exits 0
-- **AND** the production bundle is within the existing performance budget
-
-#### Scenario: Umbrella proposal is updated if a prop signature changed
-
-- **WHEN** slices 2d, 2e, or 2f shipped a public prop signature change
-- **THEN** the umbrella's `proposal.md` records the change
-- **AND** `openspec validate replace-shadcn-with-heroui` passes after the update
-
-#### Scenario: Umbrella is archived after merge
-
-- **WHEN** the umbrella's PR merges to main
-- **THEN** `openspec archive replace-shadcn-with-heroui` moves the change to `openspec/changes/archive/<date>-replace-shadcn-with-heroui/`
-
-> The capability deltas for `app-shell` and `ui-system` are owned by earlier slices and the umbrella `replace-shadcn-with-heroui`. This slice is the closing gate.
+- **WHEN** the migration to HeroUI-backed primitives changed a
+  primitive's pixel output
+- **THEN** the baseline under `tests/visual/` was regenerated and
+  approved as part of this change
+- **AND** the prior baseline was removed (or archived with a
+  clear marker) so the suite no longer carries stale references.
 

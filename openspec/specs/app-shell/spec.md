@@ -155,15 +155,13 @@ The app shell SHALL recreate the visible legacy frame using migrated target UI-s
 
 - **WHEN** any client island inside the shell hydrates
 - **THEN** `HeroUIProvider` from the production provider module is mounted above the island tree
-- **AND** the global theme configuration is sourced from the production HeroUI theme module `src/lib/heroui-theme.ts`, not from `src/components/ui/heroui-replica/theme.ts`
+- **AND** the global theme configuration is sourced from the production HeroUI theme module `src/lib/heroui-theme.ts`
 
 #### Scenario: SSR does not crash on Cloudflare Workers
 
 - **WHEN** the shell renders during SSR on the Cloudflare Workers adapter
 - **THEN** no HeroUI client-only API executes during server rendering
 - **AND** every island that wraps a HeroUI client-only surface is mounted with `client:only="react"` (or an equivalent dynamic import gated by `useEffect`)
-
-> The full delta for the `app-shell` capability (including the unchanged scenarios from the umbrella proposal) is owned by the umbrella `replace-shadcn-with-heroui`. Slice 2c ships the precondition those scenarios depend on; the umbrella's `apply` step archives both the slice and the umbrella delta together.
 
 ### Requirement: Shell Navigation Variants
 The app shell SHALL render guest, member, partner, and admin navigation variants from shell display data.
@@ -616,11 +614,53 @@ The app shell SHALL be consistent with the Ladle storybook replacement and Hero 
 
 - **WHEN** contributors read this spec
 - **THEN** they find no references to Storybook; Ladle is the reference toolchain
-- **AND** they find no references to shadcn/ui; Hero UI is the reference component library
+- **AND** they find no references to Mantine, shadcn/ui, or the Ladle-only `heroui-replica/` folder; HeroUI is the reference component library
 
 #### Scenario: Testing patterns follow Playwright + proximity selector discipline
 
 - **WHEN** a gherkin scenario selects any shell control
 - **THEN** the scenario is expressed using proximity selectors (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`) or layout selectors (`getByRole`, `getByLabel`, `getByLandmark`, `getInside`)
 - **AND** no `data-testid` or CSS class selectors are used
+
+### Requirement: Shell Surfaces Are HeroUI-Backed
+
+The app shell's reusable containers, navigation variants, page shell containers, and global state wrappers SHALL be composed from the HeroUI-backed primitives in `src/components/ui/` and SHALL NOT import from the deprecated shadcn primitives, the Ladle-only `heroui-replica/`, or any `mantine-replica/` folder.
+
+#### Scenario: Shell imports land on production primitives
+
+- **WHEN** the shell source under `src/layouts/` and
+  `src/components/unveiled/` is audited
+- **THEN** every `@/components/ui/...` import resolves to a HeroUI-backed
+  primitive module under `src/components/ui/`
+- **AND** no import lands inside `src/components/ui/heroui-replica/` or
+  `src/components/ui/mantine-replica/`.
+
+#### Scenario: Shell-level Ladle stories are parity-locked
+
+- **WHEN** a shell container (page top-bar, breadcrumb row, status
+  banner, language toggle, mobile drawer) is rendered inside a Ladle
+  harness
+- **THEN** the harness is referenced by a gherkin scenario in
+  `tests/features/ui-system/` via a `@ladle(component=…, story=…)`
+  tag
+- **AND** the scenario asserts the shell surface matches the approved
+  Ladle story for every variant the shell exposes.
+
+### Requirement: Shell Docs Reference HeroUI
+
+`AGENTS.md`, `docs/guidelines.md`, and `CONTRIBUTING.md` SHALL describe HeroUI as the production component library for the shell and SHALL NOT reference Mantine, shadcn, the `mantine-replica/`, the `heroui-replica/`, or the deleted Storybook workflow.
+
+#### Scenario: Canonical docs name HeroUI
+
+- **WHEN** a contributor reads the "Tech stack", "File layout", or
+  "Toolchain commands" sections of `AGENTS.md`
+- **THEN** HeroUI is named as the production component library
+- **AND** no mention of Mantine, shadcn, or Storybook remains.
+
+#### Scenario: Docs and replica gates agree
+
+- **WHEN** `bun run heroui-design-system-replica:check` and the
+  umbrella `bun run check` pass
+- **THEN** the docs and the gates agree that the only HeroUI source of
+  truth is the production module path, not a Ladle-only folder.
 

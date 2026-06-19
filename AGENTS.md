@@ -42,9 +42,13 @@ architecture change.
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus Hero UI
   component library. Design tokens are generated from
   `design-tokens.json` via Style Dictionary (`bun run tokens:gen`). The
-  Hero UI library is kept in `devDependencies` for the Ladle-only design
-  replica under `src/components/ui/heroui-replica/` and MUST NOT be
-  imported by production code (gate: `bun run heroui-design-system-replica:check`).
+  Hero UI library (`@nextui-org/react`) is a production dependency; the
+  production primitives in `src/components/ui/` compose HeroUI as their
+  base. The Ladle-only design replica under
+  `src/components/ui/heroui-replica/` MUST NOT be imported by production
+  code (gate: `bun run heroui-design-system-replica:check` and the
+  permanent `bun run test:unit` import-graph guard in
+  `tests/unit/no-ladle-replica-in-production.test.ts`).
 - **Lint / format:** Biome 2.4 — see `biome.json`. CI runs `bun run check`,
   which combines `astro check`, `biome check .`, `bun run specs:check`, and
   `bun run tokens:check`.
@@ -82,7 +86,6 @@ architecture change.
 ├── README.md                # one-screen visitor quickstart
 ├── astro.config.mjs         # Astro + Cloudflare adapter config
 ├── biome.json               # Biome lint/format rules
-├── components.json          # Hero UI convention config
 ├── design-tokens.json       # Style Dictionary source of truth
 ├── drizzle/                 # Drizzle migrations + schema snapshots
 ├── drizzle.config.ts        # Drizzle Kit config
@@ -97,7 +100,7 @@ architecture change.
 │   ├── pages/               # SSR routes (.astro) + HTTP endpoints (api/)
 │   ├── actions/index.ts     # typed server actions (the only mutation surface)
 │   ├── components/          # Astro + React components (PascalCase .tsx, kebab-case .astro)
-│   │   ├── ui/              # production primitives (shadcn) + Ladle-only heroui-replica/ (gated)
+│   │   ├── ui/              # production primitives (HeroUI-backed) + Ladle-only heroui-replica/ (gated)
 │   ├── layouts/             # Astro layouts (e.g. base-layout.astro)
 │   ├── lib/
 │   │   ├── auth.ts          # Better Auth setup
@@ -238,6 +241,7 @@ All commands are run with `bun` from the repo root.
 | `bun run ladle` | Ladle dev server on port 6006. |
 | `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
+| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`). |
 | `bun run heroui-design-system-replica:check` | Gate the `src/components/ui/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
 | `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |
 | `bun run preview` | Astro preview of the local build. |

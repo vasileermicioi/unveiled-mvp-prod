@@ -159,13 +159,12 @@ function pascalToKebab(name: string): string {
 function resolveStoryFile(component: string): string | null {
   const candidates = new Set<string>([component, pascalToKebab(component)]);
   for (const root of STORY_GLOBS) {
-    for (const name of candidates) {
-      const candidate = join(root, `${name}.ladle.tsx`);
-      try {
-        if (statSync(candidate).isFile()) return candidate;
-      } catch {
-        // continue
-      }
+    for (const path of walk(root, ".ladle.tsx")) {
+      const base = path
+        .split(sep)
+        .pop()
+        ?.replace(/\.ladle\.tsx$/, "");
+      if (base && candidates.has(base)) return path;
     }
   }
   return null;

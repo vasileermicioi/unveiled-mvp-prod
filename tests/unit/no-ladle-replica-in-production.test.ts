@@ -1,21 +1,28 @@
-// @ladle-only
 import { describe, expect, it } from "bun:test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-const _REPLICA_DIR = resolve("src/components/ui/heroui-replica");
-const ENTRY_POINTS = [
+const PRODUCTION_ENTRY_POINTS = [
+  "src/components/unveiled",
+  "src/components/payments",
+  "src/components/providers",
   "src/pages",
   "src/layouts",
   "src/actions/index.ts",
   "src/components/ui/button.tsx",
   "src/components/ui/unveiled-primitives.tsx",
   "src/components/ui/safe-image.tsx",
+  "src/components/ui/modal.tsx",
+  "src/components/ui/drawer.tsx",
+  "src/components/ui/tabs.tsx",
+  "src/components/ui/menu.tsx",
+  "src/components/ui/toast.tsx",
 ];
 
-const REPLICA_IMPORT_RE = /["']@\/components\/ui\/heroui-replica\/[^"']+["']/g;
+const REPLICA_IMPORT_RE =
+  /["']@\/components\/ui\/[^"']*-replica\/[^"']+["']/g;
 const LOCAL_REPLICA_IMPORT_RE =
-  /["']\.\/heroui-replica\/[^"']+["']|\.\.\/heroui-replica\/[^"']+["']/g;
+  /["']\.{1,2}\/[^"']*-replica\/[^"']+["']/g;
 
 function walk(root: string, out: string[] = []): string[] {
   const entries = readdirSync(root);
@@ -35,7 +42,12 @@ function collectFiles(paths: string[]): string[] {
   const out: string[] = [];
   for (const p of paths) {
     const full = resolve(p);
-    const st = statSync(full);
+    let st: import("node:fs").Stats;
+    try {
+      st = statSync(full);
+    } catch {
+      continue;
+    }
     if (st.isDirectory()) {
       out.push(...walk(full));
     } else {
@@ -45,8 +57,8 @@ function collectFiles(paths: string[]): string[] {
   return out;
 }
 
-describe("heroui-replica is unreachable from production", () => {
-  const files = collectFiles(ENTRY_POINTS);
+describe("Ladle-only replica folders are unreachable from production", () => {
+  const files = collectFiles(PRODUCTION_ENTRY_POINTS);
 
   it("has production entry points to scan", () => {
     expect(files.length).toBeGreaterThan(0);
@@ -54,7 +66,7 @@ describe("heroui-replica is unreachable from production", () => {
 
   for (const file of files) {
     const rel = relative(".", file);
-    it(`${rel} does not import heroui-replica`, () => {
+    it(`${rel} does not import a *-replica/ folder`, () => {
       const source = readFileSync(file, "utf8");
       const matches = [
         ...source.matchAll(REPLICA_IMPORT_RE),
