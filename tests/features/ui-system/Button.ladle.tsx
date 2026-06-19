@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Button } from "@/components/ui/button";
+import { Button } from "@unveiled/design-system";
 
 export const VariantMatrix: Story = () => (
   <div className="flex flex-wrap gap-4 bg-brand-grey p-8">

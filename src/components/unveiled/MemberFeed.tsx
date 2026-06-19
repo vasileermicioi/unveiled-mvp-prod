@@ -10,7 +10,7 @@ import {
   Mail,
 } from "lucide-react";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@unveiled/design-system";
 import {
   Badge,
   Card,
@@ -21,7 +21,7 @@ import {
   StatePanel,
   TableRow,
   TextInput,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import { StripeCheckoutRedirectButton } from "@/components/payments/StripeCheckoutRedirectButton";
 import { CreditLedgerViewTableSemantics } from "@/components/payments/CreditLedgerViewTableSemantics";
 import { SubscriptionPortalLink } from "@/components/payments/SubscriptionPortalLink";
@@ -30,7 +30,7 @@ import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "@/lib/app-shell-view-models";
 import { readDiscoveryMapProviderConfig } from "@/lib/discovery-map";
 import type { EventCardView } from "@/lib/unveiled-view-models";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 import { BookingModal } from "./BookingModal";
 import {
   defaultOnboardingPreferences,

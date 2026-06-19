@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "./generated/tokens.css";
+@import "@unveiled/design-system/styles/generated/tokens.css";
 
 @theme {
   --animate-spinner-ease-spin: spinner-spin 0.8s ease infinite;

@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Field, TextInput } from "@/components/ui/unveiled-primitives";
+import { Button } from "@unveiled/design-system";
+import { Field, TextInput } from "@unveiled/design-system";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 
 export interface PasswordRecoveryFormValues {

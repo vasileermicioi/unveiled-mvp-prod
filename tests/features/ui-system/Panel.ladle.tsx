@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Panel } from "@/components/ui/unveiled-primitives";
+import { Panel } from "@unveiled/design-system";
 
 export const ToneMatrix: Story = () => (
   <div className="grid gap-4 bg-brand-grey p-8">

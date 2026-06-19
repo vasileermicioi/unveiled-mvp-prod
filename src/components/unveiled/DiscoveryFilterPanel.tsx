@@ -4,7 +4,7 @@ import {
   Panel,
   SelectInput,
   TextInput,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import { useCopy, useLiveData } from "./context";
 

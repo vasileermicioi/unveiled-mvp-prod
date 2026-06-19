@@ -1,6 +1,6 @@
 import type { UiLanguage } from "@/lib/i18n";
 import { copyFor, type supportedLanguages } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 
 export const listSkeletonVariants = [
   "events-grid",

@@ -8,20 +8,20 @@ import {
   MapPin,
 } from "lucide-react";
 import { useContext, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SafeImage } from "@/components/ui/safe-image";
+import { Button } from "@unveiled/design-system";
+import { SafeImage } from "@unveiled/design-system";
 import {
   Badge,
   Card,
   Panel,
   StatPanel,
-} from "@/components/ui/unveiled-primitives";
+} from "@unveiled/design-system";
 import { DiscoveryShell } from "@/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "@/lib/app-shell-view-models";
 import { readDiscoveryMapProviderConfig } from "@/lib/discovery-map";
 import type { EventCardView } from "@/lib/unveiled-view-models";
-import { cn } from "@/lib/utils";
+import { cn } from "@unveiled/design-system/lib/utils";
 import { BookingModal } from "./BookingModal";
 import { LanguageContext, useCopy, useLiveData } from "./context";
 import { DiscoveryFilterPanel } from "./DiscoveryFilterPanel";

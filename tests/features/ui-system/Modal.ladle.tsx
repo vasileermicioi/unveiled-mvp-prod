@@ -3,7 +3,7 @@ import type { Story } from "@ladle/react";
 import { useState } from "react";
 
 import "@/styles/global.css";
-import { Modal } from "@/components/ui/modal";
+import { Modal } from "@unveiled/design-system";
 
 export const OpenWithTitle: Story = () => {
   const [open, setOpen] = useState(true);

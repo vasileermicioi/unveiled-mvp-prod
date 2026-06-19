@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@unveiled/design-system";
 
 export const TriggerAriaExpanded: Story = () => (
   <div className="bg-brand-grey p-8">

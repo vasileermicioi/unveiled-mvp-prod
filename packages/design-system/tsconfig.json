@@ -1,8 +1,12 @@
 {
   "extends": "../../packages/tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@unveiled/design-system": ["./src/index.ts"],
+      "@unveiled/design-system/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src/**/*", "scripts/**/*", "tests/**/*"],
+  "exclude": ["dist", "node_modules", "coverage"]
 }

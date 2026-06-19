@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@unveiled/design-system";
 import { copyFor, type UiLanguage } from "@/lib/i18n";
 
 export interface LogoutFlowProps {

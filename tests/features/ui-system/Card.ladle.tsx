@@ -2,7 +2,7 @@
 import type { Story } from "@ladle/react";
 
 import "@/styles/global.css";
-import { Card } from "@/components/ui/unveiled-primitives";
+import { Card } from "@unveiled/design-system";
 
 export const DefaultCard: Story = () => (
   <div className="grid gap-4 bg-brand-grey p-8">
