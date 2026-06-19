@@ -1,0 +1,15 @@
+{
+  "name": "@unveiled/landing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"@unveiled/landing dev: see change 05\"",
+    "build": "echo \"@unveiled/landing build: see change 05\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "test:unit": "echo \"@unveiled/landing test:unit: no tests yet (see change 05)\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

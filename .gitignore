@@ -13,6 +13,12 @@ public/ladle/
 # dependencies
 node_modules/
 
+# workspace packages — generated build output
+packages/*/dist/
+packages/*/.astro/
+packages/*/node_modules/
+packages/*/coverage/
+
 # logs
 npm-debug.log*
 yarn-debug.log*
