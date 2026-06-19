@@ -2,6 +2,10 @@
   "name": "unveiled-mvp-prod",
   "type": "module",
   "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22.12.0"
   },
@@ -16,6 +20,9 @@
     "check": "astro check && biome check . && bun run specs:check && bun run tokens:check && bun run ladle:coverage && bun run lint:viewport && bun run scripts/check-no-console.ts && bun run scripts/check-legacy-ui-references.ts",
     "format": "biome format --write .",
     "lint": "biome lint .",
+    "lint:workspaces": "biome check packages/",
+    "typecheck:workspaces": "bun run --filter '*' typecheck",
+    "test:workspaces": "bun run --filter '*' test:unit",
     "specs:gen": "tsp compile typespec/main.tsp && bun run scripts/specs-gen.ts",
     "specs:check": "bun run scripts/specs-check.ts",
     "specs:client:sdk": "echo 'specs:client:sdk reserved for 09-iteration (no-op stub)'",

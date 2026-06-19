@@ -18,7 +18,11 @@
       "!architecture",
       "!src/lib/generated",
       "!src/styles/generated",
-      "!.storybook"
+      "!.storybook",
+      "!packages/*/dist",
+      "!packages/*/.astro",
+      "!packages/*/node_modules",
+      "!packages/*/coverage"
     ]
   },
   "formatter": {

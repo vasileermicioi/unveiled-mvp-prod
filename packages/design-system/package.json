@@ -1,0 +1,15 @@
+{
+  "name": "@unveiled/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"@unveiled/design-system dev: see change 01\"",
+    "build": "echo \"@unveiled/design-system build: see change 01\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "test:unit": "echo \"@unveiled/design-system test:unit: no tests yet (see change 01)\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
