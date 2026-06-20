@@ -1,7 +1,16 @@
 {
   "extends": "../../packages/tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "paths": {
+      "~/*": ["./src/*"],
+      "@unveiled/landing": ["./src/index.ts"],
+      "@unveiled/landing/*": ["./src/*"],
+      "@unveiled/design-system": ["../design-system/src/index.ts"],
+      "@unveiled/design-system/*": ["../design-system/src/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules", ".astro"]

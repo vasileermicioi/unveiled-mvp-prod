@@ -24,21 +24,26 @@ The routing spec SHALL be exercised by at least one Gherkin scenario per surface
 #### Scenario: Gherkin scenario covers cross-surface redirect
 - **WHEN** a contributor reads `tests/features/identity/authorization.feature`
 - **THEN** at least one scenario logs in as a Member and asserts that visiting an admin or partner route redirects to a safe route for the Member surface
+
 ### Requirement: Canonical /[lang]/... Route Table Exists
 
-The application SHALL publish a canonical route table that lists every route under `/app/<lang>/...` (per the `app-package` capability), the surface it belongs to, the viewer kinds allowed, and the matching TypeSpec operation id. After this change, every URL prefixed `/api/*` is dispatched to the API Worker via the Cloudflare service binding declared in `wrangler.app.toml` (`binding = "API"`) before any Astro routing or middleware guard runs; every other URL is served by the Astro app (or, after change 06, by the routing orchestrator).
+The application SHALL publish a canonical route table that lists every route under `/app/<lang>/...` (per the `app-package` capability), the surface it belongs to, the viewer kinds allowed, and the matching TypeSpec operation id. After this change, every URL prefixed `/api/*` is dispatched to the API Worker via the Cloudflare service binding declared in `wrangler.app.toml` (`binding = "API"`) before any Astro routing or middleware guard runs. The route table now also lists every URL under `/` owned by the `landing-package` capability (the public marketing surface), and the production URL space is the union of the landing surface (`/*`) and the app surface (`/app/*`); the orchestrator in change 06 dispatches `/` to the landing Worker and `/app/*` to the app Worker.
 
 #### Scenario: Every committed route appears in the table
 
 - **WHEN** a contributor adds a new Astro page under `packages/app/src/pages/[lang]/`
 - **THEN** the same route appears in the routing spec's route table
 - **AND** the table entry names the surface (public, member, partner, admin), the allowed viewer kinds, and the matching TypeSpec operation id
-- **AND** the route table records that the route is mounted at `/app/<lang>/...` (the `/app` prefix is the Astro `base`, not part of the route segment).
+- **AND** the route table records that the route is mounted at `/app/<lang>/...` (the `/app` prefix is the Astro `base`, not part of the route segment)
+- **AND** when a contributor adds a new Astro page under `packages/landing/src/pages/`
+- **THEN** the same route appears in the landing section of the route table
+- **AND** the entry names the marketing surface and is mounted at `/` (no prefix).
 
 #### Scenario: Routes are grouped by surface
 
 - **WHEN** the route table is read
-- **THEN** public routes (e.g. `/app/<lang>/`, `/app/<lang>/discover`, `/app/<lang>/how-it-works`, `/app/<lang>/membership`, `/app/<lang>/faq`, `/app/<lang>/login`, `/app/<lang>/signup`) are listed under the public surface
+- **THEN** landing routes (e.g. `/`, `/pricing`) are listed under the landing surface and resolve under `/`
+- **AND** public routes (e.g. `/app/<lang>/discover`, `/app/<lang>/how-it-works`, `/app/<lang>/membership`, `/app/<lang>/faq`, `/app/<lang>/login`, `/app/<lang>/signup`) are listed under the public surface and resolve under `/app/<lang>/...`
 - **AND** member routes (e.g. `/app/<lang>/app`, `/app/<lang>/saved`, `/app/<lang>/bookings`, `/app/<lang>/profile`) are listed under the member surface
 - **AND** partner routes (e.g. `/app/<lang>/partner`, `/app/<lang>/partner/events`, `/app/<lang>/partner/guests`, `/app/<lang>/partner/check-in`) are listed under the partner surface
 - **AND** admin routes (e.g. `/app/<lang>/admin`, `/app/<lang>/admin/events`, `/app/<lang>/admin/partners`, `/app/<lang>/admin/members`, `/app/<lang>/admin/exports`) are listed under the admin surface
@@ -47,53 +52,33 @@ The application SHALL publish a canonical route table that lists every route und
 #### Scenario: Route table is the source of truth for navigation
 
 - **WHEN** a navigation control targets a product surface
-- **THEN** the target URL is read from the routing spec's route table and is prefixed with `/app`
+- **THEN** the target URL is read from the routing spec's route table
+- **AND** targets under `/app/*` are prefixed with `/app`, targets under `/` are not prefixed
 - **AND** no navigation control hardcodes a route string that is not in the table.
 
 ### Requirement: Public, Member, Partner, and Admin Surfaces Are Disjoint
 
-The application SHALL treat the four surfaces as disjoint permission scopes, and the routing spec SHALL declare which viewer kinds are allowed on each route. After this change, `/api/*` requests bypass the surface check entirely (the API Worker enforces its own authorization via Better Auth and the generated Zod schemas).
-
-#### Scenario: Public routes accept Guests
-
-- **WHEN** a Guest visits a public route from the route table
-- **THEN** the middleware allows the request through without an auth challenge
-- **AND** the page renders the guest navigation
-
-#### Scenario: Member routes accept Members
-
-- **WHEN** a Member visits a member route from the route table
-- **THEN** the middleware allows the request through
-- **AND** the page renders the member navigation
-
-#### Scenario: Partner routes accept Partners
-
-- **WHEN** a Partner visits a partner route from the route table
-- **THEN** the middleware allows the request through
-- **AND** operational controls are rendered from the page-local content area
-
-#### Scenario: Admin routes accept Admins
-
-- **WHEN** an Admin visits an admin route from the route table
-- **THEN** the middleware allows the request through
-- **AND** operational controls are rendered from the page-local content area
-
-#### Scenario: Cross-surface access is rejected
-
-- **WHEN** a Member visits an admin or partner route
-- **THEN** the middleware redirects the viewer to a safe route for their surface (per the redirect-after-login table) and does not render the operational page
+The application SHALL treat the four app surfaces as disjoint permission scopes, and the routing spec SHALL declare which viewer kinds are allowed on each route. After this change, the `/api/*` short-circuit and the landing surface (`/*`) bypass the surface check entirely; the API Worker enforces its own authorization via Better Auth and the generated Zod schemas, and the landing surface is unauthenticated by design (no surface check, no language guard). Everything else flows through the surface check unchanged.
 
 #### Scenario: Guest access to a protected route is challenged
 
 - **WHEN** a Guest visits a member, partner, or admin route
-- **THEN** the middleware redirects to `/[lang]/login?redirect=...` per the redirect-after-login table
+- **THEN** the middleware redirects to `/app/<lang>/login?redirect=...` per the redirect-after-login table
 
 #### Scenario: /api/* bypasses the surface check
 
 - **WHEN** a request arrives at any path under `/api/*`
 - **THEN** the surface permission check does not run
 - **AND** the API Worker enforces authorization via Better Auth and the generated Zod schemas
-- **AND** an unauthorized request returns a `401` or `403` from the API Worker, not an Astro redirect
+- **AND** an unauthorized request returns a `401` or `403` from the API Worker, not an Astro redirect.
+
+#### Scenario: Landing surface bypasses the app surface check
+
+- **WHEN** a request arrives at any path under `/` (the landing surface, owned by `@unveiled/landing`)
+- **THEN** the app's surface permission check does not run for that request (the landing Worker handles it)
+- **AND** the app's middleware language guard does not run for that request (the landing surface is single-language at this stage)
+- **AND** the production orchestrator (change 06) dispatches `/` to `unveiled-landing` before any Astro middleware in the app runs.
+
 ### Requirement: Middleware Guard Order Is Declared
 
 The routing spec SHALL declare the canonical order of middleware guards so a contributor can reason about request flow without reading the middleware code. After this change, the `/api/*` short-circuit runs **before** the guard chain; everything else flows through the chain unchanged. The middleware now lives in `packages/app/src/middleware.ts` (moved from `src/middleware.ts`), and the `env` import is sourced from `cloudflare:workers` so it works in Astro v6 (which throws when `context.locals.runtime.env` is read).
@@ -135,6 +120,7 @@ The routing spec SHALL declare that adding a new route requires updating the rou
 #### Scenario: Adding a route without updating the route table fails review
 - **WHEN** a contributor adds a new Astro page without updating the route table
 - **THEN** the PR is blocked at review until the route table, LikeC4 model, and TypeSpec contract are all updated
+
 ### Requirement: Deep-Link Preservation On Login Challenge
 
 The routing spec SHALL guarantee that a Guest who visits a guarded member, partner, or admin route is redirected to `/app/<lang>/login?redirect=<safe-relative-path>` (with `<safe-relative-path>` URL-encoded, including the `/app/<lang>/...` prefix and original query string) so the intended destination survives the sign-in round-trip, and the login form SHALL forward the viewer to that destination after a successful sign-in once the target has been validated against the canonical route table. The middleware branch that emits the deep-link redirect SHALL be activated when a real `/app/<lang>/login` page is mounted; until then the contract is exercised by the `parseSafeRedirectTarget` unit test and the login-form deep-link preview story.
@@ -179,6 +165,7 @@ The routing spec SHALL guarantee that a Guest who visits a guarded member, partn
 - **AND** at least one edge-case scenario asserts the open-redirect rejection behavior
 - **AND** every step uses only proximity + layout selectors (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`, `getByRole`, `getByLabel`, `getInside`)
 - **AND** every `Given` URL is prefixed with `/app` to match the Astro `base`.
+
 ### Requirement: Canonical Redirect-After-Login Table
 
 The routing spec SHALL declare a single typed source of truth, `redirectAfterLoginFor(viewer, owner)`, that returns the safe destination for an authenticated viewer who lands on a route their surface does not own, and every cross-surface redirect in the middleware SHALL be routed through that function. The function SHALL return destinations under the `/app/<lang>/...` prefix (per the `app-package` capability).
