@@ -42,6 +42,11 @@ architecture change.
   (`bun --filter @unveiled/app run db:generate`).
 - **Auth:** Better Auth 1.6, mounted at `/api/auth/[...all]`. Session cookie
   is the source of truth for viewer identity.
+- **Public landing surface:** `@unveiled/landing` is an Astro 6 SSR app
+  mounted at `/*` in production (orchestrator in change 06). It reuses
+  `@unveiled/design-system` primitives only — no direct HeroUI/NextUI
+  dependency. Locally it runs on port 4322; the app runs on 4321; the
+  orchestrator dev proxy listens on 4320.
 - **Validation:** Zod 4 (pinned `4.3.6`). All action input/output goes
   through Zod schemas; do not hand-roll validators.
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus Hero UI
@@ -267,6 +272,9 @@ All commands are run with `bun` from the repo root.
 | `bun run ladle` | Ladle dev server on port 6006. |
 | `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
+| `bun run wrangler:check` | Assert the SESSION KV namespace and ASSETS_BUCKET R2 binding are consistent across `wrangler.app.toml`, `wrangler.api.toml`, and `wrangler.landing.toml`. |
+| `bun run dev:landing` | Start only the `@unveiled/landing` Astro dev server on port 4322 (the landing surface). |
+| `bun run dev:app` | Start only the `@unveiled/app` Astro dev server on port 4321 (the app surface). |
 | `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`). |
 | `bun run heroui-design-system-replica:check` | Gate the `src/components/ui/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
 | `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |

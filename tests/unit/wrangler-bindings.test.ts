@@ -31,17 +31,19 @@ function bindingsByName(
 
 function diffBindings(
   label: string,
-  app: { binding: string }[] | undefined,
-  api: { binding: string }[] | undefined,
+  left: { binding: string }[] | undefined,
+  right: { binding: string }[] | undefined,
+  leftLabel: string,
+  rightLabel: string,
 ): string[] {
-  const appMap = bindingsByName(app);
-  const apiMap = bindingsByName(api);
+  const leftMap = bindingsByName(left);
+  const rightMap = bindingsByName(right);
   const missing: string[] = [];
-  for (const [name, entry] of appMap) {
-    const counterpart = apiMap.get(name);
+  for (const [name, entry] of leftMap) {
+    const counterpart = rightMap.get(name);
     if (!counterpart) {
       missing.push(
-        `${label}: binding '${name}' declared in wrangler.toml but missing from wrangler.api.toml (entry: ${JSON.stringify(entry)})`,
+        `${label}: binding '${name}' declared in ${leftLabel} but missing from ${rightLabel} (entry: ${JSON.stringify(entry)})`,
       );
       continue;
     }
@@ -50,15 +52,15 @@ function diffBindings(
     for (const key of Object.keys(entryRecord)) {
       if (entryRecord[key] !== counterpartRecord[key]) {
         missing.push(
-          `${label}: binding '${name}' field '${key}' diverges — app=${JSON.stringify(entryRecord[key])} api=${JSON.stringify(counterpartRecord[key])}`,
+          `${label}: binding '${name}' field '${key}' diverges — ${leftLabel}=${JSON.stringify(entryRecord[key])} ${rightLabel}=${JSON.stringify(counterpartRecord[key])}`,
         );
       }
     }
   }
-  for (const [name, entry] of apiMap) {
-    if (!appMap.has(name)) {
+  for (const [name, entry] of rightMap) {
+    if (!leftMap.has(name)) {
       missing.push(
-        `${label}: binding '${name}' declared in wrangler.api.toml but missing from wrangler.toml (entry: ${JSON.stringify(entry)})`,
+        `${label}: binding '${name}' declared in ${rightLabel} but missing from ${leftLabel} (entry: ${JSON.stringify(entry)})`,
       );
     }
   }
@@ -68,6 +70,7 @@ function diffBindings(
 const REPO_ROOT = resolve(__dirname, "..", "..");
 const APP_CONFIG = join(REPO_ROOT, "wrangler.app.toml");
 const API_CONFIG = join(REPO_ROOT, "wrangler.api.toml");
+const LANDING_CONFIG = join(REPO_ROOT, "wrangler.landing.toml");
 
 describe("wrangler.app.toml and wrangler.api.toml share their binding surface", () => {
   const app = readWranglerConfig(APP_CONFIG);
@@ -81,13 +84,62 @@ describe("wrangler.app.toml and wrangler.api.toml share their binding surface", 
     expect(apiBinding?.entrypoint).toBe("fetch");
   });
 
-  it("KV namespaces are mirrored between wrangler.toml and wrangler.api.toml", () => {
-    const diffs = diffBindings("KV", app.kv_namespaces, api.kv_namespaces);
+  it("KV namespaces are mirrored between wrangler.app.toml and wrangler.api.toml", () => {
+    const diffs = diffBindings(
+      "KV",
+      app.kv_namespaces,
+      api.kv_namespaces,
+      "wrangler.app.toml",
+      "wrangler.api.toml",
+    );
     expect(diffs).toEqual([]);
   });
 
-  it("R2 buckets are mirrored between wrangler.toml and wrangler.api.toml", () => {
-    const diffs = diffBindings("R2", app.r2_buckets, api.r2_buckets);
+  it("R2 buckets are mirrored between wrangler.app.toml and wrangler.api.toml", () => {
+    const diffs = diffBindings(
+      "R2",
+      app.r2_buckets,
+      api.r2_buckets,
+      "wrangler.app.toml",
+      "wrangler.api.toml",
+    );
+    expect(diffs).toEqual([]);
+  });
+});
+
+describe("wrangler.landing.toml reuses the app bindings", () => {
+  const app = readWranglerConfig(APP_CONFIG);
+  const landing = readWranglerConfig(LANDING_CONFIG);
+
+  it("landing worker name is unveiled-landing", () => {
+    const text = readFileSync(LANDING_CONFIG, "utf8");
+    expect(text).toMatch(/^name\s*=\s*"unveiled-landing"/m);
+  });
+
+  it("landing worker assets directory points at the Astro Cloudflare output", () => {
+    const text = readFileSync(LANDING_CONFIG, "utf8");
+    expect(text).toMatch(/^assets\s*=\s*\{\s*binding\s*=\s*"ASSETS",\s*directory\s*=\s*"\.\/packages\/landing\/dist\/client"\s*\}/m);
+  });
+
+  it("KV namespaces are mirrored between wrangler.app.toml and wrangler.landing.toml", () => {
+    const diffs = diffBindings(
+      "KV",
+      app.kv_namespaces,
+      landing.kv_namespaces,
+      "wrangler.app.toml",
+      "wrangler.landing.toml",
+    );
+    expect(diffs).toEqual([]);
+  });
+
+  it("R2 buckets are mirrored between wrangler.app.toml and wrangler.landing.toml", () => {
+    const diffs = diffBindings(
+      "R2",
+      app.r2_buckets,
+      landing.r2_buckets,
+      "wrangler.app.toml",
+      "wrangler.landing.toml",
+    );
     expect(diffs).toEqual([]);
   });
 });

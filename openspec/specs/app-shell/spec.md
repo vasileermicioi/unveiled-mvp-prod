@@ -264,9 +264,10 @@ The app shell SHALL expose auth-related actions that route to Better Auth-backed
 #### Scenario: Profile action is selected
 - **WHEN** a member selects the profile shell action
 - **THEN** the app routes to the authenticated profile surface only if a valid session remains present.
+
 ### Requirement: Navigation Uses URL Routes
 
-Shell navigation SHALL navigate to stable route URLs for product surfaces prefixed by the active route language parameter and the `/app` URL prefix (per the `app-package` capability), and SHALL derive selected state from the current route.
+Shell navigation SHALL navigate to stable route URLs for product surfaces prefixed by the active route language parameter and the `/app` URL prefix (per the `app-package` capability), and SHALL derive selected state from the current route. The app shell now only ships on the `/app/*` URL space; unauthenticated visitors on `/` see the landing chrome (per the `landing-package` capability), not the app shell.
 
 #### Scenario: Nav item is selected
 
@@ -294,9 +295,15 @@ Shell navigation SHALL navigate to stable route URLs for product surfaces prefix
 - **WHEN** the shell renders on small screens
 - **THEN** all role-relevant product routes remain reachable without exposing demo or workbench-only controls.
 
+#### Scenario: App shell is scoped to /app/*
+
+- **WHEN** a contributor reads the app shell sources
+- **THEN** the shell mounts only on Astro pages that resolve under `/app/*`
+- **AND** no shell component (header, mobile drawer, language toggle, status banner) is rendered on the landing surface (`/*`), which is owned by `@unveiled/landing`.
+
 ### Requirement: Shell Active State Is Route-Derived
 
-The app shell SHALL use route display data as the source of truth for active navigation state, where the route display data now reflects that the Astro app is mounted under the `/app/*` URL prefix (per the `app-package` capability) rather than the repo root. The shell SHALL also expose accessible attributes on the language toggle, the hamburger button, and the mobile drawer so assistive technology can navigate them. The shell SHALL be selector-disciplinable: every interactive control SHALL be reachable through proximity (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`) or layout (`getByRole`, `getByLabel`, `getByLandmark`, `getInside`) selectors, and SHALL NOT rely on `data-testid` or CSS class selectors.
+The app shell SHALL use route display data as the source of truth for active navigation state, where the route display data now reflects that the Astro app is mounted under the `/app/*` URL prefix (per the `app-package` capability) rather than the repo root. The shell SHALL also expose accessible attributes on the language toggle, the hamburger button, and the mobile drawer so assistive technology can navigate them. The shell SHALL be selector-disciplinable: every interactive control SHALL be reachable through proximity (`getFieldNearestTo`, `getButtonNearestTo`, `getLinkNearestTo`) or layout (`getByRole`, `getByLabel`, `getByLandmark`, `getInside`) selectors, and SHALL NOT rely on `data-testid` or CSS class selectors. After this change, the shell only renders under `/app/*`; the landing surface (`/*`) owns its own brand chrome via `@unveiled/landing`.
 
 #### Scenario: Current route is public
 
@@ -346,6 +353,12 @@ The app shell SHALL use route display data as the source of truth for active nav
 - **THEN** it strips the `/app/<lang>/` prefix before matching the route against the public / member / partner / admin surfaces
 - **AND** the public navigation item for `/app/<lang>/discover` is the one that receives active treatment when the viewer is on `/app/<lang>/discover`
 - **AND** the active state is not misattributed to a sibling route that differs only by the language prefix.
+
+#### Scenario: Landing surface does not mount the app shell
+
+- **WHEN** an unauthenticated visitor opens `/` (the landing surface, owned by `@unveiled/landing`)
+- **THEN** no app shell component renders (no header navigation, no language toggle, no mobile drawer)
+- **AND** the landing brand chrome renders instead.
 
 ### Requirement: Bilingual Shell Copy Parity
 

@@ -38,40 +38,41 @@ The application SHALL expose a single `Viewer` discriminated union that every pa
 - **WHEN** a contributor searches for the `Viewer` type
 - **THEN** the type is defined once in the viewer-session module
 - **AND** no other module redeclares a competing `Viewer`, `User`, or `SessionUser` shape
+
 ### Requirement: Viewer Is Hydrated From Better Auth and Drizzle
 
-The `Viewer` for a request SHALL be hydrated from the Better Auth session and the domain profile row in Drizzle, with explicit rules for each variant. The hydration logic now lives in `packages/app/src/lib/auth.ts` (moved from `src/lib/auth.ts` in this change) and reads the shared Drizzle schema from `packages/app/src/db/schema.ts` (moved from `src/db/schema.ts`). The session cookie itself is issued by the API Worker, so the app's middleware only reads and validates the cookie and then hydrates the viewer from the shared schema.
+The `Viewer` for a request SHALL be hydrated from the Better Auth session and the domain profile row in Drizzle, with explicit rules for each variant. The hydration logic now lives in `packages/app/src/lib/auth.ts` (moved from `src/lib/auth.ts` in this change) and reads the shared Drizzle schema from `packages/app/src/db/schema.ts` (moved from `src/db/schema.ts`). The session cookie itself is issued by the API Worker, so the app's middleware only reads and validates the cookie and then hydrates the viewer from the shared schema. After change 05, hydration only runs for requests that the production orchestrator dispatches to the app Worker (`/app/*`); requests on the landing surface (`/*`) skip hydration entirely — the landing Worker renders without consulting Better Auth or Drizzle.
 
 #### Scenario: Missing or invalid session yields a Guest
 
-- **WHEN** a request arrives with no valid Better Auth session cookie
+- **WHEN** a request arrives at the app surface (`/app/*`) with no valid Better Auth session cookie
 - **THEN** the hydrated `Viewer.kind` is `Guest`
 - **AND** no database lookup is performed for the profile.
 
 #### Scenario: Valid session with role USER yields Member
 
-- **WHEN** a request arrives with a valid Better Auth session
+- **WHEN** a request arrives at the app surface with a valid Better Auth session
 - **AND** the resolved user has role `USER`
 - **THEN** the hydrated `Viewer.kind` is `Member`
 - **AND** the variant carries the user's display name, language preference, saved count, and credit count from the shared Drizzle schema.
 
 #### Scenario: Valid session with role PARTNER yields Partner
 
-- **WHEN** a request arrives with a valid Better Auth session
+- **WHEN** a request arrives at the app surface with a valid Better Auth session
 - **AND** the resolved user has role `PARTNER`
 - **THEN** the hydrated `Viewer.kind` is `Partner`
 - **AND** the variant carries the partner id and any partner-specific display data required by the shell.
 
 #### Scenario: Valid session with role ADMIN yields Admin
 
-- **WHEN** a request arrives with a valid Better Auth session
+- **WHEN** a request arrives at the app surface with a valid Better Auth session
 - **AND** the resolved user has role `ADMIN`
 - **THEN** the hydrated `Viewer.kind` is `Admin`
 - **AND** the variant carries the admin display fields required by the shell.
 
 #### Scenario: Hydration is performed once per request
 
-- **WHEN** a request renders multiple components
+- **WHEN** a request renders multiple components inside the app surface
 - **THEN** `Viewer` is hydrated exactly once and threaded through Astro components and React islands rather than re-querying Better Auth or Drizzle in each component.
 
 #### Scenario: Hydration reads the shared schema
@@ -79,6 +80,13 @@ The `Viewer` for a request SHALL be hydrated from the Better Auth session and th
 - **WHEN** the middleware hydrates a `Viewer` from a valid session
 - **THEN** it reads from the Drizzle schema exported by `packages/app/src/db/schema.ts`
 - **AND** the schema is the same one the API Worker queries over HTTP (consumed via the `@unveiled/app/db/schema` workspace import path).
+
+#### Scenario: Landing surface skips viewer hydration
+
+- **WHEN** a request arrives at the landing surface (`/*`, owned by `@unveiled/landing`)
+- **THEN** the app's Better Auth session verification does not run for that request
+- **AND** the landing Worker may still read the session cookie to render the optional "Go to app" link, but it does not perform a Drizzle lookup for the profile
+- **AND** no `Viewer` is hydrated in the app's middleware for that request (the orchestrator dispatches it away from the app before the middleware runs).
 
 ### Requirement: Role and Permission Matrix Is Declared
 The viewer-session module SHALL export a single role/permission matrix that the middleware, server actions, and UI components consult instead of string-typed role checks.
@@ -125,3 +133,4 @@ Any page that renders viewer-aware navigation SHALL consume the hydrated `Viewer
 - **WHEN** a page renders a role-specific navigation block
 - **THEN** it consumes the `Viewer` prop
 - **AND** it does not call Better Auth or Drizzle to re-resolve the viewer
+

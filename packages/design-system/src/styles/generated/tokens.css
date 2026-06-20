@@ -30,11 +30,8 @@
   --unveiled-color-semantic-ring: #202621;
   --unveiled-color-status-error: #ff5f57;
   --unveiled-color-status-success: #35c46b;
-  --unveiled-typography-font-family-display:
-    "EK Notice Sans", Impact, Haettenschweiler, "Arial Black", sans-serif;
-  --unveiled-typography-font-family-body:
-    "Work Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --unveiled-typography-font-family-display: "EK Notice Sans", Impact, Haettenschweiler, "Arial Black", sans-serif;
+  --unveiled-typography-font-family-body: "Work Sans", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --unveiled-typography-font-weight-regular: 400;
   --unveiled-typography-font-weight-bold: 700;
   --unveiled-typography-font-weight-black: 900;
@@ -90,9 +87,7 @@
   --unveiled-motion-duration-slow: 240ms;
   --unveiled-motion-easing-ease-out: ease-out;
   --unveiled-motion-easing-ease-in-out: ease;
-  --unveiled-motion-transition-card-hover:
-    box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease,
-    color 180ms ease;
+  --unveiled-motion-transition-card-hover: box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease, color 180ms ease;
   --unveiled-breakpoint-sm: 640px;
   --unveiled-breakpoint-md: 768px;
   --unveiled-breakpoint-lg: 1024px;

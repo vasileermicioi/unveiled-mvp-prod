@@ -9,7 +9,8 @@
       "@unveiled/api/*": ["packages/api/src/*"],
       "@unveiled/app": ["packages/app/src/index.ts"],
       "@unveiled/app/*": ["packages/app/src/*"],
-      "@unveiled/landing": ["packages/landing/src/index.ts"]
+      "@unveiled/landing": ["packages/landing/src/index.ts"],
+      "@unveiled/landing/*": ["packages/landing/src/*"]
     }
   }
 }
