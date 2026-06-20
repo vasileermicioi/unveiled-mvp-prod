@@ -6,24 +6,24 @@ Feature: Subscriptions
     Given the user is logged in as Member
 
   Scenario: Member starts the Stripe checkout
-    When the user navigates to /en/membership
+    When the user navigates to /app/en/membership
     And the user submits checkout with Plan=monthly
     Then the user asserts the response is 303
 
   Scenario: Member opens the billing portal
-    When the user navigates to /en/profile
+    When the user navigates to /app/en/profile
     And the user toggles Manage billing
     Then the user asserts the response is 303
 
   @story(component=StripeCheckoutRedirectButton, story=SubmitIsLabeledFormSubmit)
   Scenario: Stripe checkout form is a labeled landmark with a localized submit button
-    When the user navigates to /en/membership
+    When the user navigates to /app/en/membership
     Then the user asserts a form named "Start Stripe checkout" is reachable
     And the user asserts a button named "Continue to Stripe checkout" inside the form is reachable
 
   @story(component=StripeCheckoutRedirectButton, story=SubmitLocalizes)
   Scenario: Stripe checkout form landmark and submit copy localize to German
-    When the user navigates to /de/membership
+    When the user navigates to /app/de/membership
     Then the user asserts a form named "Stripe-Checkout starten" is reachable
     And the user asserts a button named "Weiter zum Stripe-Checkout" inside the form is reachable
 
@@ -42,7 +42,7 @@ Feature: Subscriptions
 
   @story(component=SubscriptionPortalLink, story=PortalLinkIsLabeledExternal)
   Scenario: Active member sees a labeled portal link in the manage-subscription region
-    When the user navigates to /en/membership
+    When the user navigates to /app/en/membership
     Then the user asserts a region named "Manage subscription" is reachable
     And the user asserts a link named "Open Stripe customer portal (external)" inside the region is reachable
     And the user asserts the link has target "_blank"
@@ -50,11 +50,11 @@ Feature: Subscriptions
   @story(component=SubscriptionPortalLink, story=PortalLinkMissingFallback)
   Scenario: Portal URL is missing and the region still announces the unavailable fallback
     Given the portal URL is missing
-    When the user navigates to /en/membership
+    When the user navigates to /app/en/membership
     Then the user asserts a region named "Manage subscription" is reachable
     And the user asserts the region exposes the fallback message "The Stripe customer portal is currently unavailable."
 
   @story(component=SubscriptionPortalLink, story=PortalLinkLocalizes)
   Scenario: Portal link accessible name localizes to German
-    When the user navigates to /de/membership
+    When the user navigates to /app/de/membership
     Then the user asserts a link named "Stripe-Kundenportal öffnen (extern)" inside the region named "Mitgliedschaft verwalten" is reachable

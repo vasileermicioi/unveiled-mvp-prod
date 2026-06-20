@@ -1,0 +1,973 @@
+import { actions } from "astro:actions";
+import { ArrowLeft, ArrowRight, Upload as UploadIcon } from "lucide-react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Button } from "@unveiled/design-system";
+import { SafeImage } from "@unveiled/design-system";
+import {
+  Field,
+  Panel,
+  SelectInput,
+  StatPanel,
+  TextInput,
+} from "@unveiled/design-system";
+import {
+  LanguageContext,
+  LiveDataContext,
+} from "~/components/unveiled/context-primitives";
+import {
+  type AppShellViewModel,
+  createDemoShellViewModel,
+  demoPageShells,
+  shellDemoViews,
+} from "~/lib/app-shell-view-models";
+import {
+  useAdminDataQuery,
+  useMemberDataQuery,
+  usePartnerDataQuery,
+  usePublicDiscoveryQuery,
+} from "~/lib/data-access/hooks";
+import {
+  createLiveDataView,
+  emptyPublicData,
+  type LiveDataView,
+} from "~/lib/data-access/live-view-adapters";
+import type { DiscoveryFilters } from "~/lib/data-access/query-keys";
+import type { InitialSurfaceData } from "~/lib/data-access/surface-data";
+import { copyFor, type UiLanguage } from "~/lib/i18n";
+import type { EventCardView } from "~/lib/unveiled-view-models";
+import { cn } from "@unveiled/design-system/lib/utils";
+
+export {
+  LanguageContext,
+  LiveDataContext,
+  emptyLiveDataView,
+  useCopy,
+  useLiveData,
+} from "~/components/unveiled/context-primitives";
+export type { LiveDataView } from "~/components/unveiled/context-primitives";
+
+export { StatPanel };
+
+export type View = Extract<
+  ShellNavItemId,
+  | "landing"
+  | "discover"
+  | "how"
+  | "membership"
+  | "faq"
+  | "member"
+  | "onboarding"
+  | "bookings"
+  | "profile"
+  | "partner"
+  | "admin"
+>;
+
+type ShellNavItemId =
+  | AppShellViewModel["navItems"][number]["itemId"]
+  | "landing"
+  | "onboarding";
+
+export type AuthLandingValues = {
+  email: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  callbackURL?: string;
+};
+
+export type AuthEndpointResult = {
+  ok: boolean;
+  state?: {
+    message?: string;
+  };
+  nextPath?: string;
+};
+
+export const onboardingPreferenceOptions = {
+  interests: [
+    "Theater",
+    "Kino",
+    "Museum",
+    "Ausstellung",
+    "Konzert",
+    "Talk/Lesung",
+    "Comedy",
+    "Tanz/Performance",
+  ],
+  moods: ["Leicht", "Experimentell", "Klassisch", "Politisch", "Familie"],
+  districts: [
+    "Mitte",
+    "X-Berg",
+    "P-Berg",
+    "Charlottenburg",
+    "Wedding",
+    "F-Hain",
+    "Schöneberg",
+  ],
+  timing: ["After Work", "Weekend", "Day"],
+  preferredDays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+  preferredLanguages: ["DE", "EN", "Non-V"],
+} as const;
+
+export type OnboardingPreferenceGroup =
+  keyof typeof onboardingPreferenceOptions;
+export type OnboardingPreferenceSelections = {
+  [Key in OnboardingPreferenceGroup]: Array<
+    (typeof onboardingPreferenceOptions)[Key][number]
+  >;
+};
+
+export const defaultOnboardingPreferences: OnboardingPreferenceSelections = {
+  interests: [],
+  moods: [],
+  districts: [],
+  timing: [],
+  preferredDays: [],
+  preferredLanguages: ["DE", "EN"],
+};
+
+export type AdminAssetUploadKind = "event" | "partner";
+export type AdminAssetUploadResponse =
+  | {
+      ok: true;
+      data: {
+        kind: AdminAssetUploadKind;
+        key: string;
+        url: string;
+        contentType: string;
+        filename: string;
+      };
+    }
+  | {
+      ok: false;
+      formError?: string;
+      fieldErrors?: Record<string, string>;
+    };
+
+export interface VisualSystemContextProps {
+  view: View;
+  setView: React.Dispatch<React.SetStateAction<View>>;
+  discoveryFilters: DiscoveryFilters;
+  setDiscoveryFilters: React.Dispatch<React.SetStateAction<DiscoveryFilters>>;
+  selectedEvent: EventCardView | null;
+  setSelectedEvent: React.Dispatch<React.SetStateAction<EventCardView | null>>;
+  bookingEvent: EventCardView | null;
+  setBookingEvent: React.Dispatch<React.SetStateAction<EventCardView | null>>;
+  selectedLanguage: UiLanguage;
+  setSelectedLanguage: React.Dispatch<React.SetStateAction<UiLanguage>>;
+  membersPage: number;
+  setMembersPage: React.Dispatch<React.SetStateAction<number>>;
+  membersPageSize: number;
+  setMembersPageSize: React.Dispatch<React.SetStateAction<number>>;
+  partnersPage: number;
+  setPartnersPage: React.Dispatch<React.SetStateAction<number>>;
+  partnersPageSize: number;
+  setPartnersPageSize: React.Dispatch<React.SetStateAction<number>>;
+  eventsPage: number;
+  setEventsPage: React.Dispatch<React.SetStateAction<number>>;
+  eventsPageSize: number;
+  setEventsPageSize: React.Dispatch<React.SetStateAction<number>>;
+  live: LiveDataView;
+  shell: AppShellViewModel;
+  // biome-ignore lint/suspicious/noExplicitAny: Page shell view model can be of any layout type
+  pageShell: any;
+  navigateShell: (actionId: string) => Promise<void>;
+  handleOpenEvent: (event: EventCardView | null) => void;
+  callbackURL: string;
+  initialTab?: string;
+}
+
+export const VisualSystemContext =
+  createContext<VisualSystemContextProps | null>(null);
+
+export function useVisualSystem() {
+  const ctx = useContext(VisualSystemContext);
+  if (!ctx)
+    throw new Error("useVisualSystem must be used within VisualSystemProvider");
+  return ctx;
+}
+
+// Utility Helpers
+export async function runServerAction<TData>(
+  action: () => Promise<{
+    data?:
+      | { ok: true; notice?: { message: string }; data?: TData }
+      | { ok: false; formError?: string; fieldErrors?: Record<string, string> };
+    error?: unknown;
+  }>,
+  setMessage: (message: string) => void,
+  onSuccess?: (data: TData | undefined) => void,
+  onFailure?: (
+    fieldErrors?: Record<string, string>,
+    formError?: string,
+  ) => void,
+) {
+  const result = await action();
+  if (result.error || !result.data) {
+    setMessage("The request could not be completed.");
+    onFailure?.();
+    return;
+  }
+  if (!result.data.ok) {
+    setMessage(result.data.formError ?? "Check the highlighted fields.");
+    onFailure?.(result.data.fieldErrors, result.data.formError);
+    return;
+  }
+  setMessage(result.data.notice?.message ?? "Saved.");
+  onSuccess?.(result.data.data);
+}
+
+export function csvEscape(value: unknown) {
+  const text =
+    value instanceof Date ? value.toISOString() : String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+export function downloadCsv(
+  filename: string,
+  rows: Array<Record<string, unknown>>,
+  headers: string[],
+) {
+  if (rows.length === 0) return false;
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers.map((header) => csvEscape(row[header])).join(","),
+    ),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
+// Skeletons
+export function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("animate-pulse bg-brand-dark/15 rounded", className)}
+      {...props}
+    />
+  );
+}
+
+export function MemberCardSkeleton() {
+  return (
+    <div className="border-4 border-brand-dark bg-white p-4 md:p-6 space-y-4 unveiled-shadow">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-3 w-80" />
+          <Skeleton className="h-3 w-72" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EventRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1.2fr_auto_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <Skeleton className="h-5 w-32" />
+      <Skeleton className="h-5 w-16" />
+      <Skeleton className="h-4 w-36" />
+      <Skeleton className="h-6 w-16" />
+      <Skeleton className="h-9 w-20" />
+    </div>
+  );
+}
+
+export function PartnerRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-4 w-60" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-20" />
+      </div>
+    </div>
+  );
+}
+
+export function GuestRowSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <Skeleton className="h-5 w-40" />
+      <Skeleton className="h-6 w-16" />
+      <Skeleton className="h-9 w-28" />
+    </div>
+  );
+}
+
+interface PaginationProps {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  hasMore: boolean;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  className?: string;
+}
+
+export function Pagination({
+  page,
+  pageSize,
+  totalCount,
+  hasMore,
+  onPageChange,
+  onPageSizeChange,
+  className,
+}: PaginationProps) {
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-4 border-t-4 border-brand-dark bg-brand-cream p-4 text-sm font-bold uppercase tracking-widest text-brand-dark",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span className="unveiled-meta">Show</span>
+        <SelectInput
+          value={String(pageSize)}
+          onChange={(e) => {
+            const nextSize = Number(e.currentTarget.value);
+            onPageSizeChange(nextSize);
+            onPageChange(1);
+          }}
+          className="min-h-10 w-16 py-1.5 px-3 border-2 border-brand-dark"
+        >
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </SelectInput>
+        <span className="unveiled-meta">per page</span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Prev</span>
+        </Button>
+
+        <span className="unveiled-meta font-black">
+          Page {page} of {totalPages}{" "}
+          <span className="opacity-50">({totalCount} total)</span>
+        </span>
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => onPageChange(page + 1)}
+          disabled={!hasMore}
+          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+        >
+          <span>Next</span>
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function AdminAssetUploadField({
+  kind,
+  label,
+  ownerId,
+  value,
+  onUrlChange,
+  testId,
+  className,
+}: {
+  kind: AdminAssetUploadKind;
+  label: string;
+  ownerId: string;
+  value: string;
+  onUrlChange: (url: string) => void;
+  testId: string;
+  className?: string;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [message, setMessage] = useState("Ready");
+  const [uploading, setUploading] = useState(false);
+  const [uploadUnavailable, setUploadUnavailable] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function uploadFile(file: File) {
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl((current) => {
+      if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+      return objectUrl;
+    });
+    setMessage("Uploading");
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.set("kind", kind);
+    formData.set("ownerId", ownerId);
+    formData.set("file", file);
+
+    try {
+      const response = await fetch("/api/admin/assets/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as AdminAssetUploadResponse;
+
+      if (!payload.ok) {
+        setPreviewUrl((current) => {
+          if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+          return null;
+        });
+        setUploadUnavailable(response.status === 503);
+        setMessage(
+          payload.formError ??
+            payload.fieldErrors?.file ??
+            "The upload could not be completed.",
+        );
+        return;
+      }
+
+      onUrlChange(payload.data.url);
+      setUploadUnavailable(false);
+      setPreviewUrl(payload.data.url);
+      setMessage(`Uploaded ${payload.data.filename}`);
+    } catch {
+      setPreviewUrl((current) => {
+        if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+        return null;
+      });
+      setMessage("The upload could not be completed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const visiblePreview = previewUrl ?? value;
+
+  return (
+    <Panel
+      tone="cream"
+      shadow={false}
+      className={cn("space-y-4 p-4", className)}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="unveiled-meta">{label}</p>
+          <p className="mt-2 text-xs font-bold uppercase tracking-widest opacity-60">
+            {uploadUnavailable
+              ? "Upload unavailable; HTTPS URL fallback active."
+              : message}
+          </p>
+        </div>
+        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-brand-yellow px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-brand-dark transition-all hover:bg-white hover:shadow-[4px_4px_0_0_#202621]">
+          <UploadIcon />
+          {uploading ? "Uploading" : "Upload"}
+          <input
+            data-testid={testId}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              if (file) void uploadFile(file);
+            }}
+          />
+        </label>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
+        <div className="grid aspect-video place-items-center overflow-hidden border-4 border-brand-dark bg-brand-grey">
+          {visiblePreview ? (
+            <SafeImage
+              src={visiblePreview}
+              alt=""
+              fallbackKind={kind === "event" ? "event" : "partner"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-55">
+              Preview
+            </span>
+          )}
+        </div>
+        <Field label="Asset URL">
+          <TextInput
+            name={kind === "event" ? "imageUrl" : "logoUrl"}
+            type="url"
+            pattern="https://.*"
+            title="Use a HTTPS asset URL."
+            value={value}
+            placeholder="https://assets.example.com/image.jpg"
+            onChange={(event) => onUrlChange(event.currentTarget.value)}
+          />
+        </Field>
+      </div>
+    </Panel>
+  );
+}
+
+function useLiveDataView(
+  initialSurface: InitialSurfaceData | undefined,
+  discoveryFilters: DiscoveryFilters,
+  setDiscoveryFilters: (filters: DiscoveryFilters) => void,
+  adminFilters?: DiscoveryFilters & {
+    membersPage?: string;
+    membersPageSize?: string;
+    partnersPage?: string;
+    partnersPageSize?: string;
+    eventsPage?: string;
+    eventsPageSize?: string;
+  },
+) {
+  const publicInitial =
+    initialSurface?.surface === "public" ? initialSurface : undefined;
+  const memberInitial =
+    initialSurface?.surface === "member" ? initialSurface : undefined;
+  const partnerInitial =
+    initialSurface?.surface === "partner" ? initialSurface : undefined;
+  const adminInitial =
+    initialSurface?.surface === "admin" ? initialSurface : undefined;
+
+  const publicQuery = usePublicDiscoveryQuery(discoveryFilters, {
+    initialData: publicInitial?.data,
+    enabled: Boolean(publicInitial),
+  });
+  const memberQuery = useMemberDataQuery(
+    memberInitial?.userId ?? "",
+    discoveryFilters,
+    {
+      initialData: memberInitial?.data,
+      enabled: Boolean(memberInitial),
+    },
+  );
+  const partnerQuery = usePartnerDataQuery(partnerInitial?.partnerId ?? "", {
+    initialData: partnerInitial?.data,
+    enabled: Boolean(partnerInitial),
+  });
+  const adminQuery = useAdminDataQuery(adminFilters, {
+    initialData: adminInitial?.data,
+    enabled: Boolean(adminInitial),
+  });
+
+  const publicData =
+    memberQuery.data?.discovery ?? publicQuery.data ?? emptyPublicData;
+  const isLoading =
+    publicQuery.isLoading ||
+    memberQuery.isLoading ||
+    partnerQuery.isLoading ||
+    adminQuery.isLoading;
+  const isError =
+    publicQuery.isError ||
+    memberQuery.isError ||
+    partnerQuery.isError ||
+    adminQuery.isError;
+
+  return createLiveDataView({
+    publicData,
+    memberData: memberQuery.data,
+    partnerData: partnerQuery.data,
+    adminData: adminQuery.data,
+    isLoading,
+    isError,
+    refetchActiveSurface: () => {
+      if (initialSurface?.surface === "member") void memberQuery.refetch();
+      else if (initialSurface?.surface === "partner")
+        void partnerQuery.refetch();
+      else if (initialSurface?.surface === "admin") void adminQuery.refetch();
+      else void publicQuery.refetch();
+    },
+    setDiscoveryFilters,
+    discoveryFilters,
+  });
+}
+
+function localizeShellViewModel(
+  shell: AppShellViewModel,
+  language: UiLanguage,
+  counts: { savedCount: number; creditCount: number },
+): AppShellViewModel {
+  const copy = copyFor(language);
+  const navCopy = copy.shell.nav;
+
+  const labelForItem = (
+    itemId: AppShellViewModel["navItems"][number]["itemId"],
+  ) => {
+    if (itemId === "discover") return navCopy.discover;
+    if (itemId === "how") return navCopy.how;
+    if (itemId === "membership") return navCopy.membership;
+    if (itemId === "faq") return navCopy.faq;
+    if (itemId === "member") return navCopy.member;
+    if (itemId === "saved") return navCopy.saved;
+    if (itemId === "bookings") return navCopy.bookings;
+    if (itemId === "profile") return navCopy.profile;
+    return itemId === "admin"
+      ? "Admin"
+      : itemId === "partner"
+        ? "Partner"
+        : shell.logo.alt;
+  };
+
+  return {
+    ...shell,
+    language: {
+      ...shell.language,
+      selected: language,
+    },
+    tagline:
+      shell.viewerContext === "guest" ? copy.shell.tagline : shell.tagline,
+    savedCount: counts.savedCount,
+    creditCount:
+      shell.viewerContext === "member" ? counts.creditCount : shell.creditCount,
+    navItems: shell.navItems.map((item) => ({
+      ...item,
+      label: labelForItem(item.itemId),
+      count: item.itemId === "saved" ? counts.savedCount : item.count,
+    })),
+    primaryAction: shell.primaryAction
+      ? {
+          ...shell.primaryAction,
+          label:
+            shell.primaryAction.id === "login"
+              ? navCopy.login
+              : navCopy.becomeMember,
+        }
+      : undefined,
+  };
+}
+
+export function VisualSystemProvider({
+  initialShell,
+  initialDiscovery,
+  initialView = "landing",
+  callbackURL = "/",
+  initialTab = "metrics",
+  children,
+}: {
+  initialShell?: AppShellViewModel;
+  initialDiscovery?: InitialSurfaceData;
+  initialView?: View;
+  callbackURL?: string;
+  initialTab?: string;
+  children: React.ReactNode;
+}) {
+  const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(
+    initialDiscovery && "filters" in initialDiscovery
+      ? (initialDiscovery.filters ?? {})
+      : {},
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (initialDiscovery && "filters" in initialDiscovery) return;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl: DiscoveryFilters = {};
+    const category = params.get("category");
+    const partnerId = params.get("partnerId");
+    const startDate = params.get("startDate");
+    const endDate = params.get("endDate");
+    const page = params.get("page");
+    if (category) fromUrl.category = category;
+    if (partnerId) fromUrl.partnerId = partnerId;
+    if (startDate) fromUrl.startDate = startDate;
+    if (endDate) fromUrl.endDate = endDate;
+    if (page) fromUrl.page = page;
+    if (Object.keys(fromUrl).length > 0) {
+      setDiscoveryFilters((prev) => ({ ...prev, ...fromUrl }));
+    }
+  }, [initialDiscovery]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    const apply = (
+      key: "category" | "partnerId" | "startDate" | "endDate" | "page",
+      value: string | undefined,
+    ) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    };
+    apply("category", discoveryFilters.category);
+    apply("partnerId", discoveryFilters.partnerId);
+    apply("startDate", discoveryFilters.startDate);
+    apply("endDate", discoveryFilters.endDate);
+    apply("page", discoveryFilters.page);
+    const next = `${url.pathname}?${params.toString()}${url.hash}`;
+    const current = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== current) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [discoveryFilters]);
+
+  const setDiscoveryFiltersWrapped = (
+    value: React.SetStateAction<DiscoveryFilters>,
+  ) => {
+    setDiscoveryFilters((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      const hasFilterChanged =
+        next.category !== prev.category ||
+        next.partnerId !== prev.partnerId ||
+        next.startDate !== prev.startDate ||
+        next.endDate !== prev.endDate;
+      if (hasFilterChanged) {
+        return { ...next, page: undefined };
+      }
+      return next;
+    });
+  };
+  const [selectedEvent, setSelectedEvent] = useState<EventCardView | null>(
+    null,
+  );
+  const [bookingEvent, setBookingEvent] = useState<EventCardView | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<UiLanguage>(
+    initialShell?.language.selected ?? "DE",
+  );
+  const [membersPage, setMembersPage] = useState(1);
+  const [membersPageSize, setMembersPageSize] = useState(20);
+  const [partnersPage, setPartnersPage] = useState(1);
+  const [partnersPageSize, setPartnersPageSize] = useState(20);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsPageSize, setEventsPageSize] = useState(20);
+  const [view, setView] = useState<View>(initialView);
+
+  const adminFilters = useMemo(
+    () => ({
+      membersPage: String(membersPage),
+      membersPageSize: String(membersPageSize),
+      partnersPage: String(partnersPage),
+      partnersPageSize: String(partnersPageSize),
+      eventsPage: String(eventsPage),
+      eventsPageSize: String(eventsPageSize),
+    }),
+    [
+      membersPage,
+      membersPageSize,
+      partnersPage,
+      partnersPageSize,
+      eventsPage,
+      eventsPageSize,
+    ],
+  );
+
+  const live = useLiveDataView(
+    initialDiscovery,
+    discoveryFilters,
+    setDiscoveryFiltersWrapped,
+    adminFilters,
+  );
+
+  const handleOpenEvent = (event: EventCardView | null) => {
+    setSelectedEvent(event);
+    setBookingEvent(event);
+    if (event) {
+      void actions.trackEventOpen({
+        eventId: event.id,
+        viewName: view,
+      });
+    }
+  };
+
+  const prevFiltersRef = useRef<DiscoveryFilters>(discoveryFilters);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const hasChanged =
+      discoveryFilters.category !== prevFiltersRef.current.category ||
+      discoveryFilters.partnerId !== prevFiltersRef.current.partnerId ||
+      discoveryFilters.startDate !== prevFiltersRef.current.startDate ||
+      discoveryFilters.endDate !== prevFiltersRef.current.endDate ||
+      discoveryFilters.savedOnly !== prevFiltersRef.current.savedOnly;
+
+    if (!hasChanged) {
+      return;
+    }
+
+    prevFiltersRef.current = discoveryFilters;
+
+    const timer = setTimeout(() => {
+      void actions.trackFilterApply({
+        viewName: view,
+        filters: {
+          category: discoveryFilters.category,
+          partnerId: discoveryFilters.partnerId,
+          startDate: discoveryFilters.startDate,
+          endDate: discoveryFilters.endDate,
+          resultCount: live.events.length,
+        },
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [discoveryFilters, view, live.events.length]);
+
+  const demoShell = createDemoShellViewModel(view, {
+    savedCount: live.savedCount,
+    creditCount: live.profile.credits,
+  });
+
+  const shell = localizeShellViewModel(
+    initialShell ?? demoShell,
+    selectedLanguage,
+    {
+      savedCount: live.savedCount,
+      creditCount: live.profile.credits,
+    },
+  );
+
+  const memberPageShell =
+    initialShell &&
+    view === "member" &&
+    ["Admin Frozen", "Unpaid"].includes(
+      live.billingDisplay.subscriptionStatusLabel,
+    )
+      ? demoPageShells.member
+      : undefined;
+
+  const pageShell = view === "member" ? memberPageShell : undefined;
+
+  const navigateShell = async (actionId: string) => {
+    if (actionId === "new-event") {
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", "add-event");
+        window.history.pushState(null, "", url.pathname + url.search);
+        window.dispatchEvent(new Event("admin-tab-change"));
+      }
+      return;
+    }
+
+    if (actionId.startsWith("language:")) {
+      const language = actionId.slice("language:".length);
+      if (language === "DE" || language === "EN") {
+        setSelectedLanguage(language);
+        if (typeof document !== "undefined") {
+          document.cookie = `unveiled_lang=${language}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        actions.setLanguage({ language }).catch((e) => {
+          console.error("Failed to set user language profile:", e);
+        });
+        if (typeof window !== "undefined") {
+          const nextLang = language.toLowerCase();
+          const currentPath = window.location.pathname;
+          const currentSearch = window.location.search;
+          let nextPath = currentPath;
+          if (/^\/(?:de|en)(?=\/|$)/i.test(currentPath)) {
+            nextPath = currentPath.replace(/^\/(?:de|en)/i, `/${nextLang}`);
+          } else {
+            nextPath = `/${nextLang}${currentPath}`;
+          }
+          window.location.assign(nextPath + currentSearch);
+        }
+      }
+      return;
+    }
+    const target = shellDemoViews.find((item) => item.id === actionId);
+    if (target) setView(target.id as View);
+    if (actionId === "membership")
+      window.location.assign(`/${selectedLanguage.toLowerCase()}/membership`);
+    if (actionId === "logo")
+      setView(view === "partner" || view === "admin" ? view : "landing");
+    if (actionId === "profile") setView("profile");
+    if (actionId === "logout") {
+      await fetch("/api/account/logout", { method: "POST" });
+      window.location.assign(`/${selectedLanguage.toLowerCase()}/`);
+    }
+  };
+
+  const contextValue: VisualSystemContextProps = {
+    view,
+    setView,
+    discoveryFilters,
+    setDiscoveryFilters: setDiscoveryFiltersWrapped,
+    selectedEvent,
+    setSelectedEvent,
+    bookingEvent,
+    setBookingEvent,
+    selectedLanguage,
+    setSelectedLanguage,
+    membersPage,
+    setMembersPage,
+    membersPageSize,
+    setMembersPageSize,
+    partnersPage,
+    setPartnersPage,
+    partnersPageSize,
+    setPartnersPageSize,
+    eventsPage,
+    setEventsPage,
+    eventsPageSize,
+    setEventsPageSize,
+    live,
+    shell,
+    pageShell,
+    navigateShell,
+    handleOpenEvent,
+    callbackURL,
+    initialTab,
+  };
+
+  return (
+    <VisualSystemContext.Provider value={contextValue}>
+      <LiveDataContext.Provider value={live}>
+        <LanguageContext.Provider value={selectedLanguage}>
+          {children}
+        </LanguageContext.Provider>
+      </LiveDataContext.Provider>
+    </VisualSystemContext.Provider>
+  );
+}

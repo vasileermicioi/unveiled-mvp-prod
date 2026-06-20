@@ -13,7 +13,7 @@ Feature: Panel, Card, and Badge primitive parity
 
   @ladle(component=Panel, story=ToneMatrix)
   Scenario: Panel renders every tone entry
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Panel tone matrix" is reachable
     And the region named "Panel tone matrix" exposes the "white" tone
     And the region named "Panel tone matrix" exposes the "yellow" tone
@@ -23,25 +23,25 @@ Feature: Panel, Card, and Badge primitive parity
 
   @ladle(component=Panel, story=ShadowToggle)
   Scenario: Panel renders without the offset shadow when shadow is disabled
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Panel shadow off" is reachable
     And the region named "Panel shadow off" does not expose the offset shadow
 
   @ladle(component=Card, story=DefaultCard)
   Scenario: Card renders with the bordered treatment and a body slot
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Card body" is reachable
     And the region named "Card body" is wrapped in a bordered card
 
   @ladle(component=Card, story=InteractiveCard)
   Scenario: Card hover state stays within the bordered treatment
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Interactive card" is reachable
     And the region named "Interactive card" exposes the hover treatment
 
   @ladle(component=Badge, story=ToneMatrix)
   Scenario: Badge renders every tone entry
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Badge tone matrix" is reachable
     And the region named "Badge tone matrix" exposes the "dark" tone
     And the region named "Badge tone matrix" exposes the "yellow" tone
@@ -51,6 +51,6 @@ Feature: Panel, Card, and Badge primitive parity
 
   @ladle(component=Badge, story=CountAdjacentLabel)
   Scenario: Badge with aria-label announces a count
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Badge count label" is reachable
     And the region named "Badge count label" exposes aria-label "Saved: 3"

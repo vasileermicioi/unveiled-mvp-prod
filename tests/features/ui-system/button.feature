@@ -11,7 +11,7 @@ Feature: Button primitive parity
 
   @ladle(component=Button, story=VariantMatrix)
   Scenario: Variant matrix renders with bordered, high-contrast treatment
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the button named "Primary default" is visible
     And the button named "Primary primary" is visible
     And the button named "Primary secondary" is visible
@@ -20,25 +20,25 @@ Feature: Button primitive parity
 
   @ladle(component=Button, story=SizeMatrix)
   Scenario: Size matrix renders every entry
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the button named "Size default" is visible
     And the button named "Size sm" is visible
     And the button named "Size lg" is visible
 
   @ladle(component=Button, story=LoadingState)
   Scenario: Loading state replaces the label with the spinner and keeps aria-disabled
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the button named "Submit booking" has aria-disabled "true"
     And the button named "Submit booking" exposes a spinner role
 
   @ladle(component=Button, story=AsChildSlot)
   Scenario: asChild renders the button as a slotted anchor
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the link named "Open discovery" is reachable inside main
     And the link named "Open discovery" is rendered with a button shape
 
   @ladle(component=Button, story=FocusRing)
   Scenario: Focus ring is reachable via keyboard
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     And the user focuses the button named "Primary default"
     Then the button named "Primary default" exposes a focus ring

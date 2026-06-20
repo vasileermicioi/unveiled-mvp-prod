@@ -6,6 +6,6 @@ Feature: Media upload
     Given the user is logged in as Admin
 
   Scenario: Admin uploads an event image
-    When the user navigates to /en/admin/events
+    When the user navigates to /app/en/admin/events
     And the user submits upload with File=event.png
     Then the user asserts the section shows "Uploaded"

@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1777239118090,
+      "tag": "0000_tough_inhumans",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777751945521,
+      "tag": "0001_nervous_the_captain",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777920000000,
+      "tag": "0002_booking_transactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777878439063,
+      "tag": "0003_eager_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778025600000,
+      "tag": "0004_daily_partner_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779954261276,
+      "tag": "0005_dizzy_xavin",
+      "breakpoints": true
+    }
+  ]
+}

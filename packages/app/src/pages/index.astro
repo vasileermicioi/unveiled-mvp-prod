@@ -1,0 +1,31 @@
+---
+import { languageFromCookieHeader } from "~/lib/i18n";
+
+// 1. Detect language from cookie, header, or default
+const cookieHeader = Astro.request.headers.get("cookie");
+const acceptLanguage = Astro.request.headers.get("accept-language");
+
+let detectedLang = languageFromCookieHeader(cookieHeader, undefined);
+if (!detectedLang) {
+  const isGerman = acceptLanguage?.toLowerCase().includes("de");
+  detectedLang = isGerman ? "DE" : "EN";
+}
+
+const lang = detectedLang.toLowerCase();
+
+// 2. Handle legacy QR code redirection
+const venuePartner = Astro.url.searchParams.get("venuePartner");
+const venueToken = Astro.url.searchParams.get("venueToken");
+
+if (venuePartner && venueToken) {
+  const safeFormat = /^[a-zA-Z0-9\-_]+$/;
+  if (safeFormat.test(venuePartner) && safeFormat.test(venueToken)) {
+    return Astro.redirect(
+      `/${lang}/venue-check-in/${venuePartner}?token=${venueToken}`,
+    );
+  }
+}
+
+// 3. Standard redirect to the localized index page
+return Astro.redirect(`/${lang}/`);
+---

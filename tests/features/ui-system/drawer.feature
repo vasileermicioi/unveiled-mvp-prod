@@ -9,12 +9,12 @@ Feature: Drawer primitive parity
 
   @ladle(component=Drawer, story=OpenRightPlacement)
   Scenario: Drawer opens on the right placement
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     Then the dialog named "Saved events" is reachable
     And the dialog named "Saved events" exposes aria-modal "true"
 
   @ladle(component=Drawer, story=CloseOnEscape)
   Scenario: Drawer closes when Escape is pressed
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     And the user dismisses the dialog named "Saved events" with Escape
     Then the dialog named "Saved events" is not reachable

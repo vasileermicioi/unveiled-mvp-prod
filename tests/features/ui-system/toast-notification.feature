@@ -9,14 +9,14 @@ Feature: Toast and Notification primitive parity
 
   @ladle(component=Toast, story=SuccessTone)
   Scenario: Success toast announces itself inside the live region
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     And the user triggers the success toast "Saved"
     Then the status named "Saved" is reachable
     And the status named "Saved" lives inside an aria-live polite region
 
   @ladle(component=Toast, story=ErrorTone)
   Scenario: Error toast announces itself inside the live region with role alert
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     And the user triggers the error toast "Booking failed"
     Then the alert named "Booking failed" is reachable
     And the alert named "Booking failed" lives inside an aria-live assertive region

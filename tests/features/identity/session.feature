@@ -6,18 +6,18 @@ Feature: Session
     Given the user is logged in as Guest
 
   Scenario: Member signs up and lands on the member surface
-    When the user navigates to /en/signup
+    When the user navigates to /app/en/signup
     And the user submits signup with Email=member@example.com, Password=correct-horse-battery
     Then the user asserts the page renders the brand-yellow border
     And the user asserts the active language is en
 
   Scenario: Member logs in and lands on /en/app
-    When the user navigates to /en/login
+    When the user navigates to /app/en/login
     And the user submits login with Email=member@example.com, Password=correct-horse-battery
     Then the user asserts the nav shows "Discover"
 
   Scenario: Member recovers password
-    When the user navigates to /en/login
+    When the user navigates to /app/en/login
     And the user submits recovery with Email=member@example.com
     Then the user asserts the section shows "Recovery email sent"
 

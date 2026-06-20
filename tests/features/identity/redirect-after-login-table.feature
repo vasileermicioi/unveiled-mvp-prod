@@ -9,11 +9,11 @@ Feature: Redirect-after-login table
   @story(component=RedirectAfterLoginTable, story=MemberAdmin)
   Scenario: Member on admin route is redirected to the member safe destination
     Given the user is logged in as Member
-    When the user navigates to /en/admin
+    When the user navigates to /app/en/admin
     Then the user asserts the redirect-after-login table shows the cell "USER × admin" pointing at the member safe destination
 
   @story(component=RedirectAfterLoginTable, story=PartnerAdmin)
   Scenario: Partner on admin route is redirected to the partner safe destination
     Given the user is logged in as Partner
-    When the user navigates to /en/admin
+    When the user navigates to /app/en/admin
     Then the user asserts the redirect-after-login table shows the cell "PARTNER × admin" pointing at the partner safe destination

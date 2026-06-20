@@ -7,5 +7,5 @@ Feature: Parity smoke
     Given the user is logged in as Member
 
   Scenario: Member reaches the app and sees the feed
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     Then the user asserts the page shows the heading "Upcoming"

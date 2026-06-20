@@ -6,20 +6,20 @@ Feature: Authorization
     Given the user is logged in as Guest
 
   Scenario: Guest hitting a member route is redirected to login
-    When the user navigates to /en/bookings
+    When the user navigates to /app/en/bookings
     Then the user asserts the nav shows "Log in"
 
   Scenario: Deep link is preserved through login
-    When the user navigates to /en/bookings
+    When the user navigates to /app/en/bookings
     And the user submits login with Email=member@example.com, Password=correct-horse-battery
     Then the user asserts the page shows the heading "Bookings"
 
   Scenario: Member hitting an admin route is redirected
     Given the user is logged in as Member
-    When the user navigates to /en/admin
+    When the user navigates to /app/en/admin
     Then the user asserts the nav shows "Discover"
 
   Scenario: Member hitting a partner route is rejected
     Given the user is logged in as Member
-    When the user navigates to /en/partner
+    When the user navigates to /app/en/partner
     Then the user asserts the nav shows "Discover"
