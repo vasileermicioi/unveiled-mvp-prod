@@ -3,9 +3,19 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Hono } from "hono";
 
-import { authMiddleware, type AuthInstance } from "@unveiled/api/middleware/auth";
-import { corsMiddleware, requestIdMiddleware, runtimeEnvMiddleware } from "@unveiled/api/middleware/cors";
-import { errorHandler, jsonErrorMiddleware } from "@unveiled/api/middleware/error";
+import {
+  authMiddleware,
+  type AuthInstance,
+} from "@unveiled/api/middleware/auth";
+import {
+  corsMiddleware,
+  requestIdMiddleware,
+  runtimeEnvMiddleware,
+} from "@unveiled/api/middleware/cors";
+import {
+  errorHandler,
+  jsonErrorMiddleware,
+} from "@unveiled/api/middleware/error";
 import type { RuntimeEnv } from "@unveiled/api/env";
 
 import { mountAuthRoutes } from "@unveiled/api/routes/auth";

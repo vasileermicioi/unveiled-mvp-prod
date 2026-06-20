@@ -15,7 +15,9 @@ const OPENAPI_PATH =
 
 function readOpenapiYaml(): string {
   if (typeof process === "undefined") {
-    throw new Error("openapi.yaml access requires Node fs (not available in Workers)");
+    throw new Error(
+      "openapi.yaml access requires Node fs (not available in Workers)",
+    );
   }
   const { readFileSync } = require("node:fs") as typeof import("node:fs");
   return readFileSync(OPENAPI_PATH, "utf8");
@@ -118,20 +120,15 @@ function isReadinessAuthorized(
 
 export function mountSystemRoutes(app: AppType): void {
   app.openapi(healthRoute, (c) => {
-    return c.json(
-      { ok: true, checkedAt: new Date().toISOString() },
-      200,
-    );
+    return c.json({ ok: true, checkedAt: new Date().toISOString() }, 200);
   });
 
   app.openapi(readinessRoute, async (c) => {
-    const env = (c.get("runtimeEnv") as Record<string, string | undefined>) ?? {};
+    const env =
+      (c.get("runtimeEnv") as Record<string, string | undefined>) ?? {};
 
     if (!isReadinessAuthorized(c.req.raw, env)) {
-      return c.json(
-        { ok: false, status: "unauthorized" as const },
-        401,
-      );
+      return c.json({ ok: false, status: "unauthorized" as const }, 401);
     }
 
     const config = getSecretReadiness(env);
@@ -149,10 +146,7 @@ export function mountSystemRoutes(app: AppType): void {
     try {
       await checkDatabaseConnection(env);
     } catch {
-      return c.json(
-        { ok: false, status: "database_failed" as const },
-        503,
-      );
+      return c.json({ ok: false, status: "database_failed" as const }, 503);
     }
 
     return c.json(
@@ -162,7 +156,9 @@ export function mountSystemRoutes(app: AppType): void {
         dependencies: {
           database: "ok" as const,
           auth: "configured" as const,
-          resend: config.resendApiKey ? ("configured" as const) : ("missing_optional" as const),
+          resend: config.resendApiKey
+            ? ("configured" as const)
+            : ("missing_optional" as const),
         },
       },
       200,

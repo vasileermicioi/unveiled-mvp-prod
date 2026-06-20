@@ -31,6 +31,11 @@ export default defineConfig({
       testDir: "./tests/parity",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "api-binding",
+      testDir: "./tests/api",
+      use: { ...devices["Desktop Chrome"] },
+    },
     ...(hasLadle
       ? [
           {

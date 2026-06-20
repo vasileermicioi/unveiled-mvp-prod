@@ -18,7 +18,10 @@ function packageAliasPlugin() {
       build.onResolve({ filter: /^@unveiled\/api\// }, (args) => {
         if (args.path === "@unveiled/api/generated") {
           return {
-            path: resolve(process.cwd(), "../../src/lib/generated/request-validators.ts"),
+            path: resolve(
+              process.cwd(),
+              "../../src/lib/generated/request-validators.ts",
+            ),
           };
         }
         const subpath = args.path.replace(/^@unveiled\/api\//, "");
@@ -56,7 +59,11 @@ await build({
   sourcemap: true,
   minify: false,
   logLevel: "info",
-  plugins: [inlineOpenApiYamlPlugin(), packageAliasPlugin(), generatedShimPlugin()],
+  plugins: [
+    inlineOpenApiYamlPlugin(),
+    packageAliasPlugin(),
+    generatedShimPlugin(),
+  ],
   mainFields: ["module", "main"],
   nodePaths: [resolve(process.cwd(), "node_modules")],
   absWorkingDir: process.cwd(),

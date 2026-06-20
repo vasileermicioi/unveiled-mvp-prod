@@ -11,7 +11,11 @@ import { mountDataAccessRoutes } from "./routes/data-access";
 import { mountStripeRoutes } from "./routes/stripe";
 import { mountSystemRoutes } from "./routes/system";
 import { authMiddleware } from "./middleware/auth";
-import { corsMiddleware, requestIdMiddleware, runtimeEnvMiddleware } from "./middleware/cors";
+import {
+  corsMiddleware,
+  requestIdMiddleware,
+  runtimeEnvMiddleware,
+} from "./middleware/cors";
 import { errorHandler, jsonErrorMiddleware } from "./middleware/error";
 
 export function buildDocument(): unknown {
@@ -24,9 +28,13 @@ export function buildDocument(): unknown {
   app.onError(errorHandler);
 
   mountSystemRoutes(app as unknown as Parameters<typeof mountSystemRoutes>[0]);
-  mountAccountRoutes(app as unknown as Parameters<typeof mountAccountRoutes>[0]);
+  mountAccountRoutes(
+    app as unknown as Parameters<typeof mountAccountRoutes>[0],
+  );
   mountAdminRoutes(app as unknown as Parameters<typeof mountAdminRoutes>[0]);
-  mountDataAccessRoutes(app as unknown as Parameters<typeof mountDataAccessRoutes>[0]);
+  mountDataAccessRoutes(
+    app as unknown as Parameters<typeof mountDataAccessRoutes>[0],
+  );
   mountStripeRoutes(app as unknown as Parameters<typeof mountStripeRoutes>[0]);
 
   return app.getOpenAPIDocument({

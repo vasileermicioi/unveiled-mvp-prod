@@ -21,8 +21,7 @@ const PRODUCTION_ENTRY_POINTS = [
 
 const REPLICA_IMPORT_RE =
   /["']@\/components\/ui\/[^"']*-replica\/[^"']+["']|["']packages\/design-system\/src\/[^"']*-replica\/[^"']+["']|["']@unveiled\/design-system\/[^"']*-replica\/[^"']+["']/g;
-const LOCAL_REPLICA_IMPORT_RE =
-  /["']\.{1,2}\/[^"']*-replica\/[^"']+["']/g;
+const LOCAL_REPLICA_IMPORT_RE = /["']\.{1,2}\/[^"']*-replica\/[^"']+["']/g;
 
 function walk(root: string, out: string[] = []): string[] {
   const entries = readdirSync(root);

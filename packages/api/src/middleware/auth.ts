@@ -15,7 +15,10 @@ export type SessionContext = {
 
 export function createAuth(env?: RuntimeEnv): AuthInstance {
   const runtimeEnv = getRuntimeEnv(env);
-  const authDatabaseEnv = { ...runtimeEnv, DATABASE_DRIVER: "neon-http" as const };
+  const authDatabaseEnv = {
+    ...runtimeEnv,
+    DATABASE_DRIVER: "neon-http" as const,
+  };
 
   return betterAuth({
     database: drizzleAdapter(createDb(authDatabaseEnv), {

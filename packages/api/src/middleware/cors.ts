@@ -20,7 +20,9 @@ export function corsMiddleware(options: CorsOptions = {}): MiddlewareHandler {
 export function runtimeEnvMiddleware(): MiddlewareHandler {
   return async (c, next) => {
     const cloudflareEnv = (c.env ?? {}) as Record<string, unknown>;
-    const runtimeEnv = getRuntimeEnv(cloudflareEnv as Record<string, string | undefined>);
+    const runtimeEnv = getRuntimeEnv(
+      cloudflareEnv as Record<string, string | undefined>,
+    );
     c.set("runtimeEnv", runtimeEnv);
     await next();
   };

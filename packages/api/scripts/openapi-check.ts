@@ -29,9 +29,11 @@ function stripServers(value: unknown): unknown {
 
 function diff(a: unknown, b: unknown, path: string): string[] {
   if (a === b) return [];
-  if (typeof a !== typeof b) return [`${path}: type ${typeof a} vs ${typeof b}`];
+  if (typeof a !== typeof b)
+    return [`${path}: type ${typeof a} vs ${typeof b}`];
   if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return [`${path}: array length ${a.length} vs ${b.length}`];
+    if (a.length !== b.length)
+      return [`${path}: array length ${a.length} vs ${b.length}`];
     const out: string[] = [];
     for (let i = 0; i < a.length; i += 1) {
       out.push(...diff(a[i], b[i], `${path}[${i}]`));
@@ -76,7 +78,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("[openapi:check] Hono document matches TypeSpec (modulo servers).");
+  console.log(
+    "[openapi:check] Hono document matches TypeSpec (modulo servers).",
+  );
 }
 
 void main();

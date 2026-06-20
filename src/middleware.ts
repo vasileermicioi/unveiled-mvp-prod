@@ -1,4 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
+import { env } from "cloudflare:workers";
 import { getViewer } from "@/lib/auth-profile";
 import { trackSessionInDb } from "@/lib/behavior-tracking";
 import { logger } from "@/lib/logger";
@@ -20,12 +21,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     route: route?.id ?? "unknown",
   });
 
-  // Skip middleware for API routes, Astro internals, and static assets
-  if (
-    url.pathname.startsWith("/api") ||
-    url.pathname.startsWith("/_") ||
-    url.pathname.includes(".")
-  ) {
+  if (url.pathname.startsWith("/api/")) {
+    return env.API.fetch(request);
+  }
+
+  if (url.pathname.startsWith("/_") || url.pathname.includes(".")) {
     return next();
   }
 

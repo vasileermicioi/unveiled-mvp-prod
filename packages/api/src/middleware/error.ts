@@ -7,14 +7,21 @@ export type ApiError = {
   details?: unknown;
 };
 
-export function errorEnvelope(code: string, message: string, details?: unknown): ApiError {
+export function errorEnvelope(
+  code: string,
+  message: string,
+  details?: unknown,
+): ApiError {
   return { ok: false, code, message, details };
 }
 
 export const errorHandler: ErrorHandler = (err, c) => {
   console.error("[api] unhandled error", err);
   if (err instanceof ValidationError) {
-    return c.json(errorEnvelope("validation_error", err.message, err.details), 400);
+    return c.json(
+      errorEnvelope("validation_error", err.message, err.details),
+      400,
+    );
   }
   if (err instanceof AuthError) {
     return c.json(errorEnvelope("unauthorized", err.message), 401);
@@ -75,7 +82,10 @@ export function jsonErrorMiddleware(): MiddlewareHandler {
       await next();
     } catch (err) {
       if (err instanceof ValidationError) {
-        return c.json(errorEnvelope("validation_error", err.message, err.details), 400);
+        return c.json(
+          errorEnvelope("validation_error", err.message, err.details),
+          400,
+        );
       }
       if (err instanceof AuthError) {
         return c.json(errorEnvelope("unauthorized", err.message), 401);

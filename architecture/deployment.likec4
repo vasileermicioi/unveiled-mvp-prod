@@ -9,11 +9,16 @@ deployment {
       #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
       instanceOf astroWorker
     }
+    runtime apiDev {
+      #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
+      instanceOf apiWorker
+    }
     dataplane pglite {
       #surface-deployment-local, #domain-domain-data, #spec-likec4-architecture
       instanceOf pglite
     }
     dev -> pglite 'reads/writes'
+    dev -> apiDev 'forwards /api/* (preview only)'
   }
 
   environment preview 'Cloudflare Pages Preview' {
@@ -23,11 +28,16 @@ deployment {
       #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
       instanceOf astroWorker
     }
+    runtime apiPreview {
+      #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
+      instanceOf apiWorker
+    }
     dataplane previewDb {
       #surface-deployment-preview, #domain-domain-data, #spec-likec4-architecture
       instanceOf neon
     }
     pages -> previewDb 'reads/writes'
+    pages -> apiPreview 'forwards /api/* via service binding'
   }
 
   environment prod 'Cloudflare Workers Production' {
@@ -37,11 +47,16 @@ deployment {
       #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
       instanceOf astroWorker
     }
+    runtime apiProd {
+      #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
+      instanceOf apiWorker
+    }
     dataplane prodDb {
       #surface-deployment-prod, #domain-domain-data, #spec-likec4-architecture
       instanceOf neon
     }
     workers -> prodDb 'reads/writes'
+    workers -> apiProd 'forwards /api/* via service binding'
   }
 }
 

@@ -26,8 +26,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..");
-const FORBIDDEN_RE =
-  /(?:mantine|shadcn)|\/[^"'`\s]*-replica\//gi;
+const FORBIDDEN_RE = /(?:mantine|shadcn)|\/[^"'`\s]*-replica\//gi;
 
 const NEGATION_CUE_RE =
   /(?:(?:^|[\s\(\[])(?:no|not|never|(?:must|shall|do|does|don|don\u2019t)\s+not)(?=[\s\.\!\?])|(?:mantine|shadcn|-replica(?:\/|\b))[^.\n]{0,120}(?:^|[\s\(\[])(?:no|not|never|(?:must|shall|do|does|don|don\u2019t)\s+not)(?=[\s\.\!\?])|@ladle-only[^.\n]{0,120}replica|exception[^.\n]{0,80}replica|replica[^.\n]{0,40}enforced)/is;
@@ -86,9 +85,7 @@ function collectFiles(paths: string[]): string[] {
     if (stat.isDirectory()) {
       for (const file of walk(full)) {
         if (
-          SCAN_EXTENSIONS.has(
-            file.slice(file.lastIndexOf(".")) || "",
-          ) ||
+          SCAN_EXTENSIONS.has(file.slice(file.lastIndexOf(".")) || "") ||
           !file.includes(".")
         ) {
           out.push(file);

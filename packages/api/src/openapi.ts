@@ -43,4 +43,6 @@ const sourceYaml = await readFile(openapiYamlPath, "utf8");
 console.log(
   `[openapi] wrote ${outputPath} (${document && Object.keys(document).length} top-level keys)`,
 );
-console.log(`[openapi] TypeSpec source: ${sourceYaml.length} bytes from ${openapiYamlPath}`);
+console.log(
+  `[openapi] TypeSpec source: ${sourceYaml.length} bytes from ${openapiYamlPath}`,
+);
