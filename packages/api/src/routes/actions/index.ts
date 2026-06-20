@@ -9,7 +9,10 @@ function isActionRoute(path: string): boolean {
 export function mountActionRoutes(app: AppType): void {
   app.use("/api/actions/*", async (c) => {
     const incoming = c.req.raw;
-    const path = new URL(incoming.url).pathname.replace(/^\/api\/actions\//, "");
+    const path = new URL(incoming.url).pathname.replace(
+      /^\/api\/actions\//,
+      "",
+    );
     const actionPath = `/_actions/${path}`;
     const requestHeaders = new Headers(incoming.headers);
     requestHeaders.set(FORWARD_HEADER, "1");

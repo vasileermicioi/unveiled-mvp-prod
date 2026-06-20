@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Field,
-  Panel,
-  SelectInput,
-  TextInput,
-} from "@unveiled/design-system";
+import { Field, Panel, SelectInput, TextInput } from "@unveiled/design-system";
 import type { DiscoveryFilters } from "@/lib/data-access/query-keys";
 import { useCopy, useLiveData } from "./context";
 

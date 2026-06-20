@@ -13,3 +13,8 @@ preview_id = "a970664d170d4d18833718fb6b0cd0ee"
 [[r2_buckets]]
 binding = "ASSETS_BUCKET"
 bucket_name = "unveiled-dev"
+
+[[services]]
+binding = "API"
+service = "unveiled-api"
+entrypoint = "fetch"

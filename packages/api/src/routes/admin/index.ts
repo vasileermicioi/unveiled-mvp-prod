@@ -15,7 +15,10 @@ import {
 
 function readEnv(c: { get: (k: string) => unknown }): RuntimeEnv {
   const runtime = c.get("runtimeEnv") as RuntimeEnv | undefined;
-  return { ...getCloudflareEnv({ env: runtime }), ...(runtime ?? {}) } as RuntimeEnv;
+  return {
+    ...getCloudflareEnv({ env: runtime }),
+    ...(runtime ?? {}),
+  } as RuntimeEnv;
 }
 
 const uploadResponseSchema = z.object({
@@ -48,10 +51,22 @@ const uploadRoute = createRoute({
     },
   },
   responses: {
-    200: { description: "Upload succeeded", content: { "application/json": { schema: uploadResponseSchema } } },
-    400: { description: "Validation failed", content: { "application/json": { schema: uploadErrorSchema } } },
-    403: { description: "Forbidden", content: { "application/json": { schema: uploadErrorSchema } } },
-    503: { description: "Upload service unavailable", content: { "application/json": { schema: uploadErrorSchema } } },
+    200: {
+      description: "Upload succeeded",
+      content: { "application/json": { schema: uploadResponseSchema } },
+    },
+    400: {
+      description: "Validation failed",
+      content: { "application/json": { schema: uploadErrorSchema } },
+    },
+    403: {
+      description: "Forbidden",
+      content: { "application/json": { schema: uploadErrorSchema } },
+    },
+    503: {
+      description: "Upload service unavailable",
+      content: { "application/json": { schema: uploadErrorSchema } },
+    },
   },
 });
 

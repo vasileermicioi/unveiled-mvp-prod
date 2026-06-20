@@ -13,7 +13,10 @@ import {
 } from "@unveiled/api/db/schema";
 import { auth } from "@unveiled/api/middleware/auth";
 import type { AuthenticatedViewer } from "@unveiled/api/auth-profile";
-import type { EventFormInput, PartnerFormInput } from "@unveiled/api/forms/schemas";
+import type {
+  EventFormInput,
+  PartnerFormInput,
+} from "@unveiled/api/forms/schemas";
 
 export type OperationFailureState =
   | "validation_error"

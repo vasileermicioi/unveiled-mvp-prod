@@ -10,12 +10,7 @@ import {
 import { useContext, useState } from "react";
 import { Button } from "@unveiled/design-system";
 import { SafeImage } from "@unveiled/design-system";
-import {
-  Badge,
-  Card,
-  Panel,
-  StatPanel,
-} from "@unveiled/design-system";
+import { Badge, Card, Panel, StatPanel } from "@unveiled/design-system";
 import { DiscoveryShell } from "@/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "@/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "@/lib/app-shell-view-models";

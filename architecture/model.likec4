@@ -91,6 +91,14 @@ model {
     #role-process, #surface-runtime, #domain-payments, #spec-likec4-architecture
     description 'Server-side Stripe SDK wrapper used by Astro Actions.'
   }
+  apiWorker = container '@unveiled/api Worker' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'packages/api'
+    }
+    description 'Hono app Worker that owns every /api/* route, the canonical OpenAPI document, Better Auth mounting, and the Stripe webhook handler. Reached from the Astro app Worker via the `API` service binding declared in `wrangler.toml`.'
+  }
   emailWorker = container 'Email Worker' {
     #role-process, #surface-runtime, #domain-notifications, #spec-likec4-architecture
     description 'Server-side Resend client for transactional email.'
@@ -107,6 +115,7 @@ model {
   astroWorker -> r2Bucket 'stores objects'
   astroWorker -> stripeClient 'delegates to'
   astroWorker -> emailWorker 'delegates to'
+  astroWorker -> apiWorker 'forwards /api/* via service binding'
   astroWorker -> cronTrigger 'is triggered by'
 
   stripeClient -> stripe 'HTTPS'

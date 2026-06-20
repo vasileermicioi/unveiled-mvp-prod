@@ -4,7 +4,11 @@ import {
   requestPasswordRecovery,
   signUpWithEmail,
 } from "@unveiled/api/auth-account-actions";
-import { getCloudflareEnv, type RuntimeEnv, type AppType } from "@unveiled/api/worker";
+import {
+  getCloudflareEnv,
+  type RuntimeEnv,
+  type AppType,
+} from "@unveiled/api/worker";
 
 function readEnv(c: { get: (k: string) => unknown }): RuntimeEnv {
   const runtime = c.get("runtimeEnv") as RuntimeEnv | undefined;
@@ -24,7 +28,10 @@ export function mountAccountRoutes(app: AppType): void {
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(responseBody, (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403);
+    return c.json(
+      responseBody,
+      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
+    );
   });
 
   app.post("/api/account/logout", async (c) => {
@@ -33,7 +40,10 @@ export function mountAccountRoutes(app: AppType): void {
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(responseBody, (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403);
+    return c.json(
+      responseBody,
+      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
+    );
   });
 
   app.post("/api/account/signup", async (c) => {
@@ -47,7 +57,10 @@ export function mountAccountRoutes(app: AppType): void {
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(responseBody, (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403);
+    return c.json(
+      responseBody,
+      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
+    );
   });
 
   app.post("/api/account/password-recovery", async (c) => {
@@ -83,7 +96,9 @@ async function readJsonSignupInput(body: unknown) {
 }
 
 async function readJsonPasswordRecoveryInput(body: unknown) {
-  const { readPasswordRecoveryInput } = await import("@unveiled/api/auth-forms");
+  const { readPasswordRecoveryInput } = await import(
+    "@unveiled/api/auth-forms"
+  );
   const req = new Request("https://local/recovery", {
     method: "POST",
     headers: { "content-type": "application/json" },
