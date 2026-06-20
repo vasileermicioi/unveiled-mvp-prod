@@ -6,5 +6,5 @@ Feature: Cron workers
     Given the user is logged in as Admin
 
   Scenario: Cron worker reports a successful run
-    When the user navigates to /en/admin
+    When the user navigates to /app/en/admin
     Then the user asserts the section shows "Cron status"

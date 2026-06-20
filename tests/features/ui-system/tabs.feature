@@ -10,12 +10,12 @@ Feature: Tabs primitive parity
 
   @ladle(component=Tabs, story=KeyboardArrowNavigation)
   Scenario: Tabs expose keyboard arrow-key navigation between triggers
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the tab named "Upcoming" is visible
     And the tab named "Saved" is visible
     And the tab named "Upcoming" exposes aria-selected "true"
 
   @ladle(component=Tabs, story=ActivePanelVisibility)
   Scenario: Tabs render the active panel as visible content
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Upcoming events" is reachable

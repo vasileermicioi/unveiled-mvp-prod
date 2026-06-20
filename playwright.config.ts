@@ -12,14 +12,14 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:4321",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:4321/app/",
     trace: "on-first-retry",
   },
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
         command: "bun run dev",
-        url: "http://localhost:4321",
+        url: "http://localhost:4321/app/",
         reuseExistingServer: true,
         timeout: 120_000,
         stdout: "pipe",

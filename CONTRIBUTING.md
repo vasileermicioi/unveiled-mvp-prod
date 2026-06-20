@@ -45,8 +45,8 @@ mergeable until every box can be checked.
       `design-tokens.json`.
 - [ ] No imports from `_old_app/`, no hand-edited Mermaid, no hand-edited
       files under `typespec/output/` or `src/lib/generated/`.
-- [ ] Mutation paths go through `src/actions/index.ts`, never through HTTP
-      endpoints directly.
+- [ ] Mutation paths go through `packages/app/src/actions/index.ts`, never
+      through HTTP endpoints directly.
 - [ ] The change is small enough to revert in one revert commit if it
       breaks production.
 

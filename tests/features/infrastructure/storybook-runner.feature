@@ -11,10 +11,10 @@ Feature: Storybook runner
 
   @story(component=SmokeButton, story=Default)
   Scenario: Tagged scenario opens the Storybook iframe
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     And the user asserts the page shows the heading "Upcoming"
 
   Scenario: Opt-out story is allowed
     Given the user is logged in as Member
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     Then the user asserts the page shows the heading "Upcoming"

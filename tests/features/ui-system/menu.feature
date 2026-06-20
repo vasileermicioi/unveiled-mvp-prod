@@ -10,12 +10,12 @@ Feature: Menu primitive parity
 
   @ladle(component=Menu, story=TriggerAriaExpanded)
   Scenario: Menu trigger exposes aria-expanded state
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     Then the button named "Account menu" exposes aria-expanded "false"
 
   @ladle(component=Menu, story=ItemKeyboardNavigation)
   Scenario: Menu items are reachable via keyboard navigation
-    When the user navigates to /en/app
+    When the user navigates to /app/en/app
     And the user opens the menu named "Account menu"
     Then the menu item named "Profile" is reachable
     And the menu item named "Logout" is reachable

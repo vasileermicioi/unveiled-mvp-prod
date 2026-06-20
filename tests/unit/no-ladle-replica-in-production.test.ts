@@ -3,12 +3,17 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const PRODUCTION_ENTRY_POINTS = [
-  "src/components/unveiled",
-  "src/components/payments",
-  "src/components/providers",
-  "src/pages",
-  "src/layouts",
-  "src/actions/index.ts",
+  "packages/app/src/components/unveiled",
+  "packages/app/src/components/payments",
+  "packages/app/src/components/providers",
+  "packages/app/src/pages",
+  "packages/app/src/layouts",
+  "packages/app/src/actions/index.ts",
+  "packages/landing/src/components/unveiled",
+  "packages/landing/src/components/payments",
+  "packages/landing/src/components/providers",
+  "packages/landing/src/pages",
+  "packages/landing/src/layouts",
   "src/components/ui/button.tsx",
   "src/components/ui/unveiled-primitives.tsx",
   "src/components/ui/safe-image.tsx",
@@ -20,7 +25,7 @@ const PRODUCTION_ENTRY_POINTS = [
 ];
 
 const REPLICA_IMPORT_RE =
-  /["']@\/components\/ui\/[^"']*-replica\/[^"']+["']|["']packages\/design-system\/src\/[^"']*-replica\/[^"']+["']|["']@unveiled\/design-system\/[^"']*-replica\/[^"']+["']/g;
+  /["']@\/components\/ui\/[^"']*-replica\/[^"']+["']|["']~\/components\/ui\/[^"']*-replica\/[^"']+["']|["']packages\/design-system\/src\/[^"']*-replica\/[^"']+["']|["']@unveiled\/design-system\/[^"']*-replica\/[^"']+["']/g;
 const LOCAL_REPLICA_IMPORT_RE = /["']\.{1,2}\/[^"']*-replica\/[^"']+["']/g;
 
 function walk(root: string, out: string[] = []): string[] {

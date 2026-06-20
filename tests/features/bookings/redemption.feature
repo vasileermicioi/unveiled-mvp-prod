@@ -6,11 +6,11 @@ Feature: Redemption
     Given the user is logged in as Member
 
   Scenario: Member redeems a voucher code from the booking page
-    When the user navigates to /en/bookings
+    When the user navigates to /app/en/bookings
     And the user submits voucher with Code=ABC123
     Then the user asserts the section shows "Redeemed"
 
   Scenario: Member redeems a secret code from the booking page
-    When the user navigates to /en/bookings
+    When the user navigates to /app/en/bookings
     And the user submits secret with Code=open-sesame
     Then the user asserts the section shows "Redeemed"

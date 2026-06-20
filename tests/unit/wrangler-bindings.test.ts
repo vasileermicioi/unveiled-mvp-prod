@@ -66,14 +66,14 @@ function diffBindings(
 }
 
 const REPO_ROOT = resolve(__dirname, "..", "..");
-const APP_CONFIG = join(REPO_ROOT, "wrangler.toml");
+const APP_CONFIG = join(REPO_ROOT, "wrangler.app.toml");
 const API_CONFIG = join(REPO_ROOT, "wrangler.api.toml");
 
-describe("wrangler.toml and wrangler.api.toml share their binding surface", () => {
+describe("wrangler.app.toml and wrangler.api.toml share their binding surface", () => {
   const app = readWranglerConfig(APP_CONFIG);
   const api = readWranglerConfig(API_CONFIG);
 
-  it("wrangler.toml declares the API service binding", () => {
+  it("wrangler.app.toml declares the API service binding", () => {
     const services = app.services ?? [];
     const apiBinding = services.find((s) => s.binding === "API");
     expect(apiBinding).toBeDefined();

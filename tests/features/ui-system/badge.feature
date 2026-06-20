@@ -9,7 +9,7 @@ Feature: Badge primitive parity
 
   @ladle(component=Badge, story=ToneMatrix)
   Scenario: Badge renders every tone entry
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Badge tone matrix" is reachable
     And the region named "Badge tone matrix" exposes the "dark" tone
     And the region named "Badge tone matrix" exposes the "yellow" tone
@@ -19,6 +19,6 @@ Feature: Badge primitive parity
 
   @ladle(component=Badge, story=CountAdjacentLabel)
   Scenario: Badge with aria-label announces a count
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the region named "Badge count label" is reachable
     And the region named "Badge count label" exposes aria-label "Saved: 3"

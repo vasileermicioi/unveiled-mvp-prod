@@ -1,0 +1,20 @@
+name = "unveiled-app"
+compatibility_date = "2026-05-06"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_handle_cross_request_promise_resolution"]
+
+assets = { binding = "ASSETS", directory = "./packages/app/dist/client" }
+observability = { enabled = true }
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "b25ac2e3eb4b4df082254d32c7fd6766"
+preview_id = "a970664d170d4d18833718fb6b0cd0ee"
+
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "unveiled-dev"
+
+[[services]]
+binding = "API"
+service = "unveiled-api"
+entrypoint = "fetch"

@@ -6,10 +6,10 @@ Feature: Partner check-in
     Given the user is logged in as Partner
 
   Scenario: Partner sees the scheduled events
-    When the user navigates to /en/partner
+    When the user navigates to /app/en/partner
     Then the user asserts the section shows "Upcoming events"
 
   Scenario: Partner checks a guest in by code
-    When the user navigates to /en/partner/check-in
+    When the user navigates to /app/en/partner/check-in
     And the user submits checkin with Code=ABC123
     Then the user asserts the section shows "Checked in"

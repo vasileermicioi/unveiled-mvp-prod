@@ -1,0 +1,45 @@
+---
+import { VisualSystemApp } from "~/components/unveiled/visual-system-app";
+import BaseLayout from "~/layouts/base-layout.astro";
+import { createShellFromViewer } from "~/lib/auth-display";
+import { getViewer } from "~/lib/auth-profile";
+import { loadMemberData } from "~/lib/data-access/loaders";
+import { createMemberInitialSurfaceData } from "~/lib/data-access/surface-data";
+import { normalizeLanguage } from "~/lib/i18n";
+import {
+  productRoutes,
+  resolveMemberOnboardingRoute,
+} from "~/lib/product-routes";
+
+const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
+
+const viewer = await getViewer(Astro.request, { guestLanguage: lang });
+viewer.language = lang;
+
+const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.bookings);
+if (!ownership.ok) {
+  const redirectUrl = ownership.redirectTo.startsWith("/")
+    ? `/${lang.toLowerCase()}${ownership.redirectTo}`
+    : `/${lang.toLowerCase()}/${ownership.redirectTo}`;
+  return Astro.redirect(redirectUrl, ownership.status);
+}
+
+const initialShell = createShellFromViewer(
+  ownership.viewer,
+  ownership.route.id,
+);
+const initialDiscovery = createMemberInitialSurfaceData(
+  ownership.viewer,
+  await loadMemberData(ownership.viewer),
+);
+---
+
+<BaseLayout title="Bookings | Unveiled" lang={lang}>
+  <VisualSystemApp
+    client:load
+    initialShell={initialShell}
+    initialDiscovery={initialDiscovery}
+    initialView="bookings"
+    callbackURL={Astro.url.searchParams.get("callbackURL") ?? `/${lang.toLowerCase()}/`}
+  />
+</BaseLayout>

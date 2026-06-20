@@ -9,12 +9,12 @@ Feature: SelectInput primitive parity
 
   @ladle(component=SelectInput, story=SelectionChange)
   Scenario: SelectInput renders the selected option
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the field nearest to "City" is visible
     And the field nearest to "City" exposes the value "Berlin"
 
   @ladle(component=SelectInput, story=Disabled)
   Scenario: SelectInput renders the disabled state
-    When the user navigates to /en/
+    When the user navigates to /app/en/
     Then the field nearest to "Category" is visible
     And the field nearest to "Category" is disabled

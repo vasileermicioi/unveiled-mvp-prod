@@ -6,7 +6,9 @@
     "types": ["@cloudflare/workers-types", "@types/bun"],
     "paths": {
       "@unveiled/api": ["./src/index.ts"],
-      "@unveiled/api/*": ["./src/*"]
+      "@unveiled/api/*": ["./src/*"],
+      "@unveiled/app": ["../app/src/index.ts"],
+      "@unveiled/app/*": ["../app/src/*"]
     }
   },
   "include": ["src/**/*", "scripts/**/*", "tests/**/*"],

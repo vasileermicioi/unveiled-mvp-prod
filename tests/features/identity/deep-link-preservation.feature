@@ -9,4 +9,4 @@ Feature: Deep-link preservation
 
   @story(component=DeepLinkPreservation, story=HappyPath)
   Scenario: Login form preserves a safe deep-link target
-    Then the user asserts the main shows "After signing in you will be redirected to /en/bookings?status=upcoming."
+    Then the user asserts the main shows "After signing in you will be redirected to /app/en/bookings?status=upcoming."
