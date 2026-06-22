@@ -16,7 +16,7 @@ import {
   ROLE_TAGS,
   SPEC_TAGS,
   SURFACE_TAGS,
-} from "@/lib/architecture/tags";
+} from "@unveiled/app/lib/architecture/tags";
 
 const REPO_ROOT = resolve(__dirname, "..", "..");
 const MODEL_DIR = join(REPO_ROOT, "architecture");

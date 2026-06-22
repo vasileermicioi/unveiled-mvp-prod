@@ -3,8 +3,8 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
-const PAGES_DIR = join(ROOT, "src/pages");
-const LAYOUT_FILE = join(ROOT, "src/layouts/base-layout.astro");
+const PAGES_DIR = join(ROOT, "packages/app/src/pages");
+const LAYOUT_FILE = join(ROOT, "packages/app/src/layouts/base-layout.astro");
 const CANONICAL_CONTENT = "width=device-width, initial-scale=1";
 
 type Finding = { file: string; issue: string };
@@ -25,7 +25,7 @@ const files = walk(PAGES_DIR);
 const layoutSource = readFileSync(LAYOUT_FILE, "utf8");
 if (!layoutSource.includes(CANONICAL_CONTENT)) {
   findings.push({
-    file: "src/layouts/base-layout.astro",
+    file: "packages/app/src/layouts/base-layout.astro",
     issue: `does not emit canonical viewport content "${CANONICAL_CONTENT}"`,
   });
 }
@@ -34,10 +34,10 @@ for (const file of files) {
   const source = readFileSync(file, "utf8");
   const rel = relative(ROOT, file);
 
-  if (rel === "src/pages/index.astro") continue;
+  if (rel === "packages/app/src/pages/index.astro") continue;
 
   const importsBaseLayout = source.includes(
-    'import BaseLayout from "@/layouts/base-layout.astro"',
+    'import BaseLayout from "~/layouts/base-layout.astro"',
   );
 
   if (!importsBaseLayout) {

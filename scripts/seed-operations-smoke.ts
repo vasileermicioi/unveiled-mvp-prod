@@ -2,11 +2,11 @@ import "dotenv/config";
 
 import { eq, sql } from "drizzle-orm";
 
-import { db, postgresClient } from "@/db/client";
-import { bookings, events, partners, user, userProfiles } from "@/db/schema";
-import { signUpWithEmail } from "@/lib/auth-account-actions";
-import type { Viewer } from "@/lib/auth-profile";
-import { loadAdminData, loadPartnerData } from "@/lib/data-access/loaders";
+import { signUpWithEmail } from "@unveiled/api/auth-account-actions";
+import type { Viewer } from "@unveiled/api/auth-profile";
+import { loadAdminData, loadPartnerData } from "@unveiled/api/data-access/loaders";
+import { db, postgresClient } from "@unveiled/app/db/client";
+import { bookings, events, partners, user, userProfiles } from "@unveiled/app/db/schema";
 
 const smokePassword = "Operations-Smoke-2026!";
 

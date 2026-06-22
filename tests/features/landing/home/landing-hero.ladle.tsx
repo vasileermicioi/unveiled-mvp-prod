@@ -1,7 +1,7 @@
 // @ladle-only
 import type { Story } from "@ladle/react";
 
-import { LandingHero } from "@/../packages/landing/src/components/landing/landing-hero";
+import { LandingHero } from "@unveiled/landing/components/landing/landing-hero";
 
 export const VisitorSeesHeroWithAppCta: Story = () => (
   <LandingHero authenticated={false} />

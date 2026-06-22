@@ -1,5 +1,5 @@
 // @ladle-only
-import "@/styles/global.css";
+import "@unveiled/app/styles/global.css";
 import { HeroBadge } from "./HeroBadge";
 import { HeroButton } from "./HeroButton";
 import { HeroCard } from "./HeroCard";

@@ -1,7 +1,7 @@
 // @ladle-only
 import type { Story } from "@ladle/react";
 
-import "@/styles/global.css";
+import "@unveiled/app/styles/global.css";
 import { Card } from "@unveiled/design-system";
 
 export const DefaultCard: Story = () => (
