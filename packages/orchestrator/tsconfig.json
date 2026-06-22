@@ -1,0 +1,23 @@
+{
+  "extends": "../../packages/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "@types/bun"],
+    "paths": {
+      "~/*": ["./src/*"],
+      "@unveiled/orchestrator": ["./src/index.ts"],
+      "@unveiled/orchestrator/*": ["./src/*"],
+      "@unveiled/design-system": ["../design-system/src/index.ts"],
+      "@unveiled/design-system/*": ["../design-system/src/*"],
+      "@unveiled/api": ["../api/src/index.ts"],
+      "@unveiled/api/*": ["../api/src/*"],
+      "@unveiled/app": ["../app/src/index.ts"],
+      "@unveiled/app/*": ["../app/src/*"],
+      "@unveiled/landing": ["../landing/src/index.ts"],
+      "@unveiled/landing/*": ["../landing/src/*"]
+    }
+  },
+  "include": ["src/**/*", "scripts/**/*", "vite.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -97,7 +97,23 @@ model {
     metadata {
       path 'packages/api'
     }
-    description 'Hono app Worker that owns every /api/* route, the canonical OpenAPI document, Better Auth mounting, and the Stripe webhook handler. Reached from the Astro app Worker via the `API` service binding declared in `wrangler.toml`.'
+    description 'Hono app Worker that owns every /api/* route, the canonical OpenAPI document, Better Auth mounting, and the Stripe webhook handler. Reached from the orchestrator via the `API` service binding declared in `wrangler.orchestrator.toml`.'
+  }
+  landingWorker = container '@unveiled/landing Worker' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'packages/landing'
+    }
+    description 'Astro landing application that owns the public marketing surface under `/`. Reached from the orchestrator via the `LANDING` service binding declared in `wrangler.orchestrator.toml`.'
+  }
+  orchestrator = container '@unveiled/orchestrator Worker' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
+    #has-path
+    metadata {
+      path 'packages/orchestrator'
+    }
+    description 'Cloudflare Worker entry that owns the public URL surface. Dispatches /api/* to the API Worker, /app/* to the Astro app Worker, /* to the landing Worker, and answers /healthz + /readyz directly. Applies uniform security headers (CSP, HSTS, X-Content-Type-Options, Referrer-Policy, X-Frame-Options) and emits structured JSON request logs with a `requestId` correlation id.'
   }
   emailWorker = container 'Email Worker' {
     #role-process, #surface-runtime, #domain-notifications, #spec-likec4-architecture
@@ -108,15 +124,19 @@ model {
     description 'Cloudflare cron handler that runs scheduled jobs.'
   }
 
-  unveiled -> astroWorker 'is implemented by'
+  unveiled -> orchestrator 'is implemented by'
+  orchestrator -> astroWorker 'forwards /app/* via service binding'
+  orchestrator -> landingWorker 'forwards /* via service binding'
+  orchestrator -> apiWorker 'forwards /api/* via service binding'
   astroWorker -> reactIslands 'hydrates'
   astroWorker -> pglite 'reads/writes (local)'
   astroWorker -> neon 'reads/writes (prod)'
   astroWorker -> r2Bucket 'stores objects'
   astroWorker -> stripeClient 'delegates to'
   astroWorker -> emailWorker 'delegates to'
-  astroWorker -> apiWorker 'forwards /api/* via service binding'
+  astroWorker -> apiWorker 'forwards /api/* via service binding (defense-in-depth)'
   astroWorker -> cronTrigger 'is triggered by'
+  landingWorker -> astroWorker 'links /app CTA'
 
   stripeClient -> stripe 'HTTPS'
   r2Bucket -> r2 'HTTPS'

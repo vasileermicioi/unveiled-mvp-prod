@@ -21,11 +21,11 @@ if (venuePartner && venueToken) {
   const safeFormat = /^[a-zA-Z0-9\-_]+$/;
   if (safeFormat.test(venuePartner) && safeFormat.test(venueToken)) {
     return Astro.redirect(
-      `/${lang}/venue-check-in/${venuePartner}?token=${venueToken}`,
+      `/app/${lang}/venue-check-in/${venuePartner}?token=${venueToken}`,
     );
   }
 }
 
 // 3. Standard redirect to the localized index page
-return Astro.redirect(`/${lang}/`);
+return Astro.redirect(`/app/${lang}/`);
 ---

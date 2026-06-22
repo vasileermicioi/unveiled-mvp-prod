@@ -71,6 +71,7 @@ const REPO_ROOT = resolve(__dirname, "..", "..");
 const APP_CONFIG = join(REPO_ROOT, "wrangler.app.toml");
 const API_CONFIG = join(REPO_ROOT, "wrangler.api.toml");
 const LANDING_CONFIG = join(REPO_ROOT, "wrangler.landing.toml");
+const ORCHESTRATOR_CONFIG = join(REPO_ROOT, "wrangler.orchestrator.toml");
 
 describe("wrangler.app.toml and wrangler.api.toml share their binding surface", () => {
   const app = readWranglerConfig(APP_CONFIG);
@@ -116,9 +117,9 @@ describe("wrangler.landing.toml reuses the app bindings", () => {
     expect(text).toMatch(/^name\s*=\s*"unveiled-landing"/m);
   });
 
-  it("landing worker assets directory points at the Astro Cloudflare output", () => {
+  it("landing worker no longer declares a top-level assets binding", () => {
     const text = readFileSync(LANDING_CONFIG, "utf8");
-    expect(text).toMatch(/^assets\s*=\s*\{\s*binding\s*=\s*"ASSETS",\s*directory\s*=\s*"\.\/packages\/landing\/dist\/client"\s*\}/m);
+    expect(text).not.toMatch(/^assets\s*=/m);
   });
 
   it("KV namespaces are mirrored between wrangler.app.toml and wrangler.landing.toml", () => {
@@ -139,6 +140,83 @@ describe("wrangler.landing.toml reuses the app bindings", () => {
       landing.r2_buckets,
       "wrangler.app.toml",
       "wrangler.landing.toml",
+    );
+    expect(diffs).toEqual([]);
+  });
+});
+
+describe("wrangler.app.toml no longer declares a top-level assets binding", () => {
+  it("the orchestrator owns the top-level assets binding", () => {
+    const text = readFileSync(APP_CONFIG, "utf8");
+    expect(text).not.toMatch(/^assets\s*=/m);
+  });
+});
+
+describe("wrangler.orchestrator.toml owns the public dispatch surface", () => {
+  const app = readWranglerConfig(APP_CONFIG);
+  const api = readWranglerConfig(API_CONFIG);
+  const landing = readWranglerConfig(LANDING_CONFIG);
+  const orchestrator = readWranglerConfig(ORCHESTRATOR_CONFIG);
+
+  it("orchestrator worker name is unveiled", () => {
+    const text = readFileSync(ORCHESTRATOR_CONFIG, "utf8");
+    expect(text).toMatch(/^name\s*=\s*"unveiled"/m);
+  });
+
+  it("orchestrator declares the top-level assets binding", () => {
+    const text = readFileSync(ORCHESTRATOR_CONFIG, "utf8");
+    expect(text).toMatch(
+      /^assets\s*=\s*\{\s*binding\s*=\s*"ASSETS",\s*directory\s*=\s*"\.\/packages\/orchestrator\/dist\/client"\s*\}/m,
+    );
+  });
+
+  it("orchestrator declares the APP / LANDING / API service bindings", () => {
+    const services = orchestrator.services ?? [];
+    const appBinding = services.find((s) => s.binding === "APP");
+    const landingBinding = services.find((s) => s.binding === "LANDING");
+    const apiBinding = services.find((s) => s.binding === "API");
+    expect(appBinding?.service).toBe("unveiled-app");
+    expect(appBinding?.entrypoint).toBe("fetch");
+    expect(landingBinding?.service).toBe("unveiled-landing");
+    expect(landingBinding?.entrypoint).toBe("fetch");
+    expect(apiBinding?.service).toBe("unveiled-api");
+    expect(apiBinding?.entrypoint).toBe("fetch");
+  });
+
+  it("orchestrator service bindings reference the per-package wrangler names", () => {
+    const orchestratorNames = new Set(
+      (orchestrator.services ?? []).map((s) => s.service),
+    );
+    const text = join(REPO_ROOT, "wrangler.app.toml");
+    expect(/^name\s*=\s*"unveiled-app"/m.test(readFileSync(text, "utf8"))).toBe(
+      true,
+    );
+    expect(orchestratorNames.has("unveiled-app")).toBe(true);
+    expect(orchestratorNames.has("unveiled-landing")).toBe(true);
+    expect(orchestratorNames.has("unveiled-api")).toBe(true);
+    expect(api.kv_namespaces).toBeDefined();
+    expect(landing.kv_namespaces).toBeDefined();
+    expect(app.kv_namespaces).toBeDefined();
+  });
+
+  it("KV namespaces are mirrored between wrangler.app.toml and wrangler.orchestrator.toml", () => {
+    const diffs = diffBindings(
+      "KV",
+      app.kv_namespaces,
+      orchestrator.kv_namespaces,
+      "wrangler.app.toml",
+      "wrangler.orchestrator.toml",
+    );
+    expect(diffs).toEqual([]);
+  });
+
+  it("R2 buckets are mirrored between wrangler.app.toml and wrangler.orchestrator.toml", () => {
+    const diffs = diffBindings(
+      "R2",
+      app.r2_buckets,
+      orchestrator.r2_buckets,
+      "wrangler.app.toml",
+      "wrangler.orchestrator.toml",
     );
     expect(diffs).toEqual([]);
   });

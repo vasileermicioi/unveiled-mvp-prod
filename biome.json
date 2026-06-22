@@ -76,7 +76,13 @@
         "**/*.stories.tsx",
         "**/*.stories.ts",
         "scripts/**",
-        "tests/**"
+        "tests/**",
+        "packages/orchestrator/src/worker.ts",
+        "packages/orchestrator/src/logging.ts",
+        "packages/orchestrator/src/dev-server.ts",
+        "packages/orchestrator/src/readiness.ts",
+        "packages/orchestrator/scripts/**",
+        "packages/orchestrator/vite.config.ts"
       ],
       "linter": {
         "rules": {

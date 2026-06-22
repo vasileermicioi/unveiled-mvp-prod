@@ -25,9 +25,9 @@
 @font-face {
   font-family: "EK Notice Sans";
   src:
-    url("/fonts/EKNoticeSans-Black.woff2") format("woff2"),
-    url("/fonts/EKNoticeSans-Black.woff") format("woff"),
-    url("/fonts/EKNoticeSans-Black.otf") format("opentype");
+    url("/app/fonts/EKNoticeSans-Black.woff2") format("woff2"),
+    url("/app/fonts/EKNoticeSans-Black.woff") format("woff"),
+    url("/app/fonts/EKNoticeSans-Black.otf") format("opentype");
   font-display: swap;
   font-style: normal;
   font-weight: 900;

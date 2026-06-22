@@ -1,0 +1,33 @@
+{
+  "name": "@unveiled/orchestrator",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./worker": "./src/worker.ts",
+    "./security": "./src/security.ts",
+    "./logging": "./src/logging.ts",
+    "./readiness": "./src/readiness.ts",
+    "./dev-server": "./src/dev-server.ts"
+  },
+  "scripts": {
+    "dev": "wait-on tcp:8787 tcp:4321 tcp:4322 && vite --config vite.config.ts",
+    "build": "bun run scripts/build.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "test:unit": "bun test --pass-with-no-tests src/"
+  },
+  "dependencies": {
+    "@unveiled/design-system": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260506.1",
+    "@types/bun": "^1.3.13",
+    "concurrently": "^10.0.3",
+    "esbuild": "^0.25.0",
+    "vite": "^7.0.0",
+    "wait-on": "^9.0.10",
+    "wrangler": "^4.88.0"
+  }
+}

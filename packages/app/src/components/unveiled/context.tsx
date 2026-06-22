@@ -1,4 +1,14 @@
 import { actions } from "astro:actions";
+import {
+  Button,
+  Field,
+  Panel,
+  SafeImage,
+  SelectInput,
+  StatPanel,
+  TextInput,
+} from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
 import { ArrowLeft, ArrowRight, Upload as UploadIcon } from "lucide-react";
 import {
   createContext,
@@ -8,19 +18,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { Button } from "@unveiled/design-system";
-import { SafeImage } from "@unveiled/design-system";
-import {
-  Field,
-  Panel,
-  SelectInput,
-  StatPanel,
-  TextInput,
-} from "@unveiled/design-system";
 import {
   LanguageContext,
   LiveDataContext,
 } from "~/components/unveiled/context-primitives";
+import { APP_BASE_PREFIX, stripAppBase } from "~/lib/app-base";
 import {
   type AppShellViewModel,
   createDemoShellViewModel,
@@ -42,16 +44,15 @@ import type { DiscoveryFilters } from "~/lib/data-access/query-keys";
 import type { InitialSurfaceData } from "~/lib/data-access/surface-data";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 import type { EventCardView } from "~/lib/unveiled-view-models";
-import { cn } from "@unveiled/design-system/lib/utils";
 
+export type { LiveDataView } from "~/components/unveiled/context-primitives";
 export {
+  emptyLiveDataView,
   LanguageContext,
   LiveDataContext,
-  emptyLiveDataView,
   useCopy,
   useLiveData,
 } from "~/components/unveiled/context-primitives";
-export type { LiveDataView } from "~/components/unveiled/context-primitives";
 
 export { StatPanel };
 
@@ -905,12 +906,11 @@ export function VisualSystemProvider({
           const nextLang = language.toLowerCase();
           const currentPath = window.location.pathname;
           const currentSearch = window.location.search;
-          let nextPath = currentPath;
-          if (/^\/(?:de|en)(?=\/|$)/i.test(currentPath)) {
-            nextPath = currentPath.replace(/^\/(?:de|en)/i, `/${nextLang}`);
-          } else {
-            nextPath = `/${nextLang}${currentPath}`;
-          }
+          const internalPath = stripAppBase(currentPath);
+          const nextInternalPath = /^(\/(?:de|en))(?=\/|$)/i.test(internalPath)
+            ? internalPath.replace(/^(\/(?:de|en))/i, `/${nextLang}`)
+            : `/${nextLang}${internalPath === "/" ? "/" : internalPath}`;
+          const nextPath = `${APP_BASE_PREFIX}${nextInternalPath === "/" ? "/" : nextInternalPath}`;
           window.location.assign(nextPath + currentSearch);
         }
       }
@@ -919,13 +919,15 @@ export function VisualSystemProvider({
     const target = shellDemoViews.find((item) => item.id === actionId);
     if (target) setView(target.id as View);
     if (actionId === "membership")
-      window.location.assign(`/${selectedLanguage.toLowerCase()}/membership`);
+      window.location.assign(
+        `/app/${selectedLanguage.toLowerCase()}/membership`,
+      );
     if (actionId === "logo")
       setView(view === "partner" || view === "admin" ? view : "landing");
     if (actionId === "profile") setView("profile");
     if (actionId === "logout") {
       await fetch("/api/account/logout", { method: "POST" });
-      window.location.assign(`/${selectedLanguage.toLowerCase()}/`);
+      window.location.assign(`/app/${selectedLanguage.toLowerCase()}/`);
     }
   };
 

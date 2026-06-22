@@ -1,18 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Check } from "lucide-react";
-import { useContext, useState } from "react";
-import { type Resolver, useForm } from "react-hook-form";
-
-import { QueryProvider } from "~/components/providers/query-provider";
-import { HeroUIProvider } from "~/components/providers/heroui-provider";
-import { Button } from "@unveiled/design-system";
 import {
   Badge,
+  Button,
   Field,
   Panel,
   StatePanel,
   TextInput,
 } from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
+import { ArrowRight, Check } from "lucide-react";
+import { useContext, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { HeroUIProvider } from "~/components/providers/heroui-provider";
+import { QueryProvider } from "~/components/providers/query-provider";
 import { AppShell, PageShell } from "~/components/unveiled/app-shell";
 import {
   type AppShellViewModel,
@@ -31,7 +31,6 @@ import {
   signupSchema,
 } from "~/lib/forms/schemas";
 import { formContracts } from "~/lib/unveiled-view-models";
-import { cn } from "@unveiled/design-system/lib/utils";
 import { AdminPanel } from "./AdminPanel";
 // Custom context imports
 import {
@@ -165,15 +164,16 @@ function LandingPage({ callbackURL = "/" }: { callbackURL?: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button asChild size="lg">
-            <a href={`/${selectedLanguage.toLowerCase()}/discover`}>
+          <Button asChild variant="secondary" size="lg">
+            <a href={`/app/${selectedLanguage.toLowerCase()}/discover`}>
               {copy.exploreAccess}
               <ArrowRight />
             </a>
           </Button>
           <Button asChild variant="secondary" size="lg">
-            <a href={`/${selectedLanguage.toLowerCase()}/how-it-works`}>
+            <a href={`/app/${selectedLanguage.toLowerCase()}/how-it-works`}>
               {copy.howItWorks}
+              <ArrowRight />
             </a>
           </Button>
         </div>

@@ -10,7 +10,9 @@
       "@unveiled/app": ["packages/app/src/index.ts"],
       "@unveiled/app/*": ["packages/app/src/*"],
       "@unveiled/landing": ["packages/landing/src/index.ts"],
-      "@unveiled/landing/*": ["packages/landing/src/*"]
+      "@unveiled/landing/*": ["packages/landing/src/*"],
+      "@unveiled/orchestrator": ["packages/orchestrator/src/index.ts"],
+      "@unveiled/orchestrator/*": ["packages/orchestrator/src/*"]
     }
   }
 }

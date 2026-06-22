@@ -185,12 +185,12 @@ export function TextInput(
       defaultValue={
         defaultValue === undefined ? undefined : String(defaultValue)
       }
-      variant="bordered"
+      variant="flat"
       radius="none"
       classNames={{
         base: "data-[focus-visible=true]:!outline-none data-[focus-visible=true]:!shadow-none group-data-[focus-visible=true]:!ring-0 group-data-[focus-visible=true]:!shadow-none",
         inputWrapper: cn(
-          "!min-h-12 !h-12 !bg-white !border-4 !border-brand-dark !rounded-none !px-4 !py-3 focus-within:!ring-0 focus-within:!ring-offset-0 focus-within:!shadow-none data-[focus=true]:!border-brand-dark data-[focus-visible=true]:!outline-none",
+          "!min-h-12 !h-12 !bg-white !border-4 !border-solid !border-brand-dark !rounded-none !px-4 !py-3 focus-within:!ring-0 focus-within:!ring-offset-0 focus-within:!shadow-none data-[focus=true]:!border-brand-dark data-[focus-visible=true]:!outline-none",
           className,
         ),
         input:

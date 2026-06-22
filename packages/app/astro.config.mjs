@@ -12,6 +12,7 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: "compile",
     configPath: "../../wrangler.app.toml",
+    inspectorPort: 9231,
   }),
   security: {
     checkOrigin: false,
