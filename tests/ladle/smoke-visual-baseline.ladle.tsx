@@ -1,6 +1,6 @@
 import type { Story } from "@ladle/react";
 
-import "@/styles/global.css";
+import "@unveiled/app/styles/global.css";
 interface VisualBaselineProps {
   caption: string;
 }

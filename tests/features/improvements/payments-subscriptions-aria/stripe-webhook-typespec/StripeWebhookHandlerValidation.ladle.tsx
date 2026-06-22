@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 
-import "@/styles/global.css";
-import { StripeEventSchema } from "@/lib/generated/request-validators";
+import "@unveiled/app/styles/global.css";
+import { StripeEventSchema } from "@unveiled/app/lib/generated/request-validators";
 
 const validInvoicePaidPayload = {
   id: "evt_test_invoice_paid",

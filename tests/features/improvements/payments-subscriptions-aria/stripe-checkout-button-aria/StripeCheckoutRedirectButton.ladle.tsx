@@ -1,8 +1,8 @@
 import type { Story } from "@ladle/react";
 
-import "@/styles/global.css";
-import { StripeCheckoutRedirectButton } from "@/components/payments/StripeCheckoutRedirectButton";
-import { LanguageContext } from "@/components/unveiled/context-primitives";
+import "@unveiled/app/styles/global.css";
+import { StripeCheckoutRedirectButton } from "@unveiled/app/components/payments/StripeCheckoutRedirectButton";
+import { LanguageContext } from "@unveiled/app/components/unveiled/context-primitives";
 
 const Harness = ({
   language,

@@ -1,9 +1,9 @@
 import type { Story } from "@ladle/react";
 
-import "@/styles/global.css";
-import { CreditLedgerViewTableSemantics } from "@/components/payments/CreditLedgerViewTableSemantics";
-import { LanguageContext } from "@/components/unveiled/context-primitives";
-import type { CreditLedgerEntryView } from "@/lib/unveiled-view-models";
+import "@unveiled/app/styles/global.css";
+import { CreditLedgerViewTableSemantics } from "@unveiled/app/components/payments/CreditLedgerViewTableSemantics";
+import { LanguageContext } from "@unveiled/app/components/unveiled/context-primitives";
+import type { CreditLedgerEntryView } from "@unveiled/api/unveiled-view-models";
 
 const sampleEntries: CreditLedgerEntryView[] = [
   {

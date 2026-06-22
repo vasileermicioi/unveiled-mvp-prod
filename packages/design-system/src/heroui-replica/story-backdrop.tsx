@@ -1,5 +1,5 @@
 // @ladle-only
-import "@/styles/global.css";
+import "@unveiled/app/styles/global.css";
 import type * as React from "react";
 
 import { cn } from "../lib/utils";
