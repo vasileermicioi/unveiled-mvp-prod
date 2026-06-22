@@ -9,16 +9,26 @@ deployment {
       #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
       instanceOf astroWorker
     }
+    runtime landingDev {
+      #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
+      instanceOf landingWorker
+    }
     runtime apiDev {
       #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
       instanceOf apiWorker
+    }
+    runtime orchestratorDev {
+      #surface-deployment-local, #domain-deployment, #spec-likec4-architecture
+      instanceOf orchestrator
     }
     dataplane pglite {
       #surface-deployment-local, #domain-domain-data, #spec-likec4-architecture
       instanceOf pglite
     }
     dev -> pglite 'reads/writes'
-    dev -> apiDev 'forwards /api/* (preview only)'
+    orchestratorDev -> dev 'forwards /app/* via vite proxy'
+    orchestratorDev -> landingDev 'forwards /* via vite proxy'
+    orchestratorDev -> apiDev 'forwards /api/* via vite proxy'
   }
 
   environment preview 'Cloudflare Pages Preview' {
@@ -32,12 +42,22 @@ deployment {
       #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
       instanceOf apiWorker
     }
+    runtime landingPreview {
+      #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
+      instanceOf landingWorker
+    }
+    runtime orchestratorPreview {
+      #surface-deployment-preview, #domain-deployment, #spec-likec4-architecture
+      instanceOf orchestrator
+    }
     dataplane previewDb {
       #surface-deployment-preview, #domain-domain-data, #spec-likec4-architecture
       instanceOf neon
     }
     pages -> previewDb 'reads/writes'
-    pages -> apiPreview 'forwards /api/* via service binding'
+    orchestratorPreview -> pages 'forwards /app/* via service binding'
+    orchestratorPreview -> landingPreview 'forwards /* via service binding'
+    orchestratorPreview -> apiPreview 'forwards /api/* via service binding'
   }
 
   environment prod 'Cloudflare Workers Production' {
@@ -51,12 +71,22 @@ deployment {
       #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
       instanceOf apiWorker
     }
+    runtime landingProd {
+      #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
+      instanceOf landingWorker
+    }
+    runtime orchestratorProd {
+      #surface-deployment-prod, #domain-deployment, #spec-likec4-architecture
+      instanceOf orchestrator
+    }
     dataplane prodDb {
       #surface-deployment-prod, #domain-domain-data, #spec-likec4-architecture
       instanceOf neon
     }
     workers -> prodDb 'reads/writes'
-    workers -> apiProd 'forwards /api/* via service binding'
+    orchestratorProd -> workers 'forwards /app/* via service binding'
+    orchestratorProd -> landingProd 'forwards /* via service binding'
+    orchestratorProd -> apiProd 'forwards /api/* via service binding'
   }
 }
 

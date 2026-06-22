@@ -16,6 +16,6 @@ using TypeSpec.Http;
 using TypeSpec.JsonSchema;
 
 @service(#{ title: "Unveiled API" })
-@server("https://api.unveiled.app", "Production")
+@server("https://unveiled.app/api", "Production")
 @route("/api")
 namespace Unveiled.Api;

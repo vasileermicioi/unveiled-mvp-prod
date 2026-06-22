@@ -1,4 +1,13 @@
 import {
+  Badge,
+  Button,
+  Card,
+  Panel,
+  SafeImage,
+  StatPanel,
+} from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
+import {
   ArrowLeft,
   ArrowRight,
   Bookmark,
@@ -8,15 +17,11 @@ import {
   MapPin,
 } from "lucide-react";
 import { useContext, useState } from "react";
-import { Button } from "@unveiled/design-system";
-import { SafeImage } from "@unveiled/design-system";
-import { Badge, Card, Panel, StatPanel } from "@unveiled/design-system";
 import { DiscoveryShell } from "~/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "~/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "~/lib/app-shell-view-models";
 import { readDiscoveryMapProviderConfig } from "~/lib/discovery-map";
 import type { EventCardView } from "~/lib/unveiled-view-models";
-import { cn } from "@unveiled/design-system/lib/utils";
 import { BookingModal } from "./BookingModal";
 import { LanguageContext, useCopy, useLiveData } from "./context";
 import { DiscoveryFilterPanel } from "./DiscoveryFilterPanel";
@@ -360,7 +365,7 @@ export function FaqPage() {
   return (
     <div className="space-y-8 py-8">
       <Button asChild variant="ghost">
-        <a href={`/${selectedLanguage.toLowerCase()}/`}>
+        <a href={`/app/${selectedLanguage.toLowerCase()}/`}>
           <ArrowLeft />
           {copy.back}
         </a>

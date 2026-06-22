@@ -1,9 +1,10 @@
 import { defineMiddleware } from "astro:middleware";
 import { env } from "cloudflare:workers";
+import { APP_BASE_PREFIX, stripAppBase } from "~/lib/app-base";
 import { getViewer } from "~/lib/auth-profile";
 import { trackSessionInDb } from "~/lib/behavior-tracking";
-import { logger } from "~/lib/logger";
 import { normalizeLanguage, type UiLanguage } from "~/lib/i18n";
+import { logger } from "~/lib/logger";
 import {
   resolveMemberOnboardingRoute,
   routeForPath,
@@ -11,9 +12,12 @@ import {
 
 export const PENDING_TRACE_ID = "pending-trace-id";
 
+export { APP_BASE_PREFIX, stripAppBase };
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, redirect } = context;
-  const route = routeForPath(url.pathname);
+  const internalPath = stripAppBase(url.pathname);
+  const route = routeForPath(internalPath);
   const traceId = PENDING_TRACE_ID;
   context.locals.traceId = traceId;
   context.locals.logger = logger.child({
@@ -29,7 +33,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const match = url.pathname.match(/^\/(de|en)(?=\/|$)/i);
+  const match = internalPath.match(/^\/(de|en)(?=\/|$)/i);
   if (!match) {
     // Detect language from cookie, header, or default
     const cookieHeader = request.headers.get("cookie");
@@ -45,8 +49,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     const lang = detectedLang.toLowerCase();
-    // Redirect to prefixed URL preserving query params
-    return redirect(`/${lang}${url.pathname}${url.search}`, 302);
+    return redirect(
+      `${APP_BASE_PREFIX}/${lang}${internalPath}${url.search}`,
+      302,
+    );
   }
 
   if (!route) {
@@ -72,11 +78,31 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const outcome = resolveMemberOnboardingRoute(viewer, route);
 
     if (!outcome.ok) {
-      return redirect(`${langPrefix}${outcome.redirectTo}`, outcome.status);
+      if (viewer.kind === "guest") {
+        const postLangPath =
+          internalPath.replace(/^\/(de|en)(?=\/|$)/i, "") || "/";
+        const safeRedirect = encodeURIComponent(`${postLangPath}${url.search}`);
+        return redirect(
+          `${APP_BASE_PREFIX}${langPrefix}/login?redirect=${safeRedirect}`,
+          outcome.status,
+        );
+      }
+      return redirect(
+        `${APP_BASE_PREFIX}${langPrefix}${outcome.redirectTo}`,
+        outcome.status,
+      );
     }
   } catch (_error) {
-    // If there's an auth error (like profile_missing), redirect to landing
-    return redirect(`${langPrefix}/`, 302);
+    if (_error instanceof Error && _error.message.includes("auth")) {
+      const postLangPath =
+        internalPath.replace(/^\/(de|en)(?=\/|$)/i, "") || "/";
+      const safeRedirect = encodeURIComponent(`${postLangPath}${url.search}`);
+      return redirect(
+        `${APP_BASE_PREFIX}${langPrefix}/login?redirect=${safeRedirect}`,
+        302,
+      );
+    }
+    return redirect(`${APP_BASE_PREFIX}${langPrefix}/`, 302);
   }
 
   return next();

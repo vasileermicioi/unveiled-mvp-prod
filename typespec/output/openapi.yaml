@@ -2136,6 +2136,6 @@ components:
           type: string
       description: Webhook error envelope.
 servers:
-  - url: https://api.unveiled.app
+  - url: https://unveiled.app/api
     description: Production
     variables: {}

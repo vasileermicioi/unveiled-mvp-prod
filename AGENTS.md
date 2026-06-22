@@ -114,8 +114,9 @@ architecture change.
 │   ├── tsconfig.base.json   # shared per-package compiler options
 │   ├── design-system/       # @unveiled/design-system — Ladle + UI primitives
 │   ├── api/                 # @unveiled/api — Hono HTTP backend
-│   ├── app/                 # @unveiled/app — Astro application
-│   └── landing/             # @unveiled/landing — Astro landing
+│   ├── app/                 # @unveiled/app — Astro application (mounted at /app/*)
+│   ├── landing/             # @unveiled/landing — Astro landing (mounted at /)
+│   └── orchestrator/        # @unveiled/orchestrator — public-URL entry Worker (dispatches /api/*, /app/*, /*; answers /healthz + /readyz; owns the top-level assets binding)
 ├── src/
 │   ├── pages/               # legacy Astro pages (moved to packages/app/src/pages/)
 │   ├── components/          # legacy Astro/React components (moved to packages/app/src/components/)
@@ -249,9 +250,9 @@ All commands are run with `bun` from the repo root.
 | Command | What it does |
 | --- | --- |
 | `bun install` | Install dependencies from `bun.lock`. |
-| `bun run dev` | Start the Astro dev server. |
-| `bun run build` | Production build for Cloudflare. |
-| `bun run check` | `astro check` + `biome check .` + `bun run specs:check` + `bun run tokens:check`. Run before every commit. |
+| `bun run dev` | Boot all four Workers behind the orchestrator's Vite dev proxy on port 4320 (API Worker on 8787, app Astro on 4321, landing Astro on 4322, orchestrator on 4320). |
+| `bun run build` | Production build for Cloudflare (design-system → app → landing → orchestrator). |
+| `bun run check` | `astro check` + `biome check .` + `bun run specs:check` + `bun run tokens:check` + `bun run ladle:coverage` + `bun run wrangler:check` + `bun run arch:check`. Run before every commit. |
 | `bun run format` | Biome format write. |
 | `bun run lint` | Biome lint. |
 | `bun run lint:workspaces` | `biome check packages/` over all workspace members. |
@@ -267,20 +268,20 @@ All commands are run with `bun` from the repo root.
 | `bun run arch:drift` | Drift check only. |
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
-| `bun run test:e2e` | Playwright runs the gherkin parity suite. |
+| `bun run test:e2e` | Playwright runs the gherkin parity suite against the orchestrator's port-4320 proxy. |
 | `bun run test:ladle` | Playwright runs the gherkin scenarios that carry a `@ladle(...)` tag against the Ladle project. |
 | `bun run ladle` | Ladle dev server on port 6006. |
 | `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
-| `bun run wrangler:check` | Assert the SESSION KV namespace and ASSETS_BUCKET R2 binding are consistent across `wrangler.app.toml`, `wrangler.api.toml`, and `wrangler.landing.toml`. |
+| `bun run wrangler:check` | Assert the SESSION KV namespace and ASSETS_BUCKET R2 binding are consistent across `wrangler.app.toml`, `wrangler.api.toml`, `wrangler.landing.toml`, and `wrangler.orchestrator.toml`. |
 | `bun run dev:landing` | Start only the `@unveiled/landing` Astro dev server on port 4322 (the landing surface). |
 | `bun run dev:app` | Start only the `@unveiled/app` Astro dev server on port 4321 (the app surface). |
-| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`). |
+| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`, `tests/unit/wrangler-bindings.test.ts`, `tests/unit/orchestrator-redirects.test.ts`). |
 | `bun run heroui-design-system-replica:check` | Gate the `src/components/ui/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
 | `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |
 | `bun run preview` | Astro preview of the local build. |
-| `bun run preview:cloudflare` | Build + run with `wrangler dev --remote`. |
-| `bun run deploy:cloudflare` | Build + `wrangler deploy` for the app. |
+| `bun run preview:cloudflare` | Build + chained Wrangler deploys (api → app → landing → orchestrator) with `--remote` semantics. |
+| `bun run deploy:cloudflare` | Build + chained `wrangler deploy` (api → app → landing → orchestrator). |
 | `bun run deploy:jobs` | `wrangler deploy` for the cron/queue jobs. |
 
 ## 8. Definition of done
@@ -288,13 +289,17 @@ All commands are run with `bun` from the repo root.
 A change is *done* only when all of the following are true:
 
 - [ ] Every task in the change's `tasks.md` is checked off.
+- [ ] `packages/orchestrator/` builds and produces a deployable Worker bundle (`bun run build` writes `packages/orchestrator/dist/worker.js`).
 - [ ] `bun run check` passes locally.
-- [ ] `bun run test:e2e` passes (gherkin parity suite).
+- [ ] `bun run test:e2e` passes (gherkin parity suite against the orchestrator's port-4320 proxy).
 - [ ] `bun run test:ladle` passes for any feature spec that adds a new component.
 - [ ] `bun run ladle:coverage` shows no drift.
-- [ ] `bun run specs:check` shows no drift (TypeSpec artifacts in sync).
-- [ ] `bun run arch:check` shows no drift (LikeC4 model in sync).
+- [ ] `bun run specs:check` shows no drift (TypeSpec artifacts in sync; `servers` block points at the orchestrator's hostname).
+- [ ] `bun run arch:check` shows no drift (LikeC4 model in sync; orchestrator is the entry container with three downstream service bindings).
 - [ ] `bun run tokens:check` shows no drift (design tokens in sync).
+- [ ] `GET /healthz` returns `200` with body `ok`; `GET /readyz` returns `200` only when all downstream Workers' readiness probes are green.
+- [ ] `bun run dev` boots all four Workers behind a single local port (4320) with no port conflicts.
+- [ ] `bun run deploy:cloudflare` deploys in dependency order (api → app → landing → orchestrator) and the production hostname serves every URL prefix correctly.
 - [ ] The OpenSpec proposal is either updated in place, or a new proposal
       is added that supersedes it, and `openspec validate` passes.
 - [ ] `AGENTS.md` is updated if the stack, file layout, toolchain

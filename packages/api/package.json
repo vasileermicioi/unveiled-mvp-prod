@@ -26,7 +26,7 @@
     "./unveiled-view-models": "./src/unveiled-view-models.ts"
   },
   "scripts": {
-    "dev": "wrangler dev -c ../../wrangler.api.toml --remote",
+    "dev": "wrangler dev -c ../../wrangler.api.toml --port 8787 ${WRANGLER_REMOTE:+--remote}",
     "build": "bun run scripts/build.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome check .",

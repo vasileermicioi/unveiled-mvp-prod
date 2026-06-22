@@ -2,7 +2,6 @@ name = "unveiled-app"
 compatibility_date = "2026-05-06"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_handle_cross_request_promise_resolution"]
 
-assets = { binding = "ASSETS", directory = "./packages/app/dist/client" }
 observability = { enabled = true }
 
 [[kv_namespaces]]

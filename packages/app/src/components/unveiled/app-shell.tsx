@@ -1,4 +1,12 @@
 import {
+  Badge,
+  Button,
+  buttonVariants,
+  Panel,
+  StatePanel,
+} from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
+import {
   Bookmark,
   Calendar,
   ChevronDown,
@@ -18,9 +26,6 @@ import {
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useDeferredValue, useEffect, useState } from "react";
-
-import { Button, buttonVariants } from "@unveiled/design-system";
-import { Badge, Panel, StatePanel } from "@unveiled/design-system";
 import type {
   AppShellViewModel,
   DiscoveryShellViewModel,
@@ -32,7 +37,6 @@ import type {
   ShellStatusBannerView,
 } from "~/lib/app-shell-view-models";
 import { copyFor } from "~/lib/i18n";
-import { cn } from "@unveiled/design-system/lib/utils";
 
 type ShellActionHandler = (actionId: string) => void;
 
@@ -79,7 +83,7 @@ export function ShellLogo({
 }) {
   return (
     <img
-      src={variant ? `/logos/unveiled-logo-${variant}.svg` : undefined}
+      src={variant ? `/app/logos/unveiled-logo-${variant}.svg` : undefined}
       alt="Unveiled"
       className={cn("h-7 w-auto md:h-9", className)}
     />
@@ -223,7 +227,7 @@ export function ShellNavigation({
       <div className="content-shell">
         <div className="flex min-h-16 items-center justify-between gap-3 md:min-h-20 md:gap-4">
           <a
-            href={`/${shell.language.selected.toLowerCase()}/`}
+            href={`/app/${shell.language.selected.toLowerCase()}/`}
             className="flex min-w-0 items-center gap-3 text-left"
           >
             <ShellLogo variant={shell.logo.variant} />

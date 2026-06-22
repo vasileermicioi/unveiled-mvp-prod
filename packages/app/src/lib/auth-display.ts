@@ -1,3 +1,4 @@
+import { APP_BASE_PREFIX } from "~/lib/app-base";
 import type {
   AppShellViewModel,
   PageShellViewModel,
@@ -21,7 +22,7 @@ import { routePathFor } from "~/lib/product-routes";
 
 function publicNavItems(language: AppShellViewModel["language"]["selected"]) {
   const copy = copyFor(language).shell.nav;
-  const prefix = `/${language.toLowerCase()}`;
+  const prefix = `${APP_BASE_PREFIX}/${language.toLowerCase()}`;
   return [
     {
       id: "discover",
@@ -56,7 +57,7 @@ function memberNavItems(
   language: AppShellViewModel["language"]["selected"],
 ) {
   const copy = copyFor(language).shell.nav;
-  const prefix = `/${language.toLowerCase()}`;
+  const prefix = `${APP_BASE_PREFIX}/${language.toLowerCase()}`;
   return [
     {
       id: "member",
@@ -95,7 +96,7 @@ function memberNavItems(
 }
 
 function operationalNavItem(viewer: AuthenticatedViewer) {
-  const prefix = `/${viewer.language.toLowerCase()}`;
+  const prefix = `${APP_BASE_PREFIX}/${viewer.language.toLowerCase()}`;
   return [
     {
       id: viewer.viewerContext,
@@ -116,7 +117,7 @@ export function createShellFromViewer(
   const isMember = viewer.kind === "authenticated" && viewer.role === "USER";
   const copy = copyFor(viewer.language);
   const shellNav = copy.shell.nav;
-  const prefix = `/${viewer.language.toLowerCase()}`;
+  const prefix = `${APP_BASE_PREFIX}/${viewer.language.toLowerCase()}`;
 
   return {
     viewerContext: viewer.viewerContext,
