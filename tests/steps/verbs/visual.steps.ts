@@ -86,6 +86,16 @@ export function registerVisualSteps(registry: StepRegistry): void {
         return;
       }
 
+      if (trimmed === "the deep-link-preview is not visible") {
+        const count = await page.locator("#deep-link-preview").count();
+        if (count !== 0) {
+          throw new Error(
+            `Expected deep-link-preview to be absent, found ${count} element(s)`,
+          );
+        }
+        return;
+      }
+
       throw new Error(`Unknown visual assertion: ${assertion}`);
     },
   );
