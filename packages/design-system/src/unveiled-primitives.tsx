@@ -163,7 +163,7 @@ export function Field({
   );
 }
 
-const TEXT_INPUT_CLASS = cn(
+const _TEXT_INPUT_CLASS = cn(
   "min-h-12 w-full border-4 border-brand-dark bg-white px-4 py-3 text-sm font-bold outline-none placeholder:text-brand-dark/30 focus:bg-brand-cream focus:ring-4 focus:ring-brand-dark/15 disabled:bg-brand-grey disabled:opacity-50",
 );
 

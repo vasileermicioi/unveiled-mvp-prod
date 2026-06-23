@@ -121,7 +121,7 @@ function safeActionError(
       "name" in error &&
       error.name === "AuthAccessError")
   ) {
-    return formFailure((error as any).message, lang);
+    return formFailure((error as Error).message, lang);
   }
   logger.error("action_unexpected_error", { err: error });
   return formFailure("The request could not be completed.", lang);

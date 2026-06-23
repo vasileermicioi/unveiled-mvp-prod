@@ -154,7 +154,7 @@ const copy = copyFor(lang).venueCheckIn;
       if (status) status.textContent = checkingInText;
       void actions
          .checkInWithVenueQr({ partnerId, venueToken })
-         .then((result) => {
+         .then((result: { data?: { ok?: boolean; data?: { alreadyCheckedIn?: boolean }; notice?: { message?: string }; formError?: string } }) => {
            if (card) card.classList.add("hidden");
 
            if (result.data?.ok) {

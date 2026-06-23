@@ -24,7 +24,8 @@ import { buildRequestValidatorsContent, readOpenApi } from "./specs-shared";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const outputDir = join(root, "typespec/output");
-const generatedDir = join(root, "src/lib/generated");
+const generatedDir = join(root, "packages/api/src");
+const generatedFile = "lib-generated-request-validators.ts";
 
 function ensureDir(path: string): void {
   if (!existsSync(path)) mkdirSync(path, { recursive: true });
@@ -42,7 +43,7 @@ function main(): void {
     `[specs:gen] Parsed ${yamlPath} (${schemaCount} schemas, OpenAPI ${String(doc.openapi ?? "?")})`,
   );
 
-  const validatorsPath = join(generatedDir, "request-validators.ts");
+  const validatorsPath = join(generatedDir, generatedFile);
   writeFileSync(validatorsPath, content);
   // eslint-disable-next-line no-console
   console.log(`[specs:gen] Wrote ${validatorsPath}`);

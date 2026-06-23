@@ -1,4 +1,5 @@
 import { actions } from "astro:actions";
+import { Button, Divider, Panel } from "@unveiled/design-system";
 import {
   ArrowRight,
   Calendar,
@@ -9,8 +10,6 @@ import {
   Plus,
 } from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "@unveiled/design-system";
-import { Divider, Panel } from "@unveiled/design-system";
 import { ModalShell } from "~/components/unveiled/app-shell";
 import { demoModalShell } from "~/lib/app-shell-view-models";
 import {

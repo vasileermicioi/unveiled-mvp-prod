@@ -1,6 +1,5 @@
-import { useId, useState } from "react";
-
 import { Button } from "@unveiled/design-system";
+import { useId, useState } from "react";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 
 export interface LogoutFlowProps {
@@ -34,7 +33,6 @@ export function LogoutFlow({
       {open ? (
         <ul
           id={menuId}
-          role="menu"
           aria-label={copy.menuLabel}
           className="absolute right-0 z-10 mt-2 grid w-56 gap-1 border-4 border-brand-dark bg-white p-1"
         >

@@ -1,13 +1,12 @@
-import { count, eq } from "drizzle-orm";
-
 import { type Db, db } from "@unveiled/api/db/client";
 import { savedEvents, userProfiles } from "@unveiled/api/db/schema";
-import { auth } from "@unveiled/api/middleware/auth";
 import {
   defaultLanguage,
   languageFromCookieHeader,
   normalizeLanguage,
 } from "@unveiled/api/i18n";
+import { auth } from "@unveiled/api/middleware/auth";
+import { count, eq } from "drizzle-orm";
 
 export type BetterAuthSession = typeof auth.$Infer.Session;
 export type BetterAuthUser = BetterAuthSession["user"];

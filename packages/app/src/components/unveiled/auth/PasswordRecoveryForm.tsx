@@ -1,7 +1,5 @@
+import { Button, Field, TextInput } from "@unveiled/design-system";
 import { useId, useState } from "react";
-
-import { Button } from "@unveiled/design-system";
-import { Field, TextInput } from "@unveiled/design-system";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 
 export interface PasswordRecoveryFormValues {
@@ -50,7 +48,6 @@ export function PasswordRecoveryForm({
 
   return (
     <form
-      role="form"
       aria-label={copy.title}
       className="grid gap-4"
       onSubmit={handleSubmit}
@@ -79,13 +76,13 @@ export function PasswordRecoveryForm({
       <Button type="submit" className="w-full" loading={isSubmitting}>
         {copy.submit}
       </Button>
-      <a
-        href="#"
+      <button
+        type="button"
         className="text-sm underline opacity-70"
         onClick={(event) => event.preventDefault()}
       >
         {copy.backToLogin}
-      </a>
+      </button>
     </form>
   );
 }

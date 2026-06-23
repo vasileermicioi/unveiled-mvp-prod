@@ -83,7 +83,7 @@ export function pickLangFromRequest(request: Request): AppLang {
     }
   }
   const acceptLanguage = request.headers.get("accept-language");
-  if (acceptLanguage && acceptLanguage.toLowerCase().includes("de")) {
+  if (acceptLanguage?.toLowerCase().includes("de")) {
     return "de";
   }
   return DEFAULT_APP_LANG;

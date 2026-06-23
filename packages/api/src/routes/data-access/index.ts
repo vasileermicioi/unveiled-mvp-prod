@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import {
+  type AppType,
   AuthAccessError,
   getViewer,
   loadAdminData,
@@ -8,7 +7,6 @@ import {
   loadMemberData,
   loadPublicDiscoveryData,
   toAuthResponse,
-  type AppType,
 } from "@unveiled/api/worker";
 
 function filtersFromUrl(url: string) {

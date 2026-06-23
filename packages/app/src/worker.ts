@@ -46,7 +46,7 @@ async function runScheduledPartnerCodeJob(
 
   const result = await runDailyPartnerCodeJob({
     now: new Date(controller.scheduledTime),
-    config: getJobsConfig(env),
+    config: getJobsConfig(env as unknown as NodeJS.ProcessEnv),
     logger: workerLogger,
   });
 

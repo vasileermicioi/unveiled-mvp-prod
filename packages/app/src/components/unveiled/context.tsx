@@ -897,9 +897,10 @@ export function VisualSystemProvider({
       if (language === "DE" || language === "EN") {
         setSelectedLanguage(language);
         if (typeof document !== "undefined") {
+          // biome-ignore lint/suspicious/noDocumentCookie: client-side cookie write for instant locale preference
           document.cookie = `unveiled_lang=${language}; path=/; max-age=31536000; SameSite=Lax`;
         }
-        actions.setLanguage({ language }).catch((e) => {
+        actions.setLanguage({ language }).catch((e: unknown) => {
           console.error("Failed to set user language profile:", e);
         });
         if (typeof window !== "undefined") {

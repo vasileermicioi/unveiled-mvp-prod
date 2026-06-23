@@ -1,12 +1,32 @@
 import { describe, expect, it } from "bun:test";
+import { isPublicHost } from "../../packages/orchestrator/src/index";
 import worker, {
-  REDIRECT_PATHS,
   type OrchestratorEnv,
 } from "../../packages/orchestrator/src/worker";
-import { isPublicHost } from "../../packages/orchestrator/src/index";
 
 function ctx(): ExecutionContext {
   return {} as ExecutionContext;
+}
+
+function makeApiFetcher(): {
+  fetcher: Fetcher;
+  seen: Request[];
+} {
+  const seen: Request[] = [];
+  const fetcher = {
+    fetch: async (input: RequestInfo) => {
+      const request = input instanceof Request ? input : new Request(input);
+      seen.push(request);
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    connect() {
+      throw new Error("not supported");
+    },
+  } as unknown as Fetcher;
+  return { fetcher, seen };
 }
 
 describe("orchestrator public health/readiness replacement", () => {
@@ -31,11 +51,14 @@ describe("orchestrator public health/readiness replacement", () => {
       ctx(),
     );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
-    expect(response.headers.get("Strict-Transport-Security")).toContain("max-age=");
+    expect(response.headers.get("Strict-Transport-Security")).toContain(
+      "max-age=",
+    );
   });
 
-  it("redirects /api/health.json to /healthz", async () => {
-    const env: OrchestratorEnv = {};
+  it("forwards /api/health.json to the API binding on the public hostname (deprecation window ended)", async () => {
+    const { fetcher, seen } = makeApiFetcher();
+    const env: OrchestratorEnv = { API: fetcher };
     const response = await worker.fetch(
       new Request("https://unveiled.app/api/health.json", {
         headers: { host: "unveiled.app" },
@@ -43,12 +66,14 @@ describe("orchestrator public health/readiness replacement", () => {
       env,
       ctx(),
     );
-    expect(response.status).toBe(301);
-    expect(response.headers.get("Location")).toBe("/healthz");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Location")).toBeNull();
+    expect(seen).toHaveLength(1);
   });
 
-  it("redirects /api/readiness.json to /readyz", async () => {
-    const env: OrchestratorEnv = {};
+  it("forwards /api/readiness.json to the API binding on the public hostname (deprecation window ended)", async () => {
+    const { fetcher, seen } = makeApiFetcher();
+    const env: OrchestratorEnv = { API: fetcher };
     const response = await worker.fetch(
       new Request("https://unveiled.app/api/readiness.json", {
         headers: { host: "unveiled.app" },
@@ -56,25 +81,14 @@ describe("orchestrator public health/readiness replacement", () => {
       env,
       ctx(),
     );
-    expect(response.status).toBe(301);
-    expect(response.headers.get("Location")).toBe("/readyz");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Location")).toBeNull();
+    expect(seen).toHaveLength(1);
   });
 
-  it("does not redirect when the host is not public (preserves service-binding reachability)", async () => {
-    let apiCalls = 0;
-    const api = {
-      fetch: async () => {
-        apiCalls += 1;
-        return new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      },
-      connect() {
-        throw new Error("not supported");
-      },
-    } as unknown as Fetcher;
-    const env: OrchestratorEnv = { API: api };
+  it("forwards /api/health.json to API binding when host is not public (service-binding reachability)", async () => {
+    const { fetcher, seen } = makeApiFetcher();
+    const env: OrchestratorEnv = { API: fetcher };
     const response = await worker.fetch(
       new Request("https://internal.svc/api/health.json", {
         headers: { host: "internal.svc" },
@@ -83,14 +97,7 @@ describe("orchestrator public health/readiness replacement", () => {
       ctx(),
     );
     expect(response.status).toBe(200);
-    expect(apiCalls).toBe(1);
-  });
-
-  it("REDIRECT_PATHS only covers the deprecated JSON endpoints", () => {
-    expect([...REDIRECT_PATHS.keys()].sort()).toEqual([
-      "/api/health.json",
-      "/api/readiness.json",
-    ]);
+    expect(seen).toHaveLength(1);
   });
 
   it("isPublicHost whitelists unveiled.app and localhost hosts", () => {

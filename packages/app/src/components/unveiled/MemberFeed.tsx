@@ -1,5 +1,17 @@
 import { actions } from "astro:actions";
 import {
+  Badge,
+  Button,
+  Card,
+  Divider,
+  Field,
+  Panel,
+  SelectInput,
+  StatePanel,
+  TextInput,
+} from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
+import {
   ArrowLeft,
   ArrowRight,
   Check,
@@ -10,27 +22,14 @@ import {
   Mail,
 } from "lucide-react";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@unveiled/design-system";
-import {
-  Badge,
-  Card,
-  Divider,
-  Field,
-  Panel,
-  SelectInput,
-  StatePanel,
-  TableRow,
-  TextInput,
-} from "@unveiled/design-system";
-import { StripeCheckoutRedirectButton } from "~/components/payments/StripeCheckoutRedirectButton";
 import { CreditLedgerViewTableSemantics } from "~/components/payments/CreditLedgerViewTableSemantics";
+import { StripeCheckoutRedirectButton } from "~/components/payments/StripeCheckoutRedirectButton";
 import { SubscriptionPortalLink } from "~/components/payments/SubscriptionPortalLink";
 import { DiscoveryShell } from "~/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "~/components/unveiled/discovery-map";
 import { demoDiscoveryShell } from "~/lib/app-shell-view-models";
 import { readDiscoveryMapProviderConfig } from "~/lib/discovery-map";
 import type { EventCardView } from "~/lib/unveiled-view-models";
-import { cn } from "@unveiled/design-system/lib/utils";
 import { BookingModal } from "./BookingModal";
 import {
   defaultOnboardingPreferences,

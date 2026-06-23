@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { z } from "zod";
+import { StripeEventSchema } from "@unveiled/api/generated-bundled";
 
 import {
   getPaymentsConfig,
@@ -7,7 +7,7 @@ import {
   processStripeEvent,
 } from "@unveiled/api/payments";
 import type { AppType } from "@unveiled/api/worker";
-import { StripeEventSchema } from "@unveiled/api/generated-bundled";
+import { z } from "zod";
 
 const webhookResponseSchema = z.union([
   z.object({ received: z.literal(true) }),

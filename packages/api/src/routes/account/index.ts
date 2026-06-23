@@ -5,9 +5,9 @@ import {
   signUpWithEmail,
 } from "@unveiled/api/auth-account-actions";
 import {
+  type AppType,
   getCloudflareEnv,
   type RuntimeEnv,
-  type AppType,
 } from "@unveiled/api/worker";
 
 function readEnv(c: { get: (k: string) => unknown }): RuntimeEnv {

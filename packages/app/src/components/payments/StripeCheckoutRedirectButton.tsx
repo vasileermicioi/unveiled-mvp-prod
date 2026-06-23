@@ -1,10 +1,7 @@
+import { Button, Field, Panel, TextInput } from "@unveiled/design-system";
 import { useContext, useState } from "react";
-
-import { Button } from "@unveiled/design-system";
-import { Field, Panel, TextInput } from "@unveiled/design-system";
-import { copyFor } from "~/lib/i18n";
-
 import { LanguageContext } from "~/components/unveiled/context-primitives";
+import { copyFor } from "~/lib/i18n";
 
 export type StripeCheckoutPaymentMethod =
   | "EXPRESS"

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { Field, Panel, SelectInput, TextInput } from "@unveiled/design-system";
+import { useEffect, useState } from "react";
 import type { DiscoveryFilters } from "~/lib/data-access/query-keys";
 import { useCopy, useLiveData } from "./context";
 
@@ -29,7 +29,6 @@ export function DiscoveryFilterPanel() {
       className="grid gap-4 p-4 md:grid-cols-4"
     >
       <form
-        role="search"
         id={SEARCH_LANDMARK_ID}
         aria-labelledby={`${SEARCH_LANDMARK_ID}-heading`}
         onSubmit={(event) => event.preventDefault()}

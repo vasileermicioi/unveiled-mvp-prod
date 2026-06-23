@@ -2,7 +2,7 @@ export {
   checkDatabaseConnection,
   createDb,
   type Db,
-  getDb,
   db,
+  getDb,
   postgresClient,
 } from "@unveiled/api/db/client";

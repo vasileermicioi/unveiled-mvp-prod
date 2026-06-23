@@ -149,7 +149,7 @@ model {
     #role-ui, #surface-public-discover, #domain-discover, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/pages/[lang]'
+      path 'packages/app/src/pages/[lang]'
     }
     description 'Public discovery pages: discover, FAQ, how-it-works, membership, onboarding.'
   }
@@ -176,7 +176,7 @@ model {
     #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/auth.ts'
+      path 'packages/app/src/lib/auth.ts'
     }
     description 'Better Auth integration and session helpers.'
   }
@@ -184,140 +184,140 @@ model {
     #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/auth-account-actions.ts'
+      path 'packages/app/src/lib/auth-account-actions.ts'
     }
   }
   libAuthProfile = component 'lib-auth-profile' {
     #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/auth-profile.ts'
+      path 'packages/app/src/lib/auth-profile.ts'
     }
   }
   libAdminOps = component 'lib-admin-operations' {
     #role-process, #surface-runtime, #domain-operations, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/admin-operations.ts'
+      path 'packages/app/src/lib/admin-operations.ts'
     }
   }
   libAppShell = component 'lib-app-shell-view-models' {
     #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/app-shell-view-models.ts'
+      path 'packages/app/src/lib/app-shell-view-models.ts'
     }
   }
   libAssets = component 'lib-assets-storage' {
     #role-process, #surface-runtime, #domain-media, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/assets/storage.ts'
+      path 'packages/app/src/lib/assets/storage.ts'
     }
   }
   libBehavior = component 'lib-behavior-tracking' {
     #role-process, #surface-runtime, #domain-discover, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/behavior-tracking.ts'
+      path 'packages/app/src/lib/behavior-tracking.ts'
     }
   }
   libBookings = component 'lib-booking-transactions' {
     #role-process, #surface-runtime, #domain-bookings, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/booking-transactions.ts'
+      path 'packages/app/src/lib/booking-transactions.ts'
     }
   }
   libCalendar = component 'lib-calendar' {
     #role-process, #surface-runtime, #domain-bookings, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/calendar.ts'
+      path 'packages/app/src/lib/calendar.ts'
     }
   }
   libDiscoveryMap = component 'lib-discovery-map' {
     #role-process, #surface-runtime, #domain-discover, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/discovery-map.ts'
+      path 'packages/app/src/lib/discovery-map.ts'
     }
   }
   libEnv = component 'lib-env' {
     #role-process, #surface-runtime, #domain-deployment, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/env.ts'
+      path 'packages/app/src/lib/env.ts'
     }
   }
   libFormsSchemas = component 'lib-forms-schemas' {
     #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/forms/schemas.ts'
+      path 'packages/app/src/lib/forms/schemas.ts'
     }
   }
   libFormsClientAction = component 'lib-forms-client-action' {
     #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/forms/client-action.ts'
+      path 'packages/app/src/lib/forms/client-action.ts'
     }
   }
   libI18n = component 'lib-i18n' {
     #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/i18n.ts'
+      path 'packages/app/src/lib/i18n.ts'
     }
   }
   libProductRoutes = component 'lib-product-routes' {
     #role-process, #surface-runtime, #domain-app-shell, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/product-routes.ts'
+      path 'packages/app/src/lib/product-routes.ts'
     }
   }
   libDataAccessRepos = component 'lib-data-access-repositories' {
     #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/data-access/repositories.ts'
+      path 'packages/app/src/lib/data-access/repositories.ts'
     }
   }
   libDataAccessLoaders = component 'lib-data-access-loaders' {
     #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/data-access/loaders.ts'
+      path 'packages/app/src/lib/data-access/loaders.ts'
     }
   }
   libDataAccessFetchers = component 'lib-data-access-fetchers' {
     #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/data-access/fetchers.ts'
+      path 'packages/app/src/lib/data-access/fetchers.ts'
     }
   }
   libDataAccessMappers = component 'lib-data-access-mappers' {
     #role-process, #surface-runtime, #domain-data-access, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/data-access/mappers.ts'
+      path 'packages/app/src/lib/data-access/mappers.ts'
     }
   }
   libJobsDailyCodes = component 'lib-jobs-daily-partner-codes' {
     #role-process, #surface-runtime, #domain-jobs, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/jobs/daily-partner-codes.ts'
+      path 'packages/app/src/lib/jobs/daily-partner-codes.ts'
     }
   }
   libJobsResend = component 'lib-jobs-resend-client' {
     #role-process, #surface-runtime, #domain-notifications, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/jobs/resend-client.ts'
+      path 'packages/app/src/lib/jobs/resend-client.ts'
     }
   }
 
@@ -348,7 +348,7 @@ model {
     #role-process, #surface-runtime, #domain-forms, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/actions/index.ts'
+      path 'packages/app/src/actions/index.ts'
     }
     description 'Astro Actions handler (`src/actions/index.ts`).'
   }
@@ -359,7 +359,7 @@ model {
     #role-store, #surface-data, #domain-domain-data, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/db/schema.ts'
+      path 'packages/app/src/db/schema.ts'
     }
     description 'Drizzle schema and repository functions over PGlite/Neon.'
   }
@@ -371,7 +371,7 @@ model {
     #role-process, #surface-runtime, #domain-auth, #spec-likec4-architecture
     #has-path
     metadata {
-      path 'src/lib/auth.ts'
+      path 'packages/app/src/lib/auth.ts'
     }
     description 'Better Auth engine wired through the Drizzle adapter.'
   }

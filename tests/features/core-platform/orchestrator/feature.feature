@@ -62,18 +62,6 @@ Feature: Routing Orchestrator Dispatch
     And the response includes X-Frame-Options: DENY
     And the response includes a Content-Security-Policy that allows 'self' and *.stripe.com
 
-  @ladle(component=OrchestratorDispatch, story=DeprecatedHealthJsonRedirectsToHealthz)
-  Scenario: Deprecated /api/health.json redirects to /healthz during the deprecation window
-    When the visitor opens /api/health.json
-    Then the response status is 301
-    And the Location header is /healthz
-
-  @ladle(component=OrchestratorDispatch, story=DeprecatedReadinessJsonRedirectsToReadyz)
-  Scenario: Deprecated /api/readiness.json redirects to /readyz during the deprecation window
-    When the visitor opens /api/readiness.json
-    Then the response status is 301
-    And the Location header is /readyz
-
   @ladle(component=OrchestratorDispatch, story=BareAppPathRedirectsToLocalizedAppHome)
   Scenario: GET /app redirects to /app/en/ when no language preference is set
     When the visitor opens /app

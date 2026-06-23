@@ -96,7 +96,7 @@ The OpenAPI document served at `GET /api/openapi.json` SHALL be produced by the 
 
 ### Requirement: Cloudflare Worker Deploys From packages/api
 
-The Hono app SHALL deploy to Cloudflare Workers via a dedicated `wrangler.api.toml` at the repo root, with `name = "unveiled-api"` and `main = "packages/api/dist/worker.js"`. `wrangler.api.toml` SHALL declare the same `SESSION` KV namespace id and `ASSETS_BUCKET` R2 binding as the per-package Wrangler configs used by the app and landing so service-bound calls from the orchestrator and from the Astro app succeed in dev, preview, and production. The API Worker is the downstream target of the orchestrator's `[[services]] binding = "API"` declaration in `wrangler.orchestrator.toml`; the API Worker is no longer the public-facing entry point for `/api/*` traffic — the orchestrator is.
+The Hono app SHALL deploy to Cloudflare Workers via a dedicated `wrangler.api.toml` at the repo root, with `name = "unveiled-api"` and `main = "packages/api/dist/worker.js"`. `wrangler.api.toml` SHALL declare the same `SESSION` KV namespace id and `ASSETS_BUCKET` R2 binding as the per-package Wrangler configs used by the app and landing so service-bound calls from the orchestrator and from the Astro app succeed in dev, preview, and production. The API Worker is the downstream target of the orchestrator's `[[services]] binding = "API"` declaration in `wrangler.orchestrator.toml`; the API Worker is no longer the public-facing entry point for `/api/*` traffic — the orchestrator is. The Hono app MUST register `healthRoute`, `readinessRoute`, `openapiYamlRoute`, and `openapiJsonRoute` with `path` values of `"/api/health.json"`, `"/api/readiness.json"`, `"/api/openapi.yaml"`, and `"/api/openapi.json"` respectively.
 
 #### Scenario: Worker responds to health probes
 
@@ -104,6 +104,28 @@ The Hono app SHALL deploy to Cloudflare Workers via a dedicated `wrangler.api.to
 - **THEN** `GET /api/health.json` returns `200` with the same payload shape the Astro endpoint returned
 - **AND** `GET /api/readiness.json` returns `200` with the same payload shape the Astro endpoint returned
 - **AND** both endpoints are reachable via service binding (from the orchestrator's `/readyz` probe and from the app's middleware short-circuit) but are not the public-facing health surface — `/healthz` and `/readyz` (served by the orchestrator) are.
+
+### Requirement: Every Hono Route Uses The /api/ Prefix
+
+Every Hono route registered via `createRoute({ path })` under `packages/api/src/routes/**` MUST declare its `path` with a leading `/api/` segment. This includes the system routes (`health`, `readiness`, `openapi.yaml`, `openapi.json`), which MUST be served at `/api/health.json`, `/api/readiness.json`, `/api/openapi.yaml`, and `/api/openapi.json` respectively. The orchestrator forwards inbound `/api/*` requests to the API Worker without stripping the prefix, so the API Worker MUST register its routes with the prefix intact.
+
+#### Scenario: System routes use the /api/ prefix
+
+- **WHEN** a developer inspects `packages/api/src/routes/system/index.ts`
+- **THEN** the four `createRoute({ path })` values are `"/api/health.json"`, `"/api/readiness.json"`, `"/api/openapi.yaml"`, and `"/api/openapi.json"`
+- **AND** no other Hono route under `packages/api/src/routes/**` declares a `path` that does not begin with `/api/`.
+
+#### Scenario: Hono-generated OpenAPI document reflects the prefix
+
+- **WHEN** `bun --filter @unveiled/api run openapi:gen` is run
+- **THEN** `packages/api/openapi.generated.yaml` lists the four system routes under their `/api/...` paths
+- **AND** the diff against `typespec/output/openapi.yaml` (modulo `servers`, `info.version`, and timestamps) is limited to the path-prefix change.
+
+#### Scenario: Route-prefix guard fails CI on drift
+
+- **WHEN** `bun run test:unit` runs
+- **THEN** the permanent unit test under `tests/unit/api-route-prefixes.test.ts` parses every `createRoute({ path })` value under `packages/api/src/routes/**/*.ts`
+- **AND** fails when any value does not start with `/api/`.
 
 #### Scenario: wrangler.api.toml binds the same secrets and bindings
 

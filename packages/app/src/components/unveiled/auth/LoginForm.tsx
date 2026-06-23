@@ -1,7 +1,5 @@
+import { Button, Field, TextInput } from "@unveiled/design-system";
 import { useId, useState } from "react";
-
-import { Button } from "@unveiled/design-system";
-import { Field, TextInput } from "@unveiled/design-system";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 
 export interface LoginFormValues {
@@ -65,7 +63,6 @@ export function LoginForm({
 
   return (
     <form
-      role="form"
       aria-label={copy.title}
       className="grid gap-4"
       onSubmit={handleSubmit}
@@ -124,20 +121,20 @@ export function LoginForm({
         {copy.submit}
       </Button>
       <div className="flex flex-wrap justify-between gap-2 text-sm">
-        <a
-          href="#"
+        <button
+          type="button"
           className="underline opacity-70"
           onClick={(event) => event.preventDefault()}
         >
           {copy.forgotPassword}
-        </a>
-        <a
-          href="#"
+        </button>
+        <button
+          type="button"
           className="underline opacity-70"
           onClick={(event) => event.preventDefault()}
         >
           {copy.createAccount}
-        </a>
+        </button>
       </div>
     </form>
   );

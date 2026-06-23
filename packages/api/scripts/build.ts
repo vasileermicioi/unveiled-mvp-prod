@@ -1,6 +1,6 @@
-import { build } from "esbuild";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { build } from "esbuild";
 
 import { inlineOpenApiYamlPlugin } from "./inline-openapi-yaml";
 
@@ -20,7 +20,7 @@ function packageAliasPlugin() {
           return {
             path: resolve(
               process.cwd(),
-              "../../src/lib/generated/request-validators.ts",
+              "../lib-generated-request-validators.ts",
             ),
           };
         }
@@ -55,7 +55,13 @@ await build({
   outfile: resolve(outdir, "worker.js"),
   platform: "browser",
   conditions: ["worker", "browser"],
-  external: ["cloudflare:workers"],
+  external: [
+    "cloudflare:workers",
+    "node:fs",
+    "node:path",
+    "node:os",
+    "node:crypto",
+  ],
   sourcemap: true,
   minify: false,
   logLevel: "info",

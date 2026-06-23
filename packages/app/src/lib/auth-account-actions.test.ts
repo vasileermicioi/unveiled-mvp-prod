@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
-
-import { copyFor, mapAuthError, missingKeyPlaceholder } from "~/lib/i18n";
 import { readAuthErrorCode } from "~/lib/auth-account-actions";
+import { copyFor, mapAuthError, missingKeyPlaceholder } from "~/lib/i18n";
 
 describe("auth action error mapping", () => {
   test("readAuthErrorCode extracts the Better Auth body.code", () => {

@@ -1046,7 +1046,7 @@ export function mapAuthError(
   if (!code) {
     return bundle.unknown;
   }
-  if (Object.prototype.hasOwnProperty.call(bundle, code)) {
+  if (Object.hasOwn(bundle, code)) {
     return bundle[code as AuthErrorCode];
   }
   if (typeof console !== "undefined" && process.env.NODE_ENV !== "production") {

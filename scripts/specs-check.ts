@@ -26,7 +26,8 @@ import { buildRequestValidatorsContent, readOpenApi } from "./specs-shared";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const outputDir = join(root, "typespec/output");
-const generatedDir = join(root, "src/lib/generated");
+const generatedDir = join(root, "packages/api/src");
+const generatedFile = "lib-generated-request-validators.ts";
 
 function ensureDir(path: string): void {
   if (!existsSync(path)) mkdirSync(path, { recursive: true });
@@ -81,7 +82,7 @@ options:
   const doc = readOpenApi(tmpYaml);
   const { content: candidate, schemaCount } =
     buildRequestValidatorsContent(doc);
-  const committedValidators = join(generatedDir, "request-validators.ts");
+  const committedValidators = join(generatedDir, generatedFile);
   if (!existsSync(committedValidators)) {
     console.error(
       `[specs:check] no committed ${committedValidators}; run \`bun run specs:gen\``,
@@ -89,9 +90,7 @@ options:
     process.exit(1);
   }
   if (candidate !== readFileSync(committedValidators, "utf8")) {
-    console.error(
-      `[specs:check] drift: src/lib/generated/request-validators.ts is out of date`,
-    );
+    console.error(`[specs:check] drift: ${committedValidators} is out of date`);
     console.error("  regenerate via `bun run specs:gen`");
     process.exit(1);
   }

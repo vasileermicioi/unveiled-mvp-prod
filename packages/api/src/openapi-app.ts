@@ -1,15 +1,4 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import { OpenAPIHono } from "@hono/zod-openapi";
-
-import { mountAccountRoutes } from "./routes/account";
-import { mountActionRoutes } from "./routes/actions";
-import { mountAdminRoutes } from "./routes/admin";
-import { mountAuthRoutes } from "./routes/auth";
-import { mountDataAccessRoutes } from "./routes/data-access";
-import { mountStripeRoutes } from "./routes/stripe";
-import { mountSystemRoutes } from "./routes/system";
 import { authMiddleware } from "./middleware/auth";
 import {
   corsMiddleware,
@@ -17,6 +6,13 @@ import {
   runtimeEnvMiddleware,
 } from "./middleware/cors";
 import { errorHandler, jsonErrorMiddleware } from "./middleware/error";
+import { mountAccountRoutes } from "./routes/account";
+import { mountActionRoutes } from "./routes/actions";
+import { mountAdminRoutes } from "./routes/admin";
+import { mountAuthRoutes } from "./routes/auth";
+import { mountDataAccessRoutes } from "./routes/data-access";
+import { mountStripeRoutes } from "./routes/stripe";
+import { mountSystemRoutes } from "./routes/system";
 
 export function buildDocument(): unknown {
   const app = new OpenAPIHono();
@@ -31,7 +27,9 @@ export function buildDocument(): unknown {
   mountAccountRoutes(
     app as unknown as Parameters<typeof mountAccountRoutes>[0],
   );
+  mountActionRoutes(app as unknown as Parameters<typeof mountActionRoutes>[0]);
   mountAdminRoutes(app as unknown as Parameters<typeof mountAdminRoutes>[0]);
+  mountAuthRoutes(app as unknown as Parameters<typeof mountAuthRoutes>[0]);
   mountDataAccessRoutes(
     app as unknown as Parameters<typeof mountDataAccessRoutes>[0],
   );
@@ -48,6 +46,3 @@ export function buildDocument(): unknown {
     servers: [{ url: "/" }],
   });
 }
-
-void readFileSync;
-void resolve;

@@ -1,7 +1,6 @@
-import { RefreshCw } from "lucide-react";
-
-import { QueryProvider } from "~/components/providers/query-provider";
 import { Button } from "@unveiled/design-system";
+import { RefreshCw } from "lucide-react";
+import { QueryProvider } from "~/components/providers/query-provider";
 import { usePublicDiscoveryQuery } from "~/lib/data-access/hooks";
 import type { PublicDiscoveryData } from "~/lib/data-access/repositories";
 

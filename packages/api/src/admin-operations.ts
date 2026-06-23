@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import type { AuthenticatedViewer } from "@unveiled/api/auth-profile";
 
 import { type Db, db } from "@unveiled/api/db/client";
 import {
@@ -11,12 +11,12 @@ import {
   userProfiles,
   waitlistEntries,
 } from "@unveiled/api/db/schema";
-import { auth } from "@unveiled/api/middleware/auth";
-import type { AuthenticatedViewer } from "@unveiled/api/auth-profile";
 import type {
   EventFormInput,
   PartnerFormInput,
 } from "@unveiled/api/forms/schemas";
+import { auth } from "@unveiled/api/middleware/auth";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export type OperationFailureState =
   | "validation_error"
