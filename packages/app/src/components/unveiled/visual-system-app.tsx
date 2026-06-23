@@ -53,10 +53,32 @@ import { PartnerPortal } from "./PartnerPortal";
 // Modularized components
 import { FaqPage, HowItWorks, PublicDiscover } from "./PublicDiscover";
 
-function LandingPage({ callbackURL = "/" }: { callbackURL?: string }) {
+function LandingPage({
+  callbackURL = "/",
+  initialMode = "login",
+}: {
+  callbackURL?: string;
+  initialMode?: "login" | "signup" | "recovery";
+}) {
   const selectedLanguage = useContext(LanguageContext);
-  const copy = useCopy().public;
-  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
+  const allCopy = useCopy();
+  const copy = allCopy.public;
+  const deepLinkCopy = allCopy.routing.deepLink;
+  const safeCallbackTarget = (() => {
+    const trimmed = callbackURL.trim();
+    if (
+      !trimmed ||
+      trimmed === "/" ||
+      trimmed === `/${selectedLanguage.toLowerCase()}` ||
+      trimmed === `/${selectedLanguage.toLowerCase()}/`
+    ) {
+      return null;
+    }
+    return trimmed;
+  })();
+  const [mode, setMode] = useState<"login" | "signup" | "recovery">(
+    initialMode,
+  );
   const [formMessage, setFormMessage] = useState<string>(
     copy.auth.defaultMessage,
   );
@@ -236,6 +258,28 @@ function LandingPage({ callbackURL = "/" }: { callbackURL?: string }) {
             {formMessage || copy.auth.defaultMessage}
           </p>
         </Panel>
+        {safeCallbackTarget ? (
+          <div
+            id="deep-link-preview"
+            role="status"
+            aria-live="polite"
+            className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+          >
+            <p>
+              {deepLinkCopy.preview.replace(
+                "{destination}",
+                safeCallbackTarget,
+              )}
+            </p>
+            <input
+              id="deep-link-redirect-input"
+              type="hidden"
+              name="callbackURL"
+              value={safeCallbackTarget}
+              readOnly
+            />
+          </div>
+        ) : null}
         {isSuccess ? (
           <StatePanel
             state="success"
@@ -362,8 +406,10 @@ function LandingPage({ callbackURL = "/" }: { callbackURL?: string }) {
 
 function VisualSystemAppContent({
   hasInitialShell = false,
+  initialMode = "login",
 }: {
   hasInitialShell?: boolean;
+  initialMode?: "login" | "signup" | "recovery";
 }) {
   const {
     view,
@@ -411,7 +457,9 @@ function VisualSystemAppContent({
         ) : null}
       </div>
       <PageShell page={pageShell} onAction={navigateShell}>
-        {view === "landing" ? <LandingPage callbackURL={callbackURL} /> : null}
+        {view === "landing" ? (
+          <LandingPage callbackURL={callbackURL} initialMode={initialMode} />
+        ) : null}
         {view === "discover" ? <PublicDiscover /> : null}
         {view === "how" ? <HowItWorks /> : null}
         {view === "onboarding" ? <OnboardingPage /> : null}
@@ -456,12 +504,14 @@ export function VisualSystemApp({
   initialView = "landing",
   callbackURL = "/",
   initialTab = "metrics",
+  initialMode = "login",
 }: {
   initialShell?: AppShellViewModel;
   initialDiscovery?: unknown;
   initialView?: View;
   callbackURL?: string;
   initialTab?: string;
+  initialMode?: "login" | "signup" | "recovery";
 }) {
   const initialSurface = isInitialSurfaceData(initialDiscovery)
     ? initialDiscovery
@@ -477,7 +527,10 @@ export function VisualSystemApp({
           callbackURL={callbackURL}
           initialTab={initialTab}
         >
-          <VisualSystemAppContent hasInitialShell={Boolean(initialShell)} />
+          <VisualSystemAppContent
+            hasInitialShell={Boolean(initialShell)}
+            initialMode={initialMode}
+          />
         </VisualSystemProvider>
       </QueryProvider>
     </HeroUIProvider>

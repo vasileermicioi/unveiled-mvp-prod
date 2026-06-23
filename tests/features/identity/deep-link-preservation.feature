@@ -7,7 +7,7 @@ Feature: Deep-link preservation
   are rejected by `parseSafeRedirectTarget` and the viewer lands on
   the safe per-surface fallback.
 
-  @story(component=DeepLinkPreservation, story=HappyPath)
+  @ladle(component=DeepLinkPreservation, story=HappyPath)
   Scenario: Login form preserves a safe deep-link target
     Then the user asserts the main shows "After signing in you will be redirected to /app/en/bookings?status=upcoming."
 
@@ -38,3 +38,8 @@ Feature: Deep-link preservation
   Scenario: /app/en/login?redirect=%2Fadmin renders the login form with the deep-link preview
     When the visitor opens /app/en/login?redirect=%2Fadmin
     Then the response status is 200
+
+  Scenario: /app/en/login?redirect=https://evil.example/x falls back to the safe landing destination
+    When the visitor opens /app/en/login?redirect=https://evil.example/x
+    Then the response status is 200
+    And the user asserts the deep-link-preview is not visible
