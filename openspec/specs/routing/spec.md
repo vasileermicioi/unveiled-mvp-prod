@@ -29,6 +29,8 @@ The routing spec SHALL be exercised by at least one Gherkin scenario per surface
 
 The application SHALL publish a canonical route table that lists every route under `/app/<lang>/...` (per the `app-package` capability), the surface it belongs to, the viewer kinds allowed, and the matching TypeSpec operation id. After this change, every URL prefixed `/api/*` is dispatched to the API Worker via the Cloudflare service binding declared in `wrangler.orchestrator.toml` (`binding = "API"`) before any Astro routing or middleware guard runs. The route table also lists every URL under `/` owned by the `landing-package` capability (the public marketing surface); the production URL space is the union of the landing surface (`/*`, dispatched by the orchestrator's `LANDING` service binding), the app surface (`/app/*`, dispatched by the orchestrator's `APP` service binding), and the API surface (`/api/*`, dispatched by the orchestrator's `API` service binding). The orchestrator Worker (`packages/orchestrator/src/worker.ts`, configured via `wrangler.orchestrator.toml`) is the single entry point for the public hostname and owns the dispatch contract. The orchestrator's path normalization layer (see `routing-orchestrator` capability: `Orchestrator Normalizes App-Shaped Paths To The Canonical Form`) SHALL redirect any "app-shaped" path — bare language prefixes (`/en`, `/de`, `/en/admin`) and bare route segments (`/discover`, `/admin`, `/membership`, …) — to the canonical `/app/<lang>/...` form with `302 Found` so the canonical route table is the single source of truth for navigation regardless of how the URL is reached.
 
+Every app-owned navigation link emitted by the app surface — nav items in `packages/app/src/lib/auth-display.ts`, hero CTAs in `packages/app/src/components/unveiled/visual-system-app.tsx`, the logo home link and language switcher in `packages/app/src/components/unveiled/app-shell.tsx`, the back link in `packages/app/src/components/unveiled/PublicDiscover.tsx`, and the client-side language-switcher / membership / logout navigators in `packages/app/src/components/unveiled/context.tsx` — SHALL use the canonical `/app/<lang>/...` form. The `prefix` value in `auth-display.ts` SHALL be derived from the shared `APP_BASE_PREFIX` constant exported by `packages/app/src/lib/app-base.ts` (the same constant that the `app-package` capability uses for static asset paths), so the app base is a single source of truth across asset paths and navigation links. The client-side language switcher in `context.tsx` SHALL strip the `/app` base from the current path before swapping the language prefix and re-prepend `/app` to the new path, using the `stripAppBase` helper exported by `packages/app/src/lib/app-base.ts`.
+
 #### Scenario: Every committed route appears in the table
 
 - **WHEN** a contributor adds a new Astro page under `packages/app/src/pages/[lang]/`
@@ -63,6 +65,41 @@ The application SHALL publish a canonical route table that lists every route und
 - **THEN** the orchestrator returns `302 Found` with `Location: /app/<lang>/...` (e.g. `/app/en/admin`, `/app/de`, `/app/en/discover`, `/app/en/admin`, `/app/en/membership`, `/app/en/admin/events`)
 - **AND** the resolved `<lang>` is the user's language preference (the `unveiled_lang` cookie, then `Accept-Language`, defaulting to `en`)
 - **AND** canonical paths (`/app/<lang>/...`), the landing home (`/`), API paths (`/api/...`), `/healthz`, `/readyz`, and Vite / static asset paths are not redirected.
+
+#### Scenario: App-owned nav items use the canonical /app/<lang>/ form
+
+- **WHEN** a contributor inspects the rendered HTML of any `/app/<lang>/...` route (e.g. `curl http://localhost:4320/app/en/`)
+- **THEN** every nav-item `<a href>` emitted by `packages/app/src/lib/auth-display.ts` (e.g. `discover`, `how`, `membership`, `faq`, `member`, `saved`, `bookings`, `profile`, `partner`, `admin`) begins with `/app/<lang>/...`
+- **AND** the nav `prefix` is constructed from `APP_BASE_PREFIX` (not from a string literal that hardcodes `/app`).
+
+#### Scenario: Hero CTAs use the canonical /app/<lang>/ form
+
+- **WHEN** a contributor inspects the rendered HTML of the landing-style hero on `/app/<lang>/...`
+- **THEN** the `EXPLORE ACCESS` `<a href>` is `/app/<lang>/discover`
+- **AND** the `HOW IT WORKS` `<a href>` is `/app/<lang>/how-it-works`
+- **AND** both hrefs are constructed from `APP_BASE_PREFIX` (not from a string literal that hardcodes `/app`).
+
+#### Scenario: Logo, back, and language-switcher links use the canonical /app/<lang>/ form
+
+- **WHEN** a contributor inspects the rendered HTML of any `/app/<lang>/...` route
+- **THEN** the logo home `<a href>` is `/app/<lang>/`
+- **AND** the back link on the discover page is `/app/<lang>/`
+- **AND** every language-switcher option rendered by the client-side navigator in `context.tsx` is `/app/<other-lang>/...` (built from the current path with the lang prefix swapped using the `stripAppBase` helper).
+
+#### Scenario: Membership and logout navigators use the canonical /app/<lang>/ form
+
+- **WHEN** an authenticated member clicks the membership or logout control
+- **THEN** the client-side navigator in `context.tsx` routes to `/app/<lang>/membership` (membership) or `/app/<lang>/` followed by the API `/api/auth/sign-out` call (logout)
+- **AND** the destination is constructed from `APP_BASE_PREFIX` (not from a string literal that hardcodes `/app`).
+
+#### Scenario: stripAppBase handles the documented edge cases
+
+- **WHEN** the `stripAppBase` helper exported by `packages/app/src/lib/app-base.ts` is invoked
+- **THEN** `stripAppBase("/app/en/discover")` returns `"/en/discover"`
+- **AND** `stripAppBase("/app")` returns `"/"`
+- **AND** `stripAppBase("/app/")` returns `"/"`
+- **AND** `stripAppBase("/en/discover")` returns `"/en/discover"` unchanged (no base to strip)
+- **AND** `stripAppBase("/apple")` returns `"/apple"` unchanged (not a base prefix).
 
 ### Requirement: Public, Member, Partner, and Admin Surfaces Are Disjoint
 

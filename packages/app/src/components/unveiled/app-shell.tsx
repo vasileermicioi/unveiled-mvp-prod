@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useDeferredValue, useEffect, useState } from "react";
+import { APP_BASE_PREFIX } from "~/lib/app-base";
 import type {
   AppShellViewModel,
   DiscoveryShellViewModel,
@@ -278,7 +279,7 @@ export function ShellNavigation({
                       label: copy.profile,
                       icon: "user",
                       active: shell.activeItem === "profile",
-                      targetHref: `/${shell.language.selected.toLowerCase()}/profile`,
+                      targetHref: `${APP_BASE_PREFIX}/${shell.language.selected.toLowerCase()}/profile`,
                     }}
                     onAction={onAction}
                     iconOnly
@@ -410,7 +411,7 @@ export function ShellNavigation({
                       label: copy.profile,
                       icon: "user",
                       active: shell.activeItem === "profile",
-                      targetHref: `/${shell.language.selected.toLowerCase()}/profile`,
+                      targetHref: `${APP_BASE_PREFIX}/${shell.language.selected.toLowerCase()}/profile`,
                     }}
                     onAction={(actionId) => {
                       setDrawerOpen(false);
