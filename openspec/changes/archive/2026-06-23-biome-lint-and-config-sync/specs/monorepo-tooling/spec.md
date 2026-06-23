@@ -1,8 +1,5 @@
-# monorepo-tooling Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change allowlist-heroui-replica-references. Update Purpose after archive.
-## Requirements
 ### Requirement: `check-legacy-ui-references` allowlist covers legitimate spec references
 
 The `check-legacy-ui-references` gate in `scripts/check-legacy-ui-references.ts` MUST allowlist the capability spec folders that legitimately describe the `heroui-replica/` folder (or the broader `mantine`/`shadcn`/`*-replica/` rule set) as the boundary for the design-system isolation guard: `openspec/specs/design-system-package/`, `openspec/specs/heroui-ladle-design-system/`, and `openspec/specs/monorepo-tooling/`. The gate MUST continue to fail on genuine `mantine`, `shadcn`, or other `*-replica/` references in every other tracked file.
@@ -35,6 +32,8 @@ The `check-legacy-ui-references` gate in `scripts/check-legacy-ui-references.ts`
 - **WHEN** a contributor reads the header comment at the top of `scripts/check-legacy-ui-references.ts`
 - **THEN** the `Allowed exceptions:` list names `openspec/specs/design-system-package/`, `openspec/specs/heroui-ladle-design-system/`, and `openspec/specs/monorepo-tooling/` alongside the existing allowlist entries.
 
+## ADDED Requirements
+
 ### Requirement: Biome lint and config gate is green and schema-synced
 
 The root `package.json` `scripts.check` gate MUST include `biome check .` and the command MUST exit 0 with zero errors and zero (or only documented baseline) warnings. The `biome.json` `$schema` field MUST match the installed Biome CLI version pinned in `package.json`. The `biome.json` file MUST NOT use the deprecated `linter.rules.recommended: true` field; it MUST use the modern `preset` syntax (or rely on the default recommended ruleset without the deprecated field).
@@ -63,4 +62,3 @@ The root `package.json` `scripts.check` gate MUST include `biome check .` and th
 - **WHEN** a contributor makes a change that introduces auto-fixable formatting or import-sort drift
 - **THEN** running `bun run format` resolves the drift
 - **AND** running `bun run check` afterwards still exits 0.
-

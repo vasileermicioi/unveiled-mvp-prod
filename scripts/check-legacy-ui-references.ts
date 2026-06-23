@@ -16,6 +16,10 @@
  *   - the `openspec/changes/allowlist-heroui-replica-references/` change
  *     folder (its proposal/design/spec intentionally name the legacy
  *     libraries to describe what the gate itself forbids)
+ *   - the `openspec/changes/biome-lint-and-config-sync/` change folder
+ *     (its proposal/spec intentionally name the legacy libraries to
+ *     describe the allowlist update that resolves the gate's false
+ *     positive on the `monorepo-tooling/` spec)
  *   - the `openspec/changes/archive/` tree (historical records)
  *   - the `tests/unit/no-ladle-replica-in-production.test.ts` import-graph
  *     guard (the regexes it carries must name the legacy libraries to
@@ -29,6 +33,10 @@
  *   - the `openspec/specs/design-system-package/` spec folder (its
  *     requirements legitimately describe the `heroui-replica/` boundary
  *     as part of the isolation contract)
+ *   - the `openspec/specs/monorepo-tooling/` spec folder (its
+ *     requirements legitimately describe the `mantine`/`shadcn`/
+ *     `*-replica/` rule set enforced by this gate as part of the
+ *     toolchain contract)
  *
  * Exit codes:
  *   0  no offending matches
@@ -58,9 +66,11 @@ const ALLOWED_PATH_FRAGMENTS = [
   "openspec/changes/archive/",
   "openspec/changes/heroui-parity-and-docs/",
   "openspec/changes/allowlist-heroui-replica-references/",
+  "openspec/changes/biome-lint-and-config-sync/",
   "openspec/specs/heroui-ladle-design-system/",
   "openspec/specs/ui-system-heroui-parity/",
   "openspec/specs/design-system-package/",
+  "openspec/specs/monorepo-tooling/",
 ];
 
 const SCAN_EXTENSIONS = new Set([

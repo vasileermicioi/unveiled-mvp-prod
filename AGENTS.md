@@ -59,7 +59,7 @@ architecture change.
   code (gate: `bun run heroui-design-system-replica:check` and the
   permanent `bun run test:unit` import-graph guard in
   `tests/unit/no-ladle-replica-in-production.test.ts`).
-- **Lint / format:** Biome 2.4 — see `biome.json`. CI runs `bun run check`,
+- **Lint / format:** Biome (CLI version reported by `bunx biome --version`, currently 2.5.0) — see `biome.json`. CI runs `bun run check`,
   which fans out per-package (e.g. `astro check` in `@unveiled/app`,
   `biome check .` across the repo) and combines with `bun run specs:check`,
   and `bun run tokens:check`.
