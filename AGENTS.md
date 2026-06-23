@@ -265,7 +265,7 @@ All commands are run with `bun` from the repo root.
 | `bun run specs:gen` | Compile TypeSpec + regenerate `typespec/output/` and `src/lib/generated/`. |
 | `bun run specs:check` | Fail if generated artifacts are out of date. |
 | `bun run arch:check` | `likec4 validate` + drift check against the repo. |
-| `bun run arch:drift` | Drift check only. |
+| `bun run arch:drift` | Drift check only; rejects any `metadata.path` not anchored under a live workspace root (`packages/api`, `packages/app`, `packages/landing`, `packages/orchestrator`, `packages/design-system`). |
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
 | `bun run test:e2e` | Playwright runs the gherkin parity suite against the orchestrator's port-4320 proxy. |
