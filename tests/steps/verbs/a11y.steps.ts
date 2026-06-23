@@ -13,6 +13,12 @@ const attributeSchema = z.object({
   value: z.string(),
 });
 
+const classContainsSchema = z.object({
+  landmark: z.string(),
+  selector: z.string(),
+  substring: z.string(),
+});
+
 function resolveLandmark(
   page: Parameters<typeof getRegion>[0],
   landmark: string,
@@ -63,6 +69,24 @@ export function registerA11ySteps(registry: StepRegistry): void {
       if (actual !== value) {
         throw new Error(
           `Expected ${selector} ${attribute}="${value}" in ${landmark}, got "${actual}"`,
+        );
+      }
+    },
+  );
+
+  Then(
+    registry,
+    'the user asserts <landmark> exposes <selector> with class containing "<substring>"',
+    classContainsSchema,
+    async (page, { landmark, selector, substring }) => {
+      const region = resolveLandmark(page, landmark);
+      const target = region.locator(selector).first();
+      await target.waitFor({ state: "attached" });
+      const classAttr = (await target.getAttribute("class")) ?? "";
+      const tokens = classAttr.split(/\s+/).filter((token) => token.length > 0);
+      if (!tokens.includes(substring) && !classAttr.includes(substring)) {
+        throw new Error(
+          `Expected ${selector} class to contain "${substring}" in ${landmark}, got "${classAttr}"`,
         );
       }
     },
