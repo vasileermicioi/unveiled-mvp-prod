@@ -264,6 +264,7 @@ All commands are run with `bun` from the repo root.
 | `bun run db:seed:operations-smoke` | Seed the operations smoke dataset locally. |
 | `bun run specs:gen` | Compile TypeSpec + regenerate `typespec/output/` and `src/lib/generated/`. |
 | `bun run specs:check` | Fail if generated artifacts are out of date. |
+| `bun run scripts/codemod-prepend-app-prefix.ts --verify` | Fail if any `.feature` file under `tests/features/**` has an un-prefixed app-route URL; excludes `/healthz`, `/readyz`, `/api/...`, `/ladle/...`, `/favicon.ico`, `/favicon.svg`, full URLs (`http://...`, `https://...`), and content-type strings; skips scenarios whose title matches `/normalizes\|does not normalize/i`. |
 | `bun run arch:check` | `likec4 validate` + drift check against the repo. |
 | `bun run arch:drift` | Drift check only; rejects any `metadata.path` not anchored under a live workspace root (`packages/api`, `packages/app`, `packages/landing`, `packages/orchestrator`, `packages/design-system`). |
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |

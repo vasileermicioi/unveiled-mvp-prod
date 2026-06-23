@@ -5,7 +5,9 @@ import { join, relative, resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..");
 
-const FEATURE_ROOT = join(REPO_ROOT, "tests/features");
+const FEATURE_ROOT = process.env.CODEMOD_FEATURE_ROOT
+  ? resolve(process.env.CODEMOD_FEATURE_ROOT)
+  : join(REPO_ROOT, "tests/features");
 
 const STEP_KEYWORDS = ["Given", "When", "Then", "And", "But"];
 
@@ -35,6 +37,11 @@ function rewriteUrl(url: string): string {
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   if (url.startsWith("/_")) return url;
   if (url.startsWith("/api/")) return url;
+  if (url.startsWith("/healthz")) return url;
+  if (url.startsWith("/readyz")) return url;
+  if (url.startsWith("/ladle/")) return url;
+  if (url.startsWith("/favicon.ico")) return url;
+  if (url.startsWith("/favicon.svg")) return url;
   if (!url.startsWith("/")) return url;
   return `/app${url}`;
 }
@@ -44,18 +51,29 @@ const PATTERN_RE = new RegExp(
   "i",
 );
 
+const SCENARIO_HEADER_RE = /^\s*Scenario:|^Background:/;
+const NORMALIZATION_TITLE_RE = /normalizes|does not normalize/i;
+const URL_RE =
+  /(?<![\w:/])\/[a-z][\w-]*(?:\/[\w-]+)*(?:\.\w+)?(?:\?[\w=&%-]*)?(?=#|\s|$|[),;.])/gi;
+
 for (const file of walk(FEATURE_ROOT)) {
   const original = readFileSync(file, "utf8");
   const lines = original.split("\n");
   let changed = false;
+  let skipScenarioRewrites = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (SCENARIO_HEADER_RE.test(line)) {
+      skipScenarioRewrites = NORMALIZATION_TITLE_RE.test(line);
+      continue;
+    }
     const m = line.match(PATTERN_RE);
     if (!m) continue;
+    if (skipScenarioRewrites) continue;
     const indent = m[1];
     const keyword = m[2];
     const rest = m[3];
-    const replaced = rest.replace(/(\/[a-z][\w./?=&%-]*)/gi, (match) => {
+    const replaced = rest.replace(URL_RE, (match) => {
       const next = rewriteUrl(match);
       if (next !== match) {
         changed = true;
