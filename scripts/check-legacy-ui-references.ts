@@ -13,10 +13,22 @@
  *   - the `openspec/changes/heroui-parity-and-docs/` change folder
  *     (its proposal/design/spec intentionally name the legacy libraries
  *     so reviewers can read the audit context)
+ *   - the `openspec/changes/allowlist-heroui-replica-references/` change
+ *     folder (its proposal/design/spec intentionally name the legacy
+ *     libraries to describe what the gate itself forbids)
  *   - the `openspec/changes/archive/` tree (historical records)
  *   - the `tests/unit/no-ladle-replica-in-production.test.ts` import-graph
  *     guard (the regexes it carries must name the legacy libraries to
  *     detect them)
+ *   - the `openspec/specs/heroui-ladle-design-system/` spec folder (its
+ *     requirements legitimately describe the `heroui-replica/` boundary
+ *     as part of the isolation contract)
+ *   - the `openspec/specs/ui-system-heroui-parity/` spec folder (its
+ *     requirements legitimately reference `heroui-replica` and
+ *     `mantine-replica` for parity audit context)
+ *   - the `openspec/specs/design-system-package/` spec folder (its
+ *     requirements legitimately describe the `heroui-replica/` boundary
+ *     as part of the isolation contract)
  *
  * Exit codes:
  *   0  no offending matches
@@ -45,6 +57,7 @@ const ALLOWED_PATH_FRAGMENTS = [
   "tests/unit/no-ladle-replica-in-production.test.ts",
   "openspec/changes/archive/",
   "openspec/changes/heroui-parity-and-docs/",
+  "openspec/changes/allowlist-heroui-replica-references/",
   "openspec/specs/heroui-ladle-design-system/",
   "openspec/specs/ui-system-heroui-parity/",
   "openspec/specs/design-system-package/",
