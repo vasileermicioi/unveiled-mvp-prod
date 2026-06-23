@@ -35,6 +35,14 @@ const LIKEC4_BIN = resolve(REPO_ROOT, "node_modules", ".bin", "likec4");
 const args = new Set(process.argv.slice(2));
 const UPDATE_MODE = args.has("--update");
 
+const ALLOWED_PATH_PREFIXES = [
+  "packages/api",
+  "packages/app",
+  "packages/landing",
+  "packages/orchestrator",
+  "packages/design-system",
+];
+
 interface LikeC4Element {
   id: string;
   kind?: string;
@@ -191,19 +199,28 @@ function main() {
   ]);
 
   const missing: DriftEntry[] = [];
+  const prefixViolations: DriftEntry[] = [];
   const entries: DriftEntry[] = [];
 
   for (const el of elements) {
     const rawPath = el.metadata?.path;
     const rel = Array.isArray(rawPath) ? rawPath[0] : rawPath;
     if (typeof rel !== "string" || !rel) continue;
-    const abs = join(REPO_ROOT, rel);
     const entry: DriftEntry = {
       element: el.id,
       path: rel,
       sourceFile: findSourceFileForElement(el),
     };
     entries.push(entry);
+    if (
+      !ALLOWED_PATH_PREFIXES.some(
+        (prefix) => rel === prefix || rel.startsWith(`${prefix}/`),
+      )
+    ) {
+      prefixViolations.push(entry);
+      continue;
+    }
+    const abs = join(REPO_ROOT, rel);
     if (!existsSync(abs) || !statSync(abs)) {
       missing.push(entry);
     }
@@ -215,11 +232,32 @@ function main() {
     // best-effort cleanup
   }
 
-  if (missing.length === 0) {
+  if (missing.length === 0 && prefixViolations.length === 0) {
     console.log(
       `arch:drift OK — checked ${entries.length} metadata.path value(s) against the repo.`,
     );
     process.exit(0);
+  }
+
+  if (prefixViolations.length > 0) {
+    console.error(
+      "arch:drift FAILED — path is not under a live workspace root:",
+    );
+    for (const v of prefixViolations) {
+      console.error(
+        `  - element ${v.element} -> metadata.path = '${v.path}' (declared in ${relative(
+          REPO_ROOT,
+          v.sourceFile,
+        )})`,
+      );
+    }
+    console.error(
+      `\n${prefixViolations.length} prefix violation(s). Allowed prefixes: ${ALLOWED_PATH_PREFIXES.join(", ")}.`,
+    );
+    console.error(
+      "Add the new root to ALLOWED_PATH_PREFIXES in scripts/check-architecture-drift.ts when adding a new workspace.",
+    );
+    process.exit(1);
   }
 
   if (UPDATE_MODE) {
