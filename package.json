@@ -35,7 +35,7 @@
     "test:e2e": "playwright test --project=real-route tests/parity/gherkin.spec.ts && playwright test --project=api-binding",
     "test:api": "playwright test --project=api-binding",
     "test:ladle": "playwright test --project=ladle tests/ladle/ladle.spec.ts",
-    "test:unit": "bun test tests/unit/",
+    "test:unit": "bun test tests/unit/ scripts/codemod-prepend-app-prefix.test.ts",
     "ladle": "bun packages/design-system/scripts/ladle-dev.ts",
     "ladle:build": "bun packages/design-system/scripts/ladle-build.ts",
     "ladle:coverage": "bun packages/design-system/scripts/coverage.ts",
