@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false,
+    "ignoreUnknown": true,
     "includes": [
       "**",
       "!dist",
@@ -18,6 +18,15 @@
       "!architecture",
       "!src/lib/generated",
       "!src/styles/generated",
+      "!**/*.svg",
+      "!**/*.md",
+      "!tests/features/**/*.ladle.tsx",
+      "!tests/ladle",
+      "!worker-configuration.d.ts",
+      "!packages/api/src/lib-generated-request-validators.ts",
+      "!packages/design-system/src/lib/design-tokens.types.ts",
+      "!packages/design-system/src/lib/design-tokens.ts",
+      "!packages/design-system/src/styles/generated",
       "!.storybook",
       "!packages/*/dist",
       "!packages/*/.astro",

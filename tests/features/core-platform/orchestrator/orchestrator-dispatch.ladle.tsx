@@ -82,12 +82,14 @@ function SecurityHeadersList() {
 
 function ReadinessEnvelope() {
   return (
-    <pre
+    <figure
       aria-label="Orchestrator readiness envelope"
       className="rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs"
     >
-      {JSON.stringify({ status: "ok", surfaces: READINESS_SURFACES }, null, 2)}
-    </pre>
+      <pre>
+        {JSON.stringify({ status: "ok", surfaces: READINESS_SURFACES }, null, 2)}
+      </pre>
+    </figure>
   );
 }
 
@@ -172,24 +174,6 @@ export const SecurityHeadersAppliedToLanding: Story = () => (
       Every non-API response is stamped with the following header policy.
     </p>
     <SecurityHeadersList />
-  </section>
-);
-
-export const DeprecatedHealthJsonRedirectsToHealthz: Story = () => (
-  <section aria-label="Deprecated health redirect" className="space-y-3 p-6">
-    <h2 className="text-lg font-semibold">/api/health.json → /healthz</h2>
-    <pre className="rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs">
-      HTTP/1.1 301 Moved Permanently{"\n"}Location: /healthz
-    </pre>
-  </section>
-);
-
-export const DeprecatedReadinessJsonRedirectsToReadyz: Story = () => (
-  <section aria-label="Deprecated readiness redirect" className="space-y-3 p-6">
-    <h2 className="text-lg font-semibold">/api/readiness.json → /readyz</h2>
-    <pre className="rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs">
-      HTTP/1.1 301 Moved Permanently{"\n"}Location: /readyz
-    </pre>
   </section>
 );
 

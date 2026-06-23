@@ -36,8 +36,8 @@
     "openapi:check": "bun run scripts/openapi-check.ts"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.0",
-    "@hono/zod-openapi": "^0.19.2",
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
+    "@hono/zod-openapi": "^1.4.0",
     "@neondatabase/serverless": "^1.1.0",
     "@unveiled/app": "workspace:*",
     "better-auth": "^1.6.9",

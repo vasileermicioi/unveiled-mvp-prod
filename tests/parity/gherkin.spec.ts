@@ -3,16 +3,16 @@ import { relative, sep } from "node:path";
 import type { TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { dispatch } from "../steps/dsl";
-import { emailForRole, type Role } from "../steps/seed";
 import {
   coalesceKind,
   findLadleTag,
-  parseFeature,
-  type ParsedScenario,
-  sharedRegistry,
   LADLE_TAG,
+  type ParsedScenario,
+  parseFeature,
+  sharedRegistry,
   walkFeatures,
 } from "../steps/ladle-helpers";
+import { emailForRole, type Role } from "../steps/seed";
 
 const FEATURE_ROOT = "tests/features";
 

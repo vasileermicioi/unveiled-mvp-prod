@@ -1,10 +1,8 @@
-import { useContext } from "react";
-
 import { Panel } from "@unveiled/design-system";
+import { useContext } from "react";
+import { LanguageContext } from "~/components/unveiled/context-primitives";
 import { copyFor } from "~/lib/i18n";
 import type { CreditLedgerEntryView } from "~/lib/unveiled-view-models";
-
-import { LanguageContext } from "~/components/unveiled/context-primitives";
 
 export type CreditLedgerViewTableSemanticsProps = {
   entries: ReadonlyArray<CreditLedgerEntryView>;

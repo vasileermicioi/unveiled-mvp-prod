@@ -1,10 +1,9 @@
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import type { MiddlewareHandler } from "hono";
-
 import { createDb } from "@unveiled/api/db/client";
 import * as schema from "@unveiled/api/db/schema";
 import { getRuntimeEnv, type RuntimeEnv } from "@unveiled/api/env";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import type { MiddlewareHandler } from "hono";
 
 export type AuthInstance = ReturnType<typeof betterAuth>;
 

@@ -1,6 +1,5 @@
-import Stripe from "stripe";
-
 import { getPaymentsConfig } from "@unveiled/api/payments/config";
+import Stripe from "stripe";
 
 let stripeClient: Stripe | undefined;
 

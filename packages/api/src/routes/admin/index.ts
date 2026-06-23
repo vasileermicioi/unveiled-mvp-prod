@@ -1,17 +1,16 @@
 import { createRoute } from "@hono/zod-openapi";
-import { z } from "zod";
-
 import {
+  type AppType,
   type AssetKind,
   type AssetRuntimeEnv,
   AuthAccessError,
   getCloudflareEnv,
+  type RuntimeEnv,
   requireAdmin,
   uploadAdminAssetFile,
   validateAdminAssetUploadFile,
-  type AppType,
-  type RuntimeEnv,
 } from "@unveiled/api/worker";
+import { z } from "zod";
 
 function readEnv(c: { get: (k: string) => unknown }): RuntimeEnv {
   const runtime = c.get("runtimeEnv") as RuntimeEnv | undefined;
@@ -38,7 +37,7 @@ const uploadErrorSchema = z.object({
   formError: z.string(),
 });
 
-const uploadRoute = createRoute({
+const _uploadRoute = createRoute({
   method: "post",
   path: "/api/admin/assets/upload",
   tags: ["Admin"],
@@ -70,7 +69,7 @@ const uploadRoute = createRoute({
   },
 });
 
-function uploadFailure(message: string, status: number, field = "file") {
+function _uploadFailure(message: string, status: number, field = "file") {
   return {
     body: {
       ok: false,

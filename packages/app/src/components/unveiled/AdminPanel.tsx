@@ -1,15 +1,7 @@
 import { actions } from "astro:actions";
 import {
-  ArrowDownToLine,
-  ArrowLeft,
-  ExternalLink,
-  Plus,
-  QrCode,
-} from "lucide-react";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "@unveiled/design-system";
-import {
   Badge,
+  Button,
   Card,
   Divider,
   Field,
@@ -21,9 +13,17 @@ import {
   TextArea,
   TextInput,
 } from "@unveiled/design-system";
+import { cn } from "@unveiled/design-system/lib/utils";
+import {
+  ArrowDownToLine,
+  ArrowLeft,
+  ExternalLink,
+  Plus,
+  QrCode,
+} from "lucide-react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { AdminFreezeUnfreezeForm } from "~/components/payments/AdminFreezeUnfreezeForm";
 import { ModalShell } from "~/components/unveiled/app-shell";
-import { cn } from "@unveiled/design-system/lib/utils";
 import {
   AdminAssetUploadField,
   downloadCsv,
@@ -1308,7 +1308,11 @@ export function AdminPanel({
                         partnerId: exportPartnerId || undefined,
                       }),
                     setExportMessage,
-                    (data) => {
+                    (
+                      data:
+                        | { rows: Array<Record<string, unknown>> }
+                        | undefined,
+                    ) => {
                       const downloaded = downloadCsv(
                         "admin-bookings.csv",
                         data?.rows ?? [],

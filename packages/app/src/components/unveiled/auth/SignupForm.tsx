@@ -1,7 +1,5 @@
+import { Button, Field, TextInput } from "@unveiled/design-system";
 import { useId, useState } from "react";
-
-import { Button } from "@unveiled/design-system";
-import { Field, TextInput } from "@unveiled/design-system";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 
 export interface SignupFormValues {
@@ -70,7 +68,6 @@ export function SignupForm({
 
   return (
     <form
-      role="form"
       aria-label={copy.title}
       className="grid gap-4"
       onSubmit={handleSubmit}

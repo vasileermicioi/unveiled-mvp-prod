@@ -107,11 +107,11 @@ export function dispatchPlugin(): Plugin {
         }
 
         const acceptLanguage = req.headers["accept-language"];
-        const cookie = req.headers["cookie"];
+        const cookie = req.headers.cookie;
         const proxyHeaders: Record<string, string> = {};
         if (acceptLanguage)
           proxyHeaders["accept-language"] = String(acceptLanguage);
-        if (cookie) proxyHeaders["cookie"] = String(cookie);
+        if (cookie) proxyHeaders.cookie = String(cookie);
         const fakeRequest = new Request(`http://localhost${rawUrl}`, {
           headers: proxyHeaders,
         });

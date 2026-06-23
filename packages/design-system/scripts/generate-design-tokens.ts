@@ -107,7 +107,7 @@ function emitCss(resolved: ResolvedToken[]): string {
   return lines.join("\n");
 }
 
-function toCssValue(value: string | number): string {
+function _toCssValue(value: string | number): string {
   return typeof value === "number" ? String(value) : value;
 }
 

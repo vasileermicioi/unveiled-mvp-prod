@@ -1,8 +1,8 @@
-import { type AuthenticatedViewer, type Viewer } from "~/lib/auth-profile";
+import type { AuthenticatedViewer, Viewer } from "~/lib/auth-profile";
 import { copyFor, type UiLanguage } from "~/lib/i18n";
 import {
-  redirectAfterLoginFor,
   type ProductRouteOwner,
+  redirectAfterLoginFor,
 } from "~/lib/product-routes";
 
 export interface RedirectAfterLoginTableProps {
@@ -34,7 +34,6 @@ export function RedirectAfterLoginTable({
 
   return (
     <table
-      role="table"
       aria-label={bundle.tableHeading}
       className="w-full border-collapse text-sm"
     >

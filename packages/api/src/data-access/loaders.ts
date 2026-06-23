@@ -1,4 +1,3 @@
-import { type Db, db } from "@unveiled/api/db/client";
 import {
   AuthAccessError,
   authFailure,
@@ -8,6 +7,7 @@ import {
   requireUser,
   type Viewer,
 } from "@unveiled/api/auth-profile";
+import { type Db, db } from "@unveiled/api/db/client";
 import type { UiLanguage } from "@unveiled/api/i18n";
 import type { DiscoveryFilters } from "./query-keys";
 import {

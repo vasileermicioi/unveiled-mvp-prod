@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -46,7 +46,6 @@ for (const file of files) {
       issue:
         "does not import BaseLayout (and does not declare the canonical viewport meta directly)",
     });
-    continue;
   }
 }
 

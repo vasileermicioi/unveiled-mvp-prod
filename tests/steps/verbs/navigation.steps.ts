@@ -27,7 +27,7 @@ export function registerNavigationSteps(registry: StepRegistry): void {
       (page as unknown as { __lastStatus?: number }).__lastStatus =
         response.status();
       (page as unknown as { __lastLocation?: string }).__lastLocation =
-        response.headers()["location"] ?? "";
+        response.headers().location ?? "";
       (page as unknown as { __lastContentType?: string }).__lastContentType =
         response.headers()["content-type"] ?? "";
     },

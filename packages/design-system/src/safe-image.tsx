@@ -34,7 +34,6 @@ export function SafeImage({
   const [errored, setErrored] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset error/loaded state when src changes
   useEffect(() => {
     setErrored(false);
     setLoaded(false);

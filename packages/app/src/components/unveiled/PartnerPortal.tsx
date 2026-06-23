@@ -1,9 +1,7 @@
 import { actions } from "astro:actions";
-import { Check, Download, QrCode } from "lucide-react";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "@unveiled/design-system";
 import {
   Badge,
+  Button,
   Field,
   Panel,
   SelectInput,
@@ -12,6 +10,8 @@ import {
   TableShell,
   TextInput,
 } from "@unveiled/design-system";
+import { Check, Download, QrCode } from "lucide-react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   downloadCsv,
   GuestRowSkeleton,
@@ -127,7 +127,7 @@ export function PartnerPortal() {
                   eventId: eventFilter || undefined,
                 }),
               setCheckInMessage,
-              (data) => {
+              (data: { rows: Array<Record<string, unknown>> } | undefined) => {
                 const downloaded = downloadCsv(
                   "partner-guests.csv",
                   data?.rows ?? [],

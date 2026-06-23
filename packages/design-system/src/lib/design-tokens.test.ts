@@ -31,7 +31,7 @@ function readTokens(): DtcgNode {
   return JSON.parse(readFileSync(TOKENS_PATH, "utf8")) as DtcgNode;
 }
 
-function collectLeafValues(
+function _collectLeafValues(
   node: unknown,
   prefix: string[],
   out: string[],
@@ -47,11 +47,11 @@ function collectLeafValues(
   }
   for (const [key, child] of Object.entries(obj)) {
     if (key.startsWith("$")) continue;
-    collectLeafValues(child, [...prefix, key], out);
+    _collectLeafValues(child, [...prefix, key], out);
   }
 }
 
-function collectResolvedLeafValues(
+function _collectResolvedLeafValues(
   node: unknown,
   prefix: string[],
   lookup: Map<string, string>,
@@ -76,7 +76,7 @@ function collectResolvedLeafValues(
   }
   for (const [key, child] of Object.entries(obj)) {
     if (key.startsWith("$")) continue;
-    collectResolvedLeafValues(child, [...prefix, key], lookup, out);
+    _collectResolvedLeafValues(child, [...prefix, key], lookup, out);
   }
 }
 

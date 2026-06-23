@@ -1,9 +1,7 @@
-import { useContext } from "react";
-
 import { Panel } from "@unveiled/design-system";
-import { copyFor } from "~/lib/i18n";
-
+import { useContext } from "react";
 import { LanguageContext } from "~/components/unveiled/context-primitives";
+import { copyFor } from "~/lib/i18n";
 
 export type SubscriptionPortalLinkProps = {
   url: string | null;

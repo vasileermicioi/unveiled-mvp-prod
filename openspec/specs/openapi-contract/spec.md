@@ -67,7 +67,7 @@ A `specs:check` script SHALL detect drift between the TypeSpec source and the co
 
 ### Requirement: OpenAPI Document Is Served At A Stable URL
 
-A stable URL SHALL serve the generated OpenAPI document so auditors, partner integrators, and downstream codegen can fetch the contract. The document SHALL be assembled by the `@unveiled/api` Hono app from `@hono/zod-openapi` and SHALL be byte-identical to `typespec/output/openapi.yaml` modulo server URL. `GET /api/openapi.json` is reached by sending the request to the public hostname, where the orchestrator dispatches `/api/*` to the API Worker via the `API` service binding declared in `wrangler.orchestrator.toml`; the orchestrator does not transform the response. The `servers` block in `typespec/output/openapi.yaml` points at the orchestrator's public hostname.
+A stable URL MUST serve the generated OpenAPI document so auditors, partner integrators, and downstream codegen can fetch the contract. The document MUST be assembled by the `@unveiled/api` Hono app from `@hono/zod-openapi` and MUST be byte-identical to `typespec/output/openapi.yaml` modulo server URL. `GET /api/openapi.json` and `GET /api/openapi.yaml` are reached by sending the request to the public hostname, where the orchestrator dispatches `/api/*` to the API Worker via the `API` service binding declared in `wrangler.orchestrator.toml`; the orchestrator does not transform the response. The `servers` block in `typespec/output/openapi.yaml` MUST point at the orchestrator's public hostname. The API Worker MUST register `openapiJsonRoute` at `path: "/api/openapi.json"` and `openapiYamlRoute` at `path: "/api/openapi.yaml"` so that the orchestrator's un-stripped dispatch reaches the correct handler.
 
 #### Scenario: Document is served at /api/openapi.yaml
 
@@ -81,6 +81,7 @@ A stable URL SHALL serve the generated OpenAPI document so auditors, partner int
 
 - **WHEN** a client issues `GET /api/openapi.json` to the public hostname
 - **THEN** the orchestrator dispatches the request to `env.API.fetch(request)` (the API Worker)
+- **AND** the API Worker matches the request to `openapiJsonRoute` registered at `path: "/api/openapi.json"`
 - **AND** the response body is the Hono-app-generated OpenAPI 3.1 document
 - **AND** the response `Content-Type` is `application/json; charset=utf-8`
 - **AND** no Astro endpoint handler runs for this request

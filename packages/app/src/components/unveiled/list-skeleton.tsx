@@ -1,6 +1,6 @@
-import type { UiLanguage } from "~/lib/i18n";
-import { copyFor, type supportedLanguages } from "~/lib/i18n";
+import type { AppCopy } from "@unveiled/api/i18n";
 import { cn } from "@unveiled/design-system/lib/utils";
+import { copyFor, type supportedLanguages } from "~/lib/i18n";
 
 export const listSkeletonVariants = [
   "events-grid",
@@ -34,7 +34,7 @@ const SKELETON_KEYS = {
   "member-table": "member-table",
 } as const satisfies Record<
   ListSkeletonVariant,
-  keyof UiLanguage["shell"]["skeleton"]
+  keyof AppCopy["shell"]["skeleton"]
 >;
 
 type SupportedLanguage = (typeof supportedLanguages)[number];
@@ -71,7 +71,7 @@ export function ListSkeleton({
     >
       {rows.map((_, index) => (
         <div
-          key={`${variant}-${index}`}
+          key={`skeleton-row-${variant}-${index.toString()}`}
           aria-hidden="true"
           className="h-4 w-full motion-safe:animate-pulse rounded bg-brand-dark/15"
         />
@@ -79,5 +79,3 @@ export function ListSkeleton({
     </div>
   );
 }
-
-export type UiLanguageShape = UiLanguage;

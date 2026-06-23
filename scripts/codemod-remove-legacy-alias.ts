@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..");
@@ -52,10 +52,7 @@ function* walk(root: string): Generator<string> {
 function rewriteTarget(specifier: string): string {
   for (const prefix of API_ONLY_PREFIXES) {
     const boundary = prefix.endsWith("/") ? prefix : `${prefix}/`;
-    if (
-      specifier === `@${prefix}` ||
-      specifier.startsWith(`@${boundary}`)
-    ) {
+    if (specifier === `@${prefix}` || specifier.startsWith(`@${boundary}`)) {
       return specifier.replace(/^@\/lib\//, "@unveiled/api/");
     }
   }

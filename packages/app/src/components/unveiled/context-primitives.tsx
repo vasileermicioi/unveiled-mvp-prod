@@ -8,8 +8,8 @@ import { copyFor, type UiLanguage } from "~/lib/i18n";
 export const LiveDataContext = createContext<LiveDataView>(emptyLiveDataView);
 export const LanguageContext = createContext<UiLanguage>("DE");
 
-export { emptyLiveDataView };
 export type { LiveDataView };
+export { emptyLiveDataView };
 
 export function useLiveData() {
   return useContext(LiveDataContext);

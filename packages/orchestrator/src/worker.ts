@@ -1,6 +1,5 @@
 import {
   appBarePathRedirect,
-  isPublicHost,
   normalizeAppPath,
   ORCHESTRATOR_SECURITY_HEADERS,
 } from "./index";
@@ -12,11 +11,6 @@ import {
   withSecurityHeaders,
 } from "./logging";
 import checkReadinessDefault from "./readiness";
-
-const REDIRECT_PATHS = new Map<string, string>([
-  ["/api/health.json", "/healthz"],
-  ["/api/readiness.json", "/readyz"],
-]);
 
 function redirectResponse(location: string, status = 301): Response {
   return new Response(`Redirecting to ${location}`, {
@@ -94,10 +88,7 @@ export default {
         );
         response = withSecurityHeaders(response, path);
       } else {
-        const redirect = REDIRECT_PATHS.get(path);
-        if (redirect && isPublicHost(request.headers.get("host"))) {
-          response = redirectResponse(redirect);
-        } else if (path.startsWith("/api/")) {
+        if (path.startsWith("/api/")) {
           response = await dispatch(taggedRequest, env, "API", path);
         } else if (path === "/app" || path === "/app/") {
           const target = appBarePathRedirect(path, url.search, request);
@@ -149,4 +140,4 @@ export default {
   },
 } satisfies ExportedHandler<OrchestratorEnv>;
 
-export { ORCHESTRATOR_SECURITY_HEADERS, REDIRECT_PATHS };
+export { ORCHESTRATOR_SECURITY_HEADERS };

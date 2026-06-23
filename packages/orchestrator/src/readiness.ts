@@ -2,6 +2,9 @@ import { withSecurityHeaders } from "./logging";
 
 const READINESS_TIMEOUT_MS = 1000;
 
+// Each `path` MUST match the `createRoute({ path })` declaration in
+// `packages/api/src/routes/{system,app,landing}/...` for the corresponding
+// surface. Any future rename in either location MUST be mirrored here.
 const SURFACE_PROBES = [
   { surface: "api", binding: "API", path: "/api/readiness.json" },
   { surface: "app", binding: "APP", path: "/app/_health" },
@@ -31,7 +34,7 @@ function buildProbeRequest(path: string): Request {
 }
 
 async function probeSurface(
-  surface: SurfaceName,
+  _surface: SurfaceName,
   binding: keyof OrchestratorBindings,
   path: string,
   env: OrchestratorBindings,

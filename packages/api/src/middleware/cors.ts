@@ -1,7 +1,6 @@
+import { getRuntimeEnv } from "@unveiled/api/env";
 import type { Context, MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
-
-import { getRuntimeEnv } from "@unveiled/api/env";
 
 export type CorsOptions = {
   origin?: string | string[];

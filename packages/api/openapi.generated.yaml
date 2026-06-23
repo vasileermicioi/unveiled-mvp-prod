@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: Unveiled API
+  version: 0.0.0
+  description: Generated from the Hono app at build time; canonical contract is the TypeSpec source.
+servers:
+  - url: /
+components:
+  schemas: {}
+  parameters: {}
+paths:
+  /api/health.json:
+    get:
+      tags:
+        - System
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                  checkedAt:
+                    type: string
+                required:
+                  - ok
+                  - checkedAt
+  /api/readiness.json:
+    get:
+      tags:
+        - System
+      summary: Readiness probe
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                  status:
+                    type: string
+                    enum:
+                      - ready
+                  dependencies:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum:
+                          - ok
+                      auth:
+                        type: string
+                        enum:
+                          - configured
+                      resend:
+                        type: string
+                        enum:
+                          - configured
+                          - missing_optional
+                    required:
+                      - database
+                      - auth
+                      - resend
+                required:
+                  - ok
+                  - status
+                  - dependencies
+        '401':
+          description: Missing or invalid READINESS_TOKEN
+        '503':
+          description: Service is not ready
+  /api/openapi.yaml:
+    get:
+      tags:
+        - System
+      summary: OpenAPI document (YAML)
+      security: []
+      responses:
+        '200':
+          description: OpenAPI 3.1 document
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /api/openapi.json:
+    get:
+      tags:
+        - System
+      summary: OpenAPI document (JSON)
+      security: []
+      responses:
+        '200':
+          description: OpenAPI 3.1 document
+          content:
+            application/json:
+              schema:
+                nullable: true
+  /api/stripe/webhook:
+    post:
+      tags:
+        - Stripe
+      summary: Stripe webhook receiver
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              nullable: true
+      responses:
+        '200':
+          description: Webhook accepted
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      received:
+                        type: boolean
+                        enum:
+                          - true
+                    required:
+                      - received
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        enum:
+                          - Stripe payload does not match the generated contract.
+                      issues:
+                        type: array
+                        items:
+                          nullable: true
+                    required:
+                      - error
+                      - issues
+        '400':
+          description: Signature missing or invalid
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      received:
+                        type: boolean
+                        enum:
+                          - true
+                    required:
+                      - received
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        enum:
+                          - Stripe payload does not match the generated contract.
+                      issues:
+                        type: array
+                        items:
+                          nullable: true
+                    required:
+                      - error
+                      - issues
+        '422':
+          description: Payload did not match the generated contract
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      received:
+                        type: boolean
+                        enum:
+                          - true
+                    required:
+                      - received
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        enum:
+                          - Stripe payload does not match the generated contract.
+                      issues:
+                        type: array
+                        items:
+                          nullable: true
+                    required:
+                      - error
+                      - issues

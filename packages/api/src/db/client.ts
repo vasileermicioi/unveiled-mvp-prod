@@ -1,9 +1,8 @@
 import { Client, neon, Pool } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import { drizzle as drizzleNeonServerless } from "drizzle-orm/neon-serverless";
-
 import * as schema from "@unveiled/api/db/schema";
 import { getRequiredEnv, type RuntimeEnv } from "@unveiled/api/env";
+import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle as drizzleNeonServerless } from "drizzle-orm/neon-serverless";
 
 type DatabaseDriver = "neon-serverless" | "neon-http";
 

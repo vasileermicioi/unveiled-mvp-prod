@@ -1,5 +1,3 @@
-import type { InferSelectModel } from "drizzle-orm";
-
 import type {
   bookings,
   creditLedgerEntries,
@@ -11,6 +9,7 @@ import type {
 } from "@unveiled/api/db/schema";
 import { copyFor, type UiLanguage } from "@unveiled/api/i18n";
 import type { CalendarEventMetadata } from "@unveiled/api/unveiled-view-models";
+import type { InferSelectModel } from "drizzle-orm";
 
 export type EventRow = InferSelectModel<typeof events>;
 export type PartnerRow = InferSelectModel<typeof partners>;

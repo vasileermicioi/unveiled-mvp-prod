@@ -21,7 +21,7 @@ import { HeroUIReplicaProvider } from "./provider";
 
 export const DesignSystemOverview = () => (
   <HeroUIReplicaProvider>
-    <main role="main" className="min-h-screen bg-brand-yellow p-6 md:p-10">
+    <main className="min-h-screen bg-brand-yellow p-6 md:p-10">
       <h1 className="font-display text-4xl font-black uppercase md:text-6xl">
         Unveiled Design System (HeroUI)
       </h1>

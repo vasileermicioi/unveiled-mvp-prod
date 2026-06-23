@@ -1,6 +1,3 @@
-import { and, eq, sql } from "drizzle-orm";
-import type Stripe from "stripe";
-
 import { type Db, db } from "@unveiled/api/db/client";
 import {
   billingAddresses,
@@ -16,6 +13,8 @@ import {
   type StripePaymentMethodName,
 } from "@unveiled/api/payments/config";
 import { getStripe } from "@unveiled/api/payments/stripe-client";
+import { and, eq, sql } from "drizzle-orm";
+import type Stripe from "stripe";
 
 export type LocalSubscriptionStatus =
   | "ACTIVE"

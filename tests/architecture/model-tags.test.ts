@@ -197,7 +197,7 @@ describe("LikeC4 model", () => {
   test("L5 booking lifecycle view is defined", () => {
     // likec4 export json flattens views into a single map keyed by view id.
     const views = (model.views ?? {}) as Record<string, { _type?: string }>;
-    const bookingView = views["bookingLifecycle"];
+    const bookingView = views.bookingLifecycle;
     expect(bookingView).toBeDefined();
     if (bookingView) {
       expect(bookingView._type).toBe("dynamic");

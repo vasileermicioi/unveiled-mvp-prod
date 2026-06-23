@@ -77,7 +77,9 @@ const REQUIRED_CONFIGS = [
 
 const missing = REQUIRED_CONFIGS.filter((c) => !existsSync(join(REPO_ROOT, c)));
 if (missing.length > 0) {
-  console.error(`wrangler:check FAILED — missing config(s): ${missing.join(", ")}`);
+  console.error(
+    `wrangler:check FAILED — missing config(s): ${missing.join(", ")}`,
+  );
   process.exit(1);
 }
 
@@ -87,12 +89,60 @@ const landing = readConfig("wrangler.landing.toml");
 const orchestrator = readConfig("wrangler.orchestrator.toml");
 
 const errors: string[] = [];
-errors.push(...diff(app.kv_namespaces, api.kv_namespaces, "wrangler.app.toml", "wrangler.api.toml", "KV"));
-errors.push(...diff(app.kv_namespaces, landing.kv_namespaces, "wrangler.app.toml", "wrangler.landing.toml", "KV"));
-errors.push(...diff(app.kv_namespaces, orchestrator.kv_namespaces, "wrangler.app.toml", "wrangler.orchestrator.toml", "KV"));
-errors.push(...diff(app.r2_buckets, api.r2_buckets, "wrangler.app.toml", "wrangler.api.toml", "R2"));
-errors.push(...diff(app.r2_buckets, landing.r2_buckets, "wrangler.app.toml", "wrangler.landing.toml", "R2"));
-errors.push(...diff(app.r2_buckets, orchestrator.r2_buckets, "wrangler.app.toml", "wrangler.orchestrator.toml", "R2"));
+errors.push(
+  ...diff(
+    app.kv_namespaces,
+    api.kv_namespaces,
+    "wrangler.app.toml",
+    "wrangler.api.toml",
+    "KV",
+  ),
+);
+errors.push(
+  ...diff(
+    app.kv_namespaces,
+    landing.kv_namespaces,
+    "wrangler.app.toml",
+    "wrangler.landing.toml",
+    "KV",
+  ),
+);
+errors.push(
+  ...diff(
+    app.kv_namespaces,
+    orchestrator.kv_namespaces,
+    "wrangler.app.toml",
+    "wrangler.orchestrator.toml",
+    "KV",
+  ),
+);
+errors.push(
+  ...diff(
+    app.r2_buckets,
+    api.r2_buckets,
+    "wrangler.app.toml",
+    "wrangler.api.toml",
+    "R2",
+  ),
+);
+errors.push(
+  ...diff(
+    app.r2_buckets,
+    landing.r2_buckets,
+    "wrangler.app.toml",
+    "wrangler.landing.toml",
+    "R2",
+  ),
+);
+errors.push(
+  ...diff(
+    app.r2_buckets,
+    orchestrator.r2_buckets,
+    "wrangler.app.toml",
+    "wrangler.orchestrator.toml",
+    "R2",
+  ),
+);
 
 const orchestratorServices = (orchestrator.services ?? []) as {
   binding: string;

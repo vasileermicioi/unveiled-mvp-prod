@@ -1,13 +1,30 @@
-import { writeFile, mkdir, readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-
+import type { Plugin } from "esbuild";
 import * as YAML from "js-yaml";
 
-const here = import.meta.dir;
-const projectRoot = resolve(here, "..", "..", "..");
-
+const projectRoot = resolve(import.meta.dir, "..", "..", "..");
 const openapiYamlPath = resolve(projectRoot, "typespec/output/openapi.yaml");
 const outputPath = resolve(projectRoot, "packages/api/openapi.generated.yaml");
+
+function inlineOpenApiYamlPlugin(): Plugin {
+  return {
+    name: "inline-openapi-yaml",
+    setup(build) {
+      build.onLoad({ filter: /\.ts$/ }, async (args) => {
+        const source = readFileSync(args.path, "utf8");
+        if (!source.includes("__INLINE_OPENAPI_YAML__")) return null;
+        const contents = readFileSync(openapiYamlPath, "utf8");
+        const inlined = source.replace(
+          '"__INLINE_OPENAPI_YAML__"',
+          JSON.stringify(contents),
+        );
+        return { contents: inlined, loader: "ts" };
+      });
+    },
+  };
+}
 
 await mkdir(dirname(outputPath), { recursive: true });
 
@@ -15,8 +32,9 @@ const result = await Bun.build({
   entrypoints: [resolve(projectRoot, "packages/api/src/openapi-app.ts")],
   target: "bun",
   format: "esm",
-  external: ["cloudflare:workers"],
+  external: ["cloudflare:workers", "node:fs", "node:path"],
   plugins: [
+    inlineOpenApiYamlPlugin(),
     {
       name: "generated-shim",
       setup(build) {

@@ -1,31 +1,27 @@
+// `openapiYamlSource` is a string literal produced at build time by the
+// `inlineOpenApiYamlPlugin` esbuild plugin (see `packages/api/src/openapi.ts`
+// and `packages/api/scripts/build.ts`). The plugin replaces the placeholder
+// below with the contents of `typespec/output/openapi.yaml` so the Workers
+// runtime never touches `node:fs`/`node:path`.
+const openapiYamlSource = "__INLINE_OPENAPI_YAML__";
+
 import { createRoute } from "@hono/zod-openapi";
-import { z } from "zod";
 
 import { checkDatabaseConnection } from "@unveiled/api/db/client";
 import { getSecretReadiness } from "@unveiled/api/env";
 import type { AppType } from "@unveiled/api/worker";
-
-const OPENAPI_PATH =
-  typeof process !== "undefined"
-    ? (() => {
-        const { resolve } = require("node:path") as typeof import("node:path");
-        return resolve(process.cwd(), "typespec/output/openapi.yaml");
-      })()
-    : "";
+import { z } from "zod";
 
 function readOpenapiYaml(): string {
-  if (typeof process === "undefined") {
-    throw new Error(
-      "openapi.yaml access requires Node fs (not available in Workers)",
-    );
+  if (openapiYamlSource === "__INLINE_OPENAPI_YAML__") {
+    throw new Error("openapi.yaml source was not inlined at build time");
   }
-  const { readFileSync } = require("node:fs") as typeof import("node:fs");
-  return readFileSync(OPENAPI_PATH, "utf8");
+  return openapiYamlSource;
 }
 
 const healthRoute = createRoute({
   method: "get",
-  path: "/health.json",
+  path: "/api/health.json",
   tags: ["System"],
   summary: "Liveness probe",
   responses: {
@@ -45,7 +41,7 @@ const healthRoute = createRoute({
 
 const readinessRoute = createRoute({
   method: "get",
-  path: "/readiness.json",
+  path: "/api/readiness.json",
   tags: ["System"],
   summary: "Readiness probe",
   security: [],
@@ -73,7 +69,7 @@ const readinessRoute = createRoute({
 
 const openapiYamlRoute = createRoute({
   method: "get",
-  path: "/openapi.yaml",
+  path: "/api/openapi.yaml",
   tags: ["System"],
   summary: "OpenAPI document (YAML)",
   security: [],
@@ -91,7 +87,7 @@ const openapiYamlRoute = createRoute({
 
 const openapiJsonRoute = createRoute({
   method: "get",
-  path: "/openapi.json",
+  path: "/api/openapi.json",
   tags: ["System"],
   summary: "OpenAPI document (JSON)",
   security: [],
@@ -175,10 +171,10 @@ export function mountSystemRoutes(app: AppType): void {
 
   app.openapi(openapiJsonRoute, async (c) => {
     const yaml = await readOpenapiYaml();
-    // Lazy-load yaml parser to keep the cold-start small.
     const { default: yamlParse } = await import("js-yaml");
     const json = yamlParse.load(yaml);
-    return c.json(json as Record<string, unknown>, 200, {
+    return c.body(JSON.stringify(json), 200, {
+      "content-type": "application/json; charset=utf-8",
       "cache-control": "public, max-age=60",
     });
   });

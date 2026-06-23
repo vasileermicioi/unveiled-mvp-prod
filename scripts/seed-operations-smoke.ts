@@ -1,12 +1,20 @@
 import "dotenv/config";
 
-import { eq, sql } from "drizzle-orm";
-
 import { signUpWithEmail } from "@unveiled/api/auth-account-actions";
 import type { Viewer } from "@unveiled/api/auth-profile";
-import { loadAdminData, loadPartnerData } from "@unveiled/api/data-access/loaders";
+import {
+  loadAdminData,
+  loadPartnerData,
+} from "@unveiled/api/data-access/loaders";
 import { db, postgresClient } from "@unveiled/app/db/client";
-import { bookings, events, partners, user, userProfiles } from "@unveiled/app/db/schema";
+import {
+  bookings,
+  events,
+  partners,
+  user,
+  userProfiles,
+} from "@unveiled/app/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 const smokePassword = "Operations-Smoke-2026!";
 

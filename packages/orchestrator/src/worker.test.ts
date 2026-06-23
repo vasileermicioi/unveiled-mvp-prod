@@ -5,7 +5,7 @@ import {
   normalizeAppPath,
   ORCHESTRATOR_SECURITY_HEADERS,
 } from "./index";
-import worker, { type OrchestratorEnv, REDIRECT_PATHS } from "./worker";
+import worker, { type OrchestratorEnv } from "./worker";
 
 function makeFetcher(impl: (request: Request) => Promise<Response>): Fetcher {
   const fetcher = {
@@ -67,7 +67,7 @@ describe("orchestrator worker dispatch", () => {
     );
     expect(response.status).toBe(200);
     expect(seen).toHaveLength(1);
-    expect(new URL(seen[0]!.url).pathname).toBe("/api/openapi.json");
+    expect(new URL(seen[0]?.url).pathname).toBe("/api/openapi.json");
   });
 
   it("forwards /app/* to the APP service binding", async () => {
@@ -84,7 +84,7 @@ describe("orchestrator worker dispatch", () => {
     );
     expect(response.status).toBe(200);
     expect(seen).toHaveLength(1);
-    expect(new URL(seen[0]!.url).pathname).toBe("/app/en/discover");
+    expect(new URL(seen[0]?.url).pathname).toBe("/app/en/discover");
   });
 
   it("forwards everything else to the LANDING service binding", async () => {
@@ -101,7 +101,7 @@ describe("orchestrator worker dispatch", () => {
     );
     expect(response.status).toBe(200);
     expect(seen).toHaveLength(1);
-    expect(new URL(seen[0]!.url).pathname).toBe("/");
+    expect(new URL(seen[0]?.url).pathname).toBe("/");
   });
 
   it("applies uniform security headers on non-API responses", async () => {
@@ -140,8 +140,16 @@ describe("orchestrator worker dispatch", () => {
     expect(response.headers.get("Content-Security-Policy")).toBeNull();
   });
 
-  it("returns 301 for /api/health.json when host is public", async () => {
-    const env: OrchestratorEnv = {};
+  it("forwards /api/health.json to API binding on the public hostname", async () => {
+    const seen: Request[] = [];
+    const api = makeFetcher(async (request) => {
+      seen.push(request);
+      return new Response(JSON.stringify({ ok: true, checkedAt: "now" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const env: OrchestratorEnv = { API: api };
     const response = await worker.fetch(
       new Request("https://unveiled.app/api/health.json", {
         headers: { host: "unveiled.app" },
@@ -149,12 +157,21 @@ describe("orchestrator worker dispatch", () => {
       env,
       {} as ExecutionContext,
     );
-    expect(response.status).toBe(301);
-    expect(response.headers.get("Location")).toBe("/healthz");
+    expect(response.status).toBe(200);
+    expect(seen).toHaveLength(1);
+    expect(new URL(seen[0]?.url ?? "").pathname).toBe("/api/health.json");
   });
 
-  it("returns 301 for /api/readiness.json when host is public", async () => {
-    const env: OrchestratorEnv = {};
+  it("forwards /api/readiness.json to API binding on the public hostname", async () => {
+    const seen: Request[] = [];
+    const api = makeFetcher(async (request) => {
+      seen.push(request);
+      return new Response(JSON.stringify({ ok: true, status: "ready" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const env: OrchestratorEnv = { API: api };
     const response = await worker.fetch(
       new Request("https://unveiled.app/api/readiness.json", {
         headers: { host: "unveiled.app" },
@@ -162,8 +179,9 @@ describe("orchestrator worker dispatch", () => {
       env,
       {} as ExecutionContext,
     );
-    expect(response.status).toBe(301);
-    expect(response.headers.get("Location")).toBe("/readyz");
+    expect(response.status).toBe(200);
+    expect(seen).toHaveLength(1);
+    expect(new URL(seen[0]?.url ?? "").pathname).toBe("/api/readiness.json");
   });
 
   it("forwards /api/health.json to API binding when host is not public", async () => {
@@ -233,7 +251,7 @@ describe("orchestrator worker dispatch", () => {
       line.includes("orchestrator.request"),
     );
     expect(requestLog).toBeDefined();
-    const parsed = JSON.parse(requestLog!);
+    const parsed = JSON.parse(requestLog ?? "");
     expect(parsed.service).toBe("unveiled-orchestrator");
     expect(parsed.message).toBe("orchestrator.request");
     expect(parsed.path).toBe("/");
@@ -262,9 +280,26 @@ describe("orchestrator worker dispatch", () => {
     expect(isPublicHost(null)).toBe(false);
   });
 
-  it("REDIRECT_PATHS covers the deprecated endpoints", () => {
-    expect(REDIRECT_PATHS.get("/api/health.json")).toBe("/healthz");
-    expect(REDIRECT_PATHS.get("/api/readiness.json")).toBe("/readyz");
+  it("does not redirect /api/health.json to /healthz (deprecation window has ended)", async () => {
+    const seen: Request[] = [];
+    const api = makeFetcher(async (request) => {
+      seen.push(request);
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const env: OrchestratorEnv = { API: api };
+    const response = await worker.fetch(
+      new Request("https://unveiled.app/api/health.json", {
+        headers: { host: "unveiled.app" },
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Location")).toBeNull();
+    expect(seen).toHaveLength(1);
   });
 
   it("redirects bare /app to /app/en/ when no language preference is set", async () => {

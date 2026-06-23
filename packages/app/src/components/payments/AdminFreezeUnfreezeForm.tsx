@@ -1,10 +1,7 @@
+import { Button, Field, Panel, TextInput } from "@unveiled/design-system";
 import { useContext, useId, useState } from "react";
-
-import { Button } from "@unveiled/design-system";
-import { Field, Panel, TextInput } from "@unveiled/design-system";
-import { copyFor } from "~/lib/i18n";
-
 import { LanguageContext } from "~/components/unveiled/context-primitives";
+import { copyFor } from "~/lib/i18n";
 
 export type AdminFreezeUnfreezeFormProps = {
   userId: string;
@@ -101,7 +98,6 @@ export function AdminFreezeUnfreezeForm(props: AdminFreezeUnfreezeFormProps) {
       <p
         id={errorRegionId}
         aria-live="polite"
-        aria-label={copy.errorRegionLabel}
         className="text-xs font-bold uppercase tracking-widest opacity-75"
       >
         {errorText}
