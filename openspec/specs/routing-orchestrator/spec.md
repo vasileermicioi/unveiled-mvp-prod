@@ -56,6 +56,57 @@ The Worker SHALL live at `packages/orchestrator/src/worker.ts` and SHALL be the 
 - **AND** the original query string is preserved on the `Location` header (e.g. `/app?venuePartner=abc&venueToken=xyz` → `/app/en/?venuePartner=abc&venueToken=xyz`)
 - **AND** paths already under `/app/<lang>/...` are forwarded to the app Worker unchanged (no redirect loop).
 
+### Requirement: Orchestrator Normalizes App-Shaped Paths To The Canonical Form
+
+Before the `LANDING` fallback runs, the orchestrator SHALL call `normalizeAppPath(pathname, request)` (exported from `packages/orchestrator/src/index.ts`). When `normalizeAppPath` returns a canonical `/app/<lang>/...` URL, the Worker SHALL respond with `302 Found` and `Location: <canonical>`, applying the orchestrator's uniform security headers. The Vite dev proxy in `packages/orchestrator/src/dev-proxy.ts` SHALL call the same `normalizeAppPath` function before forwarding, so manual testing on `http://localhost:4320/<bare-path>` mirrors production behavior.
+
+The normalization MUST recognize two shapes:
+
+- **Bare language prefix**: any path matching `^/(de|en)(/.*)?$` (excluding `/app/...`) SHALL be normalized to `` `/app${pathname}` `` (e.g. `/en/admin` → `/app/en/admin`; `/de` → `/app/de`).
+- **Bare route segment**: any path in the closed `APP_BARE_ROUTE_SEGMENTS` set (`/discover`, `/how-it-works`, `/membership`, `/faq`, `/app`, `/onboarding`, `/saved`, `/bookings`, `/profile`, `/partner`, `/admin`) SHALL be normalized to `` `/app/${pickLangFromRequest(request)}${pathname}` `` where `<lang>` defaults to `en`, prefers `de` when `Accept-Language` includes `de`, and respects the `unveiled_lang` cookie via `pickLangFromRequest`.
+
+The normalization MUST return `null` (no redirect) for the following path shapes so the request flows through the normal dispatch: canonical paths under `/app/...` and the bare `/app`, API paths under `/api/...`, `/healthz`, `/readyz`, `/ladle/...`, `/favicon.ico`, `/favicon.svg`, `/logos/...`, `/fonts/...`, any path starting with `/@` or `/_`, any path containing `.`, the bare landing `/`, and any unknown bare path (e.g. `/foo`).
+
+#### Scenario: Bare language prefix is redirected to /app/<lang>/...
+
+- **WHEN** a request arrives at `/en`, `/en/`, `/de`, `/en/admin`, `/en/admin/events`, or any path matching `^/(de|en)(/.*)?$` (excluding `/app/...`)
+- **THEN** the orchestrator returns `302` with `Location: /app<pathname>` (e.g. `/en/admin` → `/app/en/admin`; `/de` → `/app/de`)
+- **AND** the response carries the orchestrator's uniform security headers.
+
+#### Scenario: Bare route segment is redirected to /app/<lang><path>
+
+- **WHEN** a request arrives at any path in `APP_BARE_ROUTE_SEGMENTS` (e.g. `/discover`, `/admin`, `/membership`)
+- **THEN** the orchestrator returns `302` with `Location: /app/<lang><pathname>` where `<lang>` is resolved by `pickLangFromRequest` (cookie first, then `Accept-Language`, default `en`)
+- **AND** the response carries the orchestrator's uniform security headers.
+
+#### Scenario: Bare route segment respects the unveiled_lang cookie
+
+- **WHEN** a request arrives at `/admin` with a `Cookie: unveiled_lang=DE` header
+- **THEN** the orchestrator returns `302` with `Location: /app/de/admin`.
+
+#### Scenario: Bare route segment respects Accept-Language: de
+
+- **WHEN** a request arrives at `/discover` with `Accept-Language: de-DE,de;q=0.9` and no `unveiled_lang` cookie
+- **THEN** the orchestrator returns `302` with `Location: /app/de/discover`.
+
+#### Scenario: Canonical /app/<lang>/... paths are forwarded unchanged
+
+- **WHEN** a request arrives at any path under `/app/<lang>/...` (e.g. `/app/en/discover`)
+- **THEN** `normalizeAppPath` returns `null`
+- **AND** the orchestrator forwards the request to `env.APP.fetch(request)` without redirect.
+
+#### Scenario: Normalization excludes /api/* /healthz /readyz and static assets
+
+- **WHEN** a request arrives at any path under `/api/*`, `/healthz`, `/readyz`, `/`, `/ladle/*`, `/favicon.ico`, `/favicon.svg`, `/logos/*`, `/fonts/*`, `/@vite/...`, `/_astro/...`, or any path containing `.`
+- **THEN** `normalizeAppPath` returns `null`
+- **AND** the request flows through the normal dispatch (no `302`).
+
+#### Scenario: Unknown bare paths are forwarded to the landing Worker
+
+- **WHEN** a request arrives at a path that is not in `APP_BARE_ROUTE_SEGMENTS` and does not match the language-prefix regex (e.g. `/foo`)
+- **THEN** `normalizeAppPath` returns `null`
+- **AND** the orchestrator forwards the request to `env.LANDING.fetch(request)` (which 404s on unknown paths).
+
 ### Requirement: Orchestrator Declares Service Bindings And A Static Asset Binding
 
 `wrangler.orchestrator.toml` SHALL declare the three downstream service bindings and the top-level static asset binding. No other `wrangler.*.toml` SHALL declare `assets = ...` for the top-level hostname (the orchestrator owns it).

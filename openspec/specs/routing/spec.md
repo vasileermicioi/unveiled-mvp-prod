@@ -27,7 +27,7 @@ The routing spec SHALL be exercised by at least one Gherkin scenario per surface
 
 ### Requirement: Canonical /[lang]/... Route Table Exists
 
-The application SHALL publish a canonical route table that lists every route under `/app/<lang>/...` (per the `app-package` capability), the surface it belongs to, the viewer kinds allowed, and the matching TypeSpec operation id. After this change, every URL prefixed `/api/*` is dispatched to the API Worker via the Cloudflare service binding declared in `wrangler.orchestrator.toml` (`binding = "API"`) before any Astro routing or middleware guard runs. The route table also lists every URL under `/` owned by the `landing-package` capability (the public marketing surface); the production URL space is the union of the landing surface (`/*`, dispatched by the orchestrator's `LANDING` service binding), the app surface (`/app/*`, dispatched by the orchestrator's `APP` service binding), and the API surface (`/api/*`, dispatched by the orchestrator's `API` service binding). The orchestrator Worker (`packages/orchestrator/src/worker.ts`, configured via `wrangler.orchestrator.toml`) is the single entry point for the public hostname and owns the dispatch contract.
+The application SHALL publish a canonical route table that lists every route under `/app/<lang>/...` (per the `app-package` capability), the surface it belongs to, the viewer kinds allowed, and the matching TypeSpec operation id. After this change, every URL prefixed `/api/*` is dispatched to the API Worker via the Cloudflare service binding declared in `wrangler.orchestrator.toml` (`binding = "API"`) before any Astro routing or middleware guard runs. The route table also lists every URL under `/` owned by the `landing-package` capability (the public marketing surface); the production URL space is the union of the landing surface (`/*`, dispatched by the orchestrator's `LANDING` service binding), the app surface (`/app/*`, dispatched by the orchestrator's `APP` service binding), and the API surface (`/api/*`, dispatched by the orchestrator's `API` service binding). The orchestrator Worker (`packages/orchestrator/src/worker.ts`, configured via `wrangler.orchestrator.toml`) is the single entry point for the public hostname and owns the dispatch contract. The orchestrator's path normalization layer (see `routing-orchestrator` capability: `Orchestrator Normalizes App-Shaped Paths To The Canonical Form`) SHALL redirect any "app-shaped" path — bare language prefixes (`/en`, `/de`, `/en/admin`) and bare route segments (`/discover`, `/admin`, `/membership`, …) — to the canonical `/app/<lang>/...` form with `302 Found` so the canonical route table is the single source of truth for navigation regardless of how the URL is reached.
 
 #### Scenario: Every committed route appears in the table
 
@@ -56,6 +56,13 @@ The application SHALL publish a canonical route table that lists every route und
 - **THEN** the target URL is read from the routing spec's route table
 - **AND** targets under `/app/*` are prefixed with `/app`, targets under `/` are not prefixed
 - **AND** no navigation control hardcodes a route string that is not in the table.
+
+#### Scenario: Orchestrator normalizes app-shaped paths to the canonical form
+
+- **WHEN** a Guest visits an app-shaped path without the `/app` base (e.g. `/en/admin`, `/de`, `/discover`, `/admin`, `/membership`, `/en/admin/events`)
+- **THEN** the orchestrator returns `302 Found` with `Location: /app/<lang>/...` (e.g. `/app/en/admin`, `/app/de`, `/app/en/discover`, `/app/en/admin`, `/app/en/membership`, `/app/en/admin/events`)
+- **AND** the resolved `<lang>` is the user's language preference (the `unveiled_lang` cookie, then `Accept-Language`, defaulting to `en`)
+- **AND** canonical paths (`/app/<lang>/...`), the landing home (`/`), API paths (`/api/...`), `/healthz`, `/readyz`, and Vite / static asset paths are not redirected.
 
 ### Requirement: Public, Member, Partner, and Admin Surfaces Are Disjoint
 
