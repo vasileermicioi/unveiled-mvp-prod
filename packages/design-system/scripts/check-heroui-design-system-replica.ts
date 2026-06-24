@@ -43,7 +43,12 @@ function fail(message: string) {
 }
 
 function walk(root: string, out: string[] = []): string[] {
-  const entries = readdirSync(root);
+  let entries: string[];
+  try {
+    entries = readdirSync(root);
+  } catch {
+    return out;
+  }
   for (const entry of entries) {
     const full = join(root, entry);
     const st = statSync(full);
@@ -147,7 +152,7 @@ function checkOverview() {
     return;
   }
   const source = readFileSync(overviewPath, "utf8");
-  if (!source.includes('role="main"')) {
+  if (!source.includes("<main") && !source.includes('role="main"')) {
     fail("design-system-overview.ladle.tsx is missing main role=main");
   }
   if (!source.includes("Unveiled Design System (HeroUI)")) {

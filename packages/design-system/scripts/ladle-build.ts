@@ -1,11 +1,26 @@
 #!/usr/bin/env bun
 import { spawnSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const pkgRoot = resolve(here, "..");
 
 const result = spawnSync(
-  "ladle",
-  ["build", "-o", "dist/ladle", "--base", "/ladle/"],
+  "bunx",
+  [
+    "--bun",
+    "ladle",
+    "build",
+    "-o",
+    "dist/ladle",
+    "--base",
+    "/ladle/",
+    "--config",
+    ".ladle",
+  ],
   {
-    cwd: new URL("..", import.meta.url).pathname,
+    cwd: pkgRoot,
     stdio: "inherit",
   },
 );

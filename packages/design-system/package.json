@@ -17,7 +17,10 @@
     "tokens:check": "bun scripts/check-design-tokens.ts"
   },
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "@ladle/react": "^5.1.1",
+    "@tailwindcss/vite": "^4.2.4"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./heroui-replica": "./src/heroui-replica/index.ts",

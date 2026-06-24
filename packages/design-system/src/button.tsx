@@ -85,11 +85,11 @@ function Button({
       spinner={
         <span
           aria-hidden="true"
-          className="inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+          className="mr-2 inline-block size-3 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
         />
       }
       classNames={{
-        spinner: "mr-1",
+        spinner: "mr-2",
       }}
       {...(props as unknown as React.ComponentProps<typeof HeroUIButton>)}
     >
