@@ -11,9 +11,12 @@ const initialDiscovery = await loadPublicDiscoveryData();
   <main class="mx-auto grid min-h-screen w-full max-w-6xl gap-8 px-6 py-10">
     <nav class="flex items-center justify-between border-b pb-4">
       <a href="/" class="text-sm font-semibold tracking-wide">Unveiled MVP</a>
-      <Button asChild variant="outline" size="sm">
-        <a href="/">Home</a>
-      </Button>
+      <a
+          href="/"
+          class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-transparent px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-dark hover:text-white focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+        >
+          Home
+        </a>
     </nav>
 
     <header class="grid gap-3">

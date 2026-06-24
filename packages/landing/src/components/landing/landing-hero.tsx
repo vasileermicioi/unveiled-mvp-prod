@@ -1,5 +1,3 @@
-import { Button } from "@unveiled/design-system";
-
 export function LandingHero({ authenticated }: { authenticated: boolean }) {
   return (
     <section
@@ -18,13 +16,19 @@ export function LandingHero({ authenticated }: { authenticated: boolean }) {
         who already know what&rsquo;s good this week.
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="default" size="lg">
-          <a href="/app">Become a member</a>
-        </Button>
+        <a
+          href="/app"
+          className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-brand-dark px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-white outline-none transition-all duration-200 hover:bg-brand-yellow hover:text-brand-dark focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+        >
+          Become a member
+        </a>
         {authenticated ? (
-          <Button asChild variant="secondary" size="lg">
-            <a href="/app">Go to app</a>
-          </Button>
+          <a
+            href="/app"
+            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+          >
+            Go to app
+          </a>
         ) : null}
       </div>
     </section>

@@ -8,15 +8,23 @@
     "build": "ladle build -o dist/ladle --base /ladle/",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome check .",
-    "test:unit": "bun test src/**/*.test.ts src/**/*.test.tsx",
+    "test:unit": "bun test $(find src -name '*.test.ts' -o -name '*.test.tsx')",
     "ladle": "ladle dev -p 6006",
     "ladle:build": "ladle build -o dist/ladle --base /ladle/",
     "ladle:coverage": "bun scripts/coverage.ts",
+    "check:atomic-layers": "bun scripts/check-atomic-layers.ts",
     "heroui-design-system-replica:check": "bun scripts/check-heroui-design-system-replica.ts",
     "tokens:gen": "bun scripts/generate-design-tokens.ts",
     "tokens:check": "bun scripts/check-design-tokens.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@nextui-org/react": "^2.6.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwind-merge": "^3.5.0"
+  },
   "devDependencies": {
     "@ladle/react": "^5.1.1",
     "@tailwindcss/vite": "^4.2.4"
@@ -26,6 +34,7 @@
     "./heroui-replica": "./src/heroui-replica/index.ts",
     "./lib/*": "./src/lib/*.ts",
     "./styles/generated/tokens.css": "./src/styles/generated/tokens.css",
-    "./styles/global.css": "./src/styles/global.css"
+    "./styles/global.css": "./src/styles/global.css",
+    "./styles/atom-chrome.css": "./src/styles/atom-chrome.css"
   }
 }

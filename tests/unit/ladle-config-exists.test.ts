@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const CONFIG_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -89,10 +89,10 @@ describe("packages/design-system/public/app symlink", () => {
   });
 });
 
-describe("packages/design-system/src/button.tsx loading-state spinner", () => {
+describe("packages/design-system/src/atoms/button/button.tsx loading-state spinner", () => {
   const BUTTON_PATH = resolve(
     dirname(fileURLToPath(import.meta.url)),
-    "../../packages/design-system/src/button.tsx",
+    "../../packages/design-system/src/atoms/button/button.tsx",
   );
 
   it("gives the loading-state spinner a clear right margin", () => {

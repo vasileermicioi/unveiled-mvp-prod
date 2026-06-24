@@ -1,12 +1,13 @@
 import { Button as HeroUIButton } from "@nextui-org/react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import type * as React from "react";
 
-import { cn } from "./lib/utils";
+import { cn } from "../../lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark text-[10px] font-black uppercase tracking-[0.18em] outline-none transition-all duration-200 focus-visible:ring-4 focus-visible:ring-brand-dark/25 disabled:pointer-events-none disabled:opacity-35 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+import type { ButtonProps } from "./button.types";
+
+export const buttonVariants = cva(
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark text-[10px] font-black uppercase tracking-[0.18em] outline-none transition-all duration-200 focus-visible:ring-4 focus-visible:ring-brand-dark/25 disabled:pointer-events-none disabled:bg-brand-grey disabled:text-brand-dark/50 aria-busy:opacity-100 aria-busy:cursor-wait [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -45,41 +46,27 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
+export type { ButtonProps } from "./button.types";
+
+export function Button({
   className,
   variant,
   size,
-  asChild = false,
   loading = false,
   children,
   disabled,
   type,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-    loading?: boolean;
-  }) {
+}: ButtonProps) {
   const composedClassName = cn(buttonVariants({ variant, size, className }));
-
-  if (asChild) {
-    return (
-      <Slot
-        data-slot="button"
-        className={composedClassName}
-        {...({ type, ...props } as React.ComponentProps<typeof Slot>)}
-      >
-        {children}
-      </Slot>
-    );
-  }
 
   return (
     <HeroUIButton
       data-slot="button"
       className={composedClassName}
-      isDisabled={disabled || loading}
+      isDisabled={disabled}
       isLoading={loading}
+      aria-busy={loading || undefined}
       disableRipple
       type={type}
       spinner={
@@ -97,5 +84,3 @@ function Button({
     </HeroUIButton>
   );
 }
-
-export { Button, buttonVariants };
