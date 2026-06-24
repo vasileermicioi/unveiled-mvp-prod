@@ -21,7 +21,7 @@
     "deploy:cloudflare:api": "bun run --filter '@unveiled/api' build && wrangler deploy --config wrangler.api.toml",
     "deploy:jobs": "wrangler deploy --config wrangler.jobs.toml",
     "astro": "bun run --filter @unveiled/app astro --",
-    "check": "bun run --filter '@unveiled/app' astro-check-proxied && bun run --filter '@unveiled/landing' astro-check-proxied && biome check . && bun run specs:check && bun run tokens:check && bun run ladle:coverage && bun run lint:viewport && bun run wrangler:check && bun run scripts/check-no-console.ts && bun run scripts/check-legacy-ui-references.ts && bun run scripts/codemod-remove-legacy-alias.ts --verify",
+    "check": "bun run --filter '@unveiled/app' astro-check-proxied && bun run --filter '@unveiled/landing' astro-check-proxied && biome check . && bun run specs:check && bun run tokens:check && bun run ladle:coverage && bun run lint:viewport && bun run wrangler:check && bun run scripts/check-no-console.ts && bun run scripts/check-legacy-ui-references.ts && bun run scripts/codemod-remove-legacy-alias.ts --verify && bun run --filter '@unveiled/design-system' check:atomic-layers",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "lint:workspaces": "biome check packages/",

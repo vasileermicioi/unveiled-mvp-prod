@@ -186,18 +186,20 @@ function LandingPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="secondary" size="lg">
-            <a href={`/app/${selectedLanguage.toLowerCase()}/discover`}>
-              {copy.exploreAccess}
-              <ArrowRight />
-            </a>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <a href={`/app/${selectedLanguage.toLowerCase()}/how-it-works`}>
-              {copy.howItWorks}
-              <ArrowRight />
-            </a>
-          </Button>
+          <a
+            href={`/app/${selectedLanguage.toLowerCase()}/discover`}
+            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+          >
+            {copy.exploreAccess}
+            <ArrowRight />
+          </a>
+          <a
+            href={`/app/${selectedLanguage.toLowerCase()}/how-it-works`}
+            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+          >
+            {copy.howItWorks}
+            <ArrowRight />
+          </a>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {copy.landingPerks.map((label) => (

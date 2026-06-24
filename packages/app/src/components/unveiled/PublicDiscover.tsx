@@ -364,12 +364,13 @@ export function FaqPage() {
   const selectedLanguage = useContext(LanguageContext);
   return (
     <div className="space-y-8 py-8">
-      <Button asChild variant="ghost">
-        <a href={`/app/${selectedLanguage.toLowerCase()}/`}>
-          <ArrowLeft />
-          {copy.back}
-        </a>
-      </Button>
+      <a
+        href={`/app/${selectedLanguage.toLowerCase()}/`}
+        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-transparent px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:border-brand-dark hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+      >
+        <ArrowLeft />
+        {copy.back}
+      </a>
       <Panel tone="white">
         <Badge tone="yellow">FAQ</Badge>
         <h1 className="headline-lg mt-5">{copy.title}</h1>
