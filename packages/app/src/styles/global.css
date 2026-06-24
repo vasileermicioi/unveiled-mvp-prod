@@ -14,11 +14,13 @@
 }
 
 @source "../**/*.{ts,tsx}";
+@source "../../design-system/src/**/*.{ts,tsx}";
 @source "../../tests/features/**/*.{ts,tsx}";
 @source "../../tests/ladle/**/*.{ts,tsx}";
 @source inline("animate-spinner-ease-spin");
 @source inline("animate-spinner-linear-spin");
 @source inline("flex-none w-9 h-9 rounded-full place-items-center border-1 shadow-small translate-x-1 -translate-y-1 min-h-10 border-b-current end-1 end-3 end-2 start-1 start-4 ms-2 ms-1 me-1 me-2 border-t-transparent border-l-transparent border-r-transparent border-b-current opacity-75 border-dotted border-solid focus-visible:z-10 translate-y-0 translate-x-0 w-4 h-4 transition-transform duration-150 ease motion-reduce:transition-none rotate-180 data-open-true:rotate-180 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2");
+@source inline("border-current");
 
 @custom-variant dark (&:is(.dark *));
 

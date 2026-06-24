@@ -52,7 +52,7 @@ export const Loading = () =>
   storyBackdrop(
     <Button
       isLoading
-      className="rounded-none border-2 border-brand-dark bg-brand-dark text-[10px] font-black uppercase tracking-[0.18em] text-white"
+      className="rounded-none border-2 border-brand-dark bg-brand-dark px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white"
     >
       Loading
     </Button>,
