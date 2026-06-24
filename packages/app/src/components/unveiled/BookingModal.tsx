@@ -1,5 +1,12 @@
 import { actions } from "astro:actions";
-import { Button, Divider, Panel } from "@unveiled/design-system";
+import {
+  BookingModalActionsPresentational,
+  BookingModalFormPresentational,
+  BookingModalHeaderPresentational,
+  BookingModalSummaryPresentational,
+  Button,
+  Panel,
+} from "@unveiled/design-system";
 import {
   ArrowRight,
   Calendar,
@@ -60,6 +67,8 @@ export function BookingModal({
       window.URL.revokeObjectURL(calendarFile.href);
     };
   }, [calendarFile]);
+
+  const whenLabel = live.profile.language === "DE" ? "ZEITPUNKT" : "WHEN";
 
   return (
     <ModalShell
@@ -144,41 +153,26 @@ export function BookingModal({
                 </Panel>
               ) : null}
             </div>
-            <Button type="button" variant="link" onClick={onClose}>
-              {copy.returnFeed}
-            </Button>
+            <BookingModalActionsPresentational
+              returnLabel={copy.returnFeed}
+              onReturn={onClose}
+            />
           </div>
         </div>
       ) : (
         <>
           <section className="space-y-8">
-            <div>
-              <p className="unveiled-meta opacity-45">
-                {event.category}
-                {" // "}
-                {event.partnerName}
-              </p>
-              <h2 className="headline-lg mt-4">{event.title}</h2>
-            </div>
-            <p className="max-w-2xl text-xl font-bold leading-relaxed opacity-80">
-              {event.description}
-            </p>
-            <div className="grid gap-6 sm:grid-cols-2 border-t-2 border-brand-dark/15 pt-6">
-              <div>
-                <p className="unveiled-meta opacity-45">
-                  {live.profile.language === "DE" ? "ZEITPUNKT" : "WHEN"}
-                </p>
-                <p className="mt-2 text-2xl font-black uppercase tracking-tight">
-                  {event.dateLabel}
-                </p>
-              </div>
-              <div>
-                <p className="unveiled-meta opacity-45">{copy.location}</p>
-                <p className="mt-2 text-2xl font-black uppercase tracking-tight">
-                  {event.address}
-                </p>
-              </div>
-            </div>
+            <BookingModalHeaderPresentational
+              categoryAndPartner={`${event.category} // ${event.partnerName}`}
+              title={event.title}
+            />
+            <BookingModalSummaryPresentational
+              description={event.description}
+              whenLabel={whenLabel}
+              whenValue={event.dateLabel}
+              whereLabel={copy.location}
+              whereValue={event.address}
+            />
             {!isGuest && (
               <Panel tone="cream" shadow={false} className="p-4">
                 <p className="unveiled-meta">{copy.gateCopy}</p>
@@ -228,105 +222,90 @@ export function BookingModal({
               </Button>
             </Panel>
           ) : (
-            <Panel tone="dark" className="space-y-8">
-              <div className="flex items-center justify-between gap-4">
-                <span className="unveiled-meta">{copy.tickets}</span>
-                <div className="flex items-center gap-7 font-display text-5xl font-black">
-                  <button
-                    type="button"
-                    onClick={() => setCount(Math.max(1, count - 1))}
-                  >
-                    <Minus />
-                  </button>
-                  {count}
-                  <button
-                    type="button"
-                    onClick={() => setCount(Math.min(3, count + 1))}
-                  >
-                    <Plus />
-                  </button>
-                </div>
-              </div>
-              <Divider className="bg-brand-yellow/25" />
-              <div className="flex items-end justify-between gap-4">
-                <span className="unveiled-meta opacity-55">{copy.total}</span>
-                <span className="font-display text-5xl font-black uppercase">
-                  {total} credits
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="yellow"
-                className="w-full"
-                disabled={submitting || membershipBlocked}
-                onClick={async () => {
-                  setResult(null);
-                  setCopied(false);
-                  if (membershipBlocked) {
-                    setResult({
-                      state: "failure",
-                      message: event.membershipCta ?? copy.membershipRequired,
-                    });
-                    return;
-                  }
-                  setSubmitting(true);
-                  const response =
-                    event.remainingCapacity === 0
-                      ? await actions.joinWaitlist({
-                          eventId: event.id,
-                          ticketQuantity: count,
-                        })
-                      : await actions.bookEvent({
-                          eventId: event.id,
-                          ticketQuantity: count,
-                          idempotencyKey: crypto.randomUUID(),
-                        });
+            <BookingModalFormPresentational
+              ticketsLabel={copy.tickets}
+              totalLabel={copy.total}
+              totalValue={`${total} credits`}
+              count={count}
+              minCount={1}
+              maxCount={3}
+              submitLabel={
+                submitting
+                  ? ""
+                  : event.remainingCapacity === 0
+                    ? copy.joinWaitlist
+                    : copy.confirm
+              }
+              submitting={submitting}
+              disabled={membershipBlocked}
+              minusIcon={<Minus />}
+              plusIcon={<Plus />}
+              spinnerIcon={<Loader2 />}
+              trailingIcon={<ArrowRight />}
+              onDecrement={() =>
+                setCount((current) => Math.max(1, current - 1))
+              }
+              onIncrement={() =>
+                setCount((current) => Math.min(3, current + 1))
+              }
+              onSubmit={async () => {
+                setResult(null);
+                setCopied(false);
+                if (membershipBlocked) {
+                  setResult({
+                    state: "failure",
+                    message: event.membershipCta ?? copy.membershipRequired,
+                  });
+                  return;
+                }
+                setSubmitting(true);
+                const response =
+                  event.remainingCapacity === 0
+                    ? await actions.joinWaitlist({
+                        eventId: event.id,
+                        ticketQuantity: count,
+                      })
+                    : await actions.bookEvent({
+                        eventId: event.id,
+                        ticketQuantity: count,
+                        idempotencyKey: crypto.randomUUID(),
+                      });
 
-                  setSubmitting(false);
-                  if (response.error || !response.data) {
-                    setResult({
-                      state: "failure",
-                      message: copy.requestFailed,
-                    });
-                    return;
-                  }
+                setSubmitting(false);
+                if (response.error || !response.data) {
+                  setResult({
+                    state: "failure",
+                    message: copy.requestFailed,
+                  });
+                  return;
+                }
 
-                  if (!response.data.ok) {
-                    setResult({
-                      state: "failure",
-                      message: response.data.formError ?? copy.checkFields,
-                      waitlistAvailable: event.remainingCapacity === 0,
-                    });
-                    return;
-                  }
+                if (!response.data.ok) {
+                  setResult({
+                    state: "failure",
+                    message: response.data.formError ?? copy.checkFields,
+                    waitlistAvailable: event.remainingCapacity === 0,
+                  });
+                  return;
+                }
 
-                  const data = response.data.data;
-                  if (data?.state === "confirmed") {
-                    live.refetchActiveSurface();
-                    setResult({
-                      state: "confirmed",
-                      code: data.redemption.code,
-                      url: data.redemption.url,
-                    });
-                    return;
-                  }
+                const data = response.data.data;
+                if (data?.state === "confirmed") {
+                  live.refetchActiveSurface();
+                  setResult({
+                    state: "confirmed",
+                    code: data.redemption.code,
+                    url: data.redemption.url,
+                  });
+                  return;
+                }
 
-                  if (data?.state === "waitlist") {
-                    live.refetchActiveSurface();
-                    setResult({ state: "waitlist" });
-                  }
-                }}
-              >
-                {submitting ? (
-                  <Loader2 className="animate-spin" />
-                ) : event.remainingCapacity === 0 ? (
-                  copy.joinWaitlist
-                ) : (
-                  copy.confirm
-                )}
-                <ArrowRight />
-              </Button>
-            </Panel>
+                if (data?.state === "waitlist") {
+                  live.refetchActiveSurface();
+                  setResult({ state: "waitlist" });
+                }
+              }}
+            />
           )}
         </>
       )}

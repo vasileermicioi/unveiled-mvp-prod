@@ -1,4 +1,8 @@
-import { Button, Field, Panel, TextInput } from "@unveiled/design-system";
+import {
+  type AdminFreezeUnfreezeFormCopy,
+  AdminFreezeUnfreezeFormPresentational,
+} from "@unveiled/design-system";
+import type { FormEvent } from "react";
 import { useContext, useId, useState } from "react";
 import { LanguageContext } from "~/components/unveiled/context-primitives";
 import { copyFor } from "~/lib/i18n";
@@ -48,60 +52,28 @@ export function AdminFreezeUnfreezeForm(props: AdminFreezeUnfreezeFormProps) {
   };
 
   const errorText = localError ?? props.resultMessage ?? "";
+  const formCopy: AdminFreezeUnfreezeFormCopy = {
+    reasonLabel: copy.reasonLabel,
+    reasonPlaceholder: copy.reasonPlaceholder,
+    freezeSubmit: copy.freezeSubmit,
+    unfreezeSubmit: copy.unfreezeSubmit,
+    errorInvalidReason: copy.errorInvalidReason,
+  };
 
   return (
-    <Panel
-      as="form"
-      tone="white"
-      aria-labelledby={formLabelId}
-      className="space-y-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <h4 id={formLabelId} className="sr-only">
-        {copy.freezeFormLabel}
-      </h4>
-      <Field label={copy.reasonLabel} htmlFor={reasonInputId}>
-        <TextInput
-          id={reasonInputId}
-          name="reason"
-          placeholder={copy.reasonPlaceholder}
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          aria-describedby={errorRegionId}
-          disabled={busy}
-        />
-      </Field>
-      <div className="flex gap-2">
-        <Button
-          type="submit"
-          size="sm"
-          variant="destructive"
-          onClick={() => void submit(true)}
-          aria-label={copy.freezeSubmit}
-          disabled={busy}
-        >
-          {copy.freezeSubmit}
-        </Button>
-        <Button
-          type="submit"
-          size="sm"
-          variant="secondary"
-          onClick={() => void submit(false)}
-          aria-label={copy.unfreezeSubmit}
-          disabled={busy}
-        >
-          {copy.unfreezeSubmit}
-        </Button>
-      </div>
-      <p
-        id={errorRegionId}
-        aria-live="polite"
-        className="text-xs font-bold uppercase tracking-widest opacity-75"
-      >
-        {errorText}
-      </p>
-    </Panel>
+    <AdminFreezeUnfreezeFormPresentational
+      copy={formCopy}
+      reason={reason}
+      busy={busy}
+      errorText={errorText}
+      formId={formLabelId}
+      reasonInputId={reasonInputId}
+      errorRegionId={errorRegionId}
+      onReasonChange={setReason}
+      onSubmit={submit}
+      onFormSubmit={(event: FormEvent<HTMLFormElement>) =>
+        event.preventDefault()
+      }
+    />
   );
 }

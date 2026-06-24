@@ -30,6 +30,7 @@ const TABLE_CHROME = `
 
 export const Default = () => (
   <AtomStoryBackdrop className="flex-col items-stretch">
+    {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Ladle story seeds the table's atom-chrome CSS once per story mount; the content is a static template literal with no untrusted input. */}
     <style dangerouslySetInnerHTML={{ __html: TABLE_CHROME }} />
     <Table
       aria-label="Example table"

@@ -2,8 +2,8 @@ import React from "react";
 
 import {
   SelectItem,
-  SelectTrigger,
   type Selection,
+  SelectTrigger,
 } from "../../atoms/select-item";
 import { cn } from "../../lib/utils";
 import "../../styles/atom-chrome.css";

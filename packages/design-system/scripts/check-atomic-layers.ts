@@ -215,8 +215,55 @@ function checkCompanionFiles(
   }
 }
 
+function checkOrganismsLayer(files: string[]) {
+  const DOMAIN_DIRS = new Set([
+    "_shared",
+    "shell",
+    "auth",
+    "discovery",
+    "members",
+    "bookings",
+    "admin",
+    "partner-portal",
+    "payments",
+    "landing",
+  ]);
+  for (const file of files) {
+    const source = readFileSync(file, "utf8");
+    const imports = extractImports(source);
+
+    const lucide = imports.find((imp) => LUCIDE_RE.test(imp));
+    if (lucide) {
+      fail(
+        file,
+        `organisms file imports lucide-react — the design system has no Icon molecule; inline <svg> at the call site with a // source: lucide-static comment`,
+      );
+    }
+
+    const rel = relative(SRC_ROOT, file);
+    const parts = rel.split("/");
+    const currentDomain = parts[1] === "_shared" ? "_shared" : parts[1];
+    const crossDomain = imports.find((imp) => {
+      const match = imp.match(
+        /from\s+["']\.\.\/\.\.\/(?:organisms\/)?([^"']+)(\/[^"']*)?["']/,
+      );
+      if (!match) return false;
+      const target = match[1];
+      if (!target || !DOMAIN_DIRS.has(target)) return false;
+      return target !== currentDomain;
+    });
+    if (crossDomain) {
+      fail(
+        file,
+        `organisms file imports across domain boundaries (${currentDomain} → ${crossDomain}); cross-domain pieces MUST live in _shared/`,
+      );
+    }
+  }
+}
+
 const EXCLUDED_ATOM_DIRS = new Set(["__overview__", "backdrop"]);
 const EXCLUDED_MOLECULE_DIRS = new Set(["__overview__"]);
+const EXCLUDED_ORGANISM_DIRS = new Set(["__overview__"]);
 
 function main() {
   const atoms = listLayer("atoms");
@@ -231,8 +278,10 @@ function main() {
   checkHigherLayersDoNotImportHeroUI("layouts", layouts);
   checkHigherLayersDoNotImportHeroUI("pages", pages);
   checkMoleculesLayer(molecules);
+  checkOrganismsLayer(organisms);
   checkCompanionFiles("atoms", atoms, EXCLUDED_ATOM_DIRS);
   checkCompanionFiles("molecules", molecules, EXCLUDED_MOLECULE_DIRS);
+  checkCompanionFiles("organisms", organisms, EXCLUDED_ORGANISM_DIRS);
 
   if (failures.length === 0) {
     console.log(
