@@ -151,6 +151,48 @@ function checkHigherLayersDoNotImportHeroUI(layer: Layer, files: string[]) {
   }
 }
 
+function checkLayoutsLayer(files: string[]) {
+  for (const file of files) {
+    const source = readFileSync(file, "utf8");
+    const imports = extractImports(source);
+
+    const pageImport = imports.find((imp) =>
+      /from\s+["'][^"']*\.\.?\/(\.\.\/)?pages\//.test(imp),
+    );
+    if (pageImport) {
+      fail(
+        file,
+        `layouts file MUST NOT import from "./pages/..." — pages are Ladle demos only`,
+      );
+    }
+  }
+}
+
+function checkPagesLayer(files: string[]) {
+  const PAGE_FILE_RE = /\.page\.ladle\.tsx$/;
+  const MOCK_IMPORT_RE = /from\s+["'][^"']*\.mock["']/;
+
+  for (const file of files) {
+    if (!PAGE_FILE_RE.test(file)) {
+      fail(
+        file,
+        `pages file MUST end in ".page.ladle.tsx" — pages are Ladle demos only`,
+      );
+      continue;
+    }
+
+    const source = readFileSync(file, "utf8");
+    const imports = extractImports(source);
+    const hasMockImport = imports.some((imp) => MOCK_IMPORT_RE.test(imp));
+    if (!hasMockImport) {
+      fail(
+        file,
+        `pages file MUST import at least one "*.mock" helper — demo pages must use mock data`,
+      );
+    }
+  }
+}
+
 function checkMoleculesLayer(files: string[]) {
   for (const file of files) {
     const source = readFileSync(file, "utf8");
@@ -277,6 +319,8 @@ function main() {
   checkHigherLayersDoNotImportHeroUI("organisms", organisms);
   checkHigherLayersDoNotImportHeroUI("layouts", layouts);
   checkHigherLayersDoNotImportHeroUI("pages", pages);
+  checkLayoutsLayer(layouts);
+  checkPagesLayer(pages);
   checkMoleculesLayer(molecules);
   checkOrganismsLayer(organisms);
   checkCompanionFiles("atoms", atoms, EXCLUDED_ATOM_DIRS);
