@@ -1,1 +1,2 @@
-export { SelectItem } from "./select-item";
+export { SelectItem, SelectTrigger } from "./select";
+export type { Selection } from "./select";

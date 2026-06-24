@@ -2,7 +2,7 @@
 // Atomic-layers gate. Walks every `.tsx` under
 // `packages/design-system/src/{atoms,molecules,organisms,layouts,pages}/`
 // and asserts the per-layer rules codified by the design-system-atoms-layer
-// OpenSpec change.
+// and design-system-molecules-layer OpenSpec changes.
 //
 // Rules:
 //   1. Atoms MAY import only from allowed sources (lib, react, @nextui-org/react,
@@ -18,8 +18,17 @@
 //   3. Molecules / organisms / layouts / pages MUST NOT import from
 //      `@nextui-org/react` or `@heroui/*` directly. They consume atoms.
 //
-//   4. Every atom folder MUST contain a `<atom>.ladle.tsx` or
-//      `<atom>.test.tsx` companion file.
+//   4. Molecules MUST NOT import from sibling molecules, from
+//      `./organisms/...`, `./layouts/...`, or `./pages/...`. Molecules
+//      compose atoms; the atoms wrap HeroUI.
+//
+//   5. Molecules MUST NOT import from `lucide-react` (the design system
+//      has no `Icon` molecule; consumers inline `<svg>` directly).
+//
+//   6. Every atom folder MUST contain a `<atom>.ladle.tsx` or
+//      `<atom>.test.tsx` companion file. Every molecule folder MUST
+//      contain a `<molecule>.ladle.tsx` or `<molecule>.test.tsx` companion
+//      file.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
@@ -32,6 +41,7 @@ type Layer = (typeof LAYERS)[number];
 const HEROUI_BASE_RE = /from\s+["'](@nextui-org\/react|@heroui\/[^"']+)["']/;
 const FORBIDDEN_THIRD_PARTY_RE =
   /from\s+["'](@radix-ui\/[^"']+|@headlessui\/[^"']+|react-aria[^"']*|@mui\/[^"']+|@chakra-ui\/[^"']+)["']/;
+const LUCIDE_RE = /from\s+["']lucide-react["']/;
 const ATOMS_RE_EXPORT_MARKER = "// @atoms-re-export";
 
 interface Failure {
@@ -141,38 +151,72 @@ function checkHigherLayersDoNotImportHeroUI(layer: Layer, files: string[]) {
   }
 }
 
-function checkCompanionFiles(atomFiles: string[]) {
-  const atomRoots = new Set<string>();
-  // Folders that look like atoms but are actually utility/shared files
-  // (e.g. `backdrop/` is the shared Ladle story backdrop; `__overview__/`
-  // is the atoms overview story). They do not need a `.ladle.tsx` or
-  // `.test.tsx` companion.
-  const EXCLUDED_ATOM_DIRS = new Set(["__overview__", "backdrop"]);
-  for (const file of atomFiles) {
-    const rel = relative(SRC_ROOT, file);
-    const topDir = rel.split("/")[1];
-    if (EXCLUDED_ATOM_DIRS.has(topDir)) continue;
-    atomRoots.add(join(SRC_ROOT, rel.split("/").slice(0, 2).join("/")));
-  }
-  for (const root of atomRoots) {
-    const files = readdirSync(root);
-    const tsxFiles = files.filter((f) => f.endsWith(".tsx"));
-    const hasMain = tsxFiles.includes(`${root.split("/").pop()}.tsx`);
-    if (!hasMain) continue;
-    const hasLadle = tsxFiles.some(
-      (f) => f === `${root.split("/").pop()}.ladle.tsx`,
+function checkMoleculesLayer(files: string[]) {
+  for (const file of files) {
+    const source = readFileSync(file, "utf8");
+    const imports = extractImports(source);
+
+    const forbiddenMolecule = imports.find((imp) =>
+      /from\s+["']\.\.\/molecules\//.test(imp),
     );
-    const hasTest = tsxFiles.some(
-      (f) => f === `${root.split("/").pop()}.test.tsx`,
-    );
-    if (!hasLadle && !hasTest) {
+    if (forbiddenMolecule) {
       fail(
-        root,
-        `atom folder "${root.split("/").pop()}/" MUST have a sibling <atom>.ladle.tsx or <atom>.test.tsx companion`,
+        file,
+        `molecules file imports a sibling molecule: ${forbiddenMolecule}`,
+      );
+    }
+
+    const forbiddenAboveLayer = imports.find((imp) =>
+      /from\s+["']\.\.?\/(\.\.\/)?(organisms|layouts|pages)\//.test(imp),
+    );
+    if (forbiddenAboveLayer) {
+      fail(
+        file,
+        `molecules file imports a higher layer: ${forbiddenAboveLayer}`,
+      );
+    }
+
+    const lucide = imports.find((imp) => LUCIDE_RE.test(imp));
+    if (lucide) {
+      fail(
+        file,
+        `molecules file imports lucide-react — the design system has no Icon molecule; inline <svg> at the call site with a // source: lucide-static comment`,
       );
     }
   }
 }
+
+function checkCompanionFiles(
+  layer: Layer,
+  files: string[],
+  excludedDirs: Set<string>,
+) {
+  const roots = new Set<string>();
+  for (const file of files) {
+    const rel = relative(SRC_ROOT, file);
+    const topDir = rel.split("/")[1];
+    if (excludedDirs.has(topDir)) continue;
+    roots.add(join(SRC_ROOT, rel.split("/").slice(0, 2).join("/")));
+  }
+  for (const root of roots) {
+    const entries = readdirSync(root);
+    const tsxFiles = entries.filter((f) => f.endsWith(".tsx"));
+    const folderName = root.split("/").pop() ?? "";
+    const hasMain = tsxFiles.includes(`${folderName}.tsx`);
+    if (!hasMain) continue;
+    const hasLadle = tsxFiles.some((f) => f === `${folderName}.ladle.tsx`);
+    const hasTest = tsxFiles.some((f) => f === `${folderName}.test.tsx`);
+    if (!hasLadle && !hasTest) {
+      fail(
+        root,
+        `${layer} folder "${folderName}/" MUST have a sibling <${folderName}>.ladle.tsx or <${folderName}>.test.tsx companion`,
+      );
+    }
+  }
+}
+
+const EXCLUDED_ATOM_DIRS = new Set(["__overview__", "backdrop"]);
+const EXCLUDED_MOLECULE_DIRS = new Set(["__overview__"]);
 
 function main() {
   const atoms = listLayer("atoms");
@@ -186,7 +230,9 @@ function main() {
   checkHigherLayersDoNotImportHeroUI("organisms", organisms);
   checkHigherLayersDoNotImportHeroUI("layouts", layouts);
   checkHigherLayersDoNotImportHeroUI("pages", pages);
-  checkCompanionFiles(atoms);
+  checkMoleculesLayer(molecules);
+  checkCompanionFiles("atoms", atoms, EXCLUDED_ATOM_DIRS);
+  checkCompanionFiles("molecules", molecules, EXCLUDED_MOLECULE_DIRS);
 
   if (failures.length === 0) {
     console.log(

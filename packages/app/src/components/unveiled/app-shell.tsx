@@ -6,6 +6,7 @@ import {
   StatePanel,
 } from "@unveiled/design-system";
 import { cn } from "@unveiled/design-system/lib/utils";
+// source: lucide-react (ISC-licensed; full inline <svg> migration deferred to iteration-13 proposal 07)
 import {
   Bookmark,
   Calendar,
