@@ -1,5 +1,7 @@
 import { actions } from "astro:actions";
 import {
+  AdminPanelHeaderPresentational,
+  AdminPanelTabBarPresentational,
   Badge,
   Button,
   Card,
@@ -310,38 +312,27 @@ export function AdminPanel({
 
   return (
     <div className="space-y-8 py-8">
-      <Panel tone="white">
-        <Badge tone="yellow">Admin</Badge>
-        <h1 className="headline-lg mt-5">
-          {copy.operationsOverview || "Operations overview."}
-        </h1>
-      </Panel>
-      <div className="flex border-4 border-brand-dark bg-brand-grey p-1">
-        {(["metrics", "events", "partners", "members"] as const).map((tab) => {
-          const tabLabel =
-            copy.tabs?.[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1);
-          const isSelected =
-            activeTab === tab ||
-            (tab === "events" && activeTab === "add-event") ||
-            (tab === "partners" && activeTab === "add-partner");
-          return (
-            <button
-              key={tab}
-              data-testid={`admin-tab-${tab}`}
-              className={cn(
-                "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all",
-                isSelected
-                  ? "bg-brand-dark text-white shadow-[2px_2px_0_0_#202621]"
-                  : "text-brand-dark hover:bg-brand-dark/10",
-              )}
-              onClick={() => updateTab(tab)}
-              type="button"
-            >
-              {tabLabel}
-            </button>
-          );
-        })}
-      </div>
+      <AdminPanelHeaderPresentational
+        badge="Admin"
+        title={copy.operationsOverview || "Operations overview."}
+      />
+      <AdminPanelTabBarPresentational
+        tabs={(["metrics", "events", "partners", "members"] as const).map(
+          (tab) => ({
+            id: tab,
+            label:
+              copy.tabs?.[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1),
+          }),
+        )}
+        activeTab={
+          activeTab === "add-event"
+            ? "events"
+            : activeTab === "add-partner"
+              ? "partners"
+              : activeTab
+        }
+        onTabClick={updateTab}
+      />
       {activeTab === "metrics" && (
         <div className="space-y-8 animate-fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">

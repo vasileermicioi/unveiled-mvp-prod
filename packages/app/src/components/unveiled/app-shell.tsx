@@ -1,8 +1,12 @@
 import {
+  AppShellPresentational,
   Badge,
   Button,
   buttonVariants,
   Panel,
+  ShellIconButtonPresentational,
+  ShellLogoPresentational,
+  ShellMobileDrawerPresentational,
   StatePanel,
 } from "@unveiled/design-system";
 import { cn } from "@unveiled/design-system/lib/utils";
@@ -76,21 +80,7 @@ function ShellIcon({
   );
 }
 
-export function ShellLogo({
-  variant = "black",
-  className,
-}: {
-  variant?: "black" | "white";
-  className?: string;
-}) {
-  return (
-    <img
-      src={variant ? `/app/logos/unveiled-logo-${variant}.svg` : undefined}
-      alt="Unveiled"
-      className={cn("h-7 w-auto md:h-9", className)}
-    />
-  );
-}
+export const ShellLogo = ShellLogoPresentational;
 
 function ShellActionButton({
   action,
@@ -315,140 +305,109 @@ export function ShellNavigation({
               />
             ) : null}
 
-            <button
-              type="button"
-              className="lg:hidden flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
+            <ShellIconButtonPresentational
               onClick={() => setDrawerOpen(true)}
               aria-label={copy.openMenu}
               aria-expanded={drawerOpen}
               aria-controls="shell-mobile-drawer"
+              className="lg:hidden"
             >
               <Menu className="size-5 md:size-6" />
-            </button>
+            </ShellIconButtonPresentational>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer Overlay Backdrop */}
-      {drawerOpen && (
-        // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss
-        // biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss
-        <div
-          className="fixed inset-0 z-[100] bg-brand-dark/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden"
-          onClick={() => setDrawerOpen(false)}
-        />
-      )}
+      <ShellMobileDrawerPresentational
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        headingId="shell-mobile-drawer-heading"
+        menuHeading={copy.menuHeading}
+        closeIcon={<X className="size-5 md:size-6" />}
+        logo={<ShellLogo variant={shell.logo.variant} className="h-7 w-auto" />}
+        footer={
+          <div className="space-y-6">
+            <div className="flex justify-center">
+              <LanguageToggle
+                shell={shell}
+                onAction={(actionId) => {
+                  setDrawerOpen(false);
+                  onAction?.(actionId);
+                }}
+              />
+            </div>
 
-      {/* Mobile Drawer Panel */}
-      <div
-        id="shell-mobile-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="shell-mobile-drawer-heading"
-        className={cn(
-          "fixed inset-y-0 right-0 z-[101] w-80 max-w-full bg-white border-l-4 border-brand-dark p-6 transition-transform duration-300 ease-in-out transform lg:hidden flex flex-col justify-between",
-          drawerOpen ? "translate-x-0" : "translate-x-full",
-        )}
-      >
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <ShellLogo variant={shell.logo.variant} className="h-7 w-auto" />
-            <button
-              type="button"
-              className="flex items-center justify-center size-9 md:size-10 border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark"
-              onClick={() => setDrawerOpen(false)}
-              aria-label={copy.closeMenu}
-            >
-              <X className="size-5 md:size-6" />
-            </button>
+            {shell.showLogout ? (
+              <ShellActionButton
+                action={{ id: "logout", label: copy.logout, icon: "logout" }}
+                onAction={(actionId) => {
+                  setDrawerOpen(false);
+                  onAction?.(actionId);
+                }}
+                className="w-full justify-start"
+              />
+            ) : null}
           </div>
+        }
+      >
+        <nav className="flex flex-col gap-2">
+          {shell.navItems
+            .filter((item) => isGuest || isOperational || !item.icon)
+            .map((item) => (
+              <ShellActionButton
+                key={item.id}
+                action={item}
+                onAction={(actionId) => {
+                  setDrawerOpen(false);
+                  onAction?.(actionId);
+                }}
+                className="w-full justify-start"
+              />
+            ))}
 
-          <h2 id="shell-mobile-drawer-heading" className="sr-only">
-            {copy.menuHeading}
-          </h2>
-
-          <nav className="flex flex-col gap-2">
-            {shell.navItems
-              .filter((item) => isGuest || isOperational || !item.icon)
-              .map((item) => (
-                <ShellActionButton
-                  key={item.id}
-                  action={item}
-                  onAction={(actionId) => {
-                    setDrawerOpen(false);
-                    onAction?.(actionId);
-                  }}
-                  className="w-full justify-start"
-                />
-              ))}
-
-            {isMember && (
-              <>
-                {shell.navItems
-                  .filter((item) => item.icon)
-                  .map((item) => (
-                    <ShellActionButton
-                      key={item.id}
-                      action={item}
-                      onAction={(actionId) => {
-                        setDrawerOpen(false);
-                        onAction?.(actionId);
-                      }}
-                      className="w-full justify-start"
-                    />
-                  ))}
-                {typeof shell.creditCount === "number" ? (
-                  <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold uppercase tracking-widest">
-                    <Coins className="size-4" />
-                    <span>
-                      {shell.creditCount} {copy.credits}
-                    </span>
-                  </div>
-                ) : null}
-                {shell.showProfile ? (
+          {isMember && (
+            <>
+              {shell.navItems
+                .filter((item) => item.icon)
+                .map((item) => (
                   <ShellActionButton
-                    action={{
-                      id: "profile",
-                      label: copy.profile,
-                      icon: "user",
-                      active: shell.activeItem === "profile",
-                      targetHref: `${APP_BASE_PREFIX}/${shell.language.selected.toLowerCase()}/profile`,
-                    }}
+                    key={item.id}
+                    action={item}
                     onAction={(actionId) => {
                       setDrawerOpen(false);
                       onAction?.(actionId);
                     }}
                     className="w-full justify-start"
                   />
-                ) : null}
-              </>
-            )}
-          </nav>
-        </div>
-
-        <div className="space-y-6 border-t-2 border-brand-dark/20 pt-6">
-          <div className="flex justify-center">
-            <LanguageToggle
-              shell={shell}
-              onAction={(actionId) => {
-                setDrawerOpen(false);
-                onAction?.(actionId);
-              }}
-            />
-          </div>
-
-          {shell.showLogout ? (
-            <ShellActionButton
-              action={{ id: "logout", label: copy.logout, icon: "logout" }}
-              onAction={(actionId) => {
-                setDrawerOpen(false);
-                onAction?.(actionId);
-              }}
-              className="w-full justify-start"
-            />
-          ) : null}
-        </div>
-      </div>
+                ))}
+              {typeof shell.creditCount === "number" ? (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold uppercase tracking-widest">
+                  <Coins className="size-4" />
+                  <span>
+                    {shell.creditCount} {copy.credits}
+                  </span>
+                </div>
+              ) : null}
+              {shell.showProfile ? (
+                <ShellActionButton
+                  action={{
+                    id: "profile",
+                    label: copy.profile,
+                    icon: "user",
+                    active: shell.activeItem === "profile",
+                    targetHref: `${APP_BASE_PREFIX}/${shell.language.selected.toLowerCase()}/profile`,
+                  }}
+                  onAction={(actionId) => {
+                    setDrawerOpen(false);
+                    onAction?.(actionId);
+                  }}
+                  className="w-full justify-start"
+                />
+              ) : null}
+            </>
+          )}
+        </nav>
+      </ShellMobileDrawerPresentational>
     </nav>
   );
 }
@@ -463,10 +422,11 @@ export function AppShell({
   onAction?: ShellActionHandler;
 }) {
   return (
-    <div className="page-shell min-h-screen text-brand-dark selection:bg-brand-dark selection:text-brand-yellow">
-      <ShellNavigation shell={shell} onAction={onAction} />
-      <main className="content-shell space-y-6 pb-16">{children}</main>
-    </div>
+    <AppShellPresentational
+      header={<ShellNavigation shell={shell} onAction={onAction} />}
+    >
+      {children}
+    </AppShellPresentational>
   );
 }
 

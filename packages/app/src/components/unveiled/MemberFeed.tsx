@@ -5,6 +5,9 @@ import {
   Card,
   Divider,
   Field,
+  MemberFeedGatePresentational,
+  MemberFeedHeaderPresentational,
+  MemberFeedMessagePresentational,
   Panel,
   SelectInput,
   StatePanel,
@@ -604,25 +607,17 @@ export function MemberFeed({
 
   return (
     <div className="space-y-6">
-      <Panel tone="white">
-        <Badge tone="yellow">{copy.member.feedBadge}</Badge>
-        <h1 className="headline-lg mt-5">{copy.member.feedTitle}</h1>
-      </Panel>
+      <MemberFeedHeaderPresentational
+        badge={copy.member.feedBadge}
+        title={copy.member.feedTitle}
+      />
       {gateBlocked ? (
-        <Panel tone="cream" shadow={false} className="p-4">
-          <p className="unveiled-meta">{copy.member.membershipGate}</p>
-          <p className="mt-2 text-sm font-bold uppercase tracking-widest">
-            {copy.member.billingGate}
-          </p>
-        </Panel>
+        <MemberFeedGatePresentational
+          membershipGate={copy.member.membershipGate}
+          billingGate={copy.member.billingGate}
+        />
       ) : null}
-      {feedMessage ? (
-        <Panel tone="white" shadow={false} className="p-4">
-          <p className="text-sm font-bold uppercase tracking-widest">
-            {feedMessage}
-          </p>
-        </Panel>
-      ) : null}
+      <MemberFeedMessagePresentational message={feedMessage} />
       <DiscoveryShell
         discovery={discovery}
         filterPanel={<DiscoveryFilterPanel />}
