@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { LandingLayout } from "@unveiled/design-system/layouts/landing-layout";
 
 interface Props {
   title: string;
@@ -21,6 +22,8 @@ const { title, description = "Unveiled — curated cultural access in Berlin." }
     <title>{title}</title>
   </head>
   <body>
-    <slot />
+    <LandingLayout>
+      <slot />
+    </LandingLayout>
   </body>
 </html>
