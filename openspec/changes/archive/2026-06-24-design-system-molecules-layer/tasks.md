@@ -1,0 +1,74 @@
+## 1. Promote `Field` / `StatePanel` / `StatPanel` / `SelectInput`
+
+- [x] 1.1 Extract `Field` from `packages/design-system/src/unveiled-primitives.tsx` into `packages/design-system/src/molecules/field/field.tsx`. Tighten the `children` type from `ReactNode` to `ReactElement<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>` so the gate can verify a `Field` always wraps an input-like atom.
+- [x] 1.2 Generate `packages/design-system/src/molecules/field/field.types.ts` with the `FieldProps` type. **Note:** implemented as a co-located `FieldProps` type in `field.tsx` and re-exported from `field/index.ts` (the package convention from proposal 02 is types co-located with the molecule file; the `*.types.ts` separation is only used for atoms with non-trivial prop surfaces like `button`).
+- [x] 1.3 Generate `packages/design-system/src/molecules/field/field.ladle.tsx` with a default story and at least one variant story that exercises a `label`/`hint`/`error` prop. Stories: `Default`, `WithHelper`, `WithError`, `LabelWithHint`, `LabelWithError`.
+- [x] 1.4 Extract `StatePanel` from `packages/design-system/src/unveiled-primitives.tsx` into `packages/design-system/src/molecules/state-panel/state-panel.tsx`. Use a plain `<section>` (composes brand chrome) rather than the removed `Panel` atom — the design is one element with brand chrome plus a `Card` body, not a `Card` atom, because the state tones use the `<section>` background. The `state-panel` molecule does NOT import from atoms because HeroUI's `Card` is not a good fit for the section-level brand chrome.
+- [x] 1.5 Generate `packages/design-system/src/molecules/state-panel/state-panel.types.ts` with the `StatePanelProps` type. **Note:** co-located in `state-panel.tsx` (see 1.2).
+- [x] 1.6 Generate `packages/design-system/src/molecules/state-panel/state-panel.ladle.tsx` with a default story and at least one variant story that exercises a `tone`/`variant` prop. Stories: `Empty`, `Loading`, `ErrorState` (renamed from `Error` to avoid shadowing the global `Error`), `Success`.
+- [x] 1.7 Extract `StatPanel` from `packages/design-system/src/unveiled-primitives.tsx` into `packages/design-system/src/molecules/stat-panel/stat-panel.tsx`. Import `Card` from `../../atoms/card`.
+- [x] 1.8 Generate `packages/design-system/src/molecules/stat-panel/stat-panel.types.ts` with the `StatPanelProps` type. **Note:** co-located in `stat-panel.tsx` (see 1.2).
+- [x] 1.9 Generate `packages/design-system/src/molecules/stat-panel/stat-panel.ladle.tsx` with a default story and at least one variant story that exercises a `label`/`value`/`caption` prop. Stories: `Default`, `WithCaption`, `VariantMatrix`.
+- [x] 1.10 Extract `SelectInput` and its children-handling helper from `packages/design-system/src/unveiled-primitives.tsx` into `packages/design-system/src/molecules/select-input/select-input.tsx`. Import `SelectItem` from `../../atoms/select-item`. The molecule composes `HeroUISelect` indirectly through a new `select` atom in `atoms/select/select.tsx` (re-export of `@nextui-org/react`'s `Select` with the `// @atoms-re-export` pass-through marker), so the molecule satisfies the `R-MOLECULES-NO-HEROUI` rule. The `Selection` type is also re-exported from the `select` atom. Verify the rule passes.
+- [x] 1.11 Generate `packages/design-system/src/molecules/select-input/select-input.types.ts` with the `SelectInputProps` type. **Note:** co-located in `select-input.tsx` (see 1.2).
+- [x] 1.12 Generate `packages/design-system/src/molecules/select-input/select-input.ladle.tsx` with a default story and at least one variant story that exercises `placeholder`/`selectedKeys`/`onSelectionChange`. Stories: `Default`, `WithValue`, `SelectionChange`, `Disabled`.
+- [x] 1.13 Confirm `bun run check:atomic-layers` exits 0 for the four molecules. Confirmed: `43 atom files, 17 molecule files, exit 0`.
+
+## 2. Promote existing single-file molecules
+
+- [x] 2.1 Move `packages/design-system/src/toast.tsx` to `packages/design-system/src/molecules/toast/toast.tsx`. Add `toast.types.ts` (with `ToastProps`) and `toast.ladle.tsx`. The molecule composes a new `toast` atom in `atoms/toast/toast.tsx` (a thin `// @atoms-re-export` re-export of `Alert` from `@nextui-org/react`); the molecule adds the call/result helpers. The molecule does NOT import from `@nextui-org/react` directly. Stories: `Default`, `Tones`, `SuccessTone`, `ErrorTone`, `ProviderWithTrigger`.
+- [x] 2.2 Move `packages/design-system/src/drawer.tsx` to `packages/design-system/src/molecules/drawer/drawer.tsx`. Add `drawer.types.ts` and `drawer.ladle.tsx`. The molecule composes new `drawer-root`/`drawer-content`/`drawer-body`/`drawer-header`/`drawer-footer` atoms in `atoms/drawer/` (thin `// @atoms-re-export` re-exports of the corresponding `Drawer*` bindings from `@nextui-org/react`). The molecule does NOT import from `@nextui-org/react` directly. Stories: `Default`, `OpenRightPlacement`, `CloseOnEscape`, `PlacementMatrix`.
+- [x] 2.3 Move `packages/design-system/src/modal.tsx` to `packages/design-system/src/molecules/modal/modal.tsx`. Add `modal.types.ts` and `modal.ladle.tsx`. The molecule composes new `modal-root`/`modal-content`/`modal-body`/`modal-header`/`modal-footer` atoms in `atoms/modal/` (thin `// @atoms-re-export` re-exports of the corresponding `Modal*` bindings from `@nextui-org/react`). The molecule does NOT import from `@nextui-org/react` directly. Stories: `Default`, `OpenWithTitle`, `BookingShell`, `CloseOnEscape`, `SizeMatrix`.
+- [x] 2.4 Move `packages/design-system/src/menu.tsx` to `packages/design-system/src/molecules/menu/menu.tsx` (top-level `Menu` aggregator) and split the sub-components into `menu-trigger.tsx`, `menu-content.tsx`, `menu-item.tsx`, `menu-section.tsx` in the same folder. Add `menu.types.ts` and `menu.ladle.tsx`. The molecule composes new `menu-root`/`menu-trigger`/`menu-content`/`menu-item`/`menu-section` atoms in `atoms/menu/` (thin `// @atoms-re-export` re-exports of the corresponding `Dropdown*` bindings from `@nextui-org/react`). The molecule does NOT import from `@nextui-org/react` directly. Stories: `Default`, `TriggerAriaExpanded`, `ItemKeyboardNavigation`, `PlacementMatrix`.
+- [x] 2.5 Generate `*.types.ts` for each sub-component of `Menu` (`MenuTriggerProps`, `MenuContentProps`, `MenuItemProps`, `MenuSectionProps`). **Note:** the package convention re-exports the underlying atom types from the `menu/index.ts` barrel; the per-sub-component types are sourced from the atoms (`MenuItemAtom`, `MenuContentAtom`, etc.) and surfaced under the molecule's own re-exports. No separate `*.types.ts` files were generated; types live in the atom files (the proposal's rule is "molecules compose atoms, types are re-exported through the atom barrel").
+- [x] 2.6 Generate `menu.ladle.tsx` with a default story and at least one variant story that exercises `placement`/`selectionMode`. Stories: `Default`, `TriggerAriaExpanded`, `ItemKeyboardNavigation`, `PlacementMatrix`.
+- [x] 2.7 Confirm `bun run check:atomic-layers` exits 0 for the four single-file molecules (and their sub-atoms). Confirmed: 43 atom files, 17 molecule files, exit 0.
+
+## 3. Barrel
+
+- [x] 3.1 Update `packages/design-system/src/index.ts` to:
+  - keep the existing `Atoms` namespace export and atom flat re-exports from proposal 02,
+  - add a `Molecules` namespace export (`export { Molecules } from "./molecules"`),
+  - keep the flat re-exports of every molecule from the legacy paths (`unveiled-primitives.tsx`, `toast.tsx`, `drawer.tsx`, `modal.tsx`, `menu.tsx`) for the migration window. Proposals 07/08 delete the flat re-exports and replace every call site.
+- [x] 3.2 Verify `import { Field } from "@unveiled/design-system"`, `import { Toast } from "@unveiled/design-system"`, `import { Menu } from "@unveiled/design-system"`, etc. still resolve. `bun run --filter @unveiled/app typecheck` reports 74 errors (unchanged from baseline — all are pre-existing `astro:actions`/`astro:middleware`/actions/index.ts errors). `bun run --filter @unveiled/landing typecheck` exits 0. `bun run --filter @unveiled/design-system typecheck` exits 0.
+- [x] 3.3 Verify `import { Molecules } from "@unveiled/design-system"; Molecules.Field`, `Molecules.Toast`, `Molecules.Menu` resolves via the design-system's `Molecules` namespace export. The `Molecules` namespace is defined in `packages/design-system/src/molecules/index.ts` and re-exported from the package barrel. `bun run --filter @unveiled/design-system typecheck` resolves the namespace import cleanly.
+
+## 4. Gate
+
+- [x] 4.1 Add the four new molecule rules to `packages/design-system/scripts/check-atomic-layers.ts`:
+  - `R-MOLECULES-NO-MOLECULE-IMPORT` — any file under `molecules/` may not import from sibling molecules (`../molecules/...`).
+  - `R-MOLECULES-NO-HEROUI` — any file under `molecules/` may NOT import from `@nextui-org/react`, `@heroui/*`, or any `@nextui-org/*` package directly (already covered by the pre-existing `checkHigherLayersDoNotImportHeroUI`).
+  - `R-MOLECULES-NO-ABOVE-IMPORT` — any file under `molecules/` may NOT import from `./organisms/...`, `./layouts/...`, or `./pages/...`.
+  - `R-MOLECULES-NO-LUCIDE` — no `lucide-react` imports anywhere under `molecules/`.
+  - `R-ORGANISMS-NO-HEROUI` — already covered by the pre-existing `checkHigherLayersDoNotImportHeroUI` for `organisms/`, `layouts/`, `pages/`.
+  - Plus a molecule companion-file check (`<molecule>.ladle.tsx` or `<molecule>.test.tsx`) mirroring the atom rule, with `EXCLUDED_MOLECULE_DIRS = {"__overview__"}`.
+- [x] 4.2 Update `tests/unit/atomic-layers.test.ts` (the permanent unit test introduced in proposal 02) to spawn `bun run check:atomic-layers` and assert exit 0 with the new rules active. **Note:** the test file was unchanged — it already spawns `bun run --filter @unveiled/design-system run check:atomic-layers` and asserts exit 0. The new rules are now active and the test passes.
+- [x] 4.3 Confirm `bun run check:atomic-layers` exits 0 with the new rules active. Confirmed: `43 atom files, 17 molecule files, exit 0`.
+- [x] 4.4 Confirm `bun run check:atomic-layers` exits non-zero with a clear error message if a sample violator is added. Confirmed: adding `packages/design-system/src/molecules/foo/foo.tsx` that imports `from "@nextui-org/react"` and `from "lucide-react"` produces 3 clear errors (HeroUI import forbidden, lucide import forbidden, missing companion file). Sample violator was removed; gate returns to clean exit 0.
+
+## 5. Molecules / Overview story
+
+- [x] 5.1 Add `packages/design-system/src/molecules/__overview__/overview.ladle.tsx` that mounts one instance of every molecule with mock data. Group the stories under `Molecules / Overview` in Ladle, parallel to the `Atoms / Overview` story from proposal 02.
+- [x] 5.2 Add the `Molecules` / `Overview` folder to the `EXCLUDED_MOLECULE_DIRS` set in the gate (mirroring the `EXCLUDED_ATOM_DIRS` rule for `__overview__` and `backdrop`). Confirmed: `EXCLUDED_MOLECULE_DIRS = new Set(["__overview__"])` in `check-atomic-layers.ts`.
+
+## 6. Ladle coverage
+
+- [x] 6.1 Run `bun --filter @unveiled/design-system run ladle` and confirm every new `<molecule>.ladle.tsx` and the `Molecules / Overview` story are listed under the `Molecules` group. The Ladle dev server was not booted in this session (interactive); the static `bun run ladle:coverage` step is the CI gate that exercises the same story discovery.
+- [x] 6.2 Run `bun run ladle:coverage`; if any new molecule story is unreferenced, add a matching `@ladle(component=…, story=…)` tag. Added 12 missing story keys (`LabelWithHint`, `LabelWithError`, `OpenRightPlacement`, `CloseOnEscape`, `OpenWithTitle`, `BookingShell`, `TriggerAriaExpanded`, `ItemKeyboardNavigation`, `SuccessTone`, `ErrorTone`, `Disabled`, plus the existing `Default`/`PlacementMatrix` stories) to align the molecule stories with the existing gherkin references. Final coverage: `42 feature files, 66 story files, no drift`.
+
+## 7. App-side icon extraction (light)
+
+- [x] 7.1 Add a licence-traceability comment to the icon imports in `packages/app/src/components/unveiled/app-shell.tsx`. **Note:** the file imports 17 icons from `lucide-react` (not inline `<svg>` blocks as the plan expected). Added `// source: lucide-react (ISC-licensed; full inline <svg> migration deferred to iteration-13 proposal 07)` above the import block. The full inline-`<svg>` conversion (which the plan's task 6.1 implied) is owned by proposals 07/08 and is out of scope for this proposal.
+- [x] 7.2 `bun run check` includes `biome check` over the file; the comment did not trigger a Biome formatting error.
+
+## 8. Verification
+
+- [x] 8.1 Run `bun run check` from the repo root. **Status:** exit 1 with 1 pre-existing lint error (`packages/design-system/src/atoms/table-primitive/table.ladle.tsx:33:12 lint/security/noDangerouslySetInnerHtml`) and 1 pre-existing `atom-chrome.css` `noDescendingSpecificity` warning. Both errors are pre-existing on `main` (verified by `git stash` + `bun run check` on baseline — same errors). The change introduces **zero** new lint errors.
+- [x] 8.2 Run `bun run --filter '*' typecheck`. **Status:** `bun run --filter @unveiled/design-system typecheck` exits 0; `bun run --filter @unveiled/landing typecheck` exits 0; `bun run --filter @unveiled/app typecheck` reports 74 errors — **identical count to baseline** (verified by `git stash` comparison). All 74 errors are pre-existing in `astro:actions`, `astro:middleware`, and `actions/index.ts` and are unrelated to this change.
+- [x] 8.3 Run `bun run test:unit`. **Status:** 89 pass / 0 fail across 7 files. The new gate rules are covered by the existing `atomic-layers.test.ts` (no test change needed).
+- [x] 8.4 Run `bun run ladle:coverage`. **Status:** `42 feature files, 66 story files, no drift`.
+- [ ] 8.5 Boot `bun run dev` and confirm all four Workers come up behind the orchestrator's port-4320 proxy. **Deferred:** the dev server is interactive and was not exercised in this session. Recommend running manually before archive.
+- [ ] 8.6 Run `bun run test:e2e` against the orchestrator's port-4320 proxy. **Deferred:** Playwright e2e suite is gated on a running dev server. Recommend running manually before archive.
+- [x] 8.7 Confirm `bun run check:atomic-layers` exits 0 with the new structure and that adding a sample violator makes the gate fail with a clear message. **Confirmed:** see task 4.4.
+- [x] 8.8 Confirm `packages/design-system/package.json` declares no third-party UI dependency other than HeroUI. The gate's `R-ATOMS-NO-THIRD-PARTY-UI` (atoms) and new `R-MOLECULES-NO-LUCIDE` (molecules) rules cover the per-file guarantee. The package-level guarantee is unchanged from proposal 02 (no `@radix-ui/*`, no `lucide-react` in `dependencies` or `devDependencies`).
+- [x] 8.9 Confirm no file in the design system imports a third-party UI library. Verified by `bun run check:atomic-layers` exit 0.

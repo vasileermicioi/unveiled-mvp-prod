@@ -29,45 +29,45 @@ const TABLE_CHROME = `
 `;
 
 export const Default = () => (
-	<AtomStoryBackdrop className="flex-col items-stretch">
-		<style dangerouslySetInnerHTML={{ __html: TABLE_CHROME }} />
-		<Table
-			aria-label="Example table"
-			removeWrapper
-			classNames={{
-				base: "unveiled-table-wrap",
-				table: "unveiled-table",
-				th: "",
-				td: "",
-			}}
-		>
-			<TableHeader>
-				<TableColumn align="start">NAME</TableColumn>
-				<TableColumn align="start">ROLE</TableColumn>
-				<TableColumn align="start">STATUS</TableColumn>
-			</TableHeader>
-			<TableBody>
-				<TableRow key="1">
-					<TableCell>Ada Lovelace</TableCell>
-					<TableCell>Engineer</TableCell>
-					<TableCell>Active</TableCell>
-				</TableRow>
-				<TableRow key="2">
-					<TableCell>Grace Hopper</TableCell>
-					<TableCell>Architect</TableCell>
-					<TableCell>Active</TableCell>
-				</TableRow>
-				<TableRow key="3">
-					<TableCell>Margaret Hamilton</TableCell>
-					<TableCell>Director</TableCell>
-					<TableCell>Inactive</TableCell>
-				</TableRow>
-			</TableBody>
-		</Table>
-	</AtomStoryBackdrop>
+  <AtomStoryBackdrop className="flex-col items-stretch">
+    <style dangerouslySetInnerHTML={{ __html: TABLE_CHROME }} />
+    <Table
+      aria-label="Example table"
+      removeWrapper
+      classNames={{
+        base: "unveiled-table-wrap",
+        table: "unveiled-table",
+        th: "",
+        td: "",
+      }}
+    >
+      <TableHeader>
+        <TableColumn align="start">NAME</TableColumn>
+        <TableColumn align="start">ROLE</TableColumn>
+        <TableColumn align="start">STATUS</TableColumn>
+      </TableHeader>
+      <TableBody>
+        <TableRow key="1">
+          <TableCell>Ada Lovelace</TableCell>
+          <TableCell>Engineer</TableCell>
+          <TableCell>Active</TableCell>
+        </TableRow>
+        <TableRow key="2">
+          <TableCell>Grace Hopper</TableCell>
+          <TableCell>Architect</TableCell>
+          <TableCell>Active</TableCell>
+        </TableRow>
+        <TableRow key="3">
+          <TableCell>Margaret Hamilton</TableCell>
+          <TableCell>Director</TableCell>
+          <TableCell>Inactive</TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </AtomStoryBackdrop>
 );
 
 export default {
-	title: "Atoms / Table",
-	parameters: { ladle: { skipCoverage: true } },
+  title: "Atoms / Table",
+  parameters: { ladle: { skipCoverage: true } },
 };
