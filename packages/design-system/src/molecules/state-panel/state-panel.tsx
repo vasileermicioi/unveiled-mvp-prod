@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Card } from "../../atoms/card";
 import { cn } from "../../lib/utils";
 
 const STATE_PANEL_TONES = {
@@ -27,7 +28,7 @@ export function StatePanel({
   className,
 }: StatePanelProps) {
   return (
-    <section
+    <Card
       className={cn(
         "grid min-h-44 place-items-center border-4 border-brand-dark p-5 text-center md:p-8",
         STATE_PANEL_TONES[state],
@@ -41,6 +42,6 @@ export function StatePanel({
         </p>
         {action}
       </div>
-    </section>
+    </Card>
   );
 }

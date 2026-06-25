@@ -5,17 +5,14 @@ import {
   Badge,
   Button,
   Card,
+  cn,
   Divider,
   Field,
-  Panel,
   SelectInput,
   StatePanel,
-  TableRow,
-  TableShell,
   TextArea,
   TextInput,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -373,7 +370,7 @@ export function AdminPanel({
               <Plus />
             </Button>
           </div>
-          <TableShell>
+          <div className="admin-panel-table">
             {live.isLoading ? (
               <>
                 <EventRowSkeleton />
@@ -392,7 +389,10 @@ export function AdminPanel({
               />
             ) : (
               live.adminEvents.map((event) => (
-                <TableRow key={event.id} className="grid-cols-1 ui-dcdadbf5">
+                <div
+                  key={event.id}
+                  className="admin-panel-row grid-cols-1 ui-dcdadbf5"
+                >
                   <div>
                     <span className="ui-10d0083b">Event</span>
                     <p className="ui-8a48840f">{event.title}</p>
@@ -454,7 +454,7 @@ export function AdminPanel({
                       Delete
                     </Button>
                   </div>
-                </TableRow>
+                </div>
               ))
             )}
             {!live.isLoading && live.adminEvents.length > 0 && (
@@ -468,7 +468,7 @@ export function AdminPanel({
                 className="ui-e64dbdf1"
               />
             )}
-          </TableShell>
+          </div>
         </div>
       )}
 
@@ -499,7 +499,7 @@ export function AdminPanel({
             </Button>
           </div>
           <div className="ui-9471e6c9">
-            <Panel
+            <Card
               key={editingEventId ?? "new"}
               id="admin-event-form"
               tone="white"
@@ -979,8 +979,8 @@ export function AdminPanel({
                   {editingEventId ? "Save event" : "Publish event"}
                 </Button>
               </div>
-            </Panel>
-            <Panel tone="cream" shadow={false} className="ui-3d231851">
+            </Card>
+            <Card tone="cream" shadow={false} className="ui-3d231851">
               <div className="ui-f3472d20">
                 <p className="headline-md">{copy.seriesBuilder}</p>
                 <label className="ui-c5b342ea">
@@ -1076,7 +1076,7 @@ export function AdminPanel({
                   </p>
                 )}
               </div>
-            </Panel>
+            </Card>
           </div>
         </div>
       )}
@@ -1114,7 +1114,7 @@ export function AdminPanel({
             </div>
           </div>
 
-          <TableShell>
+          <div className="admin-panel-table">
             {live.isLoading ? (
               <>
                 <PartnerRowSkeleton />
@@ -1129,7 +1129,10 @@ export function AdminPanel({
               />
             ) : (
               live.adminPartners.map((partner) => (
-                <TableRow key={partner.id} className="grid-cols-1 ui-3ea32e50">
+                <div
+                  key={partner.id}
+                  className="admin-panel-row grid-cols-1 ui-3ea32e50"
+                >
                   <div>
                     <span className="ui-10d0083b">Partner</span>
                     <p className="ui-8a48840f">{partner.name}</p>
@@ -1209,7 +1212,7 @@ export function AdminPanel({
                       </Button>
                     </div>
                   </div>
-                </TableRow>
+                </div>
               ))
             )}
             {!live.isLoading && live.adminPartners.length > 0 && (
@@ -1223,9 +1226,9 @@ export function AdminPanel({
                 className="ui-e64dbdf1"
               />
             )}
-          </TableShell>
+          </div>
 
-          <Panel
+          <Card
             id="admin-export-panel"
             tone="cream"
             shadow={false}
@@ -1290,7 +1293,7 @@ export function AdminPanel({
                 <ArrowDownToLine />
               </Button>
             </div>
-          </Panel>
+          </Card>
         </div>
       )}
 
@@ -1321,7 +1324,7 @@ export function AdminPanel({
             </Button>
           </div>
 
-          <Panel
+          <Card
             key={editingPartnerId ?? "new"}
             id="admin-partner-form"
             tone="white"
@@ -1425,7 +1428,7 @@ export function AdminPanel({
                 Save partner
               </Button>
             </div>
-          </Panel>
+          </Card>
         </div>
       )}
       {activeTab === "members" && (
@@ -1440,7 +1443,7 @@ export function AdminPanel({
             </div>
           </div>
 
-          <Panel tone="cream" shadow={false} className="auth-stack">
+          <Card tone="cream" shadow={false} className="auth-stack">
             <div className="ui-f18be2a9">
               <Field label="Search members" className="ui-c0bddd0b">
                 <TextInput
@@ -1463,7 +1466,7 @@ export function AdminPanel({
                 Refresh registry
               </Button>
             </div>
-          </Panel>
+          </Card>
 
           <div className="auth-stack">
             {live.isLoading ? (
@@ -1826,16 +1829,16 @@ export function AdminPanel({
           }}
         >
           <div className="ui-3ad7a596">
-            <Panel tone="white" shadow={false} className="form-shell">
+            <Card tone="white" shadow={false} className="form-shell">
               <p className="body-md ui-de598f1f">
                 {deleteConfirmTarget.type === "event"
                   ? copy.confirmDeleteEventBody
                   : copy.confirmDeletePartnerBody}
               </p>
               {deleteErrorMessage && (
-                <Panel tone="cream" shadow={false} className="ui-dcbaf86e">
+                <Card tone="cream" shadow={false} className="ui-dcbaf86e">
                   <p className="ui-02b025d9">{deleteErrorMessage}</p>
-                </Panel>
+                </Card>
               )}
               <div className="ui-2c5eb4ee">
                 <span className="ui-79b6860a">
@@ -1910,7 +1913,7 @@ export function AdminPanel({
                   {copy.confirm}
                 </Button>
               </div>
-            </Panel>
+            </Card>
           </div>
         </ModalShell>
       )}

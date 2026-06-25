@@ -3,13 +3,13 @@ import {
   Badge,
   Button,
   buttonVariants,
-  Panel,
+  Card,
+  cn,
   ShellIconButtonPresentational,
   ShellLogoPresentational,
   ShellMobileDrawerPresentational,
   StatePanel,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 // source: lucide-react (ISC-licensed; full inline <svg> migration deferred to iteration-13 proposal 07)
 import {
   Bookmark,
@@ -444,7 +444,7 @@ export function ShellStatusBanner({
         : "cream";
 
   return (
-    <Panel
+    <Card
       tone={tone}
       shadow={status.type === "warning" || status.type === "error"}
       className="app-page-header"
@@ -470,7 +470,7 @@ export function ShellStatusBanner({
           onAction={onAction}
         />
       ) : null}
-    </Panel>
+    </Card>
   );
 }
 
@@ -516,7 +516,7 @@ export function PageShell({
       ) : null}
 
       {page?.title || page?.eyebrow || page?.actions?.length ? (
-        <Panel tone="white" className="ui-f91c29fd">
+        <Card tone="white" className="ui-f91c29fd">
           <div>
             {page.eyebrow ? <Badge tone="yellow">{page.eyebrow}</Badge> : null}
             {page.title ? (
@@ -537,7 +537,7 @@ export function PageShell({
               ))}
             </div>
           ) : null}
-        </Panel>
+        </Card>
       ) : null}
 
       {page?.statuses?.length ? (
@@ -608,7 +608,7 @@ export function DiscoveryShell({
     deferredResultCountLabel ?? discovery.resultCountLabel;
   return (
     <div className="form-shell">
-      <Panel tone="white" className="ui-8c0167c7">
+      <Card tone="white" className="ui-8c0167c7">
         <div>
           <p className="unveiled-meta ui-378d3a2b">Active range</p>
           <p className="ui-fae6ebf9">{discovery.activeRangeLabel}</p>
@@ -621,7 +621,7 @@ export function DiscoveryShell({
         >
           {settledResultCountLabel}
         </p>
-      </Panel>
+      </Card>
 
       <div className="ui-6211bda6">
         <button
