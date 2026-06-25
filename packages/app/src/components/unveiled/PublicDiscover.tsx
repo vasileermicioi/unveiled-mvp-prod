@@ -1,18 +1,10 @@
 import {
-  cn,
   PublicDiscoverCardPresentational,
   PublicDiscoverHeaderPresentational,
   PublicDiscoverLayoutPresentational,
   PublicDiscoverPresentational,
 } from "@unveiled/design-system";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bookmark,
-  Calendar,
-  Mail,
-  MapPin,
-} from "lucide-react";
+import { ArrowLeft, Bookmark, Calendar, Mail, MapPin } from "lucide-react";
 import { useContext, useState } from "react";
 import { DiscoveryShell } from "~/components/unveiled/app-shell";
 import { DiscoveryMapPanel } from "~/components/unveiled/discovery-map";
@@ -20,13 +12,21 @@ import { demoDiscoveryShell } from "~/lib/app-shell-view-models";
 import { readDiscoveryMapProviderConfig } from "~/lib/discovery-map";
 import type { EventCardView } from "~/lib/unveiled-view-models";
 import { BookingModal } from "./BookingModal";
-import { LanguageContext, useCopy, useLiveData } from "./context";
+import {
+  LanguageContext,
+  Pagination,
+  useCopy,
+  useLiveData,
+  useVisualSystem,
+} from "./context";
 import { DiscoveryFilterPanel } from "./DiscoveryFilterPanel";
+
+const PUBLIC_PAGE_SIZE_OPTIONS = [6, 12, 24, 48] as const;
 
 export function PublicDiscover() {
   const copy = useCopy();
   const live = useLiveData();
-  const selectedLanguage = useContext(LanguageContext);
+  const { setDiscoveryFilters } = useVisualSystem();
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
   const [selectedPublicEvent, setSelectedPublicEvent] =
@@ -60,51 +60,34 @@ export function PublicDiscover() {
     },
   } as const;
 
-  const pagination =
-    live.totalCount && live.pageSize && live.totalCount > live.pageSize ? (
-      <div className="ui-21e8ca97">
-        <button
-          type="button"
-          disabled={!live.page || live.page <= 1}
-          onClick={() => {
-            const prevPage = String(Math.max(1, (live.page ?? 1) - 1));
-            live.setDiscoveryFilters?.({
-              ...live.discoveryFilters,
-              page: prevPage,
-            });
-          }}
-          className={cn(
-            "hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-b6198e56",
-            (!live.page || live.page <= 1) && "ui-4b97c56d",
-          )}
-        >
-          <ArrowLeft className="ui-c9577821" />
-          {selectedLanguage === "DE" ? "Zurück" : "Previous"}
-        </button>
-        <span className="ui-dd5eece2">
-          {selectedLanguage === "DE" ? "Seite" : "Page"} {live.page} /{" "}
-          {Math.ceil(live.totalCount / live.pageSize)}
-        </span>
-        <button
-          type="button"
-          disabled={!live.hasMore}
-          onClick={() => {
-            const nextPage = String((live.page ?? 1) + 1);
-            live.setDiscoveryFilters?.({
-              ...live.discoveryFilters,
-              page: nextPage,
-            });
-          }}
-          className={cn(
-            "hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-b6198e56",
-            !live.hasMore && "ui-4b97c56d",
-          )}
-        >
-          {selectedLanguage === "DE" ? "Weiter" : "Next"}
-          <ArrowRight className="ui-be66dea2" />
-        </button>
-      </div>
-    ) : null;
+  const activePage = live.page ?? 1;
+  const activePageSize = live.pageSize ?? 6;
+  const totalCount = live.totalCount ?? 0;
+  const showPagination = totalCount > activePageSize;
+
+  const pagination = showPagination ? (
+    <Pagination
+      page={activePage}
+      pageSize={activePageSize}
+      totalCount={totalCount}
+      hasMore={Boolean(live.hasMore)}
+      pageSizeOptions={PUBLIC_PAGE_SIZE_OPTIONS}
+      onPageChange={(next) => {
+        setDiscoveryFilters((prev) => ({
+          ...prev,
+          page: next === 1 ? undefined : String(next),
+        }));
+      }}
+      onPageSizeChange={(next) => {
+        setDiscoveryFilters((prev) => ({
+          ...prev,
+          page: undefined,
+          pageSize: String(next),
+        }));
+      }}
+      className="ui-21e8ca97"
+    />
+  ) : null;
 
   return (
     <DiscoveryShell

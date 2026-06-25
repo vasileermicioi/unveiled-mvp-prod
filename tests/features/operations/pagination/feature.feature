@@ -2,7 +2,8 @@ Feature: Admin pagination over the pagination dataset
   Admin operations tabs paginate at pageSize=20. The seeded
   pagination dataset supplies ≥3 pages of events, ≥3 pages of
   partners, and ≥3 pages of members so every Next/Previous control
-  is exercisable.
+  is exercisable. Changing the page-size resets the active page
+  to 1 and forwards the new size to the API Worker.
 
   Background:
     Given the pagination dataset is seeded with "bun run seed:pagination"
@@ -35,3 +36,12 @@ Feature: Admin pagination over the pagination dataset
     And the user clicks the "Next page" button
     Then the user asserts the section shows "Members"
     And the user asserts the table shows "smoke-member-004"
+
+  @ladle(component=AdminPaginationControls, story=PageSizeReset)
+  Scenario: Admin changes the page size and the page resets to 1
+    Given the user is logged in as Admin
+    When the user navigates to /app/en/admin/events
+    And the user clicks the "Next page" button
+    And the user selects the page size "50"
+    Then the API Worker received "?eventsPage=1&eventsPageSize=50"
+    And the user asserts the table shows "pagination-event-001"

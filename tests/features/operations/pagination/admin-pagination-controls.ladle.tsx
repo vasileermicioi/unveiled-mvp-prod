@@ -106,3 +106,15 @@ export const Members: Story = () => (
     nextRowLabel="smoke-member-004@unveiled.local"
   />
 );
+
+export const PageSizeReset: Story = () => (
+  <PaginationControls
+    surface="events"
+    page={1}
+    totalPages={2}
+    pageSize={50}
+    totalCount={65}
+    firstRowLabel="pagination-event-001"
+    nextRowLabel="pagination-event-051"
+  />
+);

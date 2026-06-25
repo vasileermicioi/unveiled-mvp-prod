@@ -27,6 +27,16 @@ if (!ownership.ok) {
   return Astro.redirect(redirectUrl, ownership.status);
 }
 
+const discoveryFilters = {
+  category: Astro.url.searchParams.get("category") ?? undefined,
+  partnerId: Astro.url.searchParams.get("partnerId") ?? undefined,
+  startDate: Astro.url.searchParams.get("startDate") ?? undefined,
+  endDate: Astro.url.searchParams.get("endDate") ?? undefined,
+  savedOnly: Astro.url.searchParams.get("savedOnly") ?? undefined,
+  page: Astro.url.searchParams.get("page") ?? undefined,
+  pageSize: Astro.url.searchParams.get("pageSize") ?? undefined,
+};
+
 const initialShell = createShellFromViewer(
   ownership.viewer,
   ownership.route.id,
@@ -35,10 +45,14 @@ const initialDiscovery =
   ownership.viewer.kind === "authenticated" && ownership.viewer.role === "USER"
     ? createMemberInitialSurfaceData(
         ownership.viewer,
-        await loadMemberData(ownership.viewer, {}),
+        await loadMemberData(ownership.viewer, discoveryFilters),
       )
     : createPublicInitialSurfaceData(
-        await loadPublicDiscoveryData({}, undefined, ownership.viewer.language),
+        await loadPublicDiscoveryData(
+          discoveryFilters,
+          undefined,
+          ownership.viewer.language,
+        ),
       );
 ---
 

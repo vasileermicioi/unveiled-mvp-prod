@@ -7,6 +7,7 @@ export type DiscoveryFilters = {
   endDate?: string;
   savedOnly?: string;
   page?: string;
+  pageSize?: string;
 };
 
 export type AdminFilters = {
@@ -15,10 +16,11 @@ export type AdminFilters = {
 };
 
 export type NormalizedDiscoveryFilters = Required<
-  Omit<DiscoveryFilters, "savedOnly" | "page">
+  Omit<DiscoveryFilters, "savedOnly" | "page" | "pageSize">
 > & {
   savedOnly?: string;
   page?: string;
+  pageSize?: string;
 };
 
 function cleanFilterValue(value: string | undefined) {
@@ -40,6 +42,9 @@ export function normalizeDiscoveryFilters(
   }
   if (cleanFilterValue(filters.page)) {
     normalized.page = cleanFilterValue(filters.page);
+  }
+  if (cleanFilterValue(filters.pageSize)) {
+    normalized.pageSize = cleanFilterValue(filters.pageSize);
   }
   return normalized;
 }
