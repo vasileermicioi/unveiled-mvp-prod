@@ -241,6 +241,21 @@ function checkCnImportPath(root: string) {
   }
 }
 
+function checkLandingNoLocalUi() {
+  const extensions = new Set([".ts", ".tsx", ".astro"]);
+  for (const file of walk(LANDING_SRC, extensions)) {
+    const content = readFileSync(file, "utf8");
+    if (/from\s+["'][^"']*components\/landing\//.test(content)) {
+      const rel = relative(REPO_ROOT, file);
+      fail(
+        "R-LANDING-NO-LOCAL-UI",
+        rel,
+        'landing package must not import from "../components/landing/..."; import UI from "@unveiled/design-system" instead',
+      );
+    }
+  }
+}
+
 checkConsumerStyles("app");
 checkConsumerStyles("landing");
 checkReverseImports();
@@ -248,6 +263,7 @@ checkConsumerSource(APP_SRC);
 checkConsumerSource(LANDING_SRC);
 checkCnImportPath(APP_SRC);
 checkCnImportPath(LANDING_SRC);
+checkLandingNoLocalUi();
 
 if (import.meta.main) {
   if (failures.length > 0) {

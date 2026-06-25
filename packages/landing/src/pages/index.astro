@@ -1,17 +1,11 @@
 ---
-import { LandingFooter } from "~/components/landing/landing-footer";
-import { LandingHeader } from "~/components/landing/landing-header";
-import { LandingHero } from "~/components/landing/landing-hero";
-import LandingLayout from "~/layouts/landing-layout.astro";
-import { hasSessionCookie } from "~/lib/session-presence";
+import { LandingHeroPresentational } from "@unveiled/design-system";
+import LandingLayout from "../layouts/landing-layout.astro";
+import { hasSessionCookie } from "../lib/session-presence";
 
 const authenticated = hasSessionCookie(Astro);
 ---
 
 <LandingLayout title="Unveiled — curated cultural access in Berlin">
-  <LandingHeader authenticated={authenticated} client:load />
-  <main id="main">
-    <LandingHero authenticated={authenticated} client:load />
-  </main>
-  <LandingFooter client:load />
+  <LandingHeroPresentational client:load authenticated={authenticated} />
 </LandingLayout>
