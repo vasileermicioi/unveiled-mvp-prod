@@ -58,7 +58,7 @@ Every element in the LikeC4 model SHALL carry one tag from each of `role-*`, `su
 
 ### Requirement: Drift Check Fails On Missing Paths
 
-A drift check SHALL walk every model element's referenced file path (`metadata.path`) and fail the build if any path is missing from the repo. Every `metadata.path` value SHALL be anchored under one of the live workspace roots declared in `package.json` `workspaces` (`packages/api`, `packages/app`, `packages/landing`, `packages/orchestrator`, `packages/design-system`) so the architecture model cannot regress to pre-monorepo `src/...` paths after a future rename or extraction. A `metadata.path` value is considered anchored when it is exactly the workspace root name (a directory-level path) or when it starts with the workspace root followed by `/` (a file-level path).
+A drift check SHALL walk every model element's referenced file path (`metadata.path`) and fail the build if any path is missing from the repo. Every `metadata.path` value SHALL be anchored under one of the live workspace roots declared in `package.json` `workspaces` (`packages/api`, `packages/app`, `packages/landing`, `packages/orchestrator`, `packages/design-system`) so the architecture model cannot regress to pre-monorepo `src/...` paths after a future rename or extraction. A `metadata.path` value is considered anchored when it is exactly the workspace root name (a directory-level path) or when it starts with the workspace root followed by `/` (a file-level path). The LikeC4 model SHALL declare a `DesignSystem` container inside `unveiled` with `metadata.path = packages/design-system`, and the container's components (`atoms`, `molecules`, `organisms`, `templates`, `pages`) SHALL each carry `metadata.path` anchored under `packages/design-system/src/<layer>/` (or omit `metadata.path` if the layer directory does not yet exist on disk). The drift script SHALL refuse to allow a `metadata.path` value of `src/components/ui/heroui-replica/` or any other pre-iteration-13 `src/`-anchored path; the value MUST be re-rooted under a live workspace root.
 
 #### Scenario: Drift check is wired as a script
 
@@ -92,6 +92,18 @@ A drift check SHALL walk every model element's referenced file path (`metadata.p
 - **WHEN** a contributor adds a new workspace root to `package.json` `workspaces` (e.g. `packages/foo/`)
 - **THEN** the drift script's allow-list is updated to include `packages/foo/` in the same change
 - **AND** the model can immediately reference files under the new root without the drift check rejecting them.
+
+#### Scenario: Design-system container and components are anchored correctly
+
+- **WHEN** `bun run arch:drift` runs after iteration 13 lands
+- **THEN** the `designSystem` container inside `unveiled` carries
+  `metadata.path = packages/design-system`
+- **AND** every layer component under `designSystem` (`atoms`,
+  `molecules`, `organisms`, `templates`, `pages`) carries a
+  `metadata.path` anchored under `packages/design-system/src/<layer>/`
+  or omits `metadata.path` entirely
+- **AND** the drift check exits 0; the design-system container is
+  treated as a first-party peer of `App` and `Landing`.
 
 ### Requirement: Cross-References To Specs, Routes, And Tokens
 The LikeC4 model SHALL cross-reference TypeSpec routes, gherkin features, and design tokens by id, exposed via `architecture/specs.likec4`.

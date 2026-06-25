@@ -123,11 +123,25 @@ model {
     #role-process, #surface-runtime, #domain-jobs, #spec-likec4-architecture
     description 'Cloudflare cron handler that runs scheduled jobs.'
   }
+  designSystem = container '@unveiled/design-system' {
+    #role-process, #surface-runtime, #domain-app-shell, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system'
+    }
+    description 'The single source of UI for the Unveiled MVP. Organised by atomic-design layer (atoms, molecules, organisms, layouts, pages) with HeroUI as a private dependency. Consumed by the Astro app Worker and the landing Worker via the public `@unveiled/design-system` barrel; never reached into via its internal `lib/*` paths.'
+  }
+  heroui = external 'HeroUI' {
+    #role-external, #surface-external, #domain-ui-system, #spec-design-system-package
+    technology '@nextui-org/react'
+    description 'Private UI base library used by the `@unveiled/design-system` atoms and molecules layers. Imported only from inside `packages/design-system/src/**`.'
+  }
 
   unveiled -> orchestrator 'is implemented by'
   orchestrator -> astroWorker 'forwards /app/* via service binding'
   orchestrator -> landingWorker 'forwards /* via service binding'
   orchestrator -> apiWorker 'forwards /api/* via service binding'
+  astroWorker -> designSystem 'uses UI primitives from'
   astroWorker -> reactIslands 'hydrates'
   astroWorker -> pglite 'reads/writes (local)'
   astroWorker -> neon 'reads/writes (prod)'
@@ -136,6 +150,7 @@ model {
   astroWorker -> emailWorker 'delegates to'
   astroWorker -> apiWorker 'forwards /api/* via service binding (defense-in-depth)'
   astroWorker -> cronTrigger 'is triggered by'
+  landingWorker -> designSystem 'uses UI primitives from'
   landingWorker -> astroWorker 'links /app CTA'
 
   stripeClient -> stripe 'HTTPS'
@@ -376,4 +391,69 @@ model {
     description 'Better Auth engine wired through the Drizzle adapter.'
   }
   astroWorker -> betterAuth 'delegates to'
+
+  // ---------------------------------------------------------------------------
+  // L3 — Components inside the @unveiled/design-system container
+  //
+  // The design system is the single source of UI. Its layers map directly to
+  // the directories under `packages/design-system/src/` and are consumed by
+  // the Astro app Worker and the landing Worker via the public barrel. Atoms
+  // and molecules are the only layers that may import from HeroUI; the
+  // `check:atomic-layers` gate script enforces the rule.
+  // ---------------------------------------------------------------------------
+  dsAtoms = component 'design-system-atoms' {
+    #role-ui, #surface-runtime, #domain-ui-system, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system/src/atoms'
+    }
+    description 'Smallest indivisible UI primitives (Button, Badge, Card, Divider, Panel, TextInput, TextArea, Tabs, SafeImage, SelectItem, Table primitive). Each atom is a restyled HeroUI component; this is the only layer that may import from `@nextui-org/react`.'
+  }
+  dsMolecules = component 'design-system-molecules' {
+    #role-ui, #surface-runtime, #domain-ui-system, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system/src/molecules'
+    }
+    description 'Compositions of atoms (Field, StatePanel, StatPanel, SelectInput, Toast, Drawer, Modal, Menu). Molecules import atoms and `lib/*` only; they do NOT import HeroUI directly.'
+  }
+  dsOrganisms = component 'design-system-organisms' {
+    #role-ui, #surface-runtime, #domain-app-shell, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system/src/organisms'
+    }
+    description 'Domain-shaped presentational compositions of atoms + molecules (AppShell, LoginForm, PublicDiscover, AdminPanel, BookingModal, etc.). Organisms are presentational only; data hooks stay in the app / landing containers. Cross-domain pieces live under `organisms/_shared/`.'
+  }
+  dsTemplates = component 'design-system-templates' {
+    #role-ui, #surface-runtime, #domain-app-shell, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system/src/layouts'
+    }
+    description 'Layout shells (AppLayout, LandingLayout) that compose shell and landing organisms. Layouts do not fetch data and do not import from `./pages/`.'
+  }
+  dsPages = component 'design-system-pages' {
+    #role-ui, #surface-runtime, #domain-pages, #spec-design-system-package
+    #has-path
+    metadata {
+      path 'packages/design-system/src/pages'
+    }
+    description 'Ladle-only demo pages — one per user-facing surface — that mount the layouts with mock organisms and mock fixtures. Import-isolated from production by the `tests/unit/design-system-pages.test.ts` permanent unit test.'
+  }
+
+  designSystem -> dsAtoms 'owns'
+  designSystem -> dsMolecules 'owns'
+  designSystem -> dsOrganisms 'owns'
+  designSystem -> dsTemplates 'owns'
+  designSystem -> dsPages 'owns'
+
+  dsMolecules -> dsAtoms 'composes'
+  dsOrganisms -> dsAtoms 'composes'
+  dsOrganisms -> dsMolecules 'composes'
+  dsTemplates -> dsOrganisms 'composes'
+  dsPages -> dsTemplates 'composes'
+
+  dsAtoms -> heroui 'restyles (private dependency)'
+  dsMolecules -> heroui 'reaches via atoms only'
 }

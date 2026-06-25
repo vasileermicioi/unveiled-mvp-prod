@@ -49,15 +49,25 @@ architecture change.
   orchestrator dev proxy listens on 4320.
 - **Validation:** Zod 4 (pinned `4.3.6`). All action input/output goes
   through Zod schemas; do not hand-roll validators.
-- **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus Hero UI
-  component library. Design tokens are generated from
+- **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`, plus the
+  HeroUI component library as a **private dependency** of
+  `@unveiled/design-system`. Design tokens are generated from
   `design-tokens.json` via Style Dictionary (`bun run tokens:gen`). The
-  Hero UI library (`@nextui-org/react`) is a production dependency; the
-  production primitives in `src/components/ui/` compose HeroUI as their
-  base. The Ladle-only design replica under
-  `src/components/ui/heroui-replica/` MUST NOT be imported by production
-  code (gate: `bun run heroui-design-system-replica:check` and the
-  permanent `bun run test:unit` import-graph guard in
+  HeroUI library (`@nextui-org/react`) MUST NOT appear in any import
+  outside `packages/design-system/src/**`; the design system ships
+  restyled HeroUI components only — no documented "extreme cases" for
+  plain-React primitives or third-party UI dependencies (Radix, MUI,
+  Headless UI, etc.) are allowed. Atomic-design layering
+  (atoms → molecules → organisms → layouts → pages) is enforced by
+  `bun run check:atomic-layers`. Every CSS rule lives in
+  `packages/design-system/src/styles/global.css`; `app/` and `landing/`
+  import the global CSS once and use the design-system semantic
+  classes only (no raw Tailwind utilities outside the design-system
+  surface; gate: `bun run check:styling-ownership`). The Ladle-only
+  HeroUI replica under `packages/design-system/src/heroui-replica/`
+  MUST NOT be imported by production code (gate:
+  `bun run heroui-design-system-replica:check` and the permanent
+  `bun run test:unit` import-graph guard in
   `tests/unit/no-ladle-replica-in-production.test.ts`).
 - **Lint / format:** Biome (CLI version reported by `bunx biome --version`, currently 2.5.0) — see `biome.json`. CI runs `bun run check`,
   which fans out per-package (e.g. `astro check` in `@unveiled/app`,
@@ -107,35 +117,50 @@ architecture change.
 ├── wrangler.app.toml        # Astro Cloudflare Workers config (per-package)
 ├── wrangler.api.toml         # Hono API Cloudflare Workers config (per-package)
 ├── wrangler.jobs.toml        # Cloudflare Jobs config (cron/queues)
-├── wrangler.jobs.toml       # Cloudflare Jobs config (cron/queues)
 ├── architecture/            # LikeC4 model (source of truth for C4)
 ├── typespec/                # TypeSpec sources (source of truth for HTTP)
 ├── packages/                # Bun workspace members (see packages/README.md)
 │   ├── tsconfig.base.json   # shared per-package compiler options
-│   ├── design-system/       # @unveiled/design-system — Ladle + UI primitives
+│   ├── design-system/       # @unveiled/design-system — atomic-design source of UI
+│   │   ├── src/
+│   │   │   ├── atoms/       # smallest indivisible primitives (HeroUI restyles)
+│   │   │   ├── molecules/   # compositions of atoms
+│   │   │   ├── organisms/   # domain-shaped compositions of atoms + molecules
+│   │   │   │   ├── _shared/ # reusable cross-domain organisms
+│   │   │   │   ├── shell/
+│   │   │   │   ├── auth/
+│   │   │   │   ├── discovery/
+│   │   │   │   ├── members/
+│   │   │   │   ├── bookings/
+│   │   │   │   ├── admin/
+│   │   │   │   ├── partner-portal/
+│   │   │   │   ├── payments/
+│   │   │   │   └── landing/
+│   │   │   ├── layouts/     # layout shells (AppLayout, LandingLayout)
+│   │   │   ├── pages/       # Ladle-only demo pages (every page surface has one)
+│   │   │   ├── providers/   # UnveiledThemeProvider
+│   │   │   ├── lib/         # cn, design-tokens, theme helpers (consume via the barrel only)
+│   │   │   ├── styles/      # generated tokens + global.css (semantic classes) + atom-chrome.css
+│   │   │   ├── heroui-replica/  # Ladle-only reference (gated by heroui-design-system-replica:check)
+│   │   │   └── index.ts     # barrel: Atoms/Molecules/Organisms/Layouts/Providers namespaces + flat re-exports
+│   │   ├── .ladle/config.mjs   # Ladle dev / build config
+│   │   ├── scripts/         # gate scripts (atomic layers, styling ownership, replica, tokens, coverage)
+│   │   └── tests/
 │   ├── api/                 # @unveiled/api — Hono HTTP backend
 │   ├── app/                 # @unveiled/app — Astro application (mounted at /app/*)
-│   ├── landing/             # @unveiled/landing — Astro landing (mounted at /)
-│   └── orchestrator/        # @unveiled/orchestrator — public-URL entry Worker (dispatches /api/*, /app/*, /*; answers /healthz + /readyz; owns the top-level assets binding)
-├── src/
-│   ├── pages/               # legacy Astro pages (moved to packages/app/src/pages/)
-│   ├── components/          # legacy Astro/React components (moved to packages/app/src/components/)
-│   ├── actions/             # legacy Astro actions (moved to packages/app/src/actions/)
-│   ├── lib/                 # legacy lib code (moved to packages/app/src/lib/)
-│   ├── db/                  # legacy Drizzle client (moved to packages/app/src/db/)
-│   ├── styles/              # legacy styles (moved to packages/app/src/styles/)
-│   └── env.d.ts             # legacy env (moved to packages/app/src/env.d.ts)
-├── packages/
-│   ├── tsconfig.base.json   # shared per-package compiler options
-│   ├── design-system/       # @unveiled/design-system — Ladle + UI primitives
-│   ├── api/                 # @unveiled/api — Hono HTTP backend
-│   ├── app/                 # @unveiled/app — Astro application (mounted at /app/*)
-│   │   ├── src/             # Astro pages, components, actions, lib, db, styles
+│   │   ├── src/
+│   │   │   ├── containers/  # data-wired wrappers around presentational organisms
+│   │   │   ├── pages/       # Astro pages (delegate to design-system layouts)
+│   │   │   ├── layouts/     # Astro layouts (delegate to design-system layouts)
+│   │   │   ├── actions/     # typed Astro Actions
+│   │   │   ├── components/  # legacy wrappers (migration to containers ongoing)
+│   │   │   ├── lib/, db/, middleware.ts, env.d.ts
+│   │   │   └── styles/      # single @import line that re-exports the design-system global CSS
 │   │   ├── drizzle/         # shared migration history
 │   │   ├── drizzle.config.ts
 │   │   ├── astro.config.mjs # base: "/app", configPath: "../../wrangler.app.toml"
 │   │   └── tsconfig.json    # ~/* → ./src/*, @unveiled/* cross-package aliases
-│   └── landing/             # @unveiled/landing — Astro landing (change 05)
+│   └── landing/             # @unveiled/landing — Astro landing (mounted at /*)
 ├── openspec/
 │   ├── config.yaml          # schema + project context (machine-readable)
 │   ├── specs/               # current capability specs (what the system does)
@@ -170,6 +195,15 @@ short version:
   compatibility shim; removed in change 04). Cross-package imports MUST
   use the `@unveiled/<pkg>` alias declared in the root `tsconfig.base.json`.
   Cross-package relative imports are forbidden.
+- **Styling ownership.** Raw Tailwind utility classes (`grid`, `flex`,
+  `gap-*`, `bg-*`, `text-*`, `p-*`, `m-*`, etc.) are forbidden in
+  `packages/app/src/**` and `packages/landing/src/**` outside the
+  design-system semantic classes imported via
+  `@unveiled/design-system/styles/global.css`. Use the design-system
+  semantic classes (e.g. `unveiled-page-shell`, `unveiled-card-stack`,
+  `unveiled-hero-section`) so the global CSS remains the single source
+  of style. The rule is enforced by `bun run check:styling-ownership`,
+  which is wired into `bun run check`.
 - **Formatting.** Biome enforces double quotes, trailing commas, semicolons,
   and 2-space indent. Run `bun run format` before committing.
 - **No comments unless asked.** The codebase policy is no inline comments
@@ -252,7 +286,7 @@ All commands are run with `bun` from the repo root.
 | `bun install` | Install dependencies from `bun.lock`. |
 | `bun run dev` | Boot all four Workers behind the orchestrator's Vite dev proxy on port 4320 (API Worker on 8787, app Astro on 4321, landing Astro on 4322, orchestrator on 4320). |
 | `bun run build` | Production build for Cloudflare (design-system → app → landing → orchestrator). |
-| `bun run check` | `astro check` + `biome check .` + `bun run specs:check` + `bun run tokens:check` + `bun run ladle:coverage` + `bun run wrangler:check` + `bun run arch:check`. Run before every commit. |
+| `bun run check` | `astro check` (per workspace) + `biome check .` + `bun run specs:check` + `bun run tokens:check` + `bun run ladle:coverage` + `bun run --filter @unveiled/design-system check:atomic-layers` + `bun run check:styling-ownership`. Run before every commit. |
 | `bun run format` | Biome format write. |
 | `bun run lint` | Biome lint. |
 | `bun run lint:workspaces` | `biome check packages/` over all workspace members. |
@@ -265,21 +299,21 @@ All commands are run with `bun` from the repo root.
 | `bun run specs:gen` | Compile TypeSpec + regenerate `typespec/output/` and `src/lib/generated/`. |
 | `bun run specs:check` | Fail if generated artifacts are out of date. |
 | `bun run scripts/codemod-prepend-app-prefix.ts --verify` | Fail if any `.feature` file under `tests/features/**` has an un-prefixed app-route URL; excludes `/healthz`, `/readyz`, `/api/...`, `/ladle/...`, `/favicon.ico`, `/favicon.svg`, full URLs (`http://...`, `https://...`), and content-type strings; skips scenarios whose title matches `/normalizes\|does not normalize/i`. |
-| `bun run arch:check` | `likec4 validate` + drift check against the repo. |
-| `bun run arch:drift` | Drift check only; rejects any `metadata.path` not anchored under a live workspace root (`packages/api`, `packages/app`, `packages/landing`, `packages/orchestrator`, `packages/design-system`). |
+| `bunx likec4 validate` | Validate the LikeC4 model under `architecture/`. The drift check (`arch:drift`) was retired in iteration 13 (commit `999b259`); the model is now self-validating via `likec4 validate` and the `tests/architecture/model-tags.test.ts` permanent unit test. |
 | `bun run tokens:gen` | Regenerate design-token CSS from `design-tokens.json`. |
 | `bun run tokens:check` | Fail if generated token CSS is out of date. |
 | `bun run test:e2e` | Playwright runs the gherkin parity suite against the orchestrator's port-4320 proxy. |
 | `bun run test:ladle` | Playwright runs the gherkin scenarios that carry a `@ladle(...)` tag against the Ladle project. |
-| `bun run ladle` | Ladle dev server on port 6006. |
+| `bun run ladle` | Ladle dev server on port 6006. **MUST work**; no stories found is a regression (see the `heroui-ladle-design-system` proposal in `openspec/changes/archive/2026-06-18-heroui-ladle-design-system/`). |
 | `bun run ladle:build` | Static Ladle build at `public/ladle/`. |
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
-| `bun run wrangler:check` | Assert the SESSION KV namespace and ASSETS_BUCKET R2 binding are consistent across `wrangler.app.toml`, `wrangler.api.toml`, `wrangler.landing.toml`, and `wrangler.orchestrator.toml`. |
 | `bun run dev:landing` | Start only the `@unveiled/landing` Astro dev server on port 4322 (the landing surface). |
 | `bun run dev:app` | Start only the `@unveiled/app` Astro dev server on port 4321 (the app surface). |
-| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`, `tests/unit/wrangler-bindings.test.ts`, `tests/unit/orchestrator-redirects.test.ts`). |
-| `bun run heroui-design-system-replica:check` | Gate the `src/components/ui/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
+| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`, `tests/architecture/model-tags.test.ts`, `tests/architecture/drift-script.test.ts`). |
+| `bun run heroui-design-system-replica:check` | Gate the `packages/design-system/src/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
 | `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |
+| `bun run check:atomic-layers` | Gate the atomic-design import direction in `packages/design-system/src/`: atoms import from HeroUI / `lib/*` only; molecules / organisms / layouts / pages import from atoms / molecules / `lib/*` only, never from `@nextui-org/*`. |
+| `bun run check:styling-ownership` | Gate that raw Tailwind utility classes are forbidden in `packages/app/src/**` and `packages/landing/src/**` outside the design-system semantic classes imported via `@unveiled/design-system/styles/global.css`. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + chained Wrangler deploys (api → app → landing → orchestrator) with `--remote` semantics. |
 | `bun run deploy:cloudflare` | Build + chained `wrangler deploy` (api → app → landing → orchestrator). |
@@ -296,11 +330,14 @@ A change is *done* only when all of the following are true:
 - [ ] `bun run test:ladle` passes for any feature spec that adds a new component.
 - [ ] `bun run ladle:coverage` shows no drift.
 - [ ] `bun run specs:check` shows no drift (TypeSpec artifacts in sync; `servers` block points at the orchestrator's hostname).
-- [ ] `bun run arch:check` shows no drift (LikeC4 model in sync; orchestrator is the entry container with three downstream service bindings).
+- [ ] `bunx likec4 validate` exits 0 (LikeC4 model is syntactically and semantically valid; the model-tags unit test in `tests/architecture/model-tags.test.ts` asserts the closed-enum tag values are honoured).
 - [ ] `bun run tokens:check` shows no drift (design tokens in sync).
 - [ ] `GET /healthz` returns `200` with body `ok`; `GET /readyz` returns `200` only when all downstream Workers' readiness probes are green.
 - [ ] `bun run dev` boots all four Workers behind a single local port (4320) with no port conflicts.
 - [ ] No file outside `packages/design-system/**` imports `@nextui-org/*` or `@heroui/*` (enforced by `tests/unit/design-system-hero-ui-boundary.test.ts`, which is part of `bun run test:unit` and therefore `bun run check`).
+- [ ] Every UI change in `app/` or `landing/` lands a Ladle story under
+      `packages/design-system/src/pages/` (atomic-design layer
+      requirement: every page surface has a demo page).
 - [ ] `bun run deploy:cloudflare` deploys in dependency order (api → app → landing → orchestrator) and the production hostname serves every URL prefix correctly.
 - [ ] The OpenSpec proposal is either updated in place, or a new proposal
       is added that supersedes it, and `openspec validate` passes.
@@ -325,6 +362,25 @@ A change is *done* only when all of the following are true:
 - **No new capability without a spec.** Anything user-visible must show up
   as a `### Requirement:` + `#### Scenario:` in a capability spec.
 - **No comments in code unless asked.** Follow the no-comments policy.
+- **No `@nextui-org/*`, `@heroui/*`, or `lucide-react` imports outside
+  `packages/design-system/src/**`.** HeroUI is a private dependency of
+  the design system; `lucide-react` is forbidden entirely (consumers
+  inline `<svg>` with a `// source: lucide-static` comment for licence
+  traceability). Enforced by
+  `tests/unit/design-system-hero-ui-boundary.test.ts` and the
+  `check:atomic-layers` gate.
+- **No raw Tailwind utility classes in `app/` / `landing/` outside the
+  design-system semantic classes.** Use the semantic classes from
+  `@unveiled/design-system/styles/global.css` (e.g.
+  `unveiled-page-shell`, `unveiled-card-stack`, `unveiled-hero-section`).
+  Enforced by `bun run check:styling-ownership`.
+- **No `@unveiled/design-system/lib/*` imports.** Downstream packages
+  MUST consume the design system via the public barrel
+  (`@unveiled/design-system`), never via the internal `lib/*` paths.
+  `cn` is re-exported from the barrel; `StatusColor` is re-exported
+  from the barrel; `UnveiledThemeProvider` is re-exported from the
+  barrel. Enforced by the design-system barrel contract and the
+  `check:atomic-layers` gate.
 
 ## 10. Where to ask for help
 
