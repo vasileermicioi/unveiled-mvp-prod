@@ -1,5 +1,8 @@
 ---
-import { LandingTemplate } from "@unveiled/design-system";
+import {
+  LandingTemplate,
+  UnveiledThemeProvider,
+} from "@unveiled/design-system";
 import "../styles/global.css";
 import { hasSessionCookie } from "../lib/session-presence";
 
@@ -24,8 +27,10 @@ const authenticated = hasSessionCookie(Astro);
     <title>{title}</title>
   </head>
   <body>
-    <LandingTemplate client:load authenticated={authenticated} hero>
-      <slot />
-    </LandingTemplate>
+    <UnveiledThemeProvider client:load>
+      <LandingTemplate client:load authenticated={authenticated} hero>
+        <slot />
+      </LandingTemplate>
+    </UnveiledThemeProvider>
   </body>
 </html>

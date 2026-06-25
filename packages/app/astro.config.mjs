@@ -40,6 +40,7 @@ export default defineConfig({
                   "react-dom/server",
                   "@tanstack/react-query",
                   "zod",
+                  "@nextui-org/react",
                   "astro/actions/runtime/entrypoints/server.js",
                   "better-auth",
                   "better-auth/adapters/drizzle",

@@ -22,6 +22,7 @@
     "./forms/*": "./src/forms/*.ts",
     "./i18n": "./src/i18n.ts",
     "./middleware/*": "./src/middleware/*.ts",
+    "./payments": "./src/payments/index.ts",
     "./payments/*": "./src/payments/*.ts",
     "./routes/*": "./src/routes/*.ts",
     "./unveiled-view-models": "./src/unveiled-view-models.ts"
