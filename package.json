@@ -45,8 +45,7 @@
     "db:seed:operations-smoke": "bun run --filter @unveiled/app db:seed:operations-smoke",
     "tokens:gen": "bun packages/design-system/scripts/generate-design-tokens.ts",
     "tokens:check": "bun packages/design-system/scripts/check-design-tokens.ts",
-    "heroui-design-system-replica:check": "bun packages/design-system/scripts/check-heroui-design-system-replica.ts",
-    "check:heroui-replica": "bun run heroui-design-system-replica:check && bun run ladle:coverage && bun run check",
+    "check:heroui-replica": "bun run ladle:coverage && bun run check",
     "codemod:prepend-app-prefix": "bun run scripts/codemod-prepend-app-prefix.ts",
     "check:styling-ownership": "bun run --filter '@unveiled/design-system' check:styling-ownership"
   },

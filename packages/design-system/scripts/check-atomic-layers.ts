@@ -10,7 +10,10 @@
 //      Atoms MUST NOT import from `./molecules/...`, `./organisms/...`,
 //      `./layouts/...`, `./pages/...`, `./heroui-replica/...`, or any
 //      non-HeroUI third-party UI library (`@radix-ui/*`, `@headlessui/*`,
-//      `react-aria`, `@mui/*`, `@chakra-ui/*`).
+//      `react-aria`, `@mui/*`, `@chakra-ui/*`). The `./heroui-replica/...`
+//      rule is a forward-looking guard — the directory was deleted in
+//      change `retire-heroui-replica`; the regex still rejects any
+//      re-introduction because the path is not on the atoms allow-list.
 //
 //   2. Every atom `<atom>.tsx` MUST contain a `from "@nextui-org/react"`
 //      import OR carry the `// @atoms-re-export` pass-through marker.

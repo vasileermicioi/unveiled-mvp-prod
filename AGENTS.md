@@ -63,12 +63,7 @@ architecture change.
   `packages/design-system/src/styles/global.css`; `app/` and `landing/`
   import the global CSS once and use the design-system semantic
   classes only (no raw Tailwind utilities outside the design-system
-  surface; gate: `bun run check:styling-ownership`). The Ladle-only
-  HeroUI replica under `packages/design-system/src/heroui-replica/`
-  MUST NOT be imported by production code (gate:
-  `bun run heroui-design-system-replica:check` and the permanent
-  `bun run test:unit` import-graph guard in
-  `tests/unit/no-ladle-replica-in-production.test.ts`).
+  surface; gate: `bun run check:styling-ownership`).
 - **Lint / format:** Biome (CLI version reported by `bunx biome --version`, currently 2.5.0) — see `biome.json`. CI runs `bun run check`,
   which fans out per-package (e.g. `astro check` in `@unveiled/app`,
   `biome check .` across the repo) and combines with `bun run specs:check`,
@@ -141,10 +136,9 @@ architecture change.
 │   │   │   ├── providers/   # UnveiledThemeProvider
 │   │   │   ├── lib/         # cn, design-tokens, theme helpers (consume via the barrel only)
 │   │   │   ├── styles/      # generated tokens + global.css (semantic classes) + atom-chrome.css
-│   │   │   ├── heroui-replica/  # Ladle-only reference (gated by heroui-design-system-replica:check)
 │   │   │   └── index.ts     # barrel: Atoms/Molecules/Organisms/Layouts/Providers namespaces + flat re-exports
 │   │   ├── .ladle/config.mjs   # Ladle dev / build config
-│   │   ├── scripts/         # gate scripts (atomic layers, styling ownership, replica, tokens, coverage)
+│   │   ├── scripts/         # gate scripts (atomic layers, styling ownership, tokens, coverage)
 │   │   └── tests/
 │   ├── api/                 # @unveiled/api — Hono HTTP backend
 │   ├── app/                 # @unveiled/app — Astro application (mounted at /app/*)
@@ -208,9 +202,6 @@ short version:
   and 2-space indent. Run `bun run format` before committing.
 - **No comments unless asked.** The codebase policy is no inline comments
   unless a reviewer explicitly asks for one. Self-documenting names preferred.
-  The single permitted exception is the `// @ladle-only` header on every file
-  under `src/components/ui/heroui-replica/`, which is enforced by
-  `bun run heroui-design-system-replica:check`.
 - **Server actions are the only mutation surface.** Page-level forms call
   actions in `src/actions/index.ts`; they do not call HTTP endpoints directly.
 - **No `_old_app/` imports.** If a legacy file is the only source of an
@@ -309,9 +300,8 @@ All commands are run with `bun` from the repo root.
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
 | `bun run dev:landing` | Start only the `@unveiled/landing` Astro dev server on port 4322 (the landing surface). |
 | `bun run dev:app` | Start only the `@unveiled/app` Astro dev server on port 4321 (the app surface). |
-| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/unit/no-ladle-replica-in-production.test.ts`, `tests/architecture/model-tags.test.ts`, `tests/architecture/drift-script.test.ts`). |
-| `bun run heroui-design-system-replica:check` | Gate the `packages/design-system/src/heroui-replica/` Ladle-only HeroUI replica: co-location, theme coverage, no hex literals, overview completeness, import isolation. |
-| `bun run check:heroui-replica` | Umbrella: `heroui-design-system-replica:check` + `ladle:coverage` + `bun run check`. |
+| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/architecture/model-tags.test.ts`, `tests/architecture/drift-script.test.ts`). |
+| `bun run check:heroui-replica` | Umbrella: `ladle:coverage` + `bun run check`. |
 | `bun run check:atomic-layers` | Gate the atomic-design import direction in `packages/design-system/src/`: atoms import from HeroUI / `lib/*` only; molecules / organisms / layouts / pages import from atoms / molecules / `lib/*` only, never from `@nextui-org/*`. |
 | `bun run check:styling-ownership` | Gate that raw Tailwind utility classes are forbidden in `packages/app/src/**` and `packages/landing/src/**` outside the design-system semantic classes imported via `@unveiled/design-system/styles/global.css`. |
 | `bun run preview` | Astro preview of the local build. |

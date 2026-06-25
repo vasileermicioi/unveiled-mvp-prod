@@ -10,18 +10,19 @@ imports under the `@unveiled/design-system` alias.
 ## Requirements
 ### Requirement: `@unveiled/design-system` is a Bun workspace package
 
-The system MUST ship `@unveiled/design-system` as a Bun workspace member under `packages/design-system/`. The package MUST be `private: true`, declare `"name": "@unveiled/design-system"`, and ship the scripts `dev`, `build`, `typecheck`, `lint`, `test:unit`, `ladle`, `ladle:build`, `ladle:coverage`, `check:atomic-layers`, and `heroui-design-system-replica:check`.
+The system MUST ship `@unveiled/design-system` as a Bun workspace member under `packages/design-system/`. The package MUST be `private: true`, declare `"name": "@unveiled/design-system"`, and ship the scripts `dev`, `build`, `typecheck`, `lint`, `test:unit`, `ladle`, `ladle:build`, `ladle:coverage`, and `check:atomic-layers`. The package MUST NOT ship the `heroui-design-system-replica:check` script (the replica is retired in change `retire-heroui-replica`).
 
 #### Scenario: Package is discoverable as a workspace member
 
 - **WHEN** `bun pm ls` (or the Bun workspace equivalent) is run from the repo root
 - **THEN** `@unveiled/design-system` appears in the workspace list with `private: true`
-- **AND** its `package.json` `exports` map exposes `.` for runtime primitives, `./heroui-replica` for the Ladle-only replica, `./styles/generated/tokens.css` for the design-token CSS, and `./styles/atom-chrome.css` for the hand-written atom visual-chrome CSS.
+- **AND** its `package.json` `exports` map exposes `.` for runtime primitives, `./styles/generated/tokens.css` for the design-token CSS, and `./styles/atom-chrome.css` for the hand-written atom visual-chrome CSS. The `exports` map MUST NOT expose a `./heroui-replica` sub-path.
 
 #### Scenario: Package scripts exist and resolve
 
-- **WHEN** a contributor runs `bun --filter @unveiled/design-system run <script>` for each of `dev`, `build`, `typecheck`, `lint`, `test:unit`, `ladle`, `ladle:build`, `ladle:coverage`, `check:atomic-layers`, `heroui-design-system-replica:check`
-- **THEN** the package's `package.json` defines a script under that name and the filter invocation exits with code zero.
+- **WHEN** a contributor runs `bun --filter @unveiled/design-system run <script>` for each of `dev`, `build`, `typecheck`, `lint`, `test:unit`, `ladle`, `ladle:build`, `ladle:coverage`, `check:atomic-layers`
+- **THEN** the package's `package.json` defines a script under that name and the filter invocation exits with code zero
+- **AND** the package's `package.json` does NOT define a `heroui-design-system-replica:check` script; running `bun --filter @unveiled/design-system run heroui-design-system-replica:check` fails with "script not found".
 
 ### Requirement: `@unveiled/design-system` exposes the production UI primitives
 
@@ -103,87 +104,23 @@ In addition to the primitives above, the package barrel MUST re-export the `Unve
 - **THEN** the namespace resolves via the design-system's `Providers` namespace export.
 - **AND** `@unveiled/design-system` does NOT export a `HeroUIProvider` name; any consumer importing `HeroUIProvider` from `@unveiled/design-system` fails with "no exported member".
 
-### Requirement: `@unveiled/design-system` owns the Ladle-only HeroUI replica
-
-The package MUST ship `packages/design-system/src/heroui-replica/` as the Ladle-only HeroUI replica, re-exported via `packages/design-system/src/heroui-replica/index.ts`. The replica's import-isolation contract MUST remain identical to the previous `src/components/ui/heroui-replica/` contract: every file carries the `// @ladle-only` header, no production code outside the package imports it, and the `heroui-design-system-replica:check` script (now runnable as `bun --filter @unveiled/design-system run heroui-design-system-replica:check`) still enforces the gate.
-
-#### Scenario: Replica is reachable only through the Ladle-only export
-
-- **WHEN** a file outside `packages/design-system/src/heroui-replica/` imports from `@unveiled/design-system/heroui-replica`
-- **THEN** `bun --filter @unveiled/design-system run heroui-design-system-replica:check` fails and names the offending file and import line.
-
-#### Scenario: Replica isolation guard passes in CI
-
-- **WHEN** CI runs `bun run check`
-- **THEN** the unit test `packages/design-system/src/heroui-replica/isolation.test.ts` (relocated from `src/components/ui/heroui-replica/replica-not-imported.test.ts`) passes, asserting the import graph of every production entry point in `packages/app/src/**`, `packages/landing/src/**`, and the package's own runtime export never reaches a module under `packages/design-system/src/heroui-replica/`.
-
 ### Requirement: `@unveiled/design-system` owns the Ladle harness
 
-The package MUST own the Ladle config at `packages/design-system/.ladle/config.mjs` (Ladle v5's canonical config path; Ladle loads `<configFolder>/config.mjs`, the scripts pass `--config .ladle` from the package root). The config MUST be a `.mjs` module that exports an object with at least a non-empty `stories` array and a `base` field. The config MUST resolve every replica story under `packages/design-system/src/heroui-replica/*.ladle.tsx`, every co-located production-primitive story under `packages/design-system/src/**/*.ladle.tsx`, every gherkin `@ladle` story under `tests/features/**/*.ladle.tsx`, and every smoke story under `tests/ladle/**/*.ladle.tsx`. The config MUST declare `base: "/ladle/"` so the static build matches the orchestrator's served path, and MUST point `viteConfig` at `packages/design-system/vite.config.mjs` which wires the cross-package `@unveiled/*` and `~` resolve aliases that Ladle cannot derive from the design-system's own `tsconfig.json` (because those aliases point at `packages/<other>/src`), mounts the `@tailwindcss/vite` plugin so Tailwind utilities (`bg-brand-*`, `unveiled-shadow`, etc.) compile for stories that import `~/styles/global.css` or `@unveiled/design-system/styles/generated/tokens.css`, AND declares `resolve.dedupe: ["react", "react-dom"]` so the dev server resolves React from a single copy (otherwise the workspace-pinned `react@19.2.5` co-exists with `@ladle/react`'s transitively-pinned `react@19.2.7` and the resulting "Invalid hook call" / "Cannot read properties of null (reading 'useContext')" error in `<NextUI.Input>` crashes the story tree). The legacy `.ladle/config.mjs` at the repo root MUST NOT exist; the package-local config is the only source of truth. The package MUST also ship a `packages/design-system/public/app` symlink that resolves to `packages/app/public` so Ladle's default `publicDir` exposes the app's `logos/unveiled-logo-{black,white}.svg` and `fonts/EKNoticeSans-Black.{woff2,woff,otf}` under the production `/app/...` URL prefix that `app-shell.tsx` and `global.css` already hard-code; without that symlink Vite's HTML-fallback middleware returns the Ladle SPA HTML (status 200, `text/html`) for every `/app/...` URL and the browser renders broken-image glyphs. Running `bun --filter @unveiled/design-system run ladle` MUST serve the harness on port 6006 and list every story resolved by the config, and `bun --filter @unveiled/design-system run ladle:build` MUST write the static build to `packages/design-system/dist/ladle/` whose `index.html` references all of those stories.
+The package MUST own the Ladle config at `packages/design-system/.ladle/config.mjs` (Ladle v5's canonical config path; Ladle loads `<configFolder>/config.mjs`, the scripts pass `--config .ladle` from the package root). The config MUST be a `.mjs` module that exports an object with at least a non-empty `stories` array and a `base` field. The config MUST resolve every co-located production-primitive story under `packages/design-system/src/**/*.ladle.tsx`, every gherkin `@ladle` story under `tests/features/**/*.ladle.tsx`, and every smoke story under `tests/ladle/**/*.ladle.tsx`. The config MUST NOT resolve a story glob under `packages/design-system/src/heroui-replica/` (the directory is deleted in change `retire-heroui-replica`). The config MUST declare `base: "/ladle/"` so the static build matches the orchestrator's served path, and MUST point `viteConfig` at `packages/design-system/vite.config.mjs` which wires the cross-package `@unveiled/*` and `~` resolve aliases that Ladle cannot derive from the design-system's own `tsconfig.json` (because those aliases point at `packages/<other>/src`), mounts the `@tailwindcss/vite` plugin so Tailwind utilities (`bg-brand-*`, `unveiled-shadow`, etc.) compile for stories that import `~/styles/global.css` or `@unveiled/design-system/styles/generated/tokens.css`, AND declares `resolve.dedupe: ["react", "react-dom"]` so the dev server resolves React from a single copy (otherwise the workspace-pinned `react@19.2.5` co-exists with `@ladle/react`'s transitively-pinned `react@19.2.7` and the resulting "Invalid hook call" / "Cannot read properties of null (reading 'useContext')" error in `<NextUI.Input>` crashes the story tree). The legacy `.ladle/config.mjs` at the repo root MUST NOT exist; the package-local config is the only source of truth. The package MUST also ship a `packages/design-system/public/app` symlink that resolves to `packages/app/public` so Ladle's default `publicDir` exposes the app's `logos/unveiled-logo-{black,white}.svg` and `fonts/EKNoticeSans-Black.{woff2,woff,otf}` under the production URL prefix `app-shell.tsx` and `global.css` already use.
 
 #### Scenario: Package-local Ladle config exists with discoverable stories
 
 - **WHEN** `packages/design-system/.ladle/config.mjs` is read at runtime
 - **THEN** it is a `.mjs` module whose default export has a non-empty `stories` array
 - **AND** that array contains a glob covering `packages/design-system/src/**/*.ladle.tsx`, a glob covering `tests/features/**/*.ladle.tsx`, and a glob covering `tests/ladle/**/*.ladle.tsx`
+- **AND** the array does NOT contain a glob covering `packages/design-system/src/heroui-replica/**` (the directory is deleted)
 - **AND** the config exports `base: "/ladle/"` so the static build matches the orchestrator's served path.
-
-#### Scenario: Legacy root Ladle config is removed
-
-- **WHEN** the repo is searched for `.ladle/config.mjs` at the root
-- **THEN** no such file exists
-- **AND** the regression test `tests/unit/no-legacy-ladle-config.test.ts` passes
-- **AND** no file under `packages/` or `tests/` references `.ladle/config.mjs` by path.
 
 #### Scenario: Ladle dev server lists every resolved story
 
 - **WHEN** `bun --filter @unveiled/design-system run ladle` boots
-- **THEN** the served `index.html` and `/stories.json` enumerate the 18 replica stories under `packages/design-system/src/heroui-replica/`, the gherkin `@ladle` components under `tests/features/**`, and the smoke stories under `tests/ladle/**`.
-
-#### Scenario: Ladle dev server ships exactly one React copy
-
-- **WHEN** `packages/design-system/vite.config.mjs` is read at Ladle config-load time
-- **THEN** its `resolve` block declares `dedupe: ["react", "react-dom"]`
-- **AND** the resolved Vite bundle includes `react` (and `react-dom`) from a single workspace location, so opening any HeroUI story in the browser does NOT emit "Invalid hook call" / "Cannot read properties of null (reading 'useContext')" and the sidebar story list is NOT empty.
-
-#### Scenario: Ladle dev server compiles Tailwind utilities for stories
-
-- **WHEN** `packages/design-system/vite.config.mjs` is read at Ladle config-load time
-- **THEN** its `plugins` array mounts `@tailwindcss/vite`
-- **AND** `packages/design-system/package.json` `devDependencies` declares `"@tailwindcss/vite": "^4.2.4"` so the plugin resolves from the package's own devDeps
-- **AND** the rebuilt `packages/design-system/dist/ladle/assets/*.css` includes Tailwind utilities (e.g. `bg-brand-yellow`, `bg-brand-grey`, `unveiled-shadow`) and the `--unveiled-color-brand-*` CSS variables, so stories that import `~/styles/global.css` or `@unveiled/design-system/styles/generated/tokens.css` render with brand chrome instead of plain text.
-
-#### Scenario: Ladle dev server serves the app's public assets under `/app/...`
-
-- **WHEN** `bun ladle` boots and a story requests `/app/logos/unveiled-logo-black.svg` (or any file under `packages/app/public/`)
-- **THEN** Vite returns the actual SVG bytes (not the Ladle SPA HTML)
-- **AND** the file is reachable because `packages/design-system/public/app` is a symlink whose target is `packages/app/public`, so Ladle's default `publicDir` (`packages/design-system/public/`) exposes the app's logos and fonts under the production URL prefix `app-shell.tsx` and `global.css` already use
-- **AND** the rebuilt `packages/design-system/dist/ladle/app/logos/` and `packages/design-system/dist/ladle/app/fonts/` directories contain the originals so the static build serves them the same way.
-
-#### Scenario: Loading-state spinner renders with the right colour and margin
-
-- **WHEN** the design-system `Button` is rendered with `loading`
-- **THEN** the rebuilt `packages/design-system/dist/ladle/assets/*.css` includes both `.border-current{border-color:currentColor}` AND `.border-t-transparent{border-top-color:#0000}` so the rotating border is visible against the button background (because Tailwind v4's `@source` directives now scan `packages/design-system/src/**/*.{ts,tsx}` and the inline source list opts in `border-current`)
-- **AND** the spinner span sits clearly to the left of the label (`mr-2` on the span and on HeroUI's `classNames.spinner` slot) so the rotating icon does not crowd or visually cross the text.
-
-#### Scenario: HeroUI replica Loading story has explicit padding so the spinner never clips the label
-
-- **WHEN** `HeroButton.ladle.tsx` `Loading` story is rendered
-- **THEN** the `<Button>` element declares `px-5 py-3` (matching the design-system `Button` default size) so the spinner and the label have the same horizontal gap as in the production `Button` story
-- **AND** the spinner (HeroUI's default 20×20 dual-`<i>` `<Spinner>`) does not visually overlap or clip the first character of the "Loading" label.
-
-#### Scenario: Ladle static build produces a deployable bundle
-
-- **WHEN** `bun --filter @unveiled/design-system run ladle:build` completes
-- **THEN** `packages/design-system/dist/ladle/index.html` exists
-- **AND** every story id registered in the dev server is referenced from the static `index.html` (or its referenced chunks)
-- **AND** the directory is excluded from Biome formatting in the package's `biome.json`.
-
-#### Scenario: Regression guards fail loudly when the config drifts
-
-- **WHEN** `bun run test:unit` runs
-- **THEN** `tests/unit/ladle-config-exists.test.ts` fails if `packages/design-system/.ladle/config.mjs` is missing, exports an empty `stories` array, or omits `base: "/ladle/"`
-- **AND** `tests/unit/no-legacy-ladle-config.test.ts` fails if `.ladle/config.mjs` is re-introduced at the repo root.
+- **THEN** the served `index.html` and `/stories.json` enumerate the production atoms/molecules/organisms/layouts/pages under `packages/design-system/src/`, the gherkin `@ladle` components under `tests/features/**`, and the smoke stories under `tests/ladle/**`
+- **AND** the served stories do NOT enumerate any story under `packages/design-system/src/heroui-replica/` (the directory is deleted).
 
 ### Requirement: `@unveiled/design-system` owns design-token CSS
 
@@ -216,17 +153,13 @@ The atoms/ layer MAY import only from:
 - `./styles/generated/tokens.css` (the design-token CSS — never the `@nextui-org/theme` runtime),
 - nothing else in the design-system package, and nothing from any other third-party UI library.
 
+The `check-atomic-layers` gate's allow-list MUST NOT mention `./heroui-replica/...` as a forbidden cross-layer path (the directory is deleted in change `retire-heroui-replica`); the gate's cross-layer rule continues to reject any import from `./heroui-replica/...` if the directory is re-introduced, because the path is not on any allow-list.
+
 #### Scenario: Atoms import only from allowed sources
 
 - **WHEN** `bun run check:atomic-layers` runs across `packages/design-system/src/atoms/**/*.tsx`
-- **THEN** every file's import list matches the allow-list above.
-- **AND** any atom importing from `./molecules/...`, `./organisms/...`, `./layouts/...`, `./pages/...`, `./heroui-replica/...`, or any third-party UI library (e.g. `@radix-ui/*`, `@headlessui/*`, `react-aria`, `@mui/*`) causes the gate to fail with the offending file path.
-
-#### Scenario: Higher layers do not import HeroUI directly
-
-- **WHEN** `bun run check:atomic-layers` walks `packages/design-system/src/{molecules,organisms,layouts,pages}/**/*.tsx`
-- **THEN** no file contains `from "@nextui-org/react"` or `from "@heroui/..."`.
-- **AND** no file imports from a sibling atom's internals (the atom's barrel re-export is the only allowed entry point).
+- **THEN** every file's import list matches the allow-list above
+- **AND** any atom importing from `./molecules/...`, `./organisms/...`, `./layouts/...`, `./pages/...`, or any third-party UI library (e.g. `@radix-ui/*`, `@headlessui/*`, `react-aria`, `@mui/*`) causes the gate to fail with the offending file path.
 
 ### Requirement: Atoms are restyled HeroUI components (no documented extreme cases)
 
@@ -338,66 +271,13 @@ The iteration-13 prompt is strict: "all components are based on HeroUI". The des
 
 The molecules layer is organised under `packages/design-system/src/molecules/<molecule>/` with one folder per molecule. Each molecule folder MUST ship a `<molecule>.tsx`, a `<molecule>.types.ts` (when prop types are non-trivial), and a `<molecule>.ladle.tsx` with a default story and at least one variant story. Molecules with non-trivial logic MAY additionally ship a `<molecule>.test.tsx`.
 
-The following 8 molecules are promoted in this change:
-
-| Molecule | Composes |
-| --- | --- |
-| `Field` | `TextInput` / `TextArea` / `SelectInput` atom + label + helper/error span |
-| `StatePanel` | `Card` atom + headline + body + action slot |
-| `StatPanel` | `Card` atom + label + value + caption |
-| `SelectInput` | `HeroUISelect` (via the `select-item` atom) + `SelectItem` atom |
-| `Toast` | HeroUI `Alert` (via a dedicated `toast` atom in `atoms/`) + call/result helpers |
-| `Drawer` | HeroUI `Drawer` primitives (via dedicated `drawer-trigger`/`drawer-content`/`drawer-body`/`drawer-header`/`drawer-footer` atoms) |
-| `Modal` | HeroUI `Modal` primitives (via dedicated `modal-trigger`/`modal-content`/`modal-body`/`modal-header`/`modal-footer` atoms) |
-| `Menu` (with `MenuTrigger`, `MenuContent`, `MenuItem`, `MenuSection`) | HeroUI `Popover` primitives (via dedicated `menu-trigger`/`menu-content`/`menu-item`/`menu-section` atoms) |
-
-The `Icon` molecule is NOT part of the design system. HeroUI 2.x has no `Icon` primitive, and the iteration-13 prompt does not allow the design system to ship non-HeroUI components. App/landing consumers inline `<svg>` directly; each inlined `<svg>` MUST carry a `// source: lucide-static` comment naming the source icon set for licence traceability (the Lucide icon set is ISC-licensed; the geometry is in the public domain, so the comment is a convention, not a licence requirement).
-
-The `Field` molecule's `children` prop is typed
-`ReactElement<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>`
-so the gate can verify a `Field` always wraps an input-like atom
-(`TextInput`, `TextArea`, or `SelectInput`). The type narrowing
-preserves the existing call sites because every current `Field` user
-already passes one of those three atoms.
+The `check-atomic-layers` gate's allow-list MUST NOT mention `./heroui-replica/...` as a forbidden cross-layer path (the directory is deleted in change `retire-heroui-replica`); the gate's cross-layer rule continues to reject any import from `./heroui-replica/...` if the directory is re-introduced, because the path is not on any allow-list.
 
 #### Scenario: Molecules import only from atoms and lib
 
 - **WHEN** `bun run check:atomic-layers` runs across `packages/design-system/src/molecules/**/*.tsx`
-- **THEN** every file's import list matches the allow-list: `./atoms/...`, `./lib/...`, `react`, `react-dom`, framework primitives, and `./styles/generated/tokens.css`.
-- **AND** any molecule importing from a sibling molecule, `./organisms/...`, `./layouts/...`, `./pages/...`, or `./heroui-replica/...` causes the gate to fail with the offending file path.
-
-#### Scenario: Molecules do not import HeroUI directly
-
-- **WHEN** `bun run check:atomic-layers` walks `packages/design-system/src/molecules/**/*.tsx`
-- **THEN** no file contains `from "@nextui-org/react"`, `from "@nextui-org/..."`, or `from "@heroui/..."`.
-- **AND** the gate fails with the offending file path if any molecule imports HeroUI directly. Molecules that need a HeroUI primitive that no atom exposes MUST grow a new atom first; this rule is deliberate and not relaxed in any proposal.
-
-#### Scenario: Molecules do not import from above layers
-
-- **WHEN** `bun run check:atomic-layers` walks `packages/design-system/src/molecules/**/*.tsx`
-- **THEN** no file imports from `./organisms/...`, `./layouts/...`, or `./pages/...`.
-- **AND** the gate fails with the offending file path if any molecule imports from a higher layer.
-
-#### Scenario: Molecules do not import lucide-react
-
-- **WHEN** `bun run check:atomic-layers` walks `packages/design-system/src/molecules/**/*.tsx`
-- **THEN** no file imports from `lucide-react`. The design system has no `Icon` molecule; app/landing consumers inline `<svg>` directly with a `// source: lucide-static` comment.
-
-#### Scenario: Field children type is input-like
-
-- **WHEN** `packages/design-system/src/molecules/field/field.types.ts` is inspected at the `FieldProps` definition
-- **THEN** `children` is typed `ReactElement<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>` (or the equivalent generic narrowing).
-- **AND** `bun run --filter @unveiled/design-system typecheck` fails if a consumer passes a non-input element to `Field`.
-
-#### Scenario: Each molecule has a Ladle story
-
-- **WHEN** `bun ladle` boots and Ladle walks the design-system stories
-- **THEN** every `packages/design-system/src/molecules/<molecule>/<molecule>.ladle.tsx` is discoverable, and the story group for the molecule lists at least one default story and at least one variant story that exercises a `variant`, `tone`, or `size` prop.
-
-#### Scenario: Molecules / Overview story exists
-
-- **WHEN** `bun ladle` boots
-- **THEN** the `Molecules / Overview` group renders `packages/design-system/src/molecules/__overview__/overview.ladle.tsx`, which mounts one instance of every molecule with mock data.
+- **THEN** every file's import list matches the allow-list: `./atoms/...`, `./lib/...`, `react`, `react-dom`, framework primitives, and `./styles/generated/tokens.css`
+- **AND** any molecule importing from a sibling molecule, `./organisms/...`, `./layouts/...`, or `./pages/...` causes the gate to fail with the offending file path.
 
 ### Requirement: No third-party UI dependencies in the design system
 
@@ -694,42 +574,13 @@ The package MUST ship `packages/design-system/src/styles/tailwind-theme.css` con
 
 Every file under `packages/app/src/**` (Astro pages, Astro layouts, React islands, server-side data hooks, action handlers, view-model mappers) MUST import UI surfaces — atoms, molecules, organisms, layouts, semantic CSS classes, and the `cn` helper — exclusively from `@unveiled/design-system` (the public barrel). The app MUST NOT import from `@unveiled/design-system/lib/*` (the internal path), `@unveiled/design-system/<layer>/<file>` (the per-folder deep imports that skip the barrel), `@nextui-org/react`, `@heroui/*`, `lucide-react`, `@radix-ui/*`, `@headlessui/*`, `react-aria`, `@mui/*`, `@chakra-ui/*`, or any other third-party UI library. App-internal paths (`@/lib/auth-client`, `@/lib/stripe`, `@/lib/data-access/*`, `@/lib/unveiled-view-models`, `@/lib/app-shell-view-models`) are still allowed because they are not UI surfaces.
 
-The containers in `packages/app/src/components/unveiled/` (or, optionally after this change lands, `packages/app/src/containers/`) own the data wiring (`useQuery`, `useMutation`, `authClient`, `fetch("/api/...")`, Stripe calls). They compose the data hooks with the canonical `<Organism>Presentational` symbol from the design-system barrel. The container file structure is:
-
-```tsx
-"use client";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { SomeOrganismPresentational } from "@unveiled/design-system";
-import type { SomeOrganismProps } from "@unveiled/design-system";
-import { authClient } from "@/lib/auth-client";
-```
-
-The mapping helpers (`mapSessionToProps`, `mapMutationToProps`) are extracted per container and unit-tested. The container exports `<Name>Container` (the data-wired component) and does NOT re-export the presentational; consumers that want the presentational with mock data import the design-system `<Name>Presentational` directly.
-
-The rule is enforced by `bun run check:styling-ownership` (existing) plus a new permanent unit test under `tests/unit/` that greps every `.tsx` / `.astro` / `.ts` file in `packages/app/src/**` and fails if it imports from any forbidden path or module. The unit test allow-list is: `@unveiled/design-system`, `@unveiled/app/lib/*` (the app-internal paths), `react`, `react-dom`, framework primitives (`@tanstack/react-query`, `@stripe/stripe-js`, `lucide-static` comments inside `<svg>` tags only), and `@unveiled/*` cross-package imports.
+The rule is enforced by `bun run check:styling-ownership` (existing) plus a new permanent unit test under `tests/unit/` that greps every `.tsx` / `.astro` / `.ts` file in `packages/app/src/**` and fails if it imports from any forbidden path or module.
 
 #### Scenario: No deep imports into the design system
 
 - **WHEN** `tests/unit/app-design-system-import-boundary.test.ts` greps `packages/app/src/**/*.{ts,tsx,astro}` for `from "@unveiled/design-system/`
-- **THEN** every match is followed by an allowed continuation (only the public barrel `@unveiled/design-system";` or `@unveiled/design-system/styles/global.css`;` — both of which are reachable through the package's `exports` map)
-- **AND** no match points at `@unveiled/design-system/lib/*`, `@unveiled/design-system/atoms/*`, `@unveiled/design-system/molecules/*`, `@unveiled/design-system/organisms/*`, `@unveiled/design-system/layouts/*`, `@unveiled/design-system/pages/*`, or `@unveiled/design-system/heroui-replica/*`.
-
-#### Scenario: No third-party UI imports in app source
-
-- **WHEN** `tests/unit/app-design-system-import-boundary.test.ts` greps `packages/app/src/**/*.{ts,tsx,astro}` for `from "@nextui-org/"`, `from "@heroui/"`, `from "lucide-react"`, `from "@radix-ui/"`, `from "@headlessui/"`, `from "react-aria`, `from "@mui/"`, `from "@chakra-ui/"`
-- **THEN** zero hits are returned (the only `lucide-*` string allowed is the literal comment `// source: lucide-static` inside an inlined `<svg>` tag, enforced by a separate allow-list match in the test).
-
-#### Scenario: Containers compose the design-system presentational
-
-- **WHEN** a container file under `packages/app/src/components/unveiled/<surface>/` is read
-- **THEN** it imports the data hooks from `@tanstack/react-query`, `authClient`, and app-internal data-access modules
-- **AND** it imports `<Surface>Presentational` from `@unveiled/design-system`
-- **AND** the default export is `<Surface>Container`, a React component that wires the data hooks to the presentational's props via extracted `mapSessionToProps` / `mapMutationToProps` helpers.
-
-#### Scenario: Mapping helpers are unit-tested
-
-- **WHEN** `bun run test:workspaces` runs
-- **THEN** every container that has a non-trivial data mapping ships a co-located `<surface>.test.ts` (or `.test.tsx`) file that exercises the mapping helpers with at least one happy-path and one error-path fixture.
+- **THEN** every match is followed by an allowed continuation (only the public barrel `@unveiled/design-system";` or `@unveiled/design-system/styles/global.css";` — both of which are reachable through the package's `exports` map)
+- **AND** no match points at `@unveiled/design-system/lib/*`, `@unveiled/design-system/atoms/*`, `@unveiled/design-system/molecules/*`, `@unveiled/design-system/organisms/*`, `@unveiled/design-system/layouts/*`, or `@unveiled/design-system/pages/*`.
 
 ### Requirement: `cn()` is imported from the public design-system barrel
 
@@ -775,60 +626,19 @@ The rule is enforced by:
 
 ### Requirement: Landing package consumes the design system, not its internals
 
-The landing package SHALL consume UI surfaces — atoms, molecules, organisms, layouts, semantic CSS classes, and the `cn` helper — exclusively from `@unveiled/design-system` (the public barrel). Every file under `packages/landing/src/**` (Astro pages, Astro layouts, and any future React island) MUST import those surfaces from `@unveiled/design-system` and MUST NOT import from `@unveiled/design-system/lib/*` (the internal path), `@unveiled/design-system/<layer>/<file>` (the per-folder deep imports that skip the barrel), `@nextui-org/react`, `@heroui/*`, `lucide-react`, `@radix-ui/*`, `@headlessui/*`, `react-aria`, `@mui/*`, `@chakra-ui/*`, or any other third-party UI library. The landing package MUST NOT import from a local `packages/landing/src/components/landing/...` path because that path is deleted; any future re-introduction of the folder SHALL be rejected by the gate.
+The landing package SHALL consume UI surfaces — atoms, molecules, organisms, layouts, semantic CSS classes, and the `cn` helper — exclusively from `@unveiled/design-system` (the public barrel). Every file under `packages/landing/src/**` (Astro pages, Astro layouts, and any future React island) MUST import those surfaces from `@unveiled/design-system` and MUST NOT import from `@unveiled/design-system/lib/*` (the internal path), `@unveiled/design-system/<layer>/<file>` (the per-folder deep imports that skip the barrel), `@nextui-org/react`, `@heroui/*`, `lucide-react`, `@radix-ui/*`, `@headlessui/*`, `react-aria`, `@mui/*`, `@chakra-ui/*`, or any other third-party UI library.
 
 The rule is enforced by:
 
-1. The existing `bun run check:styling-ownership` script (the
-   raw-Tailwind-utility and reverse-import gate).
-2. A new `R-LANDING-NO-LOCAL-UI` rule added to
-   `packages/design-system/scripts/check-styling-ownership.ts`:
-   the rule walks every `.tsx`, `.ts`, and `.astro` file in
-   `packages/landing/src/**` and fails if any file imports from
-   a relative path that resolves under
-   `packages/landing/src/components/landing/`. The rule is a
-   forward-looking regression guard; the path no longer exists
-   after the change lands, so the rule has no hits in the
-   current source tree.
-3. A new permanent unit test under
-   `tests/unit/landing-design-system-import-boundary.test.ts`
-   that greps every `.tsx`, `.astro`, and `.ts` file in
-   `packages/landing/src/**` for `from "@unveiled/design-system/`
-   followed by a forbidden continuation, for
-   `from "@nextui-org/"`, `from "@heroui/"`,
-   `from "lucide-react"`, `from "@radix-ui/"`,
-   `from "@headlessui/"`, `from "react-aria"`, `from "@mui/"`,
-   `from "@chakra-ui/"`, and for any import whose path resolves
-   under `packages/landing/src/components/landing/`.
+1. The existing `bun run check:styling-ownership` script (the raw-Tailwind-utility and reverse-import gate).
+2. A new `R-LANDING-NO-LOCAL-UI` rule added to `packages/design-system/scripts/check-styling-ownership.ts`: the rule walks every `.tsx`, `.ts`, and `.astro` file in `packages/landing/src/**` and fails if any file imports from a relative path that resolves under `packages/landing/src/components/landing/`. The rule is a forward-looking regression guard; the path no longer exists after the change lands, so the rule has no hits in the current source tree.
+3. A new permanent unit test under `tests/unit/landing-design-system-import-boundary.test.ts` that greps every `.tsx`, `.astro`, and `.ts` file in `packages/landing/src/**` for `from "@unveiled/design-system/` followed by a forbidden continuation, for `from "@nextui-org/"`, `from "@heroui/"`, `from "lucide-react"`, `from "@radix-ui/"`, `from "@headlessui/"`, `from "react-aria"`, `from "@mui/"`, `from "@chakra-ui/"`, and for any import whose path resolves under `packages/landing/src/components/landing/`.
 
 #### Scenario: Landing imports flow through the public design-system barrel
 
 - **WHEN** `tests/unit/landing-design-system-import-boundary.test.ts` greps `packages/landing/src/**/*.{ts,tsx,astro}` for `from "@unveiled/design-system/`
 - **THEN** every match is followed by an allowed continuation (only the public barrel `@unveiled/design-system";` or `@unveiled/design-system/styles/global.css";` — both of which are reachable through the package's `exports` map)
-- **AND** no match points at `@unveiled/design-system/lib/*`, `@unveiled/design-system/atoms/*`, `@unveiled/design-system/molecules/*`, `@unveiled/design-system/organisms/*`, `@unveiled/design-system/layouts/*`, `@unveiled/design-system/pages/*`, or `@unveiled/design-system/heroui-replica/*`.
-
-#### Scenario: Landing has no third-party UI imports
-
-- **WHEN** `tests/unit/landing-design-system-import-boundary.test.ts` greps `packages/landing/src/**/*.{ts,tsx,astro}` for `from "@nextui-org/"`, `from "@heroui/"`, `from "lucide-react"`, `from "@radix-ui/"`, `from "@headlessui/"`, `from "react-aria"`, `from "@mui/"`, `from "@chakra-ui/"`
-- **THEN** zero hits are returned.
-
-#### Scenario: Landing has no local landing/ component imports
-
-- **WHEN** `tests/unit/landing-design-system-import-boundary.test.ts` greps `packages/landing/src/**/*.{ts,tsx,astro}` for any import whose resolved path is under `packages/landing/src/components/landing/`
-- **THEN** zero hits are returned (the folder is deleted).
-
-#### Scenario: Styling-ownership gate rejects re-introduced landing-local UI
-
-- **WHEN** a contributor re-creates `packages/landing/src/components/landing/landing-header.tsx` (or any file under `packages/landing/src/components/landing/`) and a consumer imports from it
-- **THEN** the `R-LANDING-NO-LOCAL-UI` rule in `packages/design-system/scripts/check-styling-ownership.ts` exits non-zero and names the offending file
-- **AND** `bun run check:styling-ownership` exits non-zero as a result
-- **AND** `bun run check` exits non-zero as a result.
-
-#### Scenario: Styling-ownership check is part of bun run check
-
-- **WHEN** a contributor runs `bun run check`
-- **THEN** `bun run check:styling-ownership` runs as one of its steps and the `R-LANDING-NO-LOCAL-UI` rule is part of the script's checks
-- **AND** if any forbidden landing-import pattern is present, `bun run check` exits non-zero.
+- **AND** no match points at `@unveiled/design-system/lib/*`, `@unveiled/design-system/atoms/*`, `@unveiled/design-system/molecules/*`, `@unveiled/design-system/organisms/*`, `@unveiled/design-system/layouts/*`, or `@unveiled/design-system/pages/*`.
 
 ### Requirement: `@unveiled/design-system` owns the theme provider
 
@@ -863,119 +673,29 @@ The design system MUST be the sole owner of the HeroUI theme provider. The provi
 
 The design system MUST be the only package in the repo that imports from `@nextui-org/react` or `@nextui-org/*`. The boundary is enforced by a permanent unit test under `tests/unit/` that walks every `.ts` / `.tsx` / `.astro` file in the repo and fails if any file outside `packages/design-system/**` imports `@nextui-org/react`, `@nextui-org/*`, or `@heroui/*`. The unit test runs as part of `bun run test:unit` and is wired into `bun run check`.
 
+The `packages/design-system/src/heroui-replica/provider.tsx` re-export shim (added in change `2026-06-25-heroui-provider-becomes-design-system`) is no longer needed once the replica is deleted in change `retire-heroui-replica`; the file is removed as part of that change, and the `UnveiledThemeProvider` is the sole owner of the theme context. The `// @ladle-only` exemption in AGENTS.md §4 was the only remaining policy supporting the replica folder and is removed at the same time.
+
 #### Scenario: No HeroUI import escapes the design system
 
 - **WHEN** `bun run test:unit` is invoked
 - **THEN** the new test (e.g. `tests/unit/design-system-hero-ui-boundary.test.ts`) passes
 - **AND** it asserts that no `.ts` / `.tsx` / `.astro` file outside `packages/design-system/**` matches `from "@nextui-org/react"`, `from "@nextui-org/...`, or `from "@heroui/..."`.
 
-#### Scenario: Boundary test runs as part of `bun run check`
-
-- **WHEN** `bun run check` is invoked at the repo root
-- **THEN** the HeroUI boundary test runs as part of the umbrella and exits 0.
-
-#### Scenario: Replica provider is a re-export of the production provider
-
-- **WHEN** `packages/design-system/src/heroui-replica/provider.tsx` is read
-- **THEN** it re-exports `UnveiledThemeProvider` from `../providers/theme-provider` under the name `HeroUIReplicaProvider`.
-- **AND** the file no longer imports `NextUIProvider` directly.
-- **AND** the `// @ladle-only` header is preserved.
-- **AND** the replica stories that import `HeroUIReplicaProvider` continue to work without modification.
-
 ### Requirement: All UI lives in `packages/design-system` and downstream packages consume the design system
 
-The system SHALL treat `packages/design-system/src/` as the single
-source of UI. The `app/` package and the `landing/` package SHALL
-consume the design system via its public barrel
-(`@unveiled/design-system`) and SHALL NOT import from
-`@unveiled/design-system/lib/*`, from `@nextui-org/*`, from
-`@heroui/*`, or from `lucide-react`. The design system's private
-dependencies (HeroUI, the design-token CSS, the semantic-class CSS,
-the Tailwind v4 theme) SHALL NOT leak into downstream packages'
-import graphs. The boundary is enforced by the
-`check:atomic-layers` and `check:styling-ownership` gate scripts
-wired into `bun run check`.
+The system SHALL treat `packages/design-system/src/` as the single source of UI. The `app/` package and the `landing/` package SHALL consume the design system via its public barrel (`@unveiled/design-system`) and SHALL NOT import from `@unveiled/design-system/lib/*`, from `@nextui-org/*`, from `@heroui/*`, or from `lucide-react`. The design system's private dependencies (HeroUI, the design-token CSS, the semantic-class CSS, the Tailwind v4 theme) SHALL NOT leak into downstream packages' import graphs. The boundary is enforced by the `check:atomic-layers` and `check:styling-ownership` gate scripts wired into `bun run check`.
 
-#### Scenario: A downstream import never reaches a private design-system path
-
-- **WHEN** `bun run test:unit` runs
-- **THEN** the existing `tests/unit/design-system-hero-ui-boundary.test.ts`
-  unit test passes, asserting that no file outside
-  `packages/design-system/src/**` imports `@nextui-org/*` or
-  `@heroui/*`
-- **AND** the design-system barrel (`packages/design-system/src/index.ts`)
-  is the only public entry point; `packages/app/src/**` and
-  `packages/landing/src/**` import from `@unveiled/design-system`
-  and never from `@unveiled/design-system/lib/*`.
-
-#### Scenario: No raw Tailwind utility classes in app or landing
-
-- **WHEN** `bun run check:styling-ownership` runs
-- **THEN** every file under `packages/app/src/**` and
-  `packages/landing/src/**` is checked for raw Tailwind utility
-  classes (`grid`, `flex`, `gap-*`, etc.) outside the design-system
-  semantic classes imported via `@unveiled/design-system/styles/global.css`
-- **AND** the gate fails with the offending file path if any raw
-  utility class is found outside the design-system semantic classes.
-
-#### Scenario: Atomic layers enforce the import direction
-
-- **WHEN** `bun run check:atomic-layers` runs
-- **THEN** atoms import only from `./lib/*`, `react`/`react-dom`,
-  `@nextui-org/react` / `@heroui/*`, and the design-token CSS
-- **AND** molecules / organisms / layouts / pages import only from
-  atoms / molecules / lib and never from `@nextui-org/react`,
-  `@heroui/*`, or any other `@nextui-org/*` package directly
-- **AND** the gate fails with the offending file path if the import
-  direction is violated.
+The `packages/design-system/src/` directory tree SHALL contain the layered design-system folders (atoms, molecules, organisms, layouts, pages, providers, lib, styles). The `heroui-replica/` folder is NOT part of the directory tree (it was deleted in change `retire-heroui-replica`); the production atoms/molecules/pages are the visual source of truth.
 
 #### Scenario: AGENTS.md documents the boundary as a hard rule
 
 - **WHEN** a new contributor reads `AGENTS.md` end to end
-- **THEN** §2 (tech stack) calls out atomic-design layering,
-  HeroUI as a private dependency of the design system, and the gate
-  scripts that enforce the boundary
-- **AND** §3 (file layout) shows the layered design-system directory
-  tree (atoms, molecules, organisms, layouts, pages, providers,
-  lib, styles, heroui-replica)
-- **AND** §4 (conventions) forbids raw Tailwind utility classes in
-  `app/` and `landing/` outside the design-system semantic classes
-- **AND** §7 (toolchain commands) lists `bun run check:atomic-layers`
-  and `bun run check:styling-ownership` as gate scripts
-- **AND** §8 (definition of done) requires a Ladle page for every
-  UI change in `app/` or `landing/`
-- **AND** §9 (what NOT to do) treats the design-system boundary as a
-  hard rule.
-
-#### Scenario: `docs/architecture.md` documents the boundary
-
-- **WHEN** a contributor opens `docs/architecture.md`
-- **THEN** the doc contains a "Design system boundary" section
-  covering the layer hierarchy, the presentational / container split,
-  the CSS ownership rule, the Ladle demo obligation, and the
-  gate-script enforcement
-- **AND** the doc points at `AGENTS.md` and at the LikeC4 model under
-  `architecture/` instead of embedding a hand-edited Mermaid diagram.
-
-#### Scenario: LikeC4 model includes the design system as a first-party container
-
-- **WHEN** `bun run arch:check` and `bun run arch:drift` run
-- **THEN** the model under `architecture/` declares a
-  `designSystem` container inside `unveiled` with `metadata.path`
-  anchored under `packages/design-system`
-- **AND** `designSystem` has components for `atoms`, `molecules`,
-  `organisms`, `templates`, and `pages`, each with `metadata.path`
-  anchored under `packages/design-system/src/<layer>/` (or omitted
-  if the layer directory does not yet exist)
-- **AND** `heroui` is declared as an external library element with
-  `technology = "@nextui-org/react"` and is connected to `atoms`
-  and `molecules` with `uses` relationships
-- **AND** the `app` and `landing` containers declare explicit `uses`
-  relationships to `designSystem`
-- **AND** every `metadata.path` value is anchored under one of the
-  live workspace roots (`packages/api`, `packages/app`,
-  `packages/landing`, `packages/orchestrator`,
-  `packages/design-system`) so the drift check stays green.
+- **THEN** §2 (tech stack) calls out atomic-design layering, HeroUI as a private dependency of the design system, and the gate scripts that enforce the boundary
+- **AND** §3 (file layout) shows the layered design-system directory tree (atoms, molecules, organisms, layouts, pages, providers, lib, styles) — the tree MUST NOT include a `heroui-replica/` entry (the directory is deleted)
+- **AND** §4 (conventions) forbids raw Tailwind utility classes in `app/` and `landing/` outside the design-system semantic classes — the `// @ladle-only` exemption for `src/components/ui/heroui-replica/` MUST NOT appear (the folder is deleted)
+- **AND** §7 (toolchain commands) lists `bun run check:atomic-layers` and `bun run check:styling-ownership` as gate scripts — the entries for `bun run heroui-design-system-replica:check` and `bun run check:heroui-replica` MUST NOT appear (the gate is retired), and the `tests/unit/no-ladle-replica-in-production.test.ts` reference MUST NOT appear (the test is deleted)
+- **AND** §8 (definition of done) requires a Ladle page for every UI change in `app/` or `landing/`
+- **AND** §9 (what NOT to do) treats the design-system boundary as a hard rule.
 
 ### Requirement: Organisms compose atoms and molecules only
 

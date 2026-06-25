@@ -223,9 +223,6 @@ into `bun run check`:
 - `bun run ladle:coverage` — enforces the demo obligation. Asserts that
   every `@ladle(component=…, story=…)` gherkin tag has a matching story
   and every story is referenced or opted out.
-- `bun run heroui-design-system-replica:check` — enforces the
-  Ladle-only invariant on `packages/design-system/src/heroui-replica/`.
-  The replica is Ladle-only; no production file may import it.
 
 In addition, the permanent unit test
 `tests/unit/design-system-hero-ui-boundary.test.ts` (part of

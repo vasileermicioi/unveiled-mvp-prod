@@ -31,10 +31,6 @@ const FORBIDDEN_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
     reason: "deep imports into design-system pages",
   },
   {
-    pattern: /from\s+["']@unveiled\/design-system\/heroui-replica\//,
-    reason: "Ladle-only replica must not be imported in production",
-  },
-  {
     pattern: /from\s+["']@nextui-org\//,
     reason: "third-party UI library import",
   },

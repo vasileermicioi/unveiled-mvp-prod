@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-25
+goal: "Iteration 13 cleanup: drop the now-redundant Ladle-only HeroUI replica
+  and its bespoke gate, relying on the production atoms/molecules and the
+  check:atomic-layers gate as the single source of truth."
