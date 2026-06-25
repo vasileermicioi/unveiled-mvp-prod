@@ -136,3 +136,6 @@ export {
   StripeCheckoutRedirectButtonPresentational,
   SubscriptionPortalLinkPresentational,
 } from "./organisms";
+export * as Providers from "./providers";
+export type { UnveiledThemeProviderProps } from "./providers/theme-provider";
+export { UnveiledThemeProvider } from "./providers/theme-provider";

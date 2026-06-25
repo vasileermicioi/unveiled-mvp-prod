@@ -7,11 +7,11 @@ import {
   Field,
   StatePanel,
   TextInput,
+  UnveiledThemeProvider,
 } from "@unveiled/design-system";
 import { ArrowRight, Check } from "lucide-react";
 import { useContext, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
-import { HeroUIProvider } from "~/components/providers/heroui-provider";
 import { QueryProvider } from "~/components/providers/query-provider";
 import { AppShell, PageShell } from "~/components/unveiled/app-shell";
 import {
@@ -516,7 +516,7 @@ export function VisualSystemApp({
     : undefined;
 
   return (
-    <HeroUIProvider>
+    <UnveiledThemeProvider>
       <QueryProvider>
         <VisualSystemProvider
           initialShell={initialShell}
@@ -531,6 +531,6 @@ export function VisualSystemApp({
           />
         </VisualSystemProvider>
       </QueryProvider>
-    </HeroUIProvider>
+    </UnveiledThemeProvider>
   );
 }

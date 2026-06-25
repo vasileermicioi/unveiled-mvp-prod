@@ -56,9 +56,7 @@ const FORBIDDEN_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
 ];
 
 const ALLOWED_LUCIDE_COMMENT = /\/\/\s*source:\s*lucide-(react|static)/;
-const FILE_ALLOW_LIST = new Set<string>([
-  "packages/app/src/components/providers/heroui-provider.tsx",
-]);
+const FILE_ALLOW_LIST = new Set<string>([]);
 
 function walk(
   dir: string,

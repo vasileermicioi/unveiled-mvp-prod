@@ -300,6 +300,7 @@ A change is *done* only when all of the following are true:
 - [ ] `bun run tokens:check` shows no drift (design tokens in sync).
 - [ ] `GET /healthz` returns `200` with body `ok`; `GET /readyz` returns `200` only when all downstream Workers' readiness probes are green.
 - [ ] `bun run dev` boots all four Workers behind a single local port (4320) with no port conflicts.
+- [ ] No file outside `packages/design-system/**` imports `@nextui-org/*` or `@heroui/*` (enforced by `tests/unit/design-system-hero-ui-boundary.test.ts`, which is part of `bun run test:unit` and therefore `bun run check`).
 - [ ] `bun run deploy:cloudflare` deploys in dependency order (api → app → landing → orchestrator) and the production hostname serves every URL prefix correctly.
 - [ ] The OpenSpec proposal is either updated in place, or a new proposal
       is added that supersedes it, and `openspec validate` passes.

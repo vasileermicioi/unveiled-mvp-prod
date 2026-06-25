@@ -37,6 +37,8 @@ In addition to the flat re-export of every atom and the `Atoms` namespace export
 
 The package barrel MUST also re-export the `cn` helper from `./lib/utils` and the `StatusColor` type from `./lib/design-tokens`. The `cn` re-export is the canonical public entry point; consumers MUST import `cn` from `@unveiled/design-system`, never from `@unveiled/design-system/lib/utils`.
 
+In addition to the primitives above, the package barrel MUST re-export the `UnveiledThemeProvider` component (defined at `packages/design-system/src/providers/theme-provider.tsx`) as a flat named export AND as a `Providers` namespace export (`export * as Providers from "./providers"`). The provider wraps HeroUI's `NextUIProvider` and is the only theme provider the app and landing packages may mount around HeroUI-context islands. The previous production provider at `packages/app/src/components/providers/heroui-provider.tsx` (exporting `HeroUIProvider`) MUST be deleted from the source tree once every consumer is rewired; the design-system barrel MUST NOT re-export the `HeroUIProvider` name because it leaks the HeroUI implementation detail into consumer surfaces.
+
 #### Scenario: All production primitives are re-exported
 
 - **WHEN** a downstream package (e.g. `@unveiled/app`, `@unveiled/landing`) imports a production primitive from `@unveiled/design-system`
@@ -92,6 +94,14 @@ The package barrel MUST also re-export the `cn` helper from `./lib/utils` and th
 - **WHEN** a downstream package writes `import { cn } from "@unveiled/design-system";`
 - **THEN** the import resolves to the `cn` helper at `packages/design-system/src/lib/utils.ts` via a flat re-export in `packages/design-system/src/index.ts`.
 - **AND** the barrel also re-exports the `StatusColor` type from `./lib/design-tokens`.
+
+#### Scenario: UnveiledThemeProvider is re-exported from the barrel
+
+- **WHEN** a downstream package writes `import { UnveiledThemeProvider } from "@unveiled/design-system";`
+- **THEN** the import resolves to the provider at `packages/design-system/src/providers/theme-provider.tsx`.
+- **WHEN** a downstream package writes `import { Providers } from "@unveiled/design-system"; Providers.UnveiledThemeProvider`
+- **THEN** the namespace resolves via the design-system's `Providers` namespace export.
+- **AND** `@unveiled/design-system` does NOT export a `HeroUIProvider` name; any consumer importing `HeroUIProvider` from `@unveiled/design-system` fails with "no exported member".
 
 ### Requirement: `@unveiled/design-system` owns the Ladle-only HeroUI replica
 
@@ -819,4 +829,56 @@ The rule is enforced by:
 - **WHEN** a contributor runs `bun run check`
 - **THEN** `bun run check:styling-ownership` runs as one of its steps and the `R-LANDING-NO-LOCAL-UI` rule is part of the script's checks
 - **AND** if any forbidden landing-import pattern is present, `bun run check` exits non-zero.
+
+### Requirement: `@unveiled/design-system` owns the theme provider
+
+The design system MUST be the sole owner of the HeroUI theme provider. The provider MUST live at `packages/design-system/src/providers/theme-provider.tsx`, MUST be named `UnveiledThemeProvider`, MUST wrap HeroUI's `NextUIProvider`, and MUST NOT accept a `theme` prop (the brand theme is fixed inside the design system; consumers cannot override it). No other file in the repo — in any package — may wrap `NextUIProvider` or define a parallel theme provider.
+
+#### Scenario: Provider file lives in the design system
+
+- **WHEN** the repo is searched for `from "@nextui-org/react"`
+- **THEN** every match points at a file under `packages/design-system/**`.
+- **AND** no file under `packages/app/src/**` or `packages/landing/src/**` matches.
+
+#### Scenario: Provider is exported via both namespace and flat re-export
+
+- **WHEN** `packages/design-system/src/index.ts` is read
+- **THEN** it contains `export * as Providers from "./providers";`
+- **AND** it contains `export { UnveiledThemeProvider } from "./providers/theme-provider";`
+- **AND** `packages/design-system/src/providers/index.ts` re-exports `UnveiledThemeProvider` from `./theme-provider`.
+
+#### Scenario: App and landing consumers import the new provider
+
+- **WHEN** any Astro page or React island in `packages/app/src/**` or `packages/landing/src/**` mounts a HeroUI-context island
+- **THEN** the mount wraps the island in `UnveiledThemeProvider` imported from `@unveiled/design-system`.
+- **AND** no file in those trees imports `HeroUIProvider` from any path or imports `NextUIProvider` from `@nextui-org/react` directly.
+
+#### Scenario: Legacy app provider file is deleted
+
+- **WHEN** the source tree is listed after this change lands
+- **THEN** `packages/app/src/components/providers/heroui-provider.tsx` does not exist.
+- **AND** no file in the repo imports from `../components/providers/heroui-provider` or `~/components/providers/heroui-provider`.
+
+### Requirement: HeroUI is a private implementation detail of the design system
+
+The design system MUST be the only package in the repo that imports from `@nextui-org/react` or `@nextui-org/*`. The boundary is enforced by a permanent unit test under `tests/unit/` that walks every `.ts` / `.tsx` / `.astro` file in the repo and fails if any file outside `packages/design-system/**` imports `@nextui-org/react`, `@nextui-org/*`, or `@heroui/*`. The unit test runs as part of `bun run test:unit` and is wired into `bun run check`.
+
+#### Scenario: No HeroUI import escapes the design system
+
+- **WHEN** `bun run test:unit` is invoked
+- **THEN** the new test (e.g. `tests/unit/design-system-hero-ui-boundary.test.ts`) passes
+- **AND** it asserts that no `.ts` / `.tsx` / `.astro` file outside `packages/design-system/**` matches `from "@nextui-org/react"`, `from "@nextui-org/...`, or `from "@heroui/..."`.
+
+#### Scenario: Boundary test runs as part of `bun run check`
+
+- **WHEN** `bun run check` is invoked at the repo root
+- **THEN** the HeroUI boundary test runs as part of the umbrella and exits 0.
+
+#### Scenario: Replica provider is a re-export of the production provider
+
+- **WHEN** `packages/design-system/src/heroui-replica/provider.tsx` is read
+- **THEN** it re-exports `UnveiledThemeProvider` from `../providers/theme-provider` under the name `HeroUIReplicaProvider`.
+- **AND** the file no longer imports `NextUIProvider` directly.
+- **AND** the `// @ladle-only` header is preserved.
+- **AND** the replica stories that import `HeroUIReplicaProvider` continue to work without modification.
 

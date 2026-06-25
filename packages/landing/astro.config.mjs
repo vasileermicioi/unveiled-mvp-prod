@@ -33,7 +33,12 @@ export default defineConfig({
           if (name !== "client") {
             return {
               optimizeDeps: {
-                include: ["react", "react-dom", "react-dom/server"],
+                include: [
+                  "react",
+                  "react-dom",
+                  "react-dom/server",
+                  "@nextui-org/react",
+                ],
                 exclude: ["@unveiled/design-system"],
               },
             };
