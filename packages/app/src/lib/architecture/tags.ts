@@ -32,6 +32,7 @@ export const SPEC_TAGS = [
   "payments-subscriptions",
   "refactor-big-files",
   "ui-system",
+  "design-system-package",
 ] as const;
 
 export const SURFACE_TAGS = [

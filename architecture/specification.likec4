@@ -119,6 +119,7 @@ specification {
   tag spec-payments-subscriptions
   tag spec-refactor-big-files
   tag spec-ui-system
+  tag spec-design-system-package
 
   // Path marker tag (the path value is encoded in metadata.path)
   tag has-path
