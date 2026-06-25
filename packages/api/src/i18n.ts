@@ -162,6 +162,10 @@ export const appCopy = {
         recoverySent:
           "Falls ein Konto für diese Email existiert, wurden Recovery-Anweisungen gesendet.",
         backToLogin: "Zurück zum Login",
+        redirecting: "Weiterleiten…",
+        redirectingHint:
+          "Du wirst gleich weitergeleitet. Falls nichts passiert, klicke unten auf „Weiter“.",
+        continueLink: "Weiter",
         firstName: "Vorname",
         lastName: "Nachname",
         email: "Email",
@@ -662,6 +666,10 @@ export const appCopy = {
         recoverySent:
           "If an account exists for that email, recovery instructions have been sent.",
         backToLogin: "Back to login",
+        redirecting: "Redirecting…",
+        redirectingHint:
+          "You're being signed in. If nothing happens, use the link below to continue manually.",
+        continueLink: "Continue",
         firstName: "First name",
         lastName: "Last name",
         email: "Email",

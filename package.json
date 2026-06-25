@@ -11,6 +11,7 @@
   },
   "scripts": {
     "dev": "concurrently --names api,app,landing,orchestrator --success first \"bun run --filter @unveiled/api dev\" \"bun run --filter @unveiled/app dev\" \"bun run --filter @unveiled/landing dev\" \"bun run --filter @unveiled/orchestrator dev\"",
+    "predev": "bun run --filter '@unveiled/api' build && bun run --filter '@unveiled/orchestrator' build",
     "dev:landing": "bun run --filter '@unveiled/landing' dev",
     "dev:app": "bun run --filter '@unveiled/app' dev",
     "build": "bun run ladle:build && bun run --filter '@unveiled/landing' build && bun run --filter '@unveiled/app' build",

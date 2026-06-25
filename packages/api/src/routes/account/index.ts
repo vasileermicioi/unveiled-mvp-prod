@@ -1,4 +1,5 @@
 import {
+  headersToResponseInit,
   loginWithEmail,
   logout,
   requestPasswordRecovery,
@@ -22,16 +23,20 @@ export function mountAccountRoutes(app: AppType): void {
     const body = (await c.req.json()) as unknown;
     const parsed = await readJsonLoginInput(body);
     if (!parsed.ok) {
-      return c.json({ ok: false, state: parsed.state }, 400);
+      const init = headersToResponseInit(new Headers(), 400);
+      return c.json(
+        { ok: false, state: parsed.state },
+        init.status,
+        init.headers,
+      );
     }
     const result = await loginWithEmail(parsed.data, env);
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(
-      responseBody,
-      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
-    );
+    const status = (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403;
+    const init = headersToResponseInit(result.headers, status);
+    return c.json(responseBody, init.status, init.headers);
   });
 
   app.post("/api/account/logout", async (c) => {
@@ -40,10 +45,9 @@ export function mountAccountRoutes(app: AppType): void {
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(
-      responseBody,
-      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
-    );
+    const status = (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403;
+    const init = headersToResponseInit(result.headers, status);
+    return c.json(responseBody, init.status, init.headers);
   });
 
   app.post("/api/account/signup", async (c) => {
@@ -51,16 +55,20 @@ export function mountAccountRoutes(app: AppType): void {
     const body = (await c.req.json()) as unknown;
     const parsed = await readJsonSignupInput(body);
     if (!parsed.ok) {
-      return c.json({ ok: false, state: parsed.state }, 400);
+      const init = headersToResponseInit(new Headers(), 400);
+      return c.json(
+        { ok: false, state: parsed.state },
+        init.status,
+        init.headers,
+      );
     }
     const result = await signUpWithEmail(parsed.data, env);
     const responseBody = result.ok
       ? { ok: true, state: result.state, nextPath: result.nextPath }
       : { ok: false, state: result.state };
-    return c.json(
-      responseBody,
-      (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403,
-    );
+    const status = (result.ok ? 200 : result.status) as 200 | 400 | 401 | 403;
+    const init = headersToResponseInit(result.headers, status);
+    return c.json(responseBody, init.status, init.headers);
   });
 
   app.post("/api/account/password-recovery", async (c) => {
@@ -68,10 +76,16 @@ export function mountAccountRoutes(app: AppType): void {
     const body = (await c.req.json()) as unknown;
     const parsed = await readJsonPasswordRecoveryInput(body);
     if (!parsed.ok) {
-      return c.json({ ok: false, state: parsed.state }, 400);
+      const init = headersToResponseInit(new Headers(), 400);
+      return c.json(
+        { ok: false, state: parsed.state },
+        init.status,
+        init.headers,
+      );
     }
     const result = await requestPasswordRecovery(parsed.data, env);
-    return c.json({ ok: true, state: result.state }, 200);
+    const init = headersToResponseInit(result.headers, 200);
+    return c.json({ ok: true, state: result.state }, init.status, init.headers);
   });
 }
 

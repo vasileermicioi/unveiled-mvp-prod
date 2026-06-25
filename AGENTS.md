@@ -275,7 +275,7 @@ All commands are run with `bun` from the repo root.
 | Command | What it does |
 | --- | --- |
 | `bun install` | Install dependencies from `bun.lock`. |
-| `bun run dev` | Boot all four Workers behind the orchestrator's Vite dev proxy on port 4320 (API Worker on 8787, app Astro on 4321, landing Astro on 4322, orchestrator on 4320). |
+| `bun run dev` | Boot all four Workers behind the orchestrator's Vite dev proxy on port 4320 (API Worker on 8787, app Astro on 4321, landing Astro on 4322, orchestrator on 4320). Runs the `predev` hook first, which rebuilds `packages/api/dist/worker.js` and `packages/orchestrator/dist/worker.js` because `wrangler dev` serves those prebuilt bundles and does **not** watch source files. The Astro surfaces (`app`, `landing`) watch source directly. |
 | `bun run build` | Production build for Cloudflare (design-system → app → landing → orchestrator). |
 | `bun run check` | `astro check` (per workspace) + `biome check .` + `bun run specs:check` + `bun run tokens:check` + `bun run ladle:coverage` + `bun run --filter @unveiled/design-system check:atomic-layers` + `bun run check:styling-ownership`. Run before every commit. |
 | `bun run format` | Biome format write. |
