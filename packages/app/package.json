@@ -20,7 +20,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "drizzle-kit migrate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed:operations-smoke": "bun ../../scripts/seed-operations-smoke.ts"
+    "db:seed:operations-smoke": "bun ../../scripts/seed-operations-smoke.ts",
+    "seed:pagination": "bun ../../scripts/seed-operations-smoke.ts --profile pagination --reset",
+    "seed:operations-smoke:full": "bun ../../scripts/seed-operations-smoke.ts --profile full"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.3.1",

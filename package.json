@@ -44,6 +44,8 @@
     "db:migrate:local": "bun run --filter @unveiled/app db:migrate:local",
     "db:migrate": "bun run --filter @unveiled/app db:migrate",
     "db:seed:operations-smoke": "bun run --filter @unveiled/app db:seed:operations-smoke",
+    "seed:pagination": "bun scripts/seed-operations-smoke.ts --profile pagination --reset",
+    "seed:operations-smoke:full": "bun scripts/seed-operations-smoke.ts --profile full",
     "tokens:gen": "bun packages/design-system/scripts/generate-design-tokens.ts",
     "tokens:check": "bun packages/design-system/scripts/check-design-tokens.ts",
     "check:heroui-replica": "bun run ladle:coverage && bun run check",

@@ -61,7 +61,7 @@ export function headersToResponseInit(
       record[lower] = [existing, value];
     }
   });
-  const setCookies = getSetCookieValues(headers);
+  const setCookies = getSetCookieValues(source);
   if (setCookies.length > 0) {
     record["set-cookie"] = setCookies.length === 1 ? setCookies[0] : setCookies;
   }
