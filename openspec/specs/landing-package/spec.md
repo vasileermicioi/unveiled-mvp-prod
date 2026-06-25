@@ -87,7 +87,7 @@ The package MUST ship a single index page at `packages/landing/src/pages/index.a
 
 ### Requirement: `@unveiled/landing` reuses design-system primitives
 
-Every UI primitive used by the landing surface MUST be imported from `@unveiled/design-system` (the production export, never the Ladle-only `heroui-replica`). The landing package MUST NOT add HeroUI, NextUI, or any other component library as a direct dependency; it MUST consume them transitively through `@unveiled/design-system`.
+Every UI primitive used by the landing surface MUST be imported from `@unveiled/design-system` (the production export, never the Ladle-only `heroui-replica`). The landing package MUST NOT add HeroUI, NextUI, or any other component library as a direct dependency; it MUST consume them transitively through `@unveiled/design-system`. The landing Astro layout MUST mount a single `<LandingTemplate client:load>` from `@unveiled/design-system` (which composes the header, optional hero, page body, and footer) and MUST project the page body via `<slot />`. The landing page MUST render the hero by mounting `<LandingHeroPresentational client:load>` and MUST NOT instantiate the header, footer, or Astro layout directly.
 
 #### Scenario: No direct HeroUI dependency
 
@@ -100,21 +100,18 @@ Every UI primitive used by the landing surface MUST be imported from `@unveiled/
 - **THEN** the import resolves through `@unveiled/design-system` (or `@unveiled/design-system/<subpath>`)
 - **AND** the import does NOT land inside `@unveiled/design-system/heroui-replica`.
 
-### Requirement: `@unveiled/landing` ships landing-specific React islands
+#### Scenario: Landing Astro layout mounts a single LandingTemplate
 
-The package MUST ship the React islands `landing-header.tsx`, `landing-hero.tsx`, and `landing-footer.tsx` under `packages/landing/src/components/landing/`. Each island MUST be a thin wrapper around `@unveiled/design-system` primitives, MUST NOT contain business logic, and MUST NOT import from `_old_app/`.
+- **WHEN** `packages/landing/src/layouts/landing-layout.astro` is read
+- **THEN** the `<body>` contains exactly one design-system mount: `<LandingTemplate client:load>` wrapping `<slot />`
+- **AND** the layout imports `LandingTemplate` from `@unveiled/design-system` (the public barrel).
 
-#### Scenario: Islands compose design-system primitives only
+#### Scenario: Landing page renders only the hero
 
-- **WHEN** any island file under `packages/landing/src/components/landing/` is read
-- **THEN** it imports its UI primitives only from `@unveiled/design-system`
-- **AND** it does not import from `_old_app/`, `@nextui-org/react`, `@heroui/react`, or `@/components/ui/`.
-
-#### Scenario: Islands honor `prefers-reduced-motion`
-
-- **WHEN** the user has `prefers-reduced-motion: reduce` enabled and visits `/`
-- **THEN** the landing hero renders without any motion (no fade-in, no slide, no pulse)
-- **AND** the same global `@media (prefers-reduced-motion: reduce)` block in `packages/design-system/src/styles/global.css` governs the behavior (no per-island `useReducedMotion()` hook).
+- **WHEN** `packages/landing/src/pages/index.astro` is read
+- **THEN** it imports `LandingHeroPresentational` from `@unveiled/design-system` (the public barrel)
+- **AND** it renders `<LandingHeroPresentational client:load>` as the only top-level element inside the layout slot
+- **AND** it does NOT import `LandingHeader`, `LandingFooter`, or `LandingTemplate` directly (the layout owns those mounts).
 
 ### Requirement: `@unveiled/landing` imports global CSS once
 

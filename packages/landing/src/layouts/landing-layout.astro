@@ -1,6 +1,7 @@
 ---
+import { LandingTemplate } from "@unveiled/design-system";
 import "../styles/global.css";
-import { LandingLayout } from "@unveiled/design-system/layouts/landing-layout";
+import { hasSessionCookie } from "../lib/session-presence";
 
 interface Props {
   title: string;
@@ -9,6 +10,7 @@ interface Props {
 
 const { title, description = "Unveiled — curated cultural access in Berlin." } =
   Astro.props;
+const authenticated = hasSessionCookie(Astro);
 ---
 
 <html lang="en">
@@ -22,8 +24,8 @@ const { title, description = "Unveiled — curated cultural access in Berlin." }
     <title>{title}</title>
   </head>
   <body>
-    <LandingLayout>
+    <LandingTemplate client:load authenticated={authenticated} hero>
       <slot />
-    </LandingLayout>
+    </LandingTemplate>
   </body>
 </html>
