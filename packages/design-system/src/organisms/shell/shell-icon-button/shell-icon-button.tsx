@@ -28,6 +28,7 @@ export function ShellIconButtonPresentational({
       className={cn(
         "flex items-center justify-center border-2 border-brand-dark bg-white hover:bg-brand-cream transition-colors text-brand-dark",
         "size-9 md:size-10",
+        "lg:hidden",
         className,
       )}
     >

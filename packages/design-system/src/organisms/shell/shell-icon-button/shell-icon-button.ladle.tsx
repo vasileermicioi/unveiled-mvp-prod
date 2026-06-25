@@ -72,6 +72,28 @@ export const Small = () => (
   />
 );
 
+export const LgViewport = () => (
+  <div data-testid="shell-icon-button-lg" className="ladle-viewport-lg">
+    <ShellIconButtonPresentational {...makeMockShellIconButtonProps()} />
+  </div>
+);
+
+export const SmViewport = () => (
+  <div data-testid="shell-icon-button-sm" className="ladle-viewport-sm">
+    <ShellIconButtonPresentational {...makeMockShellIconButtonProps()} />
+  </div>
+);
+
+LgViewport.parameters = {
+  layout: "fullscreen",
+  viewport: { defaultViewport: "desktop" },
+};
+
+SmViewport.parameters = {
+  layout: "fullscreen",
+  viewport: { defaultViewport: "mobile" },
+};
+
 export default {
   title: "Organisms / Shell / Icon Button",
   parameters: { ladle: { skipCoverage: true } },

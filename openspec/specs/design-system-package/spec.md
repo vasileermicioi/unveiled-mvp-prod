@@ -576,11 +576,16 @@ Every file under `packages/app/src/**` (Astro pages, Astro layouts, React island
 
 The rule is enforced by `bun run check:styling-ownership` (existing) plus a new permanent unit test under `tests/unit/` that greps every `.tsx` / `.astro` / `.ts` file in `packages/app/src/**` and fails if it imports from any forbidden path or module.
 
-#### Scenario: No deep imports into the design system
+The `ShellIconButton` organism (`packages/design-system/src/organisms/shell/shell-icon-button/shell-icon-button.tsx`) MUST ship the Tailwind `lg:hidden` utility in its `cn(...)` class list so the hamburger toggle is hidden at viewports ≥ 1024 px. Consumers MUST NOT override that utility — the gate `bun run check:styling-ownership` rejects any consumer that re-introduces an explicit `lg:block` / `lg:flex` on the toggle, and the design-system primitive is the single source of truth for the visibility rule.
 
-- **WHEN** `tests/unit/app-design-system-import-boundary.test.ts` greps `packages/app/src/**/*.{ts,tsx,astro}` for `from "@unveiled/design-system/`
-- **THEN** every match is followed by an allowed continuation (only the public barrel `@unveiled/design-system";` or `@unveiled/design-system/styles/global.css";` — both of which are reachable through the package's `exports` map)
-- **AND** no match points at `@unveiled/design-system/lib/*`, `@unveiled/design-system/atoms/*`, `@unveiled/design-system/molecules/*`, `@unveiled/design-system/organisms/*`, `@unveiled/design-system/layouts/*`, or `@unveiled/design-system/pages/*`.
+#### Scenario: ShellIconButton adds the `lg:hidden` utility
+
+- **WHEN** `ShellIconButtonPresentational` renders inside a ShellNavigation
+- **THEN** the rendered `<button>` element carries the Tailwind
+  `lg:hidden` utility in its `class` attribute
+- **AND** no consumer in `packages/app/src/**` or
+  `packages/landing/src/**` may override that utility (the gate
+  `bun run check:styling-ownership` is the enforcer)
 
 ### Requirement: `cn()` is imported from the public design-system barrel
 

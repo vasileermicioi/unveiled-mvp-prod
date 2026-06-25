@@ -7,7 +7,11 @@ TBD - created by archiving change app-shell-aria-and-i18n. Update Purpose after 
 
 The shell hamburger button and the mobile drawer SHALL expose a
 disclosure + dialog relationship that assistive technology can
-navigate.
+navigate. The hamburger toggle SHALL be visible only at viewports
+below 1024 px wide; at viewports ≥ 1024 px wide the toggle MUST be
+hidden (via Tailwind `lg:hidden`) so the full nav row remains the
+only visible navigation surface on desktop. The mobile drawer panel
+and its backdrop SHALL continue to share the same `lg:hidden` gate.
 
 #### Scenario: Hamburger button is announced as a disclosure
 
@@ -40,6 +44,19 @@ navigate.
   the dialog
 - **AND** a gherkin scenario driven by a proximity selector can
   click the close control without depending on text content
+
+#### Scenario: Hamburger toggle is hidden at viewports ≥ 1024 px
+
+- **WHEN** the page renders at a viewport ≥ 1024 px wide
+- **THEN** the hamburger toggle button has `display: none` (the
+  Tailwind `lg:hidden` utility is applied)
+- **AND** the full nav row is the only navigation surface visible
+
+#### Scenario: Hamburger toggle is visible at viewports < 1024 px
+
+- **WHEN** the page renders at a viewport < 1024 px wide
+- **THEN** the hamburger toggle button is visible
+- **AND** tapping it opens the mobile drawer
 
 ### Requirement: Accessible Language Toggle
 
