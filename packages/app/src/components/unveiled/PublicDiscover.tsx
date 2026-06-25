@@ -62,7 +62,7 @@ export function PublicDiscover() {
 
   const pagination =
     live.totalCount && live.pageSize && live.totalCount > live.pageSize ? (
-      <div className="flex items-center justify-between border-t-2 border-brand-dark pt-6">
+      <div className="ui-21e8ca97">
         <button
           type="button"
           disabled={!live.page || live.page <= 1}
@@ -74,14 +74,14 @@ export function PublicDiscover() {
             });
           }}
           className={cn(
-            "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25",
-            (!live.page || live.page <= 1) && "opacity-40 cursor-not-allowed",
+            "hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-b6198e56",
+            (!live.page || live.page <= 1) && "ui-4b97c56d",
           )}
         >
-          <ArrowLeft className="mr-2 size-4" />
+          <ArrowLeft className="ui-c9577821" />
           {selectedLanguage === "DE" ? "Zurück" : "Previous"}
         </button>
-        <span className="text-xs font-black uppercase tracking-widest opacity-60">
+        <span className="ui-dd5eece2">
           {selectedLanguage === "DE" ? "Seite" : "Page"} {live.page} /{" "}
           {Math.ceil(live.totalCount / live.pageSize)}
         </span>
@@ -96,12 +96,12 @@ export function PublicDiscover() {
             });
           }}
           className={cn(
-            "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25",
-            !live.hasMore && "opacity-40 cursor-not-allowed",
+            "hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-b6198e56",
+            !live.hasMore && "ui-4b97c56d",
           )}
         >
           {selectedLanguage === "DE" ? "Weiter" : "Next"}
-          <ArrowRight className="ml-2 size-4" />
+          <ArrowRight className="ui-be66dea2" />
         </button>
       </div>
     ) : null;
@@ -168,8 +168,8 @@ export function PublicDiscover() {
             creditsLabel={copy.event.credits}
             savedLabel={copy.event.saved}
             saveLabel={copy.event.save}
-            calendarIcon={<Calendar className="size-4" />}
-            mapPinIcon={<MapPin className="size-4" />}
+            calendarIcon={<Calendar className="ui-100c22d5" />}
+            mapPinIcon={<MapPin className="ui-100c22d5" />}
             bookmarkIcon={
               <Bookmark fill={event.saved ? "currentColor" : "none"} />
             }
@@ -193,7 +193,7 @@ export function PublicDiscover() {
             }}
             stats={live.publicStats}
             partners={live.publicPartners}
-            mailIcon={<Mail className="size-4" />}
+            mailIcon={<Mail className="ui-100c22d5" />}
             onTellSupport={() => undefined}
           />
         }
@@ -244,8 +244,8 @@ export function EventCard({
       creditsLabel={copy.credits}
       savedLabel={copy.saved}
       saveLabel={copy.save}
-      calendarIcon={<Calendar className="size-4" />}
-      mapPinIcon={<MapPin className="size-4" />}
+      calendarIcon={<Calendar className="ui-100c22d5" />}
+      mapPinIcon={<MapPin className="ui-100c22d5" />}
       bookmarkIcon={<Bookmark fill={event.saved ? "currentColor" : "none"} />}
       fallbackImage="/app/logos/unveiled-logo-black.svg"
       onOpen={() => onOpen(event)}
@@ -258,32 +258,24 @@ export function EventCard({
 export function HowItWorks() {
   const copy = useCopy().public.how;
   return (
-    <div className="space-y-8 py-8">
+    <div className="ui-e400b83c">
       <PublicDiscoverHeaderPresentational
         eyebrow={copy.badge}
         title={copy.title}
         body=""
       />
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="ui-ea1055c7">
         {copy.steps.map((title, index) => (
-          <div key={title} className="border-4 border-brand-dark bg-white p-6">
-            <p className="font-display text-7xl font-black leading-none">
-              0{index + 1}
-            </p>
-            <h2 className="mt-5 font-display text-3xl font-black uppercase leading-none">
-              {title}
-            </h2>
-            <p className="mt-4 text-sm font-bold uppercase tracking-widest opacity-60">
-              {copy.stepBody}
-            </p>
+          <div key={title} className="ui-448ee40e">
+            <p className="ui-a7925baf">0{index + 1}</p>
+            <h2 className="ui-f7f447d2">{title}</h2>
+            <p className="ui-60727724">{copy.stepBody}</p>
           </div>
         ))}
       </div>
-      <div className="border-4 border-brand-dark bg-brand-dark p-6 text-white grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="ui-5ede1b0d">
         <p className="headline-md">{copy.membership}</p>
-        <span className="inline-flex shrink-0 items-center justify-center border-2 border-brand-yellow bg-brand-yellow px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark">
-          {copy.monthlyCredits}
-        </span>
+        <span className="ui-2924126d">{copy.monthlyCredits}</span>
       </div>
     </div>
   );
@@ -293,10 +285,10 @@ export function FaqPage() {
   const copy = useCopy().public.faq;
   const selectedLanguage = useContext(LanguageContext);
   return (
-    <div className="space-y-8 py-8">
+    <div className="ui-e400b83c">
       <a
         href={`/app/${selectedLanguage.toLowerCase()}/`}
-        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-transparent px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:border-brand-dark hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+        className="hover:border-brand-dark hover:bg-brand-yellow focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-53b1892d"
       >
         <ArrowLeft />
         {copy.back}
@@ -306,18 +298,18 @@ export function FaqPage() {
         title={copy.title}
         body=""
       />
-      <div className="grid gap-4">
+      <div className="ui-038d1550">
         {copy.questions.map((question, index) => (
           <details
             key={question}
-            className="border-4 border-brand-dark bg-white p-5 open:bg-brand-cream"
+            className="open:bg-brand-cream ui-4260bd5c"
             open={index === 0}
           >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-black uppercase tracking-widest">
+            <summary className="ui-e499601d">
               {question}
               <svg
                 aria-hidden="true"
-                className="size-5"
+                className="ui-2bd43fb5"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -327,9 +319,7 @@ export function FaqPage() {
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </summary>
-            <p className="mt-4 max-w-3xl text-sm font-bold leading-6 opacity-65">
-              {copy.answers[index]}
-            </p>
+            <p className="ui-b65cf314">{copy.answers[index]}</p>
           </details>
         ))}
       </div>

@@ -84,32 +84,28 @@ export function BookingModal({
       }}
     >
       {success ? (
-        <div className="lg:col-span-2">
-          <div className="mx-auto max-w-5xl space-y-10 text-center">
+        <div className="ui-445032ce">
+          <div className="ui-865a86d8">
             <h2 className="headline-xl">
               {result?.state === "waitlist"
                 ? copy.waitlistSuccess
                 : copy.success}
             </h2>
-            <div className="grid gap-6 text-left md:grid-cols-2">
+            <div className="ui-351c5436">
               {result?.state === "confirmed" ? (
                 <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
-                  <p className="unveiled-meta opacity-55">
+                  <p className="unveiled-meta ui-eec042e4">
                     {event.ticketType === "Voucher"
                       ? copy.ticketCode
                       : copy.passwordToEnter}
                   </p>
-                  <p className="mt-6 break-all font-display text-5xl font-black uppercase">
-                    {result.code}
-                  </p>
+                  <p className="ui-0513cb90">{result.code}</p>
                   {result.url ? (
-                    <p className="mt-4 break-all text-sm font-bold opacity-65">
-                      {result.url}
-                    </p>
+                    <p className="ui-aeb30ef2">{result.url}</p>
                   ) : null}
                   <Button
                     type="button"
-                    className="mt-8"
+                    className="ui-c221af54"
                     variant={
                       copied
                         ? "copied"
@@ -125,27 +121,22 @@ export function BookingModal({
                 </Panel>
               ) : (
                 <Panel tone="white">
-                  <p className="unveiled-meta opacity-55">{copy.waitlist}</p>
-                  <p className="headline-md mt-5">{copy.onList}</p>
-                  <p className="mt-4 text-sm font-bold opacity-70">
-                    {copy.waitlistBody}
-                  </p>
+                  <p className="unveiled-meta ui-eec042e4">{copy.waitlist}</p>
+                  <p className="headline-md ui-54e0c144">{copy.onList}</p>
+                  <p className="ui-ea7cb6d2">{copy.waitlistBody}</p>
                 </Panel>
               )}
               {calendarAvailable && calendarMetadata && calendarFile ? (
-                <Panel
-                  tone="dark"
-                  className="flex flex-col justify-between gap-8"
-                >
+                <Panel tone="dark" className="ui-dfdb58aa">
                   <div>
-                    <p className="unveiled-meta opacity-55">{copy.saveDate}</p>
-                    <p className="headline-md mt-5">{copy.markMoment}</p>
+                    <p className="unveiled-meta ui-eec042e4">{copy.saveDate}</p>
+                    <p className="headline-md ui-54e0c144">{copy.markMoment}</p>
                   </div>
                   <a
                     href={calendarFile.href}
                     download={calendarFile.filename}
                     aria-label={copy.addToCalendar(event.title)}
-                    className="inline-flex items-center justify-center gap-2 border-4 border-brand-dark bg-brand-yellow px-5 py-3 text-sm font-black uppercase tracking-widest text-brand-dark shadow-[4px_4px_0_0_#202621] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#202621]"
+                    className="hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#202621] ui-54834532"
                   >
                     <Calendar />
                     {copy.sync}
@@ -161,7 +152,7 @@ export function BookingModal({
         </div>
       ) : (
         <>
-          <section className="space-y-8">
+          <section className="ui-0dcc1c9a">
             <BookingModalHeaderPresentational
               categoryAndPartner={`${event.category} // ${event.partnerName}`}
               title={event.title}
@@ -174,11 +165,11 @@ export function BookingModal({
               whereValue={event.address}
             />
             {!isGuest && (
-              <Panel tone="cream" shadow={false} className="p-4">
+              <Panel tone="cream" shadow={false} className="ui-99df8659">
                 <p className="unveiled-meta">{copy.gateCopy}</p>
-                <p className="mt-2 text-sm font-bold">{copy.gateMessage}</p>
+                <p className="ui-a099bead">{copy.gateMessage}</p>
                 {result?.state === "failure" ? (
-                  <p className="mt-4 border-t-2 border-brand-dark/20 pt-4 text-sm font-black uppercase text-red-700">
+                  <p className="ui-c34a0ad5">
                     {result.message}
                     {result.waitlistAvailable ? copy.joinInstead : ""}
                   </p>
@@ -188,17 +179,14 @@ export function BookingModal({
           </section>
 
           {isGuest ? (
-            <Panel
-              tone="dark"
-              className="space-y-8 flex flex-col justify-between"
-            >
+            <Panel tone="dark" className="ui-c92b7c33">
               <div>
-                <p className="unveiled-meta opacity-55 text-white">
+                <p className="unveiled-meta ui-3fd8c8e2">
                   {live.profile.language === "DE"
                     ? "PREMIUM-ZUGANG"
                     : "PREMIUM ACCESS"}
                 </p>
-                <p className="headline-md mt-5 text-white">
+                <p className="headline-md ui-fc95d2d8">
                   {live.profile.language === "DE"
                     ? "Werde Unveiled-Mitglied, um dieses Event zu buchen."
                     : "Join Unveiled to book this event."}
@@ -207,7 +195,7 @@ export function BookingModal({
               <Button
                 type="button"
                 variant="yellow"
-                className="w-full justify-center"
+                className="ui-76f4751b"
                 onClick={() => {
                   const langLower = language.toLowerCase();
                   window.location.assign(

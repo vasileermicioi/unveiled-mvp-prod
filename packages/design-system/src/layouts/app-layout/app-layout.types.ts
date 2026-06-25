@@ -5,4 +5,5 @@ export interface AppLayoutProps {
   pageHeader?: ReactNode;
   pageBody?: ReactNode;
   pageAside?: ReactNode;
+  children?: ReactNode;
 }

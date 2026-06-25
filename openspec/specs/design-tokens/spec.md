@@ -1,4 +1,10 @@
-## ADDED Requirements
+# design-tokens Specification
+
+## Purpose
+
+Define the single source of truth for Unveiled design tokens (`design-tokens.json`), the generated CSS custom properties consumed through `@unveiled/design-system`, and the drift checks that keep generated artifacts in sync.
+
+## Requirements
 
 ### Requirement: Design Tokens Are Authored Once in W3C DTCG Format
 The design system SHALL be defined in a single `design-tokens.json` file at the repo root using the W3C Design Tokens Community Group format (`$value` / `$type` / `$description`).
@@ -18,7 +24,7 @@ The design system SHALL be defined in a single `design-tokens.json` file at the 
 - **AND** the same value does not appear in `src/styles/global.css`, `src/components/ui/unveiled-primitives.tsx`, or `docs/guidelines.md`
 ### Requirement: CSS Custom Properties Are Generated From the Tokens File
 
-A committed `packages/design-system/src/styles/generated/tokens.css` file SHALL be generated from `design-tokens.json` and re-exported via the `@unveiled/design-system` package's `exports` map. Downstream apps (`@unveiled/app`, `@unveiled/landing`) import the CSS through that export instead of importing `src/styles/generated/tokens.css` directly. After this change, the Astro app imports the generated tokens CSS from `@unveiled/design-system/styles/generated/tokens.css` inside `packages/app/src/styles/global.css`; the top-level `src/styles/` tree is no longer present.
+A committed `packages/design-system/src/styles/generated/tokens.css` file SHALL be generated from `design-tokens.json` and re-exported via the `@unveiled/design-system` package's `exports` map. Downstream apps (`@unveiled/app`, `@unveiled/landing`) import tokens through `@unveiled/design-system/styles/global.css`, which in turn imports `./generated/tokens.css` and `./tailwind-theme.css`; they MUST NOT import `src/styles/generated/tokens.css` directly or declare local `@theme` blocks.
 
 #### Scenario: Generation script emits CSS custom properties
 
@@ -27,11 +33,11 @@ A committed `packages/design-system/src/styles/generated/tokens.css` file SHALL 
 - **AND** every brand and semantic color appears as a CSS custom property on `:root` using the `--unveiled-*` prefix
 - **AND** typography, spacing, radius, border, shadow, motion, breakpoint, and z-index tokens appear as CSS custom properties on `:root` with the same prefix.
 
-#### Scenario: Tailwind v4 @theme inline consumes the same variables
+#### Scenario: Tailwind v4 @theme consumes the same variables from the design system
 
-- **WHEN** `packages/app/src/styles/global.css` imports `@unveiled/design-system/styles/generated/tokens.css`
-- **THEN** its Tailwind v4 `@theme inline` block references the generated CSS custom properties
-- **AND** Tailwind utility classes (e.g. `bg-brand-yellow`, `rounded-md`, `shadow-unveiled`) resolve to the same values.
+- **WHEN** `packages/design-system/src/styles/tailwind-theme.css` is read
+- **THEN** its `@theme` block references the generated CSS custom properties from `./generated/tokens.css`
+- **AND** Tailwind utility classes (e.g. `bg-brand-yellow`, `rounded-md`, `shadow-unveiled`) resolve to the same values when consumed through `@unveiled/design-system/styles/global.css`.
 
 #### Scenario: Generated CSS is committed
 

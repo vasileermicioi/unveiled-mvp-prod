@@ -176,48 +176,43 @@ function LandingPage({
   }
 
   return (
-    <div className="grid gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-16">
-      <section className="space-y-8">
-        <div className="space-y-5">
+    <div className="ui-6d732a37">
+      <section className="ui-0dcc1c9a">
+        <div className="ui-3d231851">
           <Badge tone="white">{copy.landingBadge}</Badge>
-          <h1 className="headline-xl max-w-4xl">{copy.landingTitle}</h1>
-          <p className="max-w-2xl text-lg font-bold leading-relaxed md:text-2xl">
-            {copy.landingBody}
-          </p>
+          <h1 className="headline-xl ui-25bba6bf">{copy.landingTitle}</h1>
+          <p className="ui-ad7f82b0">{copy.landingBody}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="ui-b24be85d">
           <a
             href={`/app/${selectedLanguage.toLowerCase()}/discover`}
-            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+            className="hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-36208f9c"
           >
             {copy.exploreAccess}
             <ArrowRight />
           </a>
           <a
             href={`/app/${selectedLanguage.toLowerCase()}/how-it-works`}
-            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.18em] text-brand-dark outline-none transition-all duration-200 hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25"
+            className="hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-36208f9c"
           >
             {copy.howItWorks}
             <ArrowRight />
           </a>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="ui-e46bc956">
           {copy.landingPerks.map((label) => (
-            <Badge key={label} tone="yellow" className="justify-center py-2">
-              <Check className="size-3" />
+            <Badge key={label} tone="yellow" className="ui-a383f2e8">
+              <Check className="ui-5e34f531" />
               {label}
             </Badge>
           ))}
         </div>
       </section>
 
-      <Panel tone="white" className="space-y-6">
-        <div className="flex border-4 border-brand-dark bg-brand-grey p-1">
+      <Panel tone="white" className="form-shell">
+        <div className="ui-17c61589">
           <button
-            className={cn(
-              "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
-              mode === "login" && "bg-brand-dark text-white",
-            )}
+            className={cn("ui-1d8f081a", mode === "login" && "ui-806c1ffa")}
             onClick={() => {
               setMode("login");
               setIsSuccess(false);
@@ -227,10 +222,7 @@ function LandingPage({
             {copy.auth.login}
           </button>
           <button
-            className={cn(
-              "flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-widest",
-              mode === "signup" && "bg-brand-dark text-white",
-            )}
+            className={cn("ui-1d8f081a", mode === "signup" && "ui-806c1ffa")}
             onClick={() => {
               setMode("signup");
               setIsSuccess(false);
@@ -248,15 +240,15 @@ function LandingPage({
                 ? copy.auth.createAccess
                 : copy.auth.resetPassword}
           </p>
-          <p className="mt-2 text-sm font-bold uppercase tracking-widest opacity-55">
+          <p className="ui-2f9396da">
             {mode === "recovery"
               ? copy.auth.recoveryInstructions
               : copy.auth.helper}
           </p>
         </div>
-        <Panel tone="cream" shadow={false} className="p-4">
+        <Panel tone="cream" shadow={false} className="ui-99df8659">
           <p className="unveiled-meta">{copy.auth.notice}</p>
-          <p className="text-sm font-bold">
+          <p className="ui-3760c8c2">
             {formMessage || copy.auth.defaultMessage}
           </p>
         </Panel>
@@ -265,7 +257,7 @@ function LandingPage({
             id="deep-link-preview"
             role="status"
             aria-live="polite"
-            className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+            className="ui-d2123c1a"
           >
             <p>
               {deepLinkCopy.preview.replace(
@@ -302,12 +294,12 @@ function LandingPage({
           />
         ) : (
           <form
-            className="grid gap-4"
+            className="ui-038d1550"
             method="POST"
             onSubmit={form.handleSubmit(submitAuth)}
           >
             {mode === "signup" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="ui-45d16817">
                 <Field
                   label={copy.auth.firstName}
                   error={
@@ -375,7 +367,11 @@ function LandingPage({
                 />
               </Field>
             ) : null}
-            <Button type="submit" className="w-full" loading={isSubmitting}>
+            <Button
+              type="submit"
+              className="ui-58d0413d"
+              loading={isSubmitting}
+            >
               {mode === "login"
                 ? copy.auth.login
                 : mode === "signup"
@@ -385,7 +381,7 @@ function LandingPage({
             {mode === "login" ? (
               <button
                 type="button"
-                className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
+                className="hover:opacity-100 ui-6396dc42"
                 onClick={() => setMode("recovery")}
               >
                 {copy.auth.forgotPassword}
@@ -393,7 +389,7 @@ function LandingPage({
             ) : mode === "recovery" ? (
               <button
                 type="button"
-                className="text-left text-[10px] font-black uppercase tracking-widest underline opacity-50 hover:opacity-100"
+                className="hover:opacity-100 ui-6396dc42"
                 onClick={() => setMode("login")}
               >
                 {copy.auth.backToLogin}
@@ -441,9 +437,9 @@ function VisualSystemAppContent({
 
   return (
     <AppShell shell={shell} onAction={navigateShell}>
-      <div className="pt-6">
+      <div className="ui-e5d3acde">
         {!hasInitialShell ? (
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+          <div className="ui-f3045b25">
             {shellDemoViews.map((item) => (
               <Button
                 key={item.id}

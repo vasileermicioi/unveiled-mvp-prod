@@ -311,7 +311,7 @@ export function AdminPanel({
   };
 
   return (
-    <div className="space-y-8 py-8">
+    <div className="ui-e400b83c">
       <AdminPanelHeaderPresentational
         badge="Admin"
         title={copy.operationsOverview || "Operations overview."}
@@ -334,17 +334,17 @@ export function AdminPanel({
         onTabClick={updateTab}
       />
       {activeTab === "metrics" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">Operational KPIs</h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 Overview of key business metrics, including active members,
                 ticket bookings, and venue partners.
               </p>
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="ui-3d7f24e3">
             {live.adminDashboardMetrics.map((metric) => (
               <StatPanel key={metric.label} {...metric} />
             ))}
@@ -352,11 +352,11 @@ export function AdminPanel({
         </div>
       )}
       {activeTab === "events" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">Events registry</h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 Manage live drops, create series slots, and track capacity.
               </p>
             </div>
@@ -392,50 +392,29 @@ export function AdminPanel({
               />
             ) : (
               live.adminEvents.map((event) => (
-                <TableRow
-                  key={event.id}
-                  className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1.2fr_auto_auto] md:items-center gap-4"
-                >
+                <TableRow key={event.id} className="grid-cols-1 ui-dcdadbf5">
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Event
-                    </span>
-                    <p className="text-sm font-black uppercase tracking-widest">
-                      {event.title}
-                    </p>
-                    <p className="text-xs font-bold opacity-55">
-                      {event.partnerName}
-                    </p>
+                    <span className="ui-10d0083b">Event</span>
+                    <p className="ui-8a48840f">{event.title}</p>
+                    <p className="ui-600d3d0f">{event.partnerName}</p>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Date
-                    </span>
-                    <p className="text-sm font-bold uppercase">
-                      {event.dateLabel}
-                    </p>
+                    <span className="ui-10d0083b">Date</span>
+                    <p className="ui-2eb25574">{event.dateLabel}</p>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Capacity
-                    </span>
-                    <p className="text-sm font-bold uppercase">
-                      {event.capacityLabel}
-                    </p>
+                    <span className="ui-10d0083b">Capacity</span>
+                    <p className="ui-2eb25574">{event.capacityLabel}</p>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Details
-                    </span>
-                    <p className="text-xs font-black uppercase tracking-widest opacity-55">
+                    <span className="ui-10d0083b">Details</span>
+                    <p className="ui-da162047">
                       {event.codeStrategyLabel} {" // "}
                       {event.creditPrice} credits
                     </p>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Status
-                    </span>
+                    <span className="ui-10d0083b">Status</span>
                     <div>
                       <Badge
                         tone={event.statusLabel === "Draft" ? "grey" : "yellow"}
@@ -444,12 +423,12 @@ export function AdminPanel({
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 md:justify-end">
+                  <div className="ui-9bc94b54">
                     <Button
                       type="button"
                       size="sm"
                       variant="secondary"
-                      className="flex-1 md:flex-initial"
+                      className="ui-7306d872"
                       onClick={() => {
                         setEditingEventId(event.id);
                         setEventFieldErrors({});
@@ -462,7 +441,7 @@ export function AdminPanel({
                       type="button"
                       size="sm"
                       variant="destructive"
-                      className="flex-1 md:flex-initial"
+                      className="ui-7306d872"
                       onClick={() => {
                         setDeleteErrorMessage(null);
                         setDeleteConfirmTarget({
@@ -486,7 +465,7 @@ export function AdminPanel({
                 hasMore={live.adminEventsHasMore}
                 onPageChange={setEventsPage}
                 onPageSizeChange={setEventsPageSize}
-                className="border-t-4 border-l-0 border-r-0 border-b-0 shadow-none"
+                className="ui-e64dbdf1"
               />
             )}
           </TableShell>
@@ -494,13 +473,13 @@ export function AdminPanel({
       )}
 
       {activeTab === "add-event" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">
                 {editingEventId ? "Edit Event" : "New Event"}
               </h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 {editingEventId
                   ? "Modify an existing drop slot."
                   : "Create a new drop slot or series of events for members."}
@@ -519,13 +498,13 @@ export function AdminPanel({
               Back to Events
             </Button>
           </div>
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="ui-9471e6c9">
             <Panel
               key={editingEventId ?? "new"}
               id="admin-event-form"
               tone="white"
               shadow={false}
-              className="scroll-mt-24 space-y-5"
+              className="scroll-mt-24 ui-b3fd4cbe"
               as="form"
               onChange={() => {
                 if (Object.keys(eventFieldErrors).length > 0) {
@@ -653,10 +632,8 @@ export function AdminPanel({
               <p className="headline-md">
                 {editingEventId ? "Edit Event" : "Event form"}
               </p>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-                {adminMessage}
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <p className="ui-8df1c4da">{adminMessage}</p>
+              <div className="ui-45d16817">
                 <Field label="Title" error={eventFieldErrors.title}>
                   <TextInput
                     name="title"
@@ -848,11 +825,11 @@ export function AdminPanel({
 
                 <Field
                   label="Languages"
-                  className="sm:col-span-2"
+                  className="ui-1cfa1776"
                   error={eventFieldErrors.languages}
                 >
-                  <div className="mt-2 flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <div className="ui-ed2a159b">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="languages"
@@ -865,7 +842,7 @@ export function AdminPanel({
                       />{" "}
                       DE
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="languages"
@@ -878,7 +855,7 @@ export function AdminPanel({
                       />{" "}
                       EN
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="languages"
@@ -891,7 +868,7 @@ export function AdminPanel({
                       />{" "}
                       Turki (TR)
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="languages"
@@ -904,7 +881,7 @@ export function AdminPanel({
                       />{" "}
                       Arabic (AR)
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="languages"
@@ -922,11 +899,11 @@ export function AdminPanel({
 
                 <Field
                   label="Target Age Groups"
-                  className="sm:col-span-2"
+                  className="ui-1cfa1776"
                   error={eventFieldErrors.targetAgeGroups}
                 >
-                  <div className="mt-2 flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <div className="ui-ed2a159b">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="targetAgeGroups"
@@ -939,7 +916,7 @@ export function AdminPanel({
                       />{" "}
                       18-25
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="targetAgeGroups"
@@ -952,7 +929,7 @@ export function AdminPanel({
                       />{" "}
                       26-35
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="targetAgeGroups"
@@ -965,7 +942,7 @@ export function AdminPanel({
                       />{" "}
                       36-50
                     </label>
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                    <label className="ui-4e0644ab">
                       <input
                         type="checkbox"
                         name="targetAgeGroups"
@@ -995,33 +972,30 @@ export function AdminPanel({
                 value={eventImageUrl}
                 onUrlChange={setEventImageUrl}
                 testId="admin-event-image-upload"
-                className="sm:col-span-2"
+                className="ui-1cfa1776"
               />
-              <div className="flex justify-end">
+              <div className="ui-8f0ebda8">
                 <Button type="submit" loading={eventSubmitting}>
                   {editingEventId ? "Save event" : "Publish event"}
                 </Button>
               </div>
             </Panel>
-            <Panel tone="cream" shadow={false} className="space-y-5">
-              <div className="flex flex-wrap items-center justify-between border-b border-brand-dark/20 pb-3 gap-2">
+            <Panel tone="cream" shadow={false} className="ui-3d231851">
+              <div className="ui-f3472d20">
                 <p className="headline-md">{copy.seriesBuilder}</p>
-                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest cursor-pointer">
+                <label className="ui-c5b342ea">
                   <input
                     type="checkbox"
                     checked={seriesEnabled}
                     onChange={(e) => setSeriesEnabled(e.target.checked)}
                     data-testid="admin-series-enabled-checkbox"
-                    className="w-4 h-4 accent-brand-dark"
+                    className="ui-c4637c8c"
                   />
                   <span>Publish as Event Series</span>
                 </label>
               </div>
               <div
-                className={cn(
-                  "grid gap-4 sm:grid-cols-2 transition-opacity duration-200",
-                  !seriesEnabled && "opacity-50 pointer-events-none",
-                )}
+                className={cn("ui-2af82946", !seriesEnabled && "ui-219978c9")}
               >
                 <Field label={`${copy.dateRange} (Start)`}>
                   <TextInput
@@ -1039,16 +1013,13 @@ export function AdminPanel({
                     disabled={!seriesEnabled}
                   />
                 </Field>
-                <Field label={copy.weekdays} className="sm:col-span-2">
-                  <div className="flex flex-wrap gap-3 mt-1">
+                <Field label={copy.weekdays} className="ui-1cfa1776">
+                  <div className="ui-093b4b7f">
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
                       (day) => {
                         const isChecked = seriesWeekdays.includes(day);
                         return (
-                          <label
-                            key={day}
-                            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest cursor-pointer"
-                          >
+                          <label key={day} className="ui-3b4589f7">
                             <input
                               type="checkbox"
                               checked={isChecked}
@@ -1089,7 +1060,7 @@ export function AdminPanel({
                   />
                 </Field>
               </div>
-              <div className="grid gap-2 border-t border-brand-dark/20 pt-4">
+              <div className="ui-9a3166fc">
                 {seriesEnabled &&
                   computedSeries.labels.map((slot) => (
                     <Badge key={slot} tone="white">
@@ -1097,12 +1068,10 @@ export function AdminPanel({
                     </Badge>
                   ))}
                 {seriesEnabled && computedSeries.labels.length === 0 && (
-                  <p className="text-[10px] uppercase font-bold opacity-40">
-                    No slots matching criteria
-                  </p>
+                  <p className="ui-f4822063">No slots matching criteria</p>
                 )}
                 {!seriesEnabled && (
-                  <p className="text-[10px] uppercase font-bold opacity-40">
+                  <p className="ui-f4822063">
                     Check "Publish as Event Series" to configure.
                   </p>
                 )}
@@ -1112,16 +1081,16 @@ export function AdminPanel({
         </div>
       )}
       {activeTab === "partners" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">Partners directory</h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 Manage partner venues, provision portal access, and rotate
                 check-in tokens.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="app-page-toolbar">
               <Button
                 type="button"
                 variant="yellow"
@@ -1160,32 +1129,23 @@ export function AdminPanel({
               />
             ) : (
               live.adminPartners.map((partner) => (
-                <TableRow
-                  key={partner.id}
-                  className="grid grid-cols-1 md:grid-cols-[1.5fr_auto] md:items-center gap-4"
-                >
+                <TableRow key={partner.id} className="grid-cols-1 ui-3ea32e50">
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                      Partner
-                    </span>
-                    <p className="text-sm font-black uppercase tracking-widest">
-                      {partner.name}
-                    </p>
-                    <p className="text-xs font-bold opacity-55">
+                    <span className="ui-10d0083b">Partner</span>
+                    <p className="ui-8a48840f">{partner.name}</p>
+                    <p className="ui-600d3d0f">
                       {partner.portalLoginLabel} {" // "}{" "}
                       {partner.venueQrTokenLabel}
                     </p>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
-                      Actions
-                    </span>
-                    <div className="flex flex-wrap gap-2">
+                    <span className="ui-79d8b63e">Actions</span>
+                    <div className="app-page-toolbar">
                       <Button
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="flex-1 md:flex-initial"
+                        className="ui-7306d872"
                         onClick={() => {
                           setEditingPartnerId(partner.id);
                           setPartnerFieldErrors({});
@@ -1198,7 +1158,7 @@ export function AdminPanel({
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="flex-1 md:flex-initial"
+                        className="ui-7306d872"
                         onClick={() =>
                           void runServerAction(
                             () =>
@@ -1217,7 +1177,7 @@ export function AdminPanel({
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="flex-1 md:flex-initial"
+                        className="ui-7306d872"
                         onClick={() =>
                           void runServerAction(
                             () =>
@@ -1235,7 +1195,7 @@ export function AdminPanel({
                         type="button"
                         size="sm"
                         variant="destructive"
-                        className="flex-1 md:flex-initial"
+                        className="ui-7306d872"
                         onClick={() => {
                           setDeleteErrorMessage(null);
                           setDeleteConfirmTarget({
@@ -1260,7 +1220,7 @@ export function AdminPanel({
                 hasMore={live.adminPartnersHasMore}
                 onPageChange={setPartnersPage}
                 onPageSizeChange={setPartnersPageSize}
-                className="border-t-4 border-l-0 border-r-0 border-b-0 shadow-none"
+                className="ui-e64dbdf1"
               />
             )}
           </TableShell>
@@ -1269,14 +1229,12 @@ export function AdminPanel({
             id="admin-export-panel"
             tone="cream"
             shadow={false}
-            className="scroll-mt-24 space-y-5"
+            className="scroll-mt-24 ui-b3fd4cbe"
           >
             <p className="headline-md">Export Bookings</p>
-            <p className="text-xs font-bold uppercase tracking-widest opacity-55">
-              {exportMessage}
-            </p>
-            <div className="flex flex-wrap items-end gap-4">
-              <Field label="Export partner" className="min-w-64">
+            <p className="ui-8df1c4da">{exportMessage}</p>
+            <div className="ui-b49bf65e">
+              <Field label="Export partner" className="ui-bedf9403">
                 <SelectInput
                   value={exportPartnerId}
                   onChange={(e) => setExportPartnerId(e.currentTarget.value)}
@@ -1337,13 +1295,13 @@ export function AdminPanel({
       )}
 
       {activeTab === "add-partner" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">
                 {editingPartnerId ? "Edit Partner" : "New Partner"}
               </h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 {editingPartnerId
                   ? "Modify an existing partner venue."
                   : "Register a new partner venue."}
@@ -1368,7 +1326,7 @@ export function AdminPanel({
             id="admin-partner-form"
             tone="white"
             shadow={false}
-            className="scroll-mt-24 space-y-5"
+            className="scroll-mt-24 ui-b3fd4cbe"
             as="form"
             onChange={() => {
               if (Object.keys(partnerFieldErrors).length > 0) {
@@ -1416,7 +1374,7 @@ export function AdminPanel({
                 ? "Edit partner venue"
                 : "Add new partner venue"}
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="ui-45d16817">
               <Field label="Venue name" error={partnerFieldErrors.name}>
                 <TextInput
                   name="name"
@@ -1439,7 +1397,7 @@ export function AdminPanel({
               </Field>
               <Field
                 label="Address"
-                className="sm:col-span-2"
+                className="ui-1cfa1776"
                 error={partnerFieldErrors.address}
               >
                 <TextInput
@@ -1458,7 +1416,7 @@ export function AdminPanel({
               onUrlChange={setPartnerLogoUrl}
               testId="admin-partner-logo-upload"
             />
-            <div className="flex justify-end">
+            <div className="ui-8f0ebda8">
               <Button
                 type="submit"
                 variant="primary"
@@ -1471,20 +1429,20 @@ export function AdminPanel({
         </div>
       )}
       {activeTab === "members" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="animate-in fade-in ui-1c863832">
+          <div className="ui-60030e8d">
             <div>
               <h2 className="headline-md">Member registry</h2>
-              <p className="text-xs font-bold uppercase tracking-widest opacity-55">
+              <p className="ui-8df1c4da">
                 Review member preferences, billing status, and adjust booking
                 credits.
               </p>
             </div>
           </div>
 
-          <Panel tone="cream" shadow={false} className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <Field label="Search members" className="flex-1 min-w-64">
+          <Panel tone="cream" shadow={false} className="auth-stack">
+            <div className="ui-f18be2a9">
+              <Field label="Search members" className="ui-c0bddd0b">
                 <TextInput
                   placeholder="Name or email"
                   value={memberSearchQuery}
@@ -1507,7 +1465,7 @@ export function AdminPanel({
             </div>
           </Panel>
 
-          <div className="space-y-4">
+          <div className="auth-stack">
             {live.isLoading ? (
               <>
                 <MemberCardSkeleton />
@@ -1526,12 +1484,12 @@ export function AdminPanel({
               />
             ) : (
               filteredMembers.map((member) => (
-                <Card key={member.userId} className="p-4 md:p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                <Card key={member.userId} className="ui-b2b8b472">
+                  <div className="ui-204f9214">
                     {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
                     {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
                     <div
-                      className="cursor-pointer flex-1 min-w-[200px]"
+                      className="ui-063b2c11"
                       onClick={() =>
                         setExpandedMemberId(
                           expandedMemberId === member.userId
@@ -1540,35 +1498,33 @@ export function AdminPanel({
                         )
                       }
                     >
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-black uppercase tracking-widest">
-                          {member.fullName}
-                        </p>
-                        <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                      <div className="ui-00ebb85d">
+                        <p className="ui-8a48840f">{member.fullName}</p>
+                        <span className="ui-dd637d47">
                           {expandedMemberId === member.userId
                             ? "(Hide Intel)"
                             : "(Show Intel)"}
                         </span>
                       </div>
-                      <p className="text-xs font-bold opacity-55">
+                      <p className="ui-600d3d0f">
                         {member.subscriptionStatusLabel} {" // "}
                         {member.credits} credits {" // "}
                         {member.roleLabel}
                       </p>
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                      <p className="ui-115c9c32">
                         {member.email} {" // "}
                         {member.bookingCount} bookings {" // "}
                         {member.savedCount} saved {" // "}
                         {member.waitlistCount} waitlist
                       </p>
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest opacity-45">
+                      <p className="ui-115c9c32">
                         {member.providerStatus ?? "No provider"} {" // "}
                         {member.currentPeriodLabel} {" // "}
                         {member.historySummary}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
+                    <div className="ui-7c5144aa">
+                      <div className="ui-c354e22d">
                         <Button
                           type="button"
                           size="sm"
@@ -1612,20 +1568,18 @@ export function AdminPanel({
                   </div>
 
                   {expandedMemberId === member.userId && (
-                    <div className="mt-4 pt-4 border-t border-brand-dark/20 space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-4">
-                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                            Preferences
-                          </div>
-                          <div className="text-xs font-bold uppercase tracking-widest mt-2">
+                    <div className="ui-d5cabae9">
+                      <div className="grid-cols-1 ui-0710d2a7">
+                        <div className="auth-stack">
+                          <div className="ui-8be98ec0">Preferences</div>
+                          <div className="ui-e93697cc">
                             Age {member.preferences.ageGroup || "Unknown"} /
                             Radius {member.preferences.maxDistance}km /{" "}
                             {member.preferences.accessibility
                               ? "Accessible"
                               : "No accessibility flag"}
                           </div>
-                          <div className="space-y-3">
+                          <div className="ui-b8ceaab1">
                             {[
                               {
                                 label: "Interests",
@@ -1654,11 +1608,9 @@ export function AdminPanel({
                                 values: member.preferences.preferredLanguages,
                               },
                             ].map((group) => (
-                              <div key={group.label} className="space-y-1">
-                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                                  {group.label}
-                                </div>
-                                <div className="flex flex-wrap gap-1">
+                              <div key={group.label} className="ui-27e6c432">
+                                <div className="ui-04a3b34c">{group.label}</div>
+                                <div className="ui-94a65763">
                                   {(group.values?.length
                                     ? group.values
                                     : ["None"]
@@ -1666,7 +1618,7 @@ export function AdminPanel({
                                     <Badge
                                       key={`${group.label}-${value}`}
                                       tone="white"
-                                      className="text-[9px]"
+                                      className="ui-a3c18814"
                                     >
                                       {value}
                                     </Badge>
@@ -1677,90 +1629,68 @@ export function AdminPanel({
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                            History
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Bookings
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                        <div className="auth-stack">
+                          <div className="ui-8be98ec0">History</div>
+                          <div className="grid-cols-2 ui-73b06403">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Bookings</div>
+                              <div className="ui-6d76c1b3">
                                 {member.bookingCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Waitlist
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Waitlist</div>
+                              <div className="ui-6d76c1b3">
                                 {member.waitlistCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Saved
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Saved</div>
+                              <div className="ui-6d76c1b3">
                                 {member.savedCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Sessions
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Sessions</div>
+                              <div className="ui-6d76c1b3">
                                 {member.sessionCount}
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
-                            Behavior Intel
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Event Opens
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                        <div className="auth-stack">
+                          <div className="ui-8be98ec0">Behavior Intel</div>
+                          <div className="grid-cols-2 ui-73b06403">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Event Opens</div>
+                              <div className="ui-6d76c1b3">
                                 {member.eventOpenCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Filter Applies
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Filter Applies</div>
+                              <div className="ui-6d76c1b3">
                                 {member.filterApplyCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Saves
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Saves</div>
+                              <div className="ui-6d76c1b3">
                                 {member.savedCount}
                               </div>
                             </div>
-                            <div className="border border-brand-dark/20 p-2 rounded">
-                              <div className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                Unsaves
-                              </div>
-                              <div className="text-lg font-black tracking-tight">
+                            <div className="ui-820d9618">
+                              <div className="ui-dd637d47">Unsaves</div>
+                              <div className="ui-6d76c1b3">
                                 {member.unsavedCount}
                               </div>
                             </div>
                           </div>
 
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                              Latest Signals
-                            </div>
-                            <div className="border border-brand-dark/20 p-2 rounded space-y-1 text-[9px] font-bold uppercase tracking-widest">
+                          <div className="ui-27e6c432">
+                            <div className="ui-04a3b34c">Latest Signals</div>
+                            <div className="ui-7d9ca3c3">
                               <div>
                                 Last View: {member.lastView || "Unknown"}
                               </div>
@@ -1789,13 +1719,13 @@ export function AdminPanel({
                             </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                          <div className="ui-26717177">
+                            <div className="ui-04a3b34c">
                               Recently Touched Events
                             </div>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="ui-94a65763">
                               {member.recentEventIds.length === 0 ? (
-                                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                <span className="ui-dd637d47">
                                   No tracked event opens.
                                 </span>
                               ) : (
@@ -1809,7 +1739,7 @@ export function AdminPanel({
                                     <Badge
                                       key={eventId}
                                       tone="yellow"
-                                      className="text-[9px]"
+                                      className="ui-a3c18814"
                                     >
                                       {matchingEvent
                                         ? matchingEvent.title
@@ -1823,7 +1753,7 @@ export function AdminPanel({
                         </div>
                       </div>
 
-                      <Divider className="my-4" />
+                      <Divider className="ui-4078b3ee" />
                       <Button
                         type="button"
                         size="sm"
@@ -1846,7 +1776,7 @@ export function AdminPanel({
                       >
                         Create ticket
                       </Button>
-                      <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                      <p className="ui-7825411d">
                         History, preferences, bookings, and adjustment controls
                         are expandable.
                       </p>
@@ -1895,33 +1825,29 @@ export function AdminPanel({
             }
           }}
         >
-          <div className="mx-auto w-full max-w-2xl">
-            <Panel tone="white" shadow={false} className="space-y-6">
-              <p className="body-md text-brand-dark/80">
+          <div className="ui-3ad7a596">
+            <Panel tone="white" shadow={false} className="form-shell">
+              <p className="body-md ui-de598f1f">
                 {deleteConfirmTarget.type === "event"
                   ? copy.confirmDeleteEventBody
                   : copy.confirmDeletePartnerBody}
               </p>
               {deleteErrorMessage && (
-                <Panel
-                  tone="cream"
-                  shadow={false}
-                  className="border-brand-destructive bg-brand-destructive/10 p-4"
-                >
-                  <p className="text-sm font-bold text-brand-destructive">
-                    {deleteErrorMessage}
-                  </p>
+                <Panel tone="cream" shadow={false} className="ui-dcbaf86e">
+                  <p className="ui-02b025d9">{deleteErrorMessage}</p>
                 </Panel>
               )}
-              <div className="border-2 border-brand-dark bg-brand-cream/20 p-4">
-                <span className="font-mono text-xs font-bold uppercase opacity-55">
+              <div className="ui-2c5eb4ee">
+                <span className="ui-79b6860a">
                   {deleteConfirmTarget.type === "event"
                     ? copy.title
                     : copy.partner}
                 </span>
-                <p className="headline-sm mt-1">{deleteConfirmTarget.name}</p>
+                <p className="headline-sm ui-691c27fa">
+                  {deleteConfirmTarget.name}
+                </p>
               </div>
-              <div className="flex flex-wrap gap-4 justify-end">
+              <div className="ui-cbabe5f2">
                 <Button
                   type="button"
                   variant="secondary"

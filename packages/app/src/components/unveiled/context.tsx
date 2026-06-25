@@ -259,27 +259,22 @@ export function Skeleton({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("animate-pulse bg-brand-dark/15 rounded", className)}
-      {...props}
-    />
-  );
+  return <div className={cn("ui-bf84c38c", className)} {...props} />;
 }
 
 export function MemberCardSkeleton() {
   return (
-    <div className="border-4 border-brand-dark bg-white p-4 md:p-6 space-y-4 unveiled-shadow">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-4 w-64" />
-          <Skeleton className="h-3 w-80" />
-          <Skeleton className="h-3 w-72" />
+    <div className="unveiled-shadow ui-9e1eebd6">
+      <div className="ui-204f9214">
+        <div className="ui-74f315ba">
+          <Skeleton className="ui-e27742fb" />
+          <Skeleton className="ui-6ed0b0b0" />
+          <Skeleton className="ui-7b2b6151" />
+          <Skeleton className="ui-b8363213" />
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-24" />
+        <div className="ui-c354e22d">
+          <Skeleton className="ui-5e23f1fe" />
+          <Skeleton className="ui-f35e76a8" />
         </div>
       </div>
     </div>
@@ -288,31 +283,31 @@ export function MemberCardSkeleton() {
 
 export function EventRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1.2fr_auto_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-4 w-28" />
+    <div className="grid-cols-1 last:border-b-0 ui-180f30e4">
+      <div className="ui-26717177">
+        <Skeleton className="ui-116c2eff" />
+        <Skeleton className="ui-69bb51d9" />
       </div>
-      <Skeleton className="h-5 w-32" />
-      <Skeleton className="h-5 w-16" />
-      <Skeleton className="h-4 w-36" />
-      <Skeleton className="h-6 w-16" />
-      <Skeleton className="h-9 w-20" />
+      <Skeleton className="ui-04b8b55c" />
+      <Skeleton className="ui-ff497752" />
+      <Skeleton className="ui-7ea70445" />
+      <Skeleton className="ui-b8a834ed" />
+      <Skeleton className="ui-5e23f1fe" />
     </div>
   );
 }
 
 export function PartnerRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1.5fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-4 w-60" />
+    <div className="grid-cols-1 last:border-b-0 ui-4172b819">
+      <div className="ui-26717177">
+        <Skeleton className="ui-e27742fb" />
+        <Skeleton className="ui-0ce3fa0b" />
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Skeleton className="h-9 w-24" />
-        <Skeleton className="h-9 w-20" />
-        <Skeleton className="h-9 w-20" />
+      <div className="app-page-toolbar">
+        <Skeleton className="ui-f35e76a8" />
+        <Skeleton className="ui-5e23f1fe" />
+        <Skeleton className="ui-5e23f1fe" />
       </div>
     </div>
   );
@@ -320,14 +315,14 @@ export function PartnerRowSkeleton() {
 
 export function GuestRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] items-center gap-4 border-b-2 border-brand-dark/20 p-4 last:border-b-0">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-36" />
-        <Skeleton className="h-4 w-48" />
+    <div className="grid-cols-1 last:border-b-0 ui-1a112f10">
+      <div className="ui-26717177">
+        <Skeleton className="ui-6e0a0185" />
+        <Skeleton className="ui-8b1b94c4" />
       </div>
-      <Skeleton className="h-5 w-40" />
-      <Skeleton className="h-6 w-16" />
-      <Skeleton className="h-9 w-28" />
+      <Skeleton className="ui-116c2eff" />
+      <Skeleton className="ui-b8a834ed" />
+      <Skeleton className="ui-148826ce" />
     </div>
   );
 }
@@ -354,13 +349,8 @@ export function Pagination({
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center justify-between gap-4 border-t-4 border-brand-dark bg-brand-cream p-4 text-sm font-bold uppercase tracking-widest text-brand-dark",
-        className,
-      )}
-    >
-      <div className="flex items-center gap-2">
+    <div className={cn("ui-dc94094b", className)}>
+      <div className="ui-00ebb85d">
         <span className="unveiled-meta">Show</span>
         <SelectInput
           value={String(pageSize)}
@@ -369,7 +359,7 @@ export function Pagination({
             onPageSizeChange(nextSize);
             onPageChange(1);
           }}
-          className="min-h-10 w-16 py-1.5 px-3 border-2 border-brand-dark"
+          className="ui-def34157"
         >
           <option value="10">10</option>
           <option value="20">20</option>
@@ -379,21 +369,21 @@ export function Pagination({
         <span className="unveiled-meta">per page</span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="ui-1dabc0cd">
         <Button
           type="button"
           variant="secondary"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+          className="hover:bg-brand-yellow disabled:opacity-50 disabled:hover:bg-white ui-c79941c7"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="ui-df001b2d" />
           <span>Prev</span>
         </Button>
 
-        <span className="unveiled-meta font-black">
+        <span className="unveiled-meta ui-7cd26142">
           Page {page} of {totalPages}{" "}
-          <span className="opacity-50">({totalCount} total)</span>
+          <span className="ui-0b5a4d12">({totalCount} total)</span>
         </span>
 
         <Button
@@ -401,10 +391,10 @@ export function Pagination({
           variant="secondary"
           onClick={() => onPageChange(page + 1)}
           disabled={!hasMore}
-          className="flex items-center gap-1 border-2 border-brand-dark bg-white hover:bg-brand-yellow px-3 py-1.5 disabled:opacity-50 disabled:hover:bg-white"
+          className="hover:bg-brand-yellow disabled:opacity-50 disabled:hover:bg-white ui-c79941c7"
         >
           <span>Next</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="ui-df001b2d" />
         </Button>
       </div>
     </div>
@@ -492,28 +482,24 @@ export function AdminAssetUploadField({
   const visiblePreview = previewUrl ?? value;
 
   return (
-    <Panel
-      tone="cream"
-      shadow={false}
-      className={cn("space-y-4 p-4", className)}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <Panel tone="cream" shadow={false} className={cn("ui-d1ec5c8a", className)}>
+      <div className="ui-204f9214">
         <div>
           <p className="unveiled-meta">{label}</p>
-          <p className="mt-2 text-xs font-bold uppercase tracking-widest opacity-60">
+          <p className="ui-f48ac2d0">
             {uploadUnavailable
               ? "Upload unavailable; HTTPS URL fallback active."
               : message}
           </p>
         </div>
-        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border-2 border-brand-dark bg-brand-yellow px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-brand-dark transition-all hover:bg-white hover:shadow-[4px_4px_0_0_#202621]">
+        <label className="hover:bg-white hover:shadow-[4px_4px_0_0_#202621] ui-aa88c444">
           <UploadIcon />
           {uploading ? "Uploading" : "Upload"}
           <input
             data-testid={testId}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
-            className="sr-only"
+            className="ui-32fb0905"
             disabled={uploading}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
@@ -523,19 +509,17 @@ export function AdminAssetUploadField({
           />
         </label>
       </div>
-      <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-end">
-        <div className="grid aspect-video place-items-center overflow-hidden border-4 border-brand-dark bg-brand-grey">
+      <div className="ui-0230938f">
+        <div className="ui-d6434a2d">
           {visiblePreview ? (
             <SafeImage
               src={visiblePreview}
               alt=""
               fallbackKind={kind === "event" ? "event" : "partner"}
-              className="h-full w-full object-cover"
+              className="ui-344fb22d"
             />
           ) : (
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-55">
-              Preview
-            </span>
+            <span className="ui-51a57728">Preview</span>
           )}
         </div>
         <Field label="Asset URL">

@@ -22,7 +22,7 @@ export const Guest: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Demo content for the discover page.</div>
+    <div className="ui-c4328367">Demo content for the discover page.</div>
   </AppShell>
 );
 
@@ -34,7 +34,7 @@ export const Member: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Demo content for the member dashboard.</div>
+    <div className="ui-c4328367">Demo content for the member dashboard.</div>
   </AppShell>
 );
 
@@ -46,7 +46,7 @@ export const Partner: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Demo content for the partner console.</div>
+    <div className="ui-c4328367">Demo content for the partner console.</div>
   </AppShell>
 );
 
@@ -58,7 +58,7 @@ export const Admin: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Demo content for the admin console.</div>
+    <div className="ui-c4328367">Demo content for the admin console.</div>
   </AppShell>
 );
 
@@ -70,7 +70,7 @@ export const HamburgerDisclosure: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Hamburger disclosure demo.</div>
+    <div className="ui-c4328367">Hamburger disclosure demo.</div>
   </AppShell>
 );
 
@@ -82,7 +82,7 @@ export const DrawerOpensAsDialog: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Drawer-opens-as-dialog demo.</div>
+    <div className="ui-c4328367">Drawer-opens-as-dialog demo.</div>
   </AppShell>
 );
 
@@ -94,7 +94,7 @@ export const DrawerClosesViaCloseControl: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Drawer-closes-via-close-control demo.</div>
+    <div className="ui-c4328367">Drawer-closes-via-close-control demo.</div>
   </AppShell>
 );
 
@@ -106,6 +106,6 @@ export const LanguageToggleExposesAriaPressed: Story = () => (
     })}
     onAction={() => {}}
   >
-    <div className="p-6">Language toggle aria-pressed demo.</div>
+    <div className="ui-c4328367">Language toggle aria-pressed demo.</div>
   </AppShell>
 );

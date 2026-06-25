@@ -90,7 +90,7 @@ export function PartnerPortal() {
     actionButton: (
       <Button
         type="button"
-        className="w-full md:w-auto"
+        className="ui-38864ed6"
         variant={guest.checkedInLabel === "Checked in" ? "copied" : "primary"}
         disabled={guest.checkInDisabled}
         onClick={() =>
@@ -123,7 +123,7 @@ export function PartnerPortal() {
   }));
 
   return (
-    <div className="space-y-8 py-8">
+    <div className="ui-e400b83c">
       <PartnerPortalHeaderPresentational
         copy={headerCopy}
         partnerName={live.partner?.name ?? copy.partnerPortal}
@@ -133,8 +133,8 @@ export function PartnerPortal() {
           value: live.partnerGuestTotal.replace(" guests", ""),
           caption: copy.acrossSelected,
         }}
-        qrIcon={<QrCode className="size-8" />}
-        checkIcon={<Check className="size-4" />}
+        qrIcon={<QrCode className="ui-ebd37e04" />}
+        checkIcon={<Check className="ui-100c22d5" />}
         venueQrUrl={live.partner?.venueQrUrl ?? null}
       />
       <PartnerPortalFiltersPresentational
@@ -144,7 +144,7 @@ export function PartnerPortal() {
         eventOptions={live.partnerEventOptions}
         searchInputId="partner-portal-search"
         eventSelectId="partner-portal-event"
-        downloadIcon={<Download className="size-4" />}
+        downloadIcon={<Download className="ui-100c22d5" />}
         onSearchChange={setGuestSearch}
         onEventChange={setEventFilter}
         onDownload={() =>

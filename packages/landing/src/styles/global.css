@@ -1,16 +1,1 @@
-@import "tailwindcss";
-@import "@unveiled/design-system/styles/generated/tokens.css";
-
-@source "../**/*.{ts,tsx,astro}";
-@source inline("border-brand-dark text-brand-dark bg-brand-dark text-brand-yellow bg-brand-yellow bg-white bg-brand-grey min-h-11 px-5 py-3 min-h-9 px-3 py-2 min-h-14 px-7 py-4");
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms;
-    animation-iteration-count: 1;
-    transition-duration: 0.001ms;
-    scroll-behavior: auto;
-  }
-}
+@import "@unveiled/design-system/styles/global.css";

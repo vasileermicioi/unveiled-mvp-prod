@@ -35,6 +35,14 @@ export const WithAside = () => (
   />
 );
 
+export const SlotOnly = () => (
+  <AppLayout>
+    <div className="p-6 text-sm font-bold uppercase tracking-widest">
+      Astro slot-only children
+    </div>
+  </AppLayout>
+);
+
 export default {
   title: "Layouts / App Layout",
   parameters: { layout: "fullscreen", ladle: { skipCoverage: true } },
