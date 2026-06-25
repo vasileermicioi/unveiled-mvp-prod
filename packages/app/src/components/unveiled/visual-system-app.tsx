@@ -10,7 +10,7 @@ import {
   UnveiledThemeProvider,
 } from "@unveiled/design-system";
 import { ArrowRight, Check } from "lucide-react";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { QueryProvider } from "~/components/providers/query-provider";
 import { AppShell, PageShell } from "~/components/unveiled/app-shell";
@@ -84,6 +84,20 @@ function LandingPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [redirecting, setRedirecting] = useState<{
+    nextPath: string;
+    showFallback: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!redirecting) return undefined;
+    const handle = window.setTimeout(() => {
+      setRedirecting((current) =>
+        current ? { ...current, showFallback: true } : current,
+      );
+    }, 1500);
+    return () => window.clearTimeout(handle);
+  }, [redirecting]);
 
   const activeSchema =
     mode === "login"
@@ -170,6 +184,7 @@ function LandingPage({
         ) {
           nextPath = `/${selectedLanguage.toLowerCase()}${nextPath}`;
         }
+        setRedirecting({ nextPath, showFallback: false });
         window.location.assign(nextPath);
       }
     }
@@ -290,6 +305,24 @@ function LandingPage({
               >
                 {copy.auth.backToLogin}
               </Button>
+            }
+          />
+        ) : redirecting ? (
+          <StatePanel
+            state="loading"
+            title={copy.auth.redirecting}
+            text={copy.auth.redirectingHint}
+            action={
+              redirecting.showFallback ? (
+                <a
+                  id="login-redirect-continue"
+                  href={redirecting.nextPath}
+                  className="hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-36208f9c"
+                >
+                  {copy.auth.continueLink}
+                  <ArrowRight />
+                </a>
+              ) : null
             }
           />
         ) : (

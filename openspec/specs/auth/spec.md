@@ -6,6 +6,8 @@ Define Better Auth-backed identity, session, domain profile hydration, and serve
 
 The app SHALL use Better Auth for email/password identity, session creation, session clearing, and account recovery entry points through typed server-side form actions, and SHALL expose the signup, login, logout, and password-recovery forms as selector-disciplinable, accessible, and bilingual surfaces that route every user-facing string through the typed `AuthFormCopy` dictionary. The Better Auth HTTP handlers (`/api/auth/*`) SHALL be mounted inside `@unveiled/api` and SHALL be reached from the Astro app via the Cloudflare service binding declared in `wrangler.toml` (`binding = "API"`).
 
+Every account-action HTTP response under `/api/account/*` SHALL forward the `Set-Cookie` headers that Better Auth's `signInEmail`, `signUpEmail`, and `signOut` handlers return, so the browser actually receives the session cookie (or its expiration) on login, signup, and logout.
+
 #### Scenario: Visitor signs up
 
 - **WHEN** a visitor submits valid signup data with email, password, first name, and last name through the signup action
@@ -26,6 +28,26 @@ The app SHALL use Better Auth for email/password identity, session creation, ses
 - **WHEN** Better Auth issues a session cookie
 - **THEN** the cookie's `Domain` attribute is set to `AUTH_COOKIE_DOMAIN`
 - **AND** both the Astro app (SSR pages) and the API Worker (Hono handlers) read the same session cookie
+
+#### Scenario: Account login response sets the Better Auth session cookie
+
+- **WHEN** a member submits valid credentials to `/api/account/login`
+- **THEN** the API response carries the `Set-Cookie` header(s) returned by Better Auth's `signInEmail` handler
+- **AND** the cookie name matches Better Auth's session cookie (`better-auth.session_token` or the `AUTH_COOKIE_DOMAIN`-scoped equivalent)
+- **AND** the response body remains valid JSON with `{ ok: true, state, nextPath }`
+
+#### Scenario: Account signup response sets the Better Auth session cookie
+
+- **WHEN** a visitor submits valid signup data to `/api/account/signup`
+- **THEN** the API response carries the `Set-Cookie` header(s) returned by Better Auth's `signUpEmail` handler
+- **AND** a domain profile is created for the new identity
+- **AND** the response body remains valid JSON with `{ ok: true, state, nextPath }`
+
+#### Scenario: Account logout response clears the session cookie
+
+- **WHEN** an authenticated visitor submits a logout request to `/api/account/logout`
+- **THEN** the API response carries `Set-Cookie` headers that expire Better Auth's session cookie
+- **AND** the response body remains valid JSON with `{ ok: true, state, nextPath }`
 
 ### Requirement: Domain Profile Creation
 The app SHALL maintain a `user_profiles` row for each signed-up product user.
@@ -259,4 +281,21 @@ The Better Auth HTTP handlers SHALL be mounted inside the Hono app at `/api/auth
 - **WHEN** the repository is inspected after the change is applied
 - **THEN** no Astro page or endpoint exists under `src/pages/api/auth/**`
 - **AND** `rg "/api/auth/" src/pages/api` returns no matches
+
+### Requirement: Redirect After Login Reaches A Real Session
+
+The auth landing form SHALL complete the post-login redirect using a session that the Astro middleware can resolve as `authenticated` on the very next navigation.
+
+#### Scenario: Redirect to /app after login establishes a session
+
+- **WHEN** a successful login response sets the session cookie
+- **AND** the form navigates to the response-supplied `nextPath`
+- **THEN** the Astro middleware resolves the request as `authenticated`
+- **AND** the destination page renders the member shell
+
+#### Scenario: Pending state never persists past a successful redirect
+
+- **WHEN** the form receives a successful login response
+- **THEN** the form renders a brief "redirecting…" terminal state for at most one render tick before navigation
+- **AND** if `window.location.assign` is blocked by the browser, the form exposes a manual "Continue" link that navigates to `nextPath`
 

@@ -30,6 +30,47 @@ export type AuthActionFailure = {
 
 export type AuthActionResult = AuthActionSuccess | AuthActionFailure;
 
+export type ResponseInitHeaders = {
+  headers: Record<string, string | string[]>;
+  status: 200 | 400 | 401 | 403;
+};
+
+function getSetCookieValues(headers: Headers): string[] {
+  const candidate = headers as Headers & { getSetCookie?: () => string[] };
+  if (typeof candidate.getSetCookie === "function") {
+    return candidate.getSetCookie();
+  }
+  const single = headers.get("set-cookie");
+  return single ? [single] : [];
+}
+
+export function headersToResponseInit(
+  headers: Headers | undefined,
+  fallbackStatus: 200 | 400 | 401 | 403 = 200,
+): ResponseInitHeaders {
+  const source = headers ?? new Headers();
+  const record: Record<string, string | string[]> = {};
+  source.forEach((value, key) => {
+    const lower = key.toLowerCase();
+    const existing = record[lower];
+    if (existing === undefined) {
+      record[lower] = value;
+    } else if (Array.isArray(existing)) {
+      existing.push(value);
+    } else {
+      record[lower] = [existing, value];
+    }
+  });
+  const setCookies = getSetCookieValues(headers);
+  if (setCookies.length > 0) {
+    record["set-cookie"] = setCookies.length === 1 ? setCookies[0] : setCookies;
+  }
+  if (!record["content-type"]) {
+    record["content-type"] = "application/json";
+  }
+  return { headers: record, status: fallbackStatus };
+}
+
 function safeErrorState(message = "The request could not be completed.") {
   return {
     ok: false,
@@ -63,17 +104,6 @@ function successState(message: string, nextPath?: string) {
 
 function getName(input: SignupInput) {
   return `${input.firstName} ${input.lastName}`.trim();
-}
-
-function getSetCookieValues(headers: Headers | undefined) {
-  if (!headers) return [];
-
-  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] })
-    .getSetCookie;
-  const values = getSetCookie ? getSetCookie.call(headers) : [];
-  const fallback = headers.get("set-cookie");
-
-  return values.length ? values : fallback ? [fallback] : [];
 }
 
 export function headersWithSetCookieAsCookie(headers: Headers) {
