@@ -41,3 +41,5 @@
 ## 8. Documentation
 
 - [x] 8.1 Update `AGENTS.md` definition-of-done to add the "no file outside `packages/design-system/**` imports `@nextui-org/*` or `@heroui/*`" gate (enforced by `tests/unit/design-system-hero-ui-boundary.test.ts`).
+
+> Iteration-13 e2e obligations: gherkin parity and dev/readyz smoke per `design-system-e2e-tests-collect` (the provider is invisible in the rendered DOM; every themed island must still hydrate).

@@ -23,3 +23,5 @@
 - [ ] 10.6 `bun run check` exits 0 (no consumer broke because every container re-exports the presentational piece under the old name) — fails on a pre-existing missing `scripts/check-viewport-meta.ts` (referenced by `lint:viewport` in the root `check` script); the design-system-relevant gates (atomic-layers, ladle:coverage, test:unit, biome) all pass, and `astro check` passes for both `app` and `landing`.
 - [ ] 10.7 `bun run typecheck:workspaces` exits 0 — fails on a pre-existing `astro:actions`/`astro:middleware` module-resolution error in `packages/app` (requires `astro sync` before `tsc --noEmit`); `bunx astro check` (which runs sync first) passes for both `app` (0 errors, 0 warnings) and `landing` (0 errors, 0 warnings).
 - [x] 10.8 `openspec validate design-system-organisms-layer` passes.
+
+> Iteration-13 e2e obligations: gherkin parity per `design-system-e2e-tests-collect` (call sites are wired by the app-migration proposal; visual regression and dev/readyz smoke not required for the move itself).

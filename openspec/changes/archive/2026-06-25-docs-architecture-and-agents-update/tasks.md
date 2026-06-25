@@ -84,3 +84,11 @@ After these changes, `bun run check` exits 0 and all 30 tasks in
 groups 1–5 are complete. Tasks 4.7, 5.1, 5.2, 5.3 — initially flagged
 as blocked by pre-existing repo state — are resolved by the
 package.json + AGENTS.md updates above.
+
+## 7. Iteration-13 e2e collect citation
+
+The `design-system-e2e-tests-collect` OpenSpec change codifies the iteration-13 end-to-end surface (gherkin parity, visual regression, dev/readyz smoke) and rewires the other iteration-13 refactor proposals to cite it by name. This proposal owns the AGENTS.md surface for that citation so contributors can find the iteration-13 e2e source of truth from the canonical entrypoint, and the revert once iteration 13 archives.
+
+- [ ] 7.1 Add a reference to `design-system-e2e-tests-collect` in `AGENTS.md` §7 (Toolchain commands) so contributors running `bun run test:e2e`, refreshing `tests/visual/**`, or smoke-testing `GET /healthz` / `GET /readyz` find the iteration-13 source of truth from the canonical entrypoint.
+- [ ] 7.2 Add a reference to `design-system-e2e-tests-collect` in `AGENTS.md` §8 (Definition of done) so contributors reviewing any iteration-13 refactor proposal see the consolidation citation alongside the standing end-to-end checks.
+- [ ] 7.3 Add a follow-up task bound to the iteration-13 archive: once `openspec archive` is invoked for every iteration-13 change, remove the references added in 7.1 and 7.2 from `AGENTS.md` §7 / §8 so the canonical entrypoint reverts to the standing end-to-end checks defined by the iteration-09 catalog and `AGENTS.md` §8.

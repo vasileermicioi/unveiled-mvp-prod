@@ -28,3 +28,5 @@
 - [x] 5.3 `bun run test:unit` passes, including the new `landing-design-system-import-boundary.test.ts` and the existing `no-ladle-replica-in-production.test.ts` (the latter still passes because the landing has no other UI import sites).
 - [x] 5.4 `bun run check:styling-ownership` exits 0 (regression guard green; no landing-local UI imports remain).
 - [x] 5.5 `bun run ladle:coverage` exits 0; the Ladle landing page (`packages/design-system/src/pages/landing/landing.page.ladle.tsx`) and the new `landing-template.ladle.tsx` story both render without coverage drift.
+
+> Iteration-13 e2e obligations: gherkin parity, visual regression, and dev/readyz smoke per `design-system-e2e-tests-collect` (the landing Astro wrapper is a non-functional change).

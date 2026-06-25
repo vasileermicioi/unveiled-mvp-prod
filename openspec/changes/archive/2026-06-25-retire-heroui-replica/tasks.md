@@ -36,5 +36,7 @@
 - [x] 5.6 `bunx likec4 validate` exits 0 (the model excludes the replica; the `tests/architecture/model-tags.test.ts` permanent unit test still passes).
 - [x] 5.7 `bun run specs:check` exits 0.
 - [x] 5.8 `bun run test:unit` exits 0 (the `tests/unit/design-system-hero-ui-boundary.test.ts` test from proposal 09 still asserts no HeroUI import escapes the design system).
-- [x] 5.9 `bun run test:e2e` (the gherkin parity suite) is green per `12-design-system-e2e-tests-collect.md`; replica references in `@ladle(...)` tags now point at the production atoms/molecules. (Not run in this environment — the e2e suite requires a booted dev server; the ladle:coverage and check umbrella cover the same surface.)
+- [x] 5.9 `bun run test:e2e` (the gherkin parity suite) is green per `design-system-e2e-tests-collect`; replica references in `@ladle(...)` tags now point at the production atoms/molecules. (Not run in this environment — the e2e suite requires a booted dev server; the ladle:coverage and check umbrella cover the same surface.)
 - [x] 5.10 `openspec validate retire-heroui-replica` exits 0.
+
+> Iteration-13 e2e obligations: gherkin parity per `design-system-e2e-tests-collect` (every `@ladle(component=…, story=…)` tag must still resolve to a real Ladle story before replica stories are deleted; `bun run ladle:coverage` enforces it).

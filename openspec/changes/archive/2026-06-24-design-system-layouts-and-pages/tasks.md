@@ -153,3 +153,5 @@
       renders unchanged.
 - [x] 12.5 Run `bun run check:atomic-layers` directly and confirm
       the four new rules pass.
+
+> Iteration-13 e2e obligations: gherkin parity per `design-system-e2e-tests-collect` (call sites are wired by the app-migration proposal; visual regression and dev/readyz smoke not required for the move itself).

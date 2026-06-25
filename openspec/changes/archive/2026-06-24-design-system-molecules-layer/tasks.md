@@ -72,3 +72,5 @@
 - [x] 8.7 Confirm `bun run check:atomic-layers` exits 0 with the new structure and that adding a sample violator makes the gate fail with a clear message. **Confirmed:** see task 4.4.
 - [x] 8.8 Confirm `packages/design-system/package.json` declares no third-party UI dependency other than HeroUI. The gate's `R-ATOMS-NO-THIRD-PARTY-UI` (atoms) and new `R-MOLECULES-NO-LUCIDE` (molecules) rules cover the per-file guarantee. The package-level guarantee is unchanged from proposal 02 (no `@radix-ui/*`, no `lucide-react` in `dependencies` or `devDependencies`).
 - [x] 8.9 Confirm no file in the design system imports a third-party UI library. Verified by `bun run check:atomic-layers` exit 0.
+
+> Iteration-13 e2e obligations: gherkin parity per `design-system-e2e-tests-collect` (no call-site change; visual regression and dev/readyz smoke not required for the move itself).

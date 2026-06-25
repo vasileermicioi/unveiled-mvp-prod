@@ -34,3 +34,5 @@
 ## 6. Documentation handoff
 
 - [x] 6.1 Record boundary decisions in this change's design.md for proposal 10 to lift into AGENTS.md (do not edit AGENTS.md in this change).
+
+> Iteration-13 e2e obligations: gherkin parity and visual regression per `design-system-e2e-tests-collect` (class names are preserved 1:1; any unexpected visual diff is a refactor bug, not a baseline refresh).
