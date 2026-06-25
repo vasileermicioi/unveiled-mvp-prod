@@ -37,7 +37,7 @@ export const appCopy = {
           password: "Passwort",
           passwordPlaceholder: "••••••••",
           submit: "Mitgliedschaft starten",
-          switchToLogin: "Login",
+          switchToLogin: "Schon Mitglied? Einloggen",
           helper:
             "Sichtbare Validierung und Hinweise entsprechen der Legacy Auth-Fläche.",
         },
@@ -98,6 +98,7 @@ export const appCopy = {
         credits: "Credits",
         login: "Login",
         becomeMember: "Mitglied werden",
+        openApp: "App öffnen",
         openMenu: "Navigationsmenü öffnen",
         closeMenu: "Navigationsmenü schließen",
         menuHeading: "Menü",
@@ -173,6 +174,8 @@ export const appCopy = {
         startMembership: "Mitgliedschaft starten",
         sendReset: "Reset-Link senden",
         forgotPassword: "Passwort vergessen?",
+        switchToLogin: "Schon Mitglied? Einloggen",
+        switchToSignup: "Noch kein Mitglied? Mitglied werden",
       },
       discover: {
         included: "Inklusive",
@@ -541,7 +544,7 @@ export const appCopy = {
           password: "Password",
           passwordPlaceholder: "••••••••",
           submit: "Start membership",
-          switchToLogin: "Login",
+          switchToLogin: "Already a member? Log in",
           helper:
             "Visible validation and notice panels match the legacy auth surface.",
         },
@@ -602,6 +605,7 @@ export const appCopy = {
         credits: "credits",
         login: "Login",
         becomeMember: "Become a member",
+        openApp: "Open app",
         openMenu: "Open navigation menu",
         closeMenu: "Close navigation menu",
         menuHeading: "Menu",
@@ -677,6 +681,8 @@ export const appCopy = {
         startMembership: "Start membership",
         sendReset: "Send reset link",
         forgotPassword: "Forgot password?",
+        switchToLogin: "Already a member? Log in",
+        switchToSignup: "Become a member",
       },
       discover: {
         included: "What's included",

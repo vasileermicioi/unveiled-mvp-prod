@@ -2,7 +2,7 @@
 import { VisualSystemApp } from "~/components/unveiled/visual-system-app";
 import BaseLayout from "~/layouts/base-layout.astro";
 import { createShellFromViewer } from "~/lib/auth-display";
-import { getViewer } from "~/lib/auth-profile";
+import { getAuthRedirectPath, getViewer } from "~/lib/auth-profile";
 import { loadPublicDiscoveryData } from "~/lib/data-access/loaders";
 import { createPublicInitialSurfaceData } from "~/lib/data-access/surface-data";
 import { normalizeLanguage } from "~/lib/i18n";
@@ -12,6 +12,13 @@ const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
 
 const viewer = await getViewer(Astro.request, { guestLanguage: lang });
 viewer.language = lang;
+
+if (viewer.kind === "authenticated") {
+  const redirectParam = Astro.url.searchParams.get("redirect");
+  const safeRedirect = parseSafeRedirectTarget(redirectParam, lang);
+  const nextPath = getAuthRedirectPath(viewer, safeRedirect?.path ?? null);
+  return Astro.redirect(`/${lang.toLowerCase()}${nextPath}`);
+}
 
 const redirectParam = Astro.url.searchParams.get("redirect");
 const safeRedirect = parseSafeRedirectTarget(redirectParam, lang);

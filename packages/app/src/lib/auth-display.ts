@@ -146,7 +146,12 @@ export function createShellFromViewer(
               : `${prefix}${routePathFor("membership")}`,
           variant: activeItem === "membership" ? "secondary" : "primary",
         }
-      : undefined,
+      : {
+          id: "open-app",
+          label: shellNav.openApp,
+          targetHref: `${prefix}${routePathFor(viewer.viewerContext)}`,
+          variant: "primary",
+        },
     savedCount: viewer.kind === "authenticated" ? viewer.savedCount : undefined,
     creditCount: isMember ? viewer.credits : undefined,
     showProfile: viewer.kind === "authenticated" && viewer.showProfile,

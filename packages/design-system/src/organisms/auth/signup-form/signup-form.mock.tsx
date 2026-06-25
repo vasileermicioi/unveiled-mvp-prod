@@ -19,6 +19,7 @@ export function makeMockSignupFormProps(
     passwordPlaceholder: "••••••••",
     submit: "Start membership",
     helper: "Membership unlocks curated invitations to Berlin's live events.",
+    switchToLogin: "Already a member? Log in",
   };
   const values: SignupFormValues = {
     firstName: "",
