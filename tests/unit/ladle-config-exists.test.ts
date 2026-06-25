@@ -106,20 +106,6 @@ describe("packages/design-system/src/atoms/button/button.tsx loading-state spinn
   });
 });
 
-describe("packages/design-system/src/heroui-replica/HeroButton.ladle.tsx Loading story", () => {
-  const LADLE_PATH = resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    "../../packages/design-system/src/heroui-replica/HeroButton.ladle.tsx",
-  );
-
-  it("declares explicit horizontal padding so the spinner never overlaps the label", () => {
-    const source = readFileSync(LADLE_PATH, "utf8");
-    // The Loading story's <Button> should carry px-5 py-3 (matches the design-system
-    // Button's "default" size so the spinner-to-label gap is consistent).
-    expect(source).toMatch(/Loading[\s\S]{0,200}px-5\s+py-3/);
-  });
-});
-
 describe("@unveiled/design-system global.css @source directives", () => {
   const GLOBAL_CSS_PATH = resolve(
     dirname(fileURLToPath(import.meta.url)),

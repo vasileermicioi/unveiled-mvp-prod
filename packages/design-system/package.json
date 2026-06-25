@@ -14,7 +14,6 @@
     "ladle:coverage": "bun scripts/coverage.ts",
     "check:atomic-layers": "bun scripts/check-atomic-layers.ts",
     "check:styling-ownership": "bun scripts/check-styling-ownership.ts",
-    "heroui-design-system-replica:check": "bun scripts/check-heroui-design-system-replica.ts",
     "tokens:gen": "bun scripts/generate-design-tokens.ts",
     "tokens:check": "bun scripts/check-design-tokens.ts"
   },
@@ -33,7 +32,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./heroui-replica": "./src/heroui-replica/index.ts",
     "./layouts/app-layout": "./src/layouts/app-layout/index.ts",
     "./layouts/landing-layout": "./src/layouts/landing-layout/index.ts",
     "./lib/*": "./src/lib/*.ts",
