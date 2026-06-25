@@ -1,0 +1,93 @@
+@theme {
+  --animate-spinner-ease-spin: spinner-spin 0.8s ease infinite;
+  --animate-spinner-linear-spin: spinner-spin 0.8s linear infinite;
+  --color-brand-yellow: var(--unveiled-color-brand-yellow);
+  --color-brand-cream: var(--unveiled-color-brand-cream);
+  --color-brand-grey: var(--unveiled-color-brand-grey);
+  --color-brand-dark: var(--unveiled-color-brand-dark);
+  --color-brand-white: var(--unveiled-color-brand-white);
+  --color-brand-error: var(--unveiled-color-brand-error);
+  --color-brand-success: var(--unveiled-color-brand-success);
+  --color-status-success: var(--unveiled-color-status-success);
+  --color-status-error: var(--unveiled-color-status-error);
+  --color-status-warning: var(--unveiled-color-status-warning);
+  --color-semantic-background: var(--unveiled-color-semantic-background);
+  --color-semantic-foreground: var(--unveiled-color-semantic-foreground);
+  --color-semantic-card: var(--unveiled-color-semantic-card);
+  --color-semantic-card-foreground: var(
+    --unveiled-color-semantic-card-foreground
+  );
+  --color-semantic-popover: var(--unveiled-color-semantic-popover);
+  --color-semantic-popover-foreground: var(
+    --unveiled-color-semantic-popover-foreground
+  );
+  --color-semantic-primary: var(--unveiled-color-semantic-primary);
+  --color-semantic-primary-foreground: var(
+    --unveiled-color-semantic-primary-foreground
+  );
+  --color-semantic-secondary: var(--unveiled-color-semantic-secondary);
+  --color-semantic-secondary-foreground: var(
+    --unveiled-color-semantic-secondary-foreground
+  );
+  --color-semantic-muted: var(--unveiled-color-semantic-muted);
+  --color-semantic-muted-foreground: var(
+    --unveiled-color-semantic-muted-foreground
+  );
+  --color-semantic-accent: var(--unveiled-color-semantic-accent);
+  --color-semantic-accent-foreground: var(
+    --unveiled-color-semantic-accent-foreground
+  );
+  --color-semantic-destructive: var(--unveiled-color-semantic-destructive);
+  --color-semantic-border: var(--unveiled-color-semantic-border);
+  --color-semantic-input: var(--unveiled-color-semantic-input);
+  --color-semantic-ring: var(--unveiled-color-semantic-ring);
+  --font-display: var(--unveiled-typography-font-family-display);
+  --font-body: var(--unveiled-typography-font-family-body);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --text-xs: var(--unveiled-typography-font-size-xs);
+  --text-sm: var(--unveiled-typography-font-size-sm);
+  --text-base: var(--unveiled-typography-font-size-base);
+  --text-lg: var(--unveiled-typography-font-size-lg);
+  --text-xl: var(--unveiled-typography-font-size-xl);
+  --text-2xl: var(--unveiled-typography-font-size-2xl);
+  --text-3xl: var(--unveiled-typography-font-size-3xl);
+  --text-4xl: var(--unveiled-typography-font-size-4xl);
+  --text-6xl: var(--unveiled-typography-font-size-6xl);
+  --text-headline-md: var(--unveiled-typography-font-size-headline-md);
+  --text-headline-lg: var(--unveiled-typography-font-size-headline-lg);
+  --text-headline-xl: var(--unveiled-typography-font-size-headline-xl);
+  --shadow-unveiled: 8px 8px 0 0 var(--unveiled-color-brand-dark);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-grey: var(--brand-grey);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-white: var(--brand-white);
+  --color-brand-error: var(--brand-error);
+  --color-brand-success: var(--brand-success);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+}

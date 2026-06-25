@@ -154,18 +154,18 @@ export function OnboardingPage() {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="form-shell">
             <h3 className="unveiled-meta">{t.ageLabel}</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid-cols-2 ui-b8d98b91">
               {(["18-25", "26-35", "36-50", "50+"] as const).map((age) => (
                 <button
                   key={age}
                   type="button"
                   className={cn(
-                    "border-4 border-brand-dark p-6 font-black text-sm transition-all uppercase tracking-widest",
+                    "ui-27cfa296",
                     ageGroup === age
-                      ? "bg-brand-dark text-white"
-                      : "bg-white border-brand-dark text-brand-dark hover:bg-brand-yellow",
+                      ? "ui-806c1ffa"
+                      : "hover:bg-brand-yellow ui-43236367",
                   )}
                   onClick={() => setAgeGroup(age)}
                 >
@@ -177,13 +177,13 @@ export function OnboardingPage() {
         );
       case 2:
         return (
-          <div className="space-y-8">
+          <div className="ui-0dcc1c9a">
             <div>
-              <h3 className="unveiled-meta mb-3 flex items-center gap-2">
-                <Heart className="size-4 fill-brand-dark text-brand-dark" />
+              <h3 className="unveiled-meta ui-e2be8f63">
+                <Heart className="ui-39ebf323" />
                 {t.interestLabel}
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="app-page-toolbar">
                 {onboardingPreferenceOptions.interests.map((opt) => {
                   const selected = preferences.interests.includes(opt);
                   return (
@@ -191,17 +191,17 @@ export function OnboardingPage() {
                       key={opt}
                       type="button"
                       className={cn(
-                        "inline-flex items-center gap-1 border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        "ui-0bfc9c2a",
                         selected
-                          ? "bg-brand-yellow text-brand-dark"
-                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                          ? "ui-339fce45"
+                          : "hover:opacity-100 ui-a251db21",
                       )}
                       onClick={() => togglePreference("interests", opt)}
                     >
                       <Heart
                         className={cn(
-                          "size-3",
-                          selected ? "fill-brand-dark" : "fill-transparent",
+                          "ui-5e34f531",
+                          selected ? "ui-53125860" : "ui-f854ac8d",
                         )}
                       />
                       {opt}
@@ -211,8 +211,8 @@ export function OnboardingPage() {
               </div>
             </div>
             <div>
-              <h3 className="unveiled-meta mb-3">{t.moodLabel}</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 className="unveiled-meta ui-100ee6f9">{t.moodLabel}</h3>
+              <div className="app-page-toolbar">
                 {onboardingPreferenceOptions.moods.map((opt) => {
                   const selected = preferences.moods.includes(opt);
                   return (
@@ -220,10 +220,10 @@ export function OnboardingPage() {
                       key={opt}
                       type="button"
                       className={cn(
-                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        "ui-3d234ff4",
                         selected
-                          ? "bg-brand-yellow text-brand-dark"
-                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                          ? "ui-339fce45"
+                          : "hover:opacity-100 ui-a251db21",
                       )}
                       onClick={() => togglePreference("moods", opt)}
                     >
@@ -237,10 +237,10 @@ export function OnboardingPage() {
         );
       case 3:
         return (
-          <div className="space-y-8">
+          <div className="ui-0dcc1c9a">
             <div>
-              <h3 className="unveiled-meta mb-3">{t.districtLabel}</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 className="unveiled-meta ui-100ee6f9">{t.districtLabel}</h3>
+              <div className="app-page-toolbar">
                 {onboardingPreferenceOptions.districts.map((opt) => {
                   const selected = preferences.districts.includes(opt);
                   return (
@@ -248,10 +248,10 @@ export function OnboardingPage() {
                       key={opt}
                       type="button"
                       className={cn(
-                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        "ui-3d234ff4",
                         selected
-                          ? "bg-brand-yellow text-brand-dark"
-                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                          ? "ui-339fce45"
+                          : "hover:opacity-100 ui-a251db21",
                       )}
                       onClick={() => togglePreference("districts", opt)}
                     >
@@ -261,8 +261,8 @@ export function OnboardingPage() {
                 })}
               </div>
             </div>
-            <div className="border-4 border-brand-dark bg-brand-cream p-5">
-              <div className="flex justify-between items-center mb-4">
+            <div className="ui-332bf778">
+              <div className="ui-bfa969af">
                 <h3 className="unveiled-meta">{t.radiusLabel}</h3>
                 <Badge tone="yellow">
                   {maxDistance} {t.km}
@@ -274,17 +274,17 @@ export function OnboardingPage() {
                 max="25"
                 value={maxDistance}
                 onChange={(e) => setMaxDistance(parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-brand-grey border-2 border-brand-dark rounded-lg appearance-none cursor-pointer accent-brand-dark"
+                className="appearance-none ui-0a6e9a0a"
               />
             </div>
           </div>
         );
       case 4:
         return (
-          <div className="space-y-8">
+          <div className="ui-0dcc1c9a">
             <div>
-              <h3 className="unveiled-meta mb-3">{t.timingLabel}</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 className="unveiled-meta ui-100ee6f9">{t.timingLabel}</h3>
+              <div className="app-page-toolbar">
                 {onboardingPreferenceOptions.timing.map((opt) => {
                   const selected = preferences.timing.includes(opt);
                   return (
@@ -292,10 +292,10 @@ export function OnboardingPage() {
                       key={opt}
                       type="button"
                       className={cn(
-                        "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        "ui-3d234ff4",
                         selected
-                          ? "bg-brand-yellow text-brand-dark"
-                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                          ? "ui-339fce45"
+                          : "hover:opacity-100 ui-a251db21",
                       )}
                       onClick={() => togglePreference("timing", opt)}
                     >
@@ -307,8 +307,8 @@ export function OnboardingPage() {
             </div>
 
             <div>
-              <h3 className="unveiled-meta mb-3">{t.daysLabel}</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 className="unveiled-meta ui-100ee6f9">{t.daysLabel}</h3>
+              <div className="app-page-toolbar">
                 {onboardingPreferenceOptions.preferredDays.map((opt) => {
                   const selected = preferences.preferredDays.includes(opt);
                   return (
@@ -316,10 +316,10 @@ export function OnboardingPage() {
                       key={opt}
                       type="button"
                       className={cn(
-                        "w-10 h-10 border-2 border-brand-dark flex items-center justify-center text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                        "ui-91da8c5b",
                         selected
-                          ? "bg-brand-yellow text-brand-dark"
-                          : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                          ? "ui-339fce45"
+                          : "hover:opacity-100 ui-a251db21",
                       )}
                       onClick={() => togglePreference("preferredDays", opt)}
                     >
@@ -330,11 +330,13 @@ export function OnboardingPage() {
               </div>
             </div>
 
-            <div className="border-t-2 border-brand-dark/20 pt-6">
-              <div className="flex flex-col sm:flex-row gap-6">
-                <div className="flex-1">
-                  <h3 className="unveiled-meta mb-3">{t.languagePrefLabel}</h3>
-                  <div className="flex gap-2">
+            <div className="ui-381ac7ab">
+              <div className="ui-f446f70f">
+                <div className="ui-7bd5bab6">
+                  <h3 className="unveiled-meta ui-100ee6f9">
+                    {t.languagePrefLabel}
+                  </h3>
+                  <div className="ui-c354e22d">
                     {onboardingPreferenceOptions.preferredLanguages.map(
                       (opt) => {
                         const selected =
@@ -344,10 +346,10 @@ export function OnboardingPage() {
                             key={opt}
                             type="button"
                             className={cn(
-                              "inline-flex items-center border-2 border-brand-dark px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-colors",
+                              "ui-3d234ff4",
                               selected
-                                ? "bg-brand-yellow text-brand-dark"
-                                : "bg-white text-brand-dark opacity-65 hover:opacity-100",
+                                ? "ui-339fce45"
+                                : "hover:opacity-100 ui-a251db21",
                             )}
                             onClick={() =>
                               togglePreference("preferredLanguages", opt)
@@ -361,22 +363,22 @@ export function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-brand-cream border-2 border-brand-dark">
-                  <span className="unveiled-meta mr-4">
+                <div className="ui-8c9b1785">
+                  <span className="unveiled-meta ui-8fb8f1e3">
                     {t.accessibilityLabel}
                   </span>
                   <button
                     type="button"
                     onClick={() => setAccessibility(!accessibility)}
                     className={cn(
-                      "w-12 h-6 rounded-full p-1 transition-all border-2 border-brand-dark relative",
-                      accessibility ? "bg-brand-yellow" : "bg-brand-grey",
+                      "ui-aa27266c",
+                      accessibility ? "ui-4d8a42b1" : "ui-118d27de",
                     )}
                   >
                     <div
                       className={cn(
-                        "w-3 h-3 bg-brand-dark rounded-full transition-all absolute top-1",
-                        accessibility ? "right-1.5" : "left-1.5",
+                        "ui-754fe500",
+                        accessibility ? "ui-89d755d9" : "ui-a99fedaa",
                       )}
                     />
                   </button>
@@ -391,46 +393,38 @@ export function OnboardingPage() {
   };
 
   return (
-    <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
-      <Panel tone="white" className="space-y-6">
+    <div className="ui-9eecda81">
+      <Panel tone="white" className="form-shell">
         <Badge tone="yellow">{copy.badge}</Badge>
         <h1 className="headline-lg">{t.title}</h1>
-        <p className="text-sm font-bold uppercase tracking-widest opacity-55">
-          {step === 1 ? t.ageSubtitle : t.subtitle}
-        </p>
+        <p className="ui-6183b14a">{step === 1 ? t.ageSubtitle : t.subtitle}</p>
 
         {/* Progress Bar */}
-        <div className="pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-55">
-              Step: {step}/4
-            </span>
-            <span className="text-[10px] font-black opacity-40">
-              {Math.round((step / 4) * 100)}%
-            </span>
+        <div className="ui-5ca89c87">
+          <div className="ui-d771bb33">
+            <span className="ui-51a57728">Step: {step}/4</span>
+            <span className="ui-5b44b59f">{Math.round((step / 4) * 100)}%</span>
           </div>
-          <div className="h-2 w-full bg-brand-grey border border-brand-dark overflow-hidden">
+          <div className="ui-bd2df8e4">
             <div
-              className="h-full bg-brand-yellow transition-all duration-500"
+              className="ui-d14b4dea"
               style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
 
         {message !== copy.message ? (
-          <p className="mt-4 text-xs font-bold uppercase tracking-widest text-[#b21d17]">
-            {message}
-          </p>
+          <p className="ui-fc02f185">{message}</p>
         ) : null}
       </Panel>
 
-      <Panel tone="dark" className="space-y-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <p className="unveiled-meta opacity-55">{copy.preview}</p>
+      <Panel tone="dark" className="ui-9bebec22">
+        <div className="form-shell">
+          <p className="unveiled-meta ui-eec042e4">{copy.preview}</p>
           {renderStep()}
         </div>
 
-        <div className="mt-8 flex gap-3">
+        <div className="ui-f3f48e34">
           {step > 1 && (
             <Button
               type="button"
@@ -443,7 +437,7 @@ export function OnboardingPage() {
           <Button
             type="button"
             variant="yellow"
-            className="flex-1"
+            className="ui-7bd5bab6"
             loading={submitting}
             onClick={() => {
               if (step < 4) {
@@ -458,7 +452,7 @@ export function OnboardingPage() {
               : step === 1 && ageGroup === ""
                 ? t.skip
                 : t.next}
-            <ArrowRight className="size-4" />
+            <ArrowRight className="ui-100c22d5" />
           </Button>
 
           {step < 4 && (
@@ -487,15 +481,13 @@ export function MembershipPage() {
   const [checkoutPromoCode, setCheckoutPromoCode] = useState("");
 
   return (
-    <div className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
-      <Panel tone="white" className="space-y-6">
+    <div className="ui-9eecda81">
+      <Panel tone="white" className="form-shell">
         <Badge tone="yellow">{copy.badge}</Badge>
         <div>
           <h1 className="headline-lg">{copy.plan}</h1>
-          <p className="mt-3 text-4xl font-black">{copy.price}</p>
-          <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
-            {copy.body}
-          </p>
+          <p className="ui-427f05bd">{copy.price}</p>
+          <p className="ui-91a6d00c">{copy.body}</p>
         </div>
         <Badge
           tone={
@@ -507,10 +499,10 @@ export function MembershipPage() {
           {live.billingDisplay.subscriptionStatusLabel}
         </Badge>
         <Divider />
-        <div className="grid gap-3">
+        <div className="ui-c7f94043">
           {copy.perks.map((perk) => (
-            <Badge key={perk} tone="white" className="justify-start">
-              <Check className="size-3" />
+            <Badge key={perk} tone="white" className="ui-c62ec162">
+              <Check className="ui-5e34f531" />
               {perk}
             </Badge>
           ))}
@@ -606,7 +598,7 @@ export function MemberFeed({
   }, [mapOpen, selectedEvent]);
 
   return (
-    <div className="space-y-6">
+    <div className="form-shell">
       <MemberFeedHeaderPresentational
         badge={copy.member.feedBadge}
         title={copy.member.feedTitle}
@@ -650,8 +642,8 @@ export function MemberFeed({
           }
         }}
       >
-        <div className="space-y-10 py-8">
-          <div className="grid gap-5 lg:grid-cols-3">
+        <div className="ui-09729a1a">
+          <div className="ui-fde9ee23">
             {visible.map((event) => (
               <EventCard
                 key={event.id}
@@ -711,7 +703,7 @@ export function MemberFeed({
           {live.totalCount &&
           live.pageSize &&
           live.totalCount > live.pageSize ? (
-            <div className="flex items-center justify-between border-t-2 border-brand-dark pt-6">
+            <div className="ui-21e8ca97">
               <Button
                 type="button"
                 variant="secondary"
@@ -724,10 +716,10 @@ export function MemberFeed({
                   });
                 }}
               >
-                <ArrowLeft className="mr-2 size-4" />
+                <ArrowLeft className="ui-c9577821" />
                 {selectedLanguage === "DE" ? "Zurück" : "Previous"}
               </Button>
-              <span className="text-xs font-black uppercase tracking-widest opacity-60">
+              <span className="ui-dd5eece2">
                 {selectedLanguage === "DE" ? "Seite" : "Page"} {live.page} /{" "}
                 {Math.ceil(live.totalCount / live.pageSize)}
               </span>
@@ -744,7 +736,7 @@ export function MemberFeed({
                 }}
               >
                 {selectedLanguage === "DE" ? "Weiter" : "Next"}
-                <ArrowRight className="ml-2 size-4" />
+                <ArrowRight className="ui-be66dea2" />
               </Button>
             </div>
           ) : null}
@@ -768,15 +760,15 @@ export function BookingsPage() {
   const live = useLiveData();
 
   return (
-    <div className="space-y-8 py-8">
+    <div className="ui-e400b83c">
       <Panel tone="white">
         <Badge tone="yellow">{copy.bookingsBadge}</Badge>
-        <h1 className="headline-lg mt-5">{copy.bookingsTitle}</h1>
+        <h1 className="headline-lg ui-71dd032f">{copy.bookingsTitle}</h1>
       </Panel>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="ui-9471e6c9">
         {live.bookings.map((booking) => (
-          <Card key={booking.id} className="p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <Card key={booking.id} className="ui-c4328367">
+            <div className="ui-fbec7f22">
               <div>
                 <Badge
                   tone={
@@ -785,10 +777,8 @@ export function BookingsPage() {
                 >
                   {booking.statusLabel}
                 </Badge>
-                <h2 className="mt-4 font-display text-4xl font-black uppercase leading-none">
-                  {booking.eventTitle}
-                </h2>
-                <p className="mt-2 unveiled-meta opacity-45">
+                <h2 className="ui-9d5b5271">{booking.eventTitle}</h2>
+                <p className="unveiled-meta ui-064a4509">
                   {booking.partnerName}
                 </p>
               </div>
@@ -796,22 +786,16 @@ export function BookingsPage() {
                 {booking.ticketCount} {copy.tickets}
               </Badge>
             </div>
-            <Divider className="my-6" />
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <Divider className="ui-5e36d9e2" />
+            <div className="ui-204f9214">
               <div>
-                <p className="unveiled-meta opacity-45">{booking.dateLabel}</p>
-                <p className="mt-1 text-xs font-bold uppercase opacity-45">
-                  {booking.eventAddress}
-                </p>
-                <p className="font-display text-3xl font-black uppercase">
-                  {booking.redemptionCode}
-                </p>
+                <p className="unveiled-meta ui-378d3a2b">{booking.dateLabel}</p>
+                <p className="ui-e844b9ae">{booking.eventAddress}</p>
+                <p className="ui-183f0876">{booking.redemptionCode}</p>
                 {booking.redemptionUrl ? (
-                  <p className="mt-2 break-all text-xs font-bold uppercase opacity-45">
-                    {booking.redemptionUrl}
-                  </p>
+                  <p className="ui-509b567d">{booking.redemptionUrl}</p>
                 ) : null}
-                <p className="mt-2 text-xs font-bold uppercase opacity-45">
+                <p className="ui-8505a5bf">
                   {booking.totalCredits} {copy.creditsSpent}
                 </p>
               </div>
@@ -826,23 +810,21 @@ export function BookingsPage() {
           </Card>
         ))}
       </div>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="ui-9471e6c9">
         {live.waitlistEntries.map((entry) => (
-          <Card key={entry.id} className="p-6">
+          <Card key={entry.id} className="ui-c4328367">
             <Badge tone="yellow">{entry.statusLabel}</Badge>
-            <p className="headline-md mt-4">{entry.eventTitle}</p>
-            <p className="mt-2 text-sm font-bold opacity-60">
+            <p className="headline-md ui-459fecc1">{entry.eventTitle}</p>
+            <p className="ui-227e60d5">
               {entry.dateLabel} {" // "} {entry.eventAddress}
             </p>
-            <p className="unveiled-meta mt-5 opacity-45">
-              {entry.createdLabel}
-            </p>
+            <p className="unveiled-meta ui-593a5608">{entry.createdLabel}</p>
           </Card>
         ))}
       </div>
       <Panel tone="white">
         <Badge tone="yellow">{copy.creditLedger}</Badge>
-        <div className="mt-5">
+        <div className="ui-a752cdc8">
           <CreditLedgerViewTableSemantics
             entries={live.creditLedgerEntries}
             noHistoryLabel={copy.creditLedger}
@@ -863,11 +845,8 @@ export function BookingsPage() {
           }
         />
       ) : null}
-      <Panel
-        tone="dark"
-        className="flex flex-wrap items-center justify-between gap-4"
-      >
-        <span className="unveiled-meta opacity-60">{copy.ticketQuestion}</span>
+      <Panel tone="dark" className="ui-55efb4da">
+        <span className="unveiled-meta ui-603a84e4">{copy.ticketQuestion}</span>
         <Button type="button" variant="yellow">
           support@unveiled.berlin
           <Mail />
@@ -976,17 +955,12 @@ export function ProfilePage() {
   }, [stripeInstance, selectedPaymentMethod]);
 
   return (
-    <div className="space-y-8 py-8">
-      <Panel
-        tone="white"
-        className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end"
-      >
+    <div className="ui-e400b83c">
+      <Panel tone="white" className="ui-d79a7edd">
         <div>
           <Badge tone="success">{live.profile.membershipStatus}</Badge>
-          <h1 className="headline-lg mt-5">{live.profile.name}</h1>
-          <p className="mt-2 text-sm font-black uppercase tracking-widest opacity-55">
-            {live.profile.email}
-          </p>
+          <h1 className="headline-lg ui-71dd032f">{live.profile.name}</h1>
+          <p className="ui-ea5bc96e">{live.profile.email}</p>
         </div>
         <StatPanel
           label={copy.wallet}
@@ -994,7 +968,7 @@ export function ProfilePage() {
           caption={`${live.profile.credits} credits`}
         />
       </Panel>
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="ui-fde9ee23">
         <Panel
           tone="cream"
           shadow={false}
@@ -1019,32 +993,30 @@ export function ProfilePage() {
           }}
         >
           <p className="unveiled-meta">{copy.identity}</p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
-            {profileMessage}
-          </p>
-          <Field label={copy.name} className="mt-5">
+          <p className="ui-9c3ea6ed">{profileMessage}</p>
+          <Field label={copy.name} className="ui-a752cdc8">
             <TextInput name="firstName" defaultValue={live.profile.firstName} />
           </Field>
-          <Field label={copy.lastName} className="mt-4">
+          <Field label={copy.lastName} className="ui-dc1d1f5a">
             <TextInput name="lastName" defaultValue={live.profile.lastName} />
           </Field>
-          <Field label={copy.email} className="mt-4">
+          <Field label={copy.email} className="ui-dc1d1f5a">
             <TextInput defaultValue={live.profile.email} disabled />
           </Field>
-          <Field label={copy.billingAddress} className="mt-4">
+          <Field label={copy.billingAddress} className="ui-dc1d1f5a">
             <TextInput
               name="billingAddress"
               defaultValue={live.profile.billingAddress}
               placeholder="Berlin"
             />
           </Field>
-          <Field label={copy.language} className="mt-4">
+          <Field label={copy.language} className="ui-dc1d1f5a">
             <SelectInput name="language" defaultValue={live.profile.language}>
               <option value="DE">DE</option>
               <option value="EN">EN</option>
             </SelectInput>
           </Field>
-          <label className="mt-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
+          <label className="ui-726f6a6a">
             <input
               name="newsletterOptIn"
               type="checkbox"
@@ -1052,13 +1024,10 @@ export function ProfilePage() {
             />
             {copy.newsletter}
           </label>
-          <a
-            className="mt-4 block text-[10px] font-black uppercase tracking-widest underline"
-            href="/api/account/password-recovery"
-          >
+          <a className="ui-8595fd7b" href="/api/account/password-recovery">
             {copy.passwordRecovery}
           </a>
-          <Button type="submit" className="mt-5" variant="secondary">
+          <Button type="submit" className="ui-a752cdc8" variant="secondary">
             {copy.saveProfile}
           </Button>
         </Panel>
@@ -1085,45 +1054,45 @@ export function ProfilePage() {
           }}
         >
           <p className="unveiled-meta">{copy.billing}</p>
-          <p className="headline-md mt-5">{live.billingDisplay.planLabel}</p>
-          <p className="mt-3 text-sm font-bold uppercase tracking-widest opacity-55">
+          <p className="headline-md ui-54e0c144">
+            {live.billingDisplay.planLabel}
+          </p>
+          <p className="ui-91a6d00c">
             {live.billingDisplay.planPriceLabel} {" // "}
             {live.profile.monthlyCredits} {copy.creditsMonthly}
           </p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
+          <p className="ui-9c3ea6ed">
             {live.billingDisplay.subscriptionStatusLabel} {" // "}
             {live.billingDisplay.paymentMethodDisplay} {" // "}
             {copy.renews} {live.billingDisplay.nextBillDateLabel}
           </p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-55">
-            {membershipMessage}
-          </p>
-          <div className="mt-5 space-y-4">
+          <p className="ui-9c3ea6ed">{membershipMessage}</p>
+          <div className="ui-594b0628">
             <div>
-              <p className="unveiled-meta opacity-55">Express</p>
+              <p className="unveiled-meta ui-eec042e4">Express</p>
               <button
                 type="button"
                 className={cn(
-                  "mt-2 flex w-full items-center justify-center gap-2 border-4 border-brand-dark px-4 py-4 text-sm font-black uppercase tracking-widest",
+                  "ui-58f6943a",
                   selectedPaymentMethod === "EXPRESS"
-                    ? "bg-brand-dark text-white"
-                    : "bg-brand-yellow text-brand-dark",
+                    ? "ui-806c1ffa"
+                    : "ui-339fce45",
                 )}
                 onClick={() => setSelectedPaymentMethod("EXPRESS")}
               >
-                <CreditCard className="size-4" />
+                <CreditCard className="ui-100c22d5" />
                 Apple Pay / Google Pay
               </button>
             </div>
             <div>
-              <p className="unveiled-meta opacity-55">PayPal</p>
+              <p className="unveiled-meta ui-eec042e4">PayPal</p>
               <button
                 type="button"
                 className={cn(
-                  "mt-2 flex w-full items-center justify-center gap-2 border-4 border-brand-dark px-4 py-3 text-sm font-black uppercase tracking-widest",
+                  "ui-f737047d",
                   selectedPaymentMethod === "PAYPAL"
-                    ? "bg-brand-dark text-white"
-                    : "bg-white text-brand-dark",
+                    ? "ui-806c1ffa"
+                    : "ui-33aa3bf7",
                 )}
                 onClick={() => setSelectedPaymentMethod("PAYPAL")}
               >
@@ -1131,17 +1100,17 @@ export function ProfilePage() {
               </button>
             </div>
             <div>
-              <p className="unveiled-meta opacity-55">{copy.standard}</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <p className="unveiled-meta ui-eec042e4">{copy.standard}</p>
+              <div className="grid-cols-2 ui-f768e37c">
                 {(["CARD", "SEPA"] as const).map((method) => (
                   <button
                     key={method}
                     type="button"
                     className={cn(
-                      "border-4 border-brand-dark px-3 py-3 text-[10px] font-black uppercase tracking-widest",
+                      "ui-803fe62e",
                       selectedPaymentMethod === method
-                        ? "bg-brand-dark text-white"
-                        : "bg-brand-grey text-brand-dark",
+                        ? "ui-806c1ffa"
+                        : "ui-5b1dce35",
                     )}
                     onClick={() => setSelectedPaymentMethod(method)}
                   >
@@ -1150,44 +1119,29 @@ export function ProfilePage() {
                 ))}
               </div>
               {selectedPaymentMethod === "CARD" ? (
-                <Panel
-                  tone="cream"
-                  shadow={false}
-                  className="mt-3 p-4 space-y-4 border-4 border-brand-dark shadow-[4px_4px_0_0_#202621]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      {copy.cardDetails}
-                    </span>
-                    <div className="flex gap-1.5">
-                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
-                        Visa
-                      </span>
-                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
-                        MC
-                      </span>
-                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
-                        Amex
-                      </span>
+                <Panel tone="cream" shadow={false} className="ui-a0bea5c6">
+                  <div className="ui-bd0c0617">
+                    <span className="ui-b3c584cf">{copy.cardDetails}</span>
+                    <div className="ui-3466874b">
+                      <span className="ui-b9bb0673">Visa</span>
+                      <span className="ui-b9bb0673">MC</span>
+                      <span className="ui-b9bb0673">Amex</span>
                     </div>
                   </div>
-                  <div className="border-4 border-brand-dark bg-white p-3 shadow-[4px_4px_0_0_#202621]">
-                    <div
-                      id="stripe-card-element"
-                      className="min-h-[40px] w-full"
-                    />
+                  <div className="ui-2bf9952e">
+                    <div id="stripe-card-element" className="ui-727a96dd" />
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="ui-4696c3a8">
                     <input
                       type="checkbox"
                       id="sync-billing-address"
                       name="syncBillingAddress"
                       defaultChecked
-                      className="size-4 accent-brand-dark"
+                      className="ui-4af27ddf"
                     />
                     <label
                       htmlFor="sync-billing-address"
-                      className="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-75"
+                      className="ui-404be656"
                     >
                       {copy.billingSync}
                     </label>
@@ -1195,41 +1149,28 @@ export function ProfilePage() {
                 </Panel>
               ) : null}
               {selectedPaymentMethod === "SEPA" ? (
-                <Panel
-                  tone="cream"
-                  shadow={false}
-                  className="mt-3 p-4 space-y-4 border-4 border-brand-dark shadow-[4px_4px_0_0_#202621]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      {copy.sepaDetails}
-                    </span>
-                    <div className="flex gap-1.5">
-                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
-                        SEPA
-                      </span>
-                      <span className="px-1.5 py-0.5 border-2 border-brand-dark bg-white text-[8px] font-black uppercase">
-                        IBAN
-                      </span>
+                <Panel tone="cream" shadow={false} className="ui-a0bea5c6">
+                  <div className="ui-bd0c0617">
+                    <span className="ui-b3c584cf">{copy.sepaDetails}</span>
+                    <div className="ui-3466874b">
+                      <span className="ui-b9bb0673">SEPA</span>
+                      <span className="ui-b9bb0673">IBAN</span>
                     </div>
                   </div>
-                  <div className="border-4 border-brand-dark bg-white p-3 shadow-[4px_4px_0_0_#202621]">
-                    <div
-                      id="stripe-sepa-element"
-                      className="min-h-[40px] w-full"
-                    />
+                  <div className="ui-2bf9952e">
+                    <div id="stripe-sepa-element" className="ui-727a96dd" />
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="ui-4696c3a8">
                     <input
                       type="checkbox"
                       id="sync-sepa-billing-address"
                       name="syncBillingAddress"
                       defaultChecked
-                      className="size-4 accent-brand-dark"
+                      className="ui-4af27ddf"
                     />
                     <label
                       htmlFor="sync-sepa-billing-address"
-                      className="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-75"
+                      className="ui-404be656"
                     >
                       {copy.billingSync}
                     </label>
@@ -1238,10 +1179,10 @@ export function ProfilePage() {
               ) : null}
             </div>
           </div>
-          <Field label={copy.promoCode} className="mt-4">
+          <Field label={copy.promoCode} className="ui-dc1d1f5a">
             <TextInput name="promoCode" placeholder={copy.optional} />
           </Field>
-          <Button type="submit" variant="secondary" className="mt-6">
+          <Button type="submit" variant="secondary" className="ui-356df208">
             <CreditCard />
             {copy.startCheckout}
           </Button>
@@ -1271,14 +1212,12 @@ export function ProfilePage() {
             );
           }}
         >
-          <p className="unveiled-meta opacity-55">{copy.vibes}</p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-widest opacity-60">
-            {preferenceMessage}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <p className="unveiled-meta ui-eec042e4">{copy.vibes}</p>
+          <p className="ui-f439dc75">{preferenceMessage}</p>
+          <div className="ui-cfd20cc3">
             {live.profile.vibes.map((vibe) => (
               <Badge key={vibe} tone="yellow">
-                <Heart className="size-3" />
+                <Heart className="ui-5e34f531" />
                 {vibe}
               </Badge>
             ))}
@@ -1286,11 +1225,11 @@ export function ProfilePage() {
               <Badge tone="white">{copy.noPreferences}</Badge>
             ) : null}
           </div>
-          <div className="mt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">
-            <Loader2 className="size-4 animate-spin" />
+          <div className="ui-3b430659">
+            <Loader2 className="ui-43705efa" />
             {copy.loadingPreview}
           </div>
-          <Button type="submit" variant="yellow" className="mt-6">
+          <Button type="submit" variant="yellow" className="ui-356df208">
             {copy.saveOnboarding}
           </Button>
         </Panel>

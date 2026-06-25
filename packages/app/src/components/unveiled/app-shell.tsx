@@ -75,7 +75,11 @@ function ShellIcon({
   const Icon = iconMap[name];
   return (
     <Icon
-      className={cn("size-4", name === "loader" && "animate-spin", className)}
+      className={cn(
+        "ui-100c22d5",
+        name === "loader" && "ui-2c14b55d",
+        className,
+      )}
     />
   );
 }
@@ -104,8 +108,8 @@ function ShellActionButton({
       {typeof action.count === "number" && action.count > 0 ? (
         <span
           className={cn(
-            "grid min-w-5 place-items-center rounded-full bg-brand-dark px-1.5 py-0.5 text-[8px] leading-none text-white",
-            iconOnly && "absolute -right-2 -top-2",
+            "ui-573cecee",
+            iconOnly && "-right-2 -top-2 ui-c5119445",
           )}
         >
           {action.count}
@@ -121,7 +125,7 @@ function ShellActionButton({
         aria-label={action.ariaLabel ?? (iconOnly ? action.label : undefined)}
         className={cn(
           buttonVariants({ variant, size: iconOnly ? "icon-sm" : size }),
-          "relative",
+          "ui-d2d9e1f1",
           className,
         )}
       >
@@ -138,7 +142,7 @@ function ShellActionButton({
       loading={action.loading}
       disabled={action.disabled}
       aria-label={action.ariaLabel ?? (iconOnly ? action.label : undefined)}
-      className={cn("relative", className)}
+      className={cn("ui-d2d9e1f1", className)}
       onClick={() => onAction?.(action.id)}
     >
       {content}
@@ -161,10 +165,7 @@ function LanguageToggle({
     <div
       role="group"
       aria-label={copy.languageGroup}
-      className={cn(
-        "flex shrink-0 overflow-hidden border-2 border-brand-dark bg-brand-grey",
-        className,
-      )}
+      className={cn("ui-58eca808", className)}
     >
       {shell.language.options.map((language) => {
         const isActive = shell.language.selected === language;
@@ -174,10 +175,8 @@ function LanguageToggle({
             type="button"
             aria-pressed={isActive}
             className={cn(
-              "px-2 py-1 text-[9px] font-black uppercase transition-colors md:px-3 md:text-[10px]",
-              isActive
-                ? "bg-brand-dark text-white"
-                : "text-brand-dark/45 hover:text-brand-dark",
+              "ui-f9e86502",
+              isActive ? "ui-806c1ffa" : "hover:text-brand-dark ui-f9351370",
             )}
             onClick={() => onAction?.(`language:${language}`)}
           >
@@ -215,22 +214,20 @@ export function ShellNavigation({
   }, [drawerOpen]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b-2 border-brand-dark bg-white md:border-b-4">
+    <nav className="ui-254d25d9">
       <div className="content-shell">
-        <div className="flex min-h-16 items-center justify-between gap-3 md:min-h-20 md:gap-4">
+        <div className="ui-0eb15c9f">
           <a
             href={`/app/${shell.language.selected.toLowerCase()}/`}
-            className="flex min-w-0 items-center gap-3 text-left"
+            className="ui-44fc928b"
           >
             <ShellLogo variant={shell.logo.variant} />
             {shell.tagline ? (
-              <span className="hidden max-w-56 text-[8px] font-black uppercase tracking-[0.25em] opacity-45 md:block">
-                {shell.tagline}
-              </span>
+              <span className="ui-79921d55">{shell.tagline}</span>
             ) : null}
           </a>
 
-          <div className="hidden min-w-0 items-center gap-1 lg:flex">
+          <div className="ui-f9d68e3d">
             {shell.navItems
               .filter((item) => isGuest || isOperational || !item.icon)
               .map((item) => (
@@ -238,12 +235,12 @@ export function ShellNavigation({
                   key={item.id}
                   action={item}
                   onAction={onAction}
-                  className="shrink-0"
+                  className="ui-27ead27a"
                 />
               ))}
           </div>
 
-          <div className="flex min-w-0 items-center gap-2 md:gap-3">
+          <div className="ui-f6809ba4">
             {isMember ? (
               <>
                 {shell.navItems
@@ -254,12 +251,12 @@ export function ShellNavigation({
                       action={item}
                       onAction={onAction}
                       iconOnly
-                      className="hidden lg:inline-flex"
+                      className="ui-ced5541f"
                     />
                   ))}
                 {typeof shell.creditCount === "number" ? (
-                  <Badge tone="yellow" className="hidden sm:inline-flex">
-                    <Coins className="size-3" />
+                  <Badge tone="yellow" className="ui-3b31bfb1">
+                    <Coins className="ui-5e34f531" />
                     {shell.creditCount} {copy.credits}
                   </Badge>
                 ) : null}
@@ -274,7 +271,7 @@ export function ShellNavigation({
                     }}
                     onAction={onAction}
                     iconOnly
-                    className="hidden lg:inline-flex"
+                    className="ui-ced5541f"
                   />
                 ) : null}
               </>
@@ -293,7 +290,7 @@ export function ShellNavigation({
             <LanguageToggle
               shell={shell}
               onAction={onAction}
-              className="hidden lg:flex"
+              className="ui-1427f7e7"
             />
 
             {shell.showLogout ? (
@@ -301,7 +298,7 @@ export function ShellNavigation({
                 action={{ id: "logout", label: copy.logout, icon: "logout" }}
                 onAction={onAction}
                 iconOnly
-                className="hidden lg:inline-flex"
+                className="ui-ced5541f"
               />
             ) : null}
 
@@ -310,9 +307,9 @@ export function ShellNavigation({
               aria-label={copy.openMenu}
               aria-expanded={drawerOpen}
               aria-controls="shell-mobile-drawer"
-              className="lg:hidden"
+              className="ui-7baf6374"
             >
-              <Menu className="size-5 md:size-6" />
+              <Menu className="ui-feac2c25" />
             </ShellIconButtonPresentational>
           </div>
         </div>
@@ -323,11 +320,13 @@ export function ShellNavigation({
         onClose={() => setDrawerOpen(false)}
         headingId="shell-mobile-drawer-heading"
         menuHeading={copy.menuHeading}
-        closeIcon={<X className="size-5 md:size-6" />}
-        logo={<ShellLogo variant={shell.logo.variant} className="h-7 w-auto" />}
+        closeIcon={<X className="ui-feac2c25" />}
+        logo={
+          <ShellLogo variant={shell.logo.variant} className="ui-ebf9f265" />
+        }
         footer={
-          <div className="space-y-6">
-            <div className="flex justify-center">
+          <div className="form-shell">
+            <div className="ui-7ef65f17">
               <LanguageToggle
                 shell={shell}
                 onAction={(actionId) => {
@@ -344,13 +343,13 @@ export function ShellNavigation({
                   setDrawerOpen(false);
                   onAction?.(actionId);
                 }}
-                className="w-full justify-start"
+                className="ui-f6005322"
               />
             ) : null}
           </div>
         }
       >
-        <nav className="flex flex-col gap-2">
+        <nav className="ui-7c5144aa">
           {shell.navItems
             .filter((item) => isGuest || isOperational || !item.icon)
             .map((item) => (
@@ -361,7 +360,7 @@ export function ShellNavigation({
                   setDrawerOpen(false);
                   onAction?.(actionId);
                 }}
-                className="w-full justify-start"
+                className="ui-f6005322"
               />
             ))}
 
@@ -377,12 +376,12 @@ export function ShellNavigation({
                       setDrawerOpen(false);
                       onAction?.(actionId);
                     }}
-                    className="w-full justify-start"
+                    className="ui-f6005322"
                   />
                 ))}
               {typeof shell.creditCount === "number" ? (
-                <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold uppercase tracking-widest">
-                  <Coins className="size-4" />
+                <div className="ui-1d3f0609">
+                  <Coins className="ui-100c22d5" />
                   <span>
                     {shell.creditCount} {copy.credits}
                   </span>
@@ -401,7 +400,7 @@ export function ShellNavigation({
                     setDrawerOpen(false);
                     onAction?.(actionId);
                   }}
-                  className="w-full justify-start"
+                  className="ui-f6005322"
                 />
               ) : null}
             </>
@@ -448,21 +447,17 @@ export function ShellStatusBanner({
     <Panel
       tone={tone}
       shadow={status.type === "warning" || status.type === "error"}
-      className="flex flex-wrap items-center justify-between gap-4 p-4"
+      className="app-page-header"
     >
-      <div className="flex min-w-0 items-start gap-3">
-        <ShellIcon name={status.icon} className="mt-0.5 shrink-0" />
-        <div className="min-w-0">
+      <div className="ui-d741e326">
+        <ShellIcon name={status.icon} className="ui-bb781639" />
+        <div className="ui-184ddc11">
           {status.label ? (
-            <p className="unveiled-meta opacity-60">{status.label}</p>
+            <p className="unveiled-meta ui-603a84e4">{status.label}</p>
           ) : null}
-          <p className="text-sm font-bold uppercase tracking-widest">
-            {status.message}
-          </p>
+          <p className="ui-7bbbc0f2">{status.message}</p>
           {status.supportEmail ? (
-            <p className="mt-1 text-xs font-black uppercase tracking-widest opacity-70">
-              {status.supportEmail}
-            </p>
+            <p className="ui-4d38eb70">{status.supportEmail}</p>
           ) : null}
         </div>
       </div>
@@ -489,20 +484,20 @@ export function PageShell({
   onAction?: ShellActionHandler;
 }) {
   return (
-    <div className="space-y-6 py-6 md:py-8">
+    <div className="ui-f8afba82">
       {page?.breadcrumbs?.length ? (
-        <nav className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-55">
+        <nav className="ui-c694eebe">
           {page.breadcrumbs.map((breadcrumb, index) => (
             <span
               key={breadcrumb.targetId ?? breadcrumb.label}
-              className="flex items-center gap-2"
+              className="ui-00ebb85d"
             >
               <button
                 type="button"
                 disabled={breadcrumb.current}
                 className={cn(
                   "hover:opacity-100 disabled:cursor-default",
-                  breadcrumb.current && "opacity-100",
+                  breadcrumb.current && "ui-65694092",
                 )}
                 onClick={() =>
                   breadcrumb.targetId
@@ -521,23 +516,18 @@ export function PageShell({
       ) : null}
 
       {page?.title || page?.eyebrow || page?.actions?.length ? (
-        <Panel
-          tone="white"
-          className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end"
-        >
+        <Panel tone="white" className="ui-f91c29fd">
           <div>
             {page.eyebrow ? <Badge tone="yellow">{page.eyebrow}</Badge> : null}
             {page.title ? (
-              <h1 className="headline-lg mt-5">{page.title}</h1>
+              <h1 className="headline-lg ui-71dd032f">{page.title}</h1>
             ) : null}
             {page.subtitle ? (
-              <p className="mt-4 max-w-3xl text-sm font-bold uppercase tracking-widest opacity-60 md:text-base">
-                {page.subtitle}
-              </p>
+              <p className="ui-c0cce89a">{page.subtitle}</p>
             ) : null}
           </div>
           {page.actions?.length ? (
-            <div className="flex flex-wrap gap-2 md:justify-end">
+            <div className="ui-9bc94b54">
               {page.actions.map((action) => (
                 <ShellActionButton
                   key={action.id}
@@ -551,7 +541,7 @@ export function PageShell({
       ) : null}
 
       {page?.statuses?.length ? (
-        <div className="grid gap-3">
+        <div className="ui-c7f94043">
           {page.statuses.map((status) => (
             <ShellStatusBanner
               key={status.id}
@@ -617,40 +607,35 @@ export function DiscoveryShell({
   const settledResultCountLabel =
     deferredResultCountLabel ?? discovery.resultCountLabel;
   return (
-    <div className="space-y-6">
-      <Panel
-        tone="white"
-        className="flex flex-wrap items-center justify-between gap-4 p-4 md:p-5"
-      >
+    <div className="form-shell">
+      <Panel tone="white" className="ui-8c0167c7">
         <div>
-          <p className="unveiled-meta opacity-45">Active range</p>
-          <p className="text-sm font-black uppercase tracking-widest md:text-lg">
-            {discovery.activeRangeLabel}
-          </p>
+          <p className="unveiled-meta ui-378d3a2b">Active range</p>
+          <p className="ui-fae6ebf9">{discovery.activeRangeLabel}</p>
         </div>
         <p
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          className="text-right text-[10px] font-black uppercase tracking-widest opacity-55"
+          className="ui-3ae82276"
         >
           {settledResultCountLabel}
         </p>
       </Panel>
 
-      <div className="grid gap-3 sm:grid-cols-2 md:gap-6">
+      <div className="ui-6211bda6">
         <button
           type="button"
           className={cn(
-            "flex items-center justify-between gap-4 border-4 border-brand-dark p-5 text-left transition-colors unveiled-shadow",
+            "unveiled-shadow ui-33fb1aa3",
             discovery.filtersOpen
-              ? "bg-brand-dark text-white"
-              : "bg-white hover:bg-brand-cream",
+              ? "ui-806c1ffa"
+              : "hover:bg-brand-cream ui-8f92dc82",
           )}
           onClick={() => onAction?.("toggle-filters")}
         >
-          <span className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] md:text-sm">
-            <Filter className="size-5" />
+          <span className="ui-6b56549b">
+            <Filter className="ui-2bd43fb5" />
             {discovery.filterToggleLabel}
             {discovery.activeFilterCount > 0
               ? ` (${discovery.activeFilterCount})`
@@ -661,15 +646,15 @@ export function DiscoveryShell({
         <button
           type="button"
           className={cn(
-            "flex items-center justify-between gap-4 border-4 border-brand-dark p-5 text-left transition-colors unveiled-shadow",
+            "unveiled-shadow ui-33fb1aa3",
             discovery.mapOpen
-              ? "bg-brand-dark text-white"
-              : "bg-white hover:bg-brand-cream",
+              ? "ui-806c1ffa"
+              : "hover:bg-brand-cream ui-8f92dc82",
           )}
           onClick={() => onAction?.("toggle-map")}
         >
-          <span className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] md:text-sm">
-            <MapIcon className="size-5" />
+          <span className="ui-6b56549b">
+            <MapIcon className="ui-2bd43fb5" />
             {discovery.mapToggleLabel}
           </span>
           {discovery.mapOpen ? <ChevronUp /> : <ChevronDown />}
@@ -677,12 +662,10 @@ export function DiscoveryShell({
       </div>
 
       {discovery.filtersOpen && filterPanel ? (
-        <div className="animate-in slide-in-from-top-4 duration-300">
-          {filterPanel}
-        </div>
+        <div className="slide-in-from-top-4 ui-f931927e">{filterPanel}</div>
       ) : null}
       {discovery.mapOpen && mapPanel ? (
-        <div className="animate-in zoom-in-95 duration-300">{mapPanel}</div>
+        <div className="zoom-in-95 ui-46a604a9">{mapPanel}</div>
       ) : null}
       {discovery.visibleResultCount > 0 ? (
         children
@@ -720,33 +703,28 @@ export function ModalShell({
   if (!modal.open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-brand-yellow">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b-4 border-brand-dark bg-brand-yellow/90 p-5 backdrop-blur md:p-10">
-        <div className="flex min-w-0 items-center gap-4">
+    <div className="ui-92360ccc">
+      <header className="ui-cbf7fa0e">
+        <div className="ui-5607416b">
           <ShellLogo variant={modal.logoVariant} />
           {modal.metadata ? (
-            <span className="hidden text-[10px] font-black uppercase tracking-widest opacity-45 sm:inline">
-              {modal.metadata}
-            </span>
+            <span className="ui-72ba2032">{modal.metadata}</span>
           ) : null}
         </div>
         {modal.closeAvailable ? (
           <button
             type="button"
-            className="transition-transform hover:rotate-90"
+            className="hover:rotate-90 ui-fdb712bb"
             onClick={() => onAction?.("close-modal")}
             aria-label="Close"
           >
-            <X className="size-10 md:size-12" />
+            <X className="ui-89a17e82" />
           </button>
         ) : null}
       </header>
 
       <div
-        className={cn(
-          "mx-auto grid w-full max-w-7xl gap-8 p-5 md:p-10",
-          modal.layout === "split" && "lg:grid-cols-[1fr_0.9fr] lg:gap-16",
-        )}
+        className={cn("ui-19592cbb", modal.layout === "split" && "ui-f3d0625b")}
       >
         {modal.loading ? (
           <GlobalStateWrapper

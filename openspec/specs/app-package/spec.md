@@ -58,7 +58,7 @@ The Astro config in `packages/app/astro.config.mjs` SHALL declare `base: "/app"`
 
 Every Astro page that previously rendered at `/<path>` SHALL render at `/app/<path>` in production. In production, the orchestrator dispatches `/app/*` to the app Worker via the `APP` service binding declared in `wrangler.orchestrator.toml`; the local dev server SHALL serve the same pages at `http://localhost:4321/app/...`, and the orchestrator's Vite dev proxy SHALL forward them through `http://localhost:4320/app/...`. The mapping SHALL be uniform: there is no per-page prefix configuration; the `base: "/app"` setting handles every route.
 
-The app's static assets — the logo SVGs (`unveiled-logo-black.svg`, `unveiled-logo-white.svg`) and the EKNoticeSans-Black font files (`EKNoticeSans-Black.woff2`, `EKNoticeSans-Black.woff`, `EKNoticeSans-Black.otf`) — SHALL be checked into `packages/app/public/logos/` and `packages/app/public/fonts/` respectively. The Astro dev server (and the production build, which respects `base: "/app"`) SHALL serve those files from `/app/logos/...` and `/app/fonts/...`. The logo `<img src>` in the app shell SHALL be `/app/logos/unveiled-logo-${variant}.svg`, and the `@font-face` `src` URLs in `packages/app/src/styles/global.css` SHALL be `/app/fonts/EKNoticeSans-Black.{woff2,woff,otf}`. The asset path is centralized in a shared `APP_BASE_PREFIX` constant exported from `packages/app/src/lib/app-base.ts` so a future base-prefix change is a single-line update.
+The app's static assets — the logo SVGs (`unveiled-logo-black.svg`, `unveiled-logo-white.svg`) and the EKNoticeSans-Black font files (`EKNoticeSans-Black.woff2`, `EKNoticeSans-Black.woff`, `EKNoticeSans-Black.otf`) — SHALL be checked into `packages/app/public/logos/` and `packages/app/public/fonts/` respectively. The Astro dev server (and the production build, which respects `base: "/app"`) SHALL serve those files from `/app/logos/...` and `/app/fonts/...`. The logo `<img src>` in the app shell SHALL be `/app/logos/unveiled-logo-${variant}.svg`, and the `@font-face` `src` URLs SHALL be declared in `packages/design-system/src/styles/global.css` as `/app/fonts/EKNoticeSans-Black.{woff2,woff,otf}`. The asset path is centralized in a shared `APP_BASE_PREFIX` constant exported from `packages/app/src/lib/app-base.ts` so a future base-prefix change is a single-line update.
 
 #### Scenario: Public route renders under /app
 
@@ -75,35 +75,14 @@ The app's static assets — the logo SVGs (`unveiled-logo-black.svg`, `unveiled-
 
 #### Scenario: Operational routes render under /app
 
-- **WHEN** a partner visits `/app/<lang>/partner` or an admin visits `/app/<lang>/admin`
-- **THEN** the Astro app renders the matching operational page
-- **AND** the response is byte-equivalent to the prior `/<lang>/partner` or `/<lang>/admin` response modulo the `/app` URL prefix.
+- **WHEN** a contributor visits `/app/healthz` or `/app/readyz` in dev or production
+- **THEN** the Astro app responds with the same status codes and bodies as before the `/app` prefix migration.
 
-#### Scenario: Every emitted link begins with /app/
+#### Scenario: Font faces resolve from design-system global CSS
 
-- **WHEN** a gherkin scenario or a unit test inspects the rendered HTML of any route
-- **THEN** every emitted `<link>` and `<script>` `href` begins with `/app/`
-- **AND** no emitted URL begins with a bare `/` that bypasses the prefix.
-
-#### Scenario: Static assets are served from /app/logos and /app/fonts
-
-- **WHEN** a contributor inspects `packages/app/public/`
-- **THEN** the directory contains a `logos/` subdirectory holding `unveiled-logo-black.svg` and `unveiled-logo-white.svg`
-- **AND** a `fonts/` subdirectory holding `EKNoticeSans-Black.woff2`, `EKNoticeSans-Black.woff`, and `EKNoticeSans-Black.otf`
-- **AND** the Astro dev server serves those files at `http://localhost:4321/app/logos/...` and `http://localhost:4321/app/fonts/...`
-- **AND** the production build emits the same files at `/app/logos/...` and `/app/fonts/...` in the served HTML.
-
-#### Scenario: Logo img src uses the /app prefix
-
-- **WHEN** a contributor inspects the rendered HTML of any `/app/<lang>/...` route
-- **THEN** the logo `<img>` element has `src="/app/logos/unveiled-logo-black.svg"` (or the matching white variant)
-- **AND** the value is constructed from the `APP_BASE_PREFIX` constant (not a string literal that hardcodes `/app`).
-
-#### Scenario: @font-face URLs use the /app prefix
-
-- **WHEN** a contributor inspects the served CSS on any `/app/<lang>/...` route
-- **THEN** every `@font-face` `src` URL under the `EKNoticeSans` family resolves to `/app/fonts/EKNoticeSans-Black.{woff2,woff,otf}`
-- **AND** the values are constructed from the `APP_BASE_PREFIX` constant (not a string literal that hardcodes `/app`).
+- **WHEN** `packages/design-system/src/styles/global.css` is read
+- **THEN** `@font-face` rules reference `/app/fonts/EKNoticeSans-Black.{woff2,woff,otf}`
+- **AND** `packages/app/src/styles/global.css` does not declare `@font-face` rules.
 
 ### Requirement: Legacy @/ Alias Is Removed
 
@@ -310,4 +289,20 @@ Tests under `tests/features/**`, `tests/parity/**`, `tests/visual/**`, and `test
 - **WHEN** `bun run test:visual` is run against the new prefix
 - **THEN** the visual baselines under `tests/visual/**` are re-recorded against `/app/...` URLs
 - **AND** the re-recorded baselines are committed alongside the prefix change
+
+### Requirement: `@unveiled/app` imports global CSS once
+
+The app package MUST ship exactly one stylesheet file at `packages/app/src/styles/global.css`. That file MUST contain only `@import "@unveiled/design-system/styles/global.css";` and MUST NOT declare `@theme`, `@layer`, `@font-face`, bespoke class rules, or Tailwind directives. All CSS rules, semantic layout classes, font faces, and theme overrides live in the design-system global CSS.
+
+#### Scenario: App global CSS is a single import
+
+- **WHEN** `packages/app/src/styles/global.css` is read
+- **THEN** it contains exactly one line: `@import "@unveiled/design-system/styles/global.css";`
+- **AND** `packages/app/src/styles/` contains no other CSS files.
+
+#### Scenario: App source uses semantic classes only
+
+- **WHEN** `bun run check:styling-ownership` runs against `packages/app/src/**`
+- **THEN** no `.tsx`, `.astro`, or `.html` file contains forbidden raw Tailwind utilities in `className` strings
+- **AND** layout and chrome use semantic classes exported from `@unveiled/design-system/styles/global.css`.
 

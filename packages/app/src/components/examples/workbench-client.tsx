@@ -14,11 +14,11 @@ function QueryExample({ initialDiscovery }: QueryExampleProps) {
   });
 
   return (
-    <section className="grid gap-4 rounded-lg border bg-card p-5 text-card-foreground">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="ui-602fe269">
+      <div className="ui-204f9214">
         <div>
-          <h2 className="text-base font-semibold">Product data query</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="ui-afb19356">Product data query</h2>
+          <p className="ui-5a72bb16">
             Public discovery data hydrated from the Astro route loader.
           </p>
         </div>
@@ -36,11 +36,9 @@ function QueryExample({ initialDiscovery }: QueryExampleProps) {
         </Button>
       </div>
       {discovery.isError ? (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
-          {discovery.error.message}
-        </p>
+        <p className="ui-2dc894e0">{discovery.error.message}</p>
       ) : null}
-      <pre className="overflow-auto rounded-md bg-muted p-3 text-sm">
+      <pre className="ui-9e056707">
         {JSON.stringify(
           {
             status: discovery.status,

@@ -34,7 +34,7 @@ export function ListSkeleton({
     <ListSkeletonPresentational
       variant={variant}
       label={label}
-      className={cn("grid gap-3", className)}
+      className={cn("ui-c7f94043", className)}
     />
   );
 }

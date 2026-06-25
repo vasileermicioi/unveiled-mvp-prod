@@ -9,27 +9,34 @@ export function AppLayout({
   pageHeader,
   pageBody,
   pageAside,
+  children,
 }: AppLayoutProps): ReactNode {
-  if (!header) {
-    return (
-      <div className="space-y-6">
-        {pageHeader ? <div className="space-y-2">{pageHeader}</div> : null}
-        <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-          <div className="min-w-0">{pageBody}</div>
-          {pageAside ? <aside className="space-y-4">{pageAside}</aside> : null}
-        </div>
-      </div>
-    );
+  const usesExplicitSlots =
+    pageHeader !== undefined ||
+    pageBody !== undefined ||
+    pageAside !== undefined;
+
+  if (!header && !usesExplicitSlots) {
+    return children ?? null;
   }
-  return (
-    <AppShellPresentational header={header}>
-      <div className="space-y-6">
-        {pageHeader ? <div className="space-y-2">{pageHeader}</div> : null}
-        <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-          <div className="min-w-0">{pageBody}</div>
-          {pageAside ? <aside className="space-y-4">{pageAside}</aside> : null}
-        </div>
+
+  const body = pageBody ?? children;
+
+  const content = (
+    <div className="space-y-6">
+      {pageHeader ? <div className="space-y-2">{pageHeader}</div> : null}
+      <div className="grid gap-6 md:grid-cols-[1fr_320px]">
+        <div className="min-w-0">{body}</div>
+        {pageAside ? <aside className="space-y-4">{pageAside}</aside> : null}
       </div>
-    </AppShellPresentational>
+    </div>
+  );
+
+  if (!header) {
+    return content;
+  }
+
+  return (
+    <AppShellPresentational header={header}>{content}</AppShellPresentational>
   );
 }

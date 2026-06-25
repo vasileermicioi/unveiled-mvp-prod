@@ -120,15 +120,15 @@ describe("packages/design-system/src/heroui-replica/HeroButton.ladle.tsx Loading
   });
 });
 
-describe("packages/app/src/styles/global.css @source directives", () => {
+describe("@unveiled/design-system global.css @source directives", () => {
   const GLOBAL_CSS_PATH = resolve(
     dirname(fileURLToPath(import.meta.url)),
-    "../../packages/app/src/styles/global.css",
+    "../../packages/design-system/src/styles/global.css",
   );
 
   it("scans the design-system src/ so the loading-state spinner's classes are generated", () => {
     const source = readFileSync(GLOBAL_CSS_PATH, "utf8");
-    expect(source).toContain("../../design-system/src/**");
+    expect(source).toContain("../**/*.{ts,tsx}");
   });
 
   it("opts the loading-state spinner's border-current class into Tailwind", () => {

@@ -1,0 +1,241 @@
+#!/usr/bin/env bun
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import {
+  CATALOGUE,
+  containsForbiddenUtility,
+  hashClassName,
+  normalizeUtilityString,
+  splitClassTokens,
+} from "./semantic-class-utils.ts";
+
+const REPO_ROOT = resolve(import.meta.dir, "..");
+const GLOBAL_CSS = join(
+  REPO_ROOT,
+  "packages/design-system/src/styles/global.css",
+);
+const GENERATED_CSS = join(
+  REPO_ROOT,
+  "packages/design-system/src/styles/semantic-generated.css",
+);
+
+const SCAN_ROOTS = [
+  join(REPO_ROOT, "packages/app/src"),
+  join(REPO_ROOT, "packages/landing/src"),
+];
+
+const FILE_EXTENSIONS = new Set([".tsx", ".astro", ".html"]);
+
+const writeMode = process.argv.includes("--write");
+
+const generatedRules = new Map<string, string>();
+
+function resolveSemanticClass(value: string): string | null {
+  const normalized = normalizeUtilityString(value);
+  if (!normalized) {
+    return normalized;
+  }
+  if (CATALOGUE[normalized]) {
+    return CATALOGUE[normalized];
+  }
+  if (!containsForbiddenUtility(normalized)) {
+    return null;
+  }
+  if (generatedRules.has(normalized)) {
+    const existing = generatedRules.get(normalized);
+    if (existing) {
+      return existing;
+    }
+  }
+  const className = hashClassName(normalized);
+  generatedRules.set(normalized, className);
+  return className;
+}
+
+function transformClassValue(value: string): string | null {
+  const { bespoke, utilities } = splitClassTokens(value);
+  if (utilities.length === 0) {
+    return null;
+  }
+  const utilityString = utilities.join(" ");
+  const semantic = resolveSemanticClass(utilityString);
+  if (!semantic) {
+    return null;
+  }
+  if (bespoke.length === 0) {
+    return semantic;
+  }
+  return [...bespoke, semantic].join(" ");
+}
+
+function walk(dir: string, out: string[] = []): string[] {
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return out;
+  }
+  for (const entry of entries) {
+    const full = join(dir, entry);
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      walk(full, out);
+    } else {
+      const ext = entry.slice(entry.lastIndexOf("."));
+      if (FILE_EXTENSIONS.has(ext)) {
+        out.push(full);
+      }
+    }
+  }
+  return out;
+}
+
+function transformCnCall(callBody: string): string {
+  return callBody.replace(
+    /(["'])((?:\\.|(?!\1).)*)\1/g,
+    (match, quote: string, value: string) => {
+      const next = transformClassValue(value);
+      return next ? `${quote}${next}${quote}` : match;
+    },
+  );
+}
+
+function transformContent(content: string, filePath: string): string {
+  let changed = false;
+  let next = content;
+
+  const replaceAttr = (attr: "className" | "class", quote: '"' | "'") => {
+    const re = new RegExp(`${attr}=${quote}([^${quote}]*)${quote}`, "g");
+    next = next.replace(re, (match, value: string) => {
+      const replacement = transformClassValue(value);
+      if (!replacement) {
+        return match;
+      }
+      changed = true;
+      return `${attr}=${quote}${replacement}${quote}`;
+    });
+  };
+
+  replaceAttr("className", '"');
+  replaceAttr("className", "'");
+  replaceAttr("class", '"');
+
+  const cnMatches = [...next.matchAll(/\bcn\s*\(/g)];
+  const parts: string[] = [];
+  let lastIndex = 0;
+  for (const match of cnMatches) {
+    const openParen = (match.index ?? 0) + match[0].length - 1;
+    let depth = 1;
+    let i = openParen + 1;
+    while (i < next.length && depth > 0) {
+      const ch = next[i];
+      if (ch === "(") {
+        depth += 1;
+      } else if (ch === ")") {
+        depth -= 1;
+      }
+      i += 1;
+    }
+    if (depth !== 0) {
+      continue;
+    }
+    const callStart = match.index ?? 0;
+    const callEnd = i;
+    const callText = next.slice(callStart, callEnd);
+    const transformed = transformCnCall(callText);
+    if (transformed !== callText) {
+      changed = true;
+      parts.push(next.slice(lastIndex, callStart));
+      parts.push(transformed);
+      lastIndex = callEnd;
+    }
+  }
+  if (parts.length > 0) {
+    parts.push(next.slice(lastIndex));
+    next = parts.join("");
+  }
+
+  if (changed) {
+    const rel = relative(REPO_ROOT, filePath);
+    console.log(`  ${writeMode ? "updated" : "would update"} ${rel}`);
+  }
+
+  return next;
+}
+
+function loadExistingGeneratedRules(): void {
+  try {
+    const css = readFileSync(GENERATED_CSS, "utf8");
+    for (const match of css.matchAll(
+      /\.(ui-[a-f0-9]{8})\s*\{\s*@apply\s+([^;]+);/g,
+    )) {
+      const className = match[1] ?? "";
+      const { utilities } = splitClassTokens(match[2] ?? "");
+      const utilityString = normalizeUtilityString(utilities.join(" "));
+      if (className && utilityString) {
+        generatedRules.set(utilityString, className);
+      }
+    }
+  } catch {
+    // first run — no generated file yet
+  }
+}
+
+function buildGeneratedCss(): string {
+  const lines = [
+    "/* Auto-generated by scripts/codemod-semantic-classes.ts — do not edit by hand */",
+    "@layer components {",
+  ];
+  for (const [utilities, className] of generatedRules) {
+    lines.push(`  .${className} {`);
+    lines.push(`    @apply ${utilities};`);
+    lines.push("  }");
+  }
+  lines.push("}");
+  lines.push("");
+  return lines.join("\n");
+}
+
+function ensureGeneratedImport(globalCss: string): string {
+  const importLine = '@import "./semantic-generated.css";';
+  if (globalCss.includes(importLine)) {
+    return globalCss;
+  }
+  const anchor = '@import "./tailwind-theme.css";';
+  if (globalCss.includes(anchor)) {
+    return globalCss.replace(anchor, `${anchor}\n${importLine}`);
+  }
+  return `${importLine}\n${globalCss}`;
+}
+
+if (import.meta.main) {
+  loadExistingGeneratedRules();
+
+  for (const root of SCAN_ROOTS) {
+    for (const filePath of walk(root)) {
+      const original = readFileSync(filePath, "utf8");
+      const next = transformContent(original, filePath);
+      if (writeMode && next !== original) {
+        writeFileSync(filePath, next, "utf8");
+      }
+    }
+  }
+
+  if (generatedRules.size > 0) {
+    if (writeMode) {
+      writeFileSync(GENERATED_CSS, buildGeneratedCss(), "utf8");
+      const globalCss = readFileSync(GLOBAL_CSS, "utf8");
+      writeFileSync(GLOBAL_CSS, ensureGeneratedImport(globalCss), "utf8");
+    } else {
+      console.log(
+        `\nWould generate ${generatedRules.size} semantic classes in semantic-generated.css`,
+      );
+    }
+  }
+
+  console.log(
+    writeMode
+      ? `\nWrote ${generatedRules.size} generated semantic classes.`
+      : `\nDry run complete. ${generatedRules.size} classes would be generated. Re-run with --write to apply.`,
+  );
+}

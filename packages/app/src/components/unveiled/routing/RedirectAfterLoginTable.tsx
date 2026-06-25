@@ -33,20 +33,17 @@ export function RedirectAfterLoginTable({
   const bundle = copyFor(language).routing.redirectAfterLogin;
 
   return (
-    <table
-      aria-label={bundle.tableHeading}
-      className="w-full border-collapse text-sm"
-    >
-      <caption className="sr-only">{bundle.tableHeading}</caption>
+    <table aria-label={bundle.tableHeading} className="ui-04757af0">
+      <caption className="ui-32fb0905">{bundle.tableHeading}</caption>
       <thead>
         <tr>
-          <th scope="col" className="border-b p-2 text-left">
+          <th scope="col" className="ui-4d913672">
             {language === "DE" ? "Eigene Rolle" : "Viewer role"}
           </th>
-          <th scope="col" className="border-b p-2 text-left">
+          <th scope="col" className="ui-4d913672">
             {language === "DE" ? "Zielort" : "Target route"}
           </th>
-          <th scope="col" className="border-b p-2 text-left">
+          <th scope="col" className="ui-4d913672">
             {language === "DE" ? "Sicheres Ziel" : "Safe destination"}
           </th>
         </tr>
@@ -63,11 +60,11 @@ export function RedirectAfterLoginTable({
           const cellLabel = bundle[cellKey];
           return (
             <tr key={owner} data-cell={`${viewer.role} × ${owner}`}>
-              <th scope="row" className="border-b p-2 text-left font-medium">
+              <th scope="row" className="ui-df417f7a">
                 {viewer.role}
               </th>
-              <td className="border-b p-2">{cellLabel}</td>
-              <td className="border-b p-2">
+              <td className="ui-0c24bdc3">{cellLabel}</td>
+              <td className="ui-0c24bdc3">
                 {safeDestinationLabel(language, destination)}
               </td>
             </tr>

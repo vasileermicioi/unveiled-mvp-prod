@@ -270,7 +270,7 @@ export function DiscoveryMapPanel({
         title={model.fallbackTitle}
         text={model.fallbackMessage}
         retryLabel="Retry Connection"
-        alertIcon={<AlertTriangle className="size-4" />}
+        alertIcon={<AlertTriangle className="ui-100c22d5" />}
         onRetry={loadState === "error" ? onRetry : undefined}
       />
     );
@@ -310,10 +310,10 @@ export function DiscoveryMapPanel({
         }
       : null,
     hasMarkers: model.hasMarkers,
-    plusIcon: <Plus className="size-4" />,
-    minusIcon: <Minus className="size-4" />,
-    mapPinIcon: <MapPin className="size-5" />,
-    closeIcon: <X className="size-4" />,
+    plusIcon: <Plus className="ui-100c22d5" />,
+    minusIcon: <Minus className="ui-100c22d5" />,
+    mapPinIcon: <MapPin className="ui-2bd43fb5" />,
+    closeIcon: <X className="ui-100c22d5" />,
     onMarkerClick: (id) => setSelectedMarkerId(id),
     onClearSelection: () => setSelectedMarkerId(null),
     onOpenSelected: () => {
@@ -432,7 +432,7 @@ export function DiscoveryMapFallback({
       title={title}
       text={text}
       retryLabel="Retry Connection"
-      alertIcon={<AlertTriangle className="size-4" />}
+      alertIcon={<AlertTriangle className="ui-100c22d5" />}
       onRetry={onRetry}
     />
   );
