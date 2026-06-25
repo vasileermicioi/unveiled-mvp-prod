@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent, ReactElement } from "react";
+import type { ChangeEvent, FormEvent, ReactElement, ReactNode } from "react";
 import { Button, TextInput } from "../../../atoms";
 import { Field } from "../../../molecules/field";
 
@@ -28,6 +28,7 @@ export interface LoginFormPresentationalProps {
   fallbackDestination?: string;
   cancelRedirectLabel?: string;
   formId: string;
+  footerSlot?: ReactNode;
   onChange: (next: LoginFormValues) => void;
   onSubmit: (values: LoginFormValues) => void;
   onCancelRedirect?: () => void;
@@ -47,6 +48,7 @@ export function LoginFormPresentational(
     fallbackDestination = "/",
     cancelRedirectLabel,
     formId,
+    footerSlot,
     onChange,
     onSubmit,
     onCancelRedirect,
@@ -160,6 +162,7 @@ export function LoginFormPresentational(
           {copy.createAccount}
         </button>
       </div>
+      {footerSlot ? <div className="text-sm">{footerSlot}</div> : null}
     </form>
   );
 }

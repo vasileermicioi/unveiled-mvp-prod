@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent, ReactElement } from "react";
+import type { ChangeEvent, FormEvent, ReactElement, ReactNode } from "react";
 import * as React from "react";
 import { Button, TextInput } from "../../../atoms";
 import { Field } from "../../../molecules/field";
@@ -15,6 +15,7 @@ export interface SignupFormCopy {
   passwordPlaceholder: string;
   submit: string;
   helper: string;
+  switchToLogin: string;
 }
 
 export interface SignupFormValues {
@@ -31,8 +32,10 @@ export interface SignupFormPresentationalProps {
   errorCode?: string | null;
   success?: boolean;
   formId: string;
+  footerSlot?: ReactNode;
   onChange: (next: SignupFormValues) => void;
   onSubmit: (values: SignupFormValues) => void;
+  onSwitchToLogin?: () => void;
 }
 
 export function SignupFormPresentational(
@@ -45,8 +48,10 @@ export function SignupFormPresentational(
     errorCode,
     success = false,
     formId,
+    footerSlot,
     onChange,
     onSubmit,
+    onSwitchToLogin,
   } = props;
   const firstNameId = `${formId}-firstName`;
   const lastNameId = `${formId}-lastName`;
@@ -148,6 +153,22 @@ export function SignupFormPresentational(
       <Button type="submit" className="w-full" loading={isSubmitting}>
         {copy.submit}
       </Button>
+      {footerSlot ? (
+        <div className="text-sm">{footerSlot}</div>
+      ) : onSwitchToLogin ? (
+        <div className="text-sm">
+          <button
+            type="button"
+            className="underline opacity-70"
+            onClick={(event) => {
+              event.preventDefault();
+              onSwitchToLogin();
+            }}
+          >
+            {copy.switchToLogin}
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 }

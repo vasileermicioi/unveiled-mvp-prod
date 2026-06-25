@@ -30,6 +30,7 @@ import {
   passwordRecoverySchema,
   signupSchema,
 } from "~/lib/forms/schemas";
+import { routePathFor } from "~/lib/product-routes";
 import { formContracts } from "~/lib/unveiled-view-models";
 import { AdminPanel } from "./AdminPanel";
 // Custom context imports
@@ -56,9 +57,11 @@ import { FaqPage, HowItWorks, PublicDiscover } from "./PublicDiscover";
 function LandingPage({
   callbackURL = "/",
   initialMode = "login",
+  viewerContext = "guest",
 }: {
   callbackURL?: string;
   initialMode?: "login" | "signup" | "recovery";
+  viewerContext?: "guest" | "member" | "partner" | "admin";
 }) {
   const selectedLanguage = useContext(LanguageContext);
   const allCopy = useCopy();
@@ -98,6 +101,23 @@ function LandingPage({
     }, 1500);
     return () => window.clearTimeout(handle);
   }, [redirecting]);
+
+  const [signedInPath, setSignedInPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (viewerContext === "guest") return;
+    const targetSegment = routePathFor(
+      viewerContext === "admin"
+        ? "admin"
+        : viewerContext === "partner"
+          ? "partner"
+          : "member",
+    );
+    const nextPath = `/${selectedLanguage.toLowerCase()}${targetSegment}`;
+    setSignedInPath(nextPath);
+    window.location.assign(nextPath);
+  }, [selectedLanguage, viewerContext]);
 
   const activeSchema =
     mode === "login"
@@ -289,7 +309,23 @@ function LandingPage({
             />
           </div>
         ) : null}
-        {isSuccess ? (
+        {signedInPath ? (
+          <StatePanel
+            state="loading"
+            title={copy.auth.redirecting}
+            text={copy.auth.redirectingHint}
+            action={
+              <a
+                id="signed-in-redirect-continue"
+                href={signedInPath}
+                className="hover:bg-brand-yellow hover:shadow-[4px_4px_0_0_#202621] focus-visible:ring-4 focus-visible:ring-brand-dark/25 ui-36208f9c"
+              >
+                {copy.auth.continueLink}
+                <ArrowRight />
+              </a>
+            }
+          />
+        ) : isSuccess ? (
           <StatePanel
             state="success"
             title={copy.auth.checkEmail}
@@ -428,6 +464,31 @@ function LandingPage({
                 {copy.auth.backToLogin}
               </button>
             ) : null}
+            {mode === "login" ? (
+              <button
+                type="button"
+                className="hover:opacity-100 ui-6396dc42"
+                data-testid="login-form-switch-to-signup"
+                onClick={() => {
+                  setMode("signup");
+                  setIsSuccess(false);
+                }}
+              >
+                {copy.auth.switchToSignup}
+              </button>
+            ) : mode === "signup" ? (
+              <button
+                type="button"
+                className="hover:opacity-100 ui-6396dc42"
+                data-testid="signup-form-switch-to-login"
+                onClick={() => {
+                  setMode("login");
+                  setIsSuccess(false);
+                }}
+              >
+                {copy.auth.switchToLogin}
+              </button>
+            ) : null}
           </form>
         )}
       </Card>
@@ -489,7 +550,11 @@ function VisualSystemAppContent({
       </div>
       <PageShell page={pageShell} onAction={navigateShell}>
         {view === "landing" ? (
-          <LandingPage callbackURL={callbackURL} initialMode={initialMode} />
+          <LandingPage
+            callbackURL={callbackURL}
+            initialMode={initialMode}
+            viewerContext={shell.viewerContext}
+          />
         ) : null}
         {view === "discover" ? <PublicDiscover /> : null}
         {view === "how" ? <HowItWorks /> : null}

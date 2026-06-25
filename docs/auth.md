@@ -34,3 +34,46 @@ the same cookie off the same origin. The round-trip above is only
 correct when both sides agree on this domain, so changing
 `AUTH_COOKIE_DOMAIN` is a coordinated change that touches the auth
 profile, the Hono account routes, and the Astro middleware in lockstep.
+
+## Unified auth landing form (proposal `unify-auth-landing`)
+
+The public auth surface is a single form reachable from three URLs:
+
+- `/<lang>/login` — initial mode `login`.
+- `/<lang>/signup` — initial mode `signup`.
+- `/<lang>/membership` — initial mode `signup`, rendered together
+  with the marketing copy.
+
+The form organism (`login-form` / `signup-form` in
+`packages/design-system/src/organisms/auth/`) accepts a
+`footerSlot: ReactNode` and an optional `onSwitchToLogin` callback
+so the page that mounts it owns the in-form mode toggle. Clicking
+"Already a member? Log in" or "Become a member" flips the active
+mode without a navigation round-trip.
+
+### Already-signed-in redirect
+
+If a valid session cookie is present when a visitor requests
+`/<lang>/login` or `/<lang>/signup`, the page server-side redirects
+to the role-appropriate product surface via `getAuthRedirectPath`:
+
+- `/<lang>/app` for `USER` (subject to onboarding enforcement).
+- `/<lang>/admin` for `ADMIN`.
+- `/<lang>/partner` for `PARTNER`.
+
+The redirect happens in the Astro frontmatter before the React
+island ever renders, so no client-side flicker of the auth form is
+visible. The `LandingPage` React island additionally watches the
+viewer context in a `useEffect` so cookies issued after the page
+rendered (e.g. immediately after a sign-in redirect) still trigger
+a client-side jump without a server round-trip.
+
+### Public nav primary CTA
+
+The public nav primary action in `createShellFromViewer`
+(`packages/app/src/lib/auth-display.ts`) flips on viewer state:
+
+- Guest → "Mitglied werden" / "Become a member" → `/<lang>/membership`.
+- Authenticated → "App öffnen" / "Open app" →
+  `/<lang>/<routePathFor(viewer.viewerContext)>`
+  (`/app`, `/admin`, or `/partner`).
