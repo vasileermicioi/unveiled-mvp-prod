@@ -33,11 +33,19 @@ export default defineConfig({
           if (name !== "client") {
             return {
               optimizeDeps: {
+                entries: ["src/**/*.{ts,tsx,astro}"],
                 include: [
                   "react",
                   "react-dom",
                   "react-dom/server",
                   "@tanstack/react-query",
+                  "zod",
+                  "astro/actions/runtime/entrypoints/server.js",
+                  "better-auth",
+                  "better-auth/adapters/drizzle",
+                  "better-auth/client",
+                  "drizzle-orm",
+                  "drizzle-orm/pg-core",
                 ],
                 exclude: ["@unveiled/design-system"],
               },
@@ -45,6 +53,16 @@ export default defineConfig({
           }
           return {
             optimizeDeps: {
+              entries: ["src/**/*.{ts,tsx,astro}"],
+              include: [
+                "react",
+                "react-dom",
+                "@tanstack/react-query",
+                "zod",
+                "astro/actions/runtime/entrypoints/client.js",
+                "better-auth",
+                "better-auth/client",
+              ],
               exclude: ["@unveiled/design-system"],
             },
           };

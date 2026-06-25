@@ -1,15 +1,15 @@
 import { actions } from "astro:actions";
 import {
   Button,
+  Card,
+  cn,
   Field,
-  Panel,
-  SafeImage,
   SelectInput,
   StatPanel,
   TextInput,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 import { ArrowLeft, ArrowRight, Upload as UploadIcon } from "lucide-react";
+import * as React from "react";
 import {
   createContext,
   useContext,
@@ -482,7 +482,7 @@ export function AdminAssetUploadField({
   const visiblePreview = previewUrl ?? value;
 
   return (
-    <Panel tone="cream" shadow={false} className={cn("ui-d1ec5c8a", className)}>
+    <Card tone="cream" shadow={false} className={cn("ui-d1ec5c8a", className)}>
       <div className="ui-204f9214">
         <div>
           <p className="unveiled-meta">{label}</p>
@@ -512,11 +512,15 @@ export function AdminAssetUploadField({
       <div className="ui-0230938f">
         <div className="ui-d6434a2d">
           {visiblePreview ? (
-            <SafeImage
+            <SafeImagePlain
               src={visiblePreview}
               alt=""
-              fallbackKind={kind === "event" ? "event" : "partner"}
               className="ui-344fb22d"
+              fallbackSrc={
+                kind === "event"
+                  ? "/placeholders/event.svg"
+                  : "/placeholders/partner.svg"
+              }
             />
           ) : (
             <span className="ui-51a57728">Preview</span>
@@ -534,7 +538,7 @@ export function AdminAssetUploadField({
           />
         </Field>
       </div>
-    </Panel>
+    </Card>
   );
 }
 
@@ -956,5 +960,24 @@ export function VisualSystemProvider({
         </LanguageContext.Provider>
       </LiveDataContext.Provider>
     </VisualSystemContext.Provider>
+  );
+}
+
+type SafeImagePlainProps = React.ImgHTMLAttributes<HTMLImageElement> & {
+  src?: string | null;
+  fallbackSrc: string;
+};
+
+function SafeImagePlain({
+  src,
+  fallbackSrc,
+  alt,
+  ...props
+}: SafeImagePlainProps) {
+  const [errored, setErrored] = React.useState(false);
+  const resolved = !src || errored ? fallbackSrc : src;
+  return (
+    // biome-ignore lint/performance/noImgElement: bespoke fallback handler; design system removed SafeImage in iteration-13 proposal 07.
+    <img src={resolved} alt={alt} onError={() => setErrored(true)} {...props} />
   );
 }

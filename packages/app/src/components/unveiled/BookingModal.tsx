@@ -5,7 +5,7 @@ import {
   BookingModalHeaderPresentational,
   BookingModalSummaryPresentational,
   Button,
-  Panel,
+  Card,
 } from "@unveiled/design-system";
 import {
   ArrowRight,
@@ -93,7 +93,7 @@ export function BookingModal({
             </h2>
             <div className="ui-351c5436">
               {result?.state === "confirmed" ? (
-                <Panel tone={event.ticketType === "Voucher" ? "dark" : "white"}>
+                <Card tone={event.ticketType === "Voucher" ? "dark" : "white"}>
                   <p className="unveiled-meta ui-eec042e4">
                     {event.ticketType === "Voucher"
                       ? copy.ticketCode
@@ -118,16 +118,16 @@ export function BookingModal({
                     {copied ? <Check /> : <Copy />}
                     {copied ? copy.copied : copy.copyCode}
                   </Button>
-                </Panel>
+                </Card>
               ) : (
-                <Panel tone="white">
+                <Card tone="white">
                   <p className="unveiled-meta ui-eec042e4">{copy.waitlist}</p>
                   <p className="headline-md ui-54e0c144">{copy.onList}</p>
                   <p className="ui-ea7cb6d2">{copy.waitlistBody}</p>
-                </Panel>
+                </Card>
               )}
               {calendarAvailable && calendarMetadata && calendarFile ? (
-                <Panel tone="dark" className="ui-dfdb58aa">
+                <Card tone="dark" className="ui-dfdb58aa">
                   <div>
                     <p className="unveiled-meta ui-eec042e4">{copy.saveDate}</p>
                     <p className="headline-md ui-54e0c144">{copy.markMoment}</p>
@@ -141,7 +141,7 @@ export function BookingModal({
                     <Calendar />
                     {copy.sync}
                   </a>
-                </Panel>
+                </Card>
               ) : null}
             </div>
             <BookingModalActionsPresentational
@@ -165,7 +165,7 @@ export function BookingModal({
               whereValue={event.address}
             />
             {!isGuest && (
-              <Panel tone="cream" shadow={false} className="ui-99df8659">
+              <Card tone="cream" shadow={false} className="ui-99df8659">
                 <p className="unveiled-meta">{copy.gateCopy}</p>
                 <p className="ui-a099bead">{copy.gateMessage}</p>
                 {result?.state === "failure" ? (
@@ -174,12 +174,12 @@ export function BookingModal({
                     {result.waitlistAvailable ? copy.joinInstead : ""}
                   </p>
                 ) : null}
-              </Panel>
+              </Card>
             )}
           </section>
 
           {isGuest ? (
-            <Panel tone="dark" className="ui-c92b7c33">
+            <Card tone="dark" className="ui-c92b7c33">
               <div>
                 <p className="unveiled-meta ui-3fd8c8e2">
                   {live.profile.language === "DE"
@@ -208,7 +208,7 @@ export function BookingModal({
                   : "Join Unveiled to Book"}
                 <ArrowRight />
               </Button>
-            </Panel>
+            </Card>
           ) : (
             <BookingModalFormPresentational
               ticketsLabel={copy.tickets}

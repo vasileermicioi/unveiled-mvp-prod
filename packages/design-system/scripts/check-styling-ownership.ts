@@ -48,6 +48,8 @@ const SEMANTIC_BASES = new Set([
   "admin-panel-grid",
   "admin-panel-section",
   "admin-panel-stats",
+  "admin-panel-row",
+  "admin-panel-table",
   "landing-page",
   "landing-section",
   "landing-footer-grid",
@@ -224,11 +226,28 @@ function checkConsumerSource(root: string) {
   }
 }
 
+function checkCnImportPath(root: string) {
+  const extensions = new Set([".ts", ".tsx", ".astro"]);
+  for (const file of walk(root, extensions)) {
+    const content = readFileSync(file, "utf8");
+    if (/from\s+["']@unveiled\/design-system\/lib\/utils["']/.test(content)) {
+      const rel = relative(REPO_ROOT, file);
+      fail(
+        "R-CN-IMPORT-PATH",
+        rel,
+        'cn must be imported from "@unveiled/design-system", not "@unveiled/design-system/lib/utils"',
+      );
+    }
+  }
+}
+
 checkConsumerStyles("app");
 checkConsumerStyles("landing");
 checkReverseImports();
 checkConsumerSource(APP_SRC);
 checkConsumerSource(LANDING_SRC);
+checkCnImportPath(APP_SRC);
+checkCnImportPath(LANDING_SRC);
 
 if (import.meta.main) {
   if (failures.length > 0) {

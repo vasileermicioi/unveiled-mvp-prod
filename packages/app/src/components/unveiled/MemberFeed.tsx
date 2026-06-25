@@ -3,17 +3,16 @@ import {
   Badge,
   Button,
   Card,
+  cn,
   Divider,
   Field,
   MemberFeedGatePresentational,
   MemberFeedHeaderPresentational,
   MemberFeedMessagePresentational,
-  Panel,
   SelectInput,
   StatePanel,
   TextInput,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 import {
   ArrowLeft,
   ArrowRight,
@@ -394,7 +393,7 @@ export function OnboardingPage() {
 
   return (
     <div className="ui-9eecda81">
-      <Panel tone="white" className="form-shell">
+      <Card tone="white" className="form-shell">
         <Badge tone="yellow">{copy.badge}</Badge>
         <h1 className="headline-lg">{t.title}</h1>
         <p className="ui-6183b14a">{step === 1 ? t.ageSubtitle : t.subtitle}</p>
@@ -416,9 +415,9 @@ export function OnboardingPage() {
         {message !== copy.message ? (
           <p className="ui-fc02f185">{message}</p>
         ) : null}
-      </Panel>
+      </Card>
 
-      <Panel tone="dark" className="ui-9bebec22">
+      <Card tone="dark" className="ui-9bebec22">
         <div className="form-shell">
           <p className="unveiled-meta ui-eec042e4">{copy.preview}</p>
           {renderStep()}
@@ -466,7 +465,7 @@ export function OnboardingPage() {
             </Button>
           )}
         </div>
-      </Panel>
+      </Card>
     </div>
   );
 }
@@ -482,7 +481,7 @@ export function MembershipPage() {
 
   return (
     <div className="ui-9eecda81">
-      <Panel tone="white" className="form-shell">
+      <Card tone="white" className="form-shell">
         <Badge tone="yellow">{copy.badge}</Badge>
         <div>
           <h1 className="headline-lg">{copy.plan}</h1>
@@ -507,7 +506,7 @@ export function MembershipPage() {
             </Badge>
           ))}
         </div>
-      </Panel>
+      </Card>
 
       <StripeCheckoutRedirectButton
         selectedPaymentMethod={selectedPaymentMethod}
@@ -761,10 +760,10 @@ export function BookingsPage() {
 
   return (
     <div className="ui-e400b83c">
-      <Panel tone="white">
+      <Card tone="white">
         <Badge tone="yellow">{copy.bookingsBadge}</Badge>
         <h1 className="headline-lg ui-71dd032f">{copy.bookingsTitle}</h1>
-      </Panel>
+      </Card>
       <div className="ui-9471e6c9">
         {live.bookings.map((booking) => (
           <Card key={booking.id} className="ui-c4328367">
@@ -822,7 +821,7 @@ export function BookingsPage() {
           </Card>
         ))}
       </div>
-      <Panel tone="white">
+      <Card tone="white">
         <Badge tone="yellow">{copy.creditLedger}</Badge>
         <div className="ui-a752cdc8">
           <CreditLedgerViewTableSemantics
@@ -832,7 +831,7 @@ export function BookingsPage() {
             memberActorLabel={copy.memberActor}
           />
         </div>
-      </Panel>
+      </Card>
       {live.bookings.length === 0 ? (
         <StatePanel
           title={live.isLoading ? copy.loadingBookings : copy.noBookings}
@@ -845,13 +844,13 @@ export function BookingsPage() {
           }
         />
       ) : null}
-      <Panel tone="dark" className="ui-55efb4da">
+      <Card tone="dark" className="ui-55efb4da">
         <span className="unveiled-meta ui-603a84e4">{copy.ticketQuestion}</span>
         <Button type="button" variant="yellow">
           support@unveiled.berlin
           <Mail />
         </Button>
-      </Panel>
+      </Card>
     </div>
   );
 }
@@ -956,7 +955,7 @@ export function ProfilePage() {
 
   return (
     <div className="ui-e400b83c">
-      <Panel tone="white" className="ui-d79a7edd">
+      <Card tone="white" className="ui-d79a7edd">
         <div>
           <Badge tone="success">{live.profile.membershipStatus}</Badge>
           <h1 className="headline-lg ui-71dd032f">{live.profile.name}</h1>
@@ -967,9 +966,9 @@ export function ProfilePage() {
           value={`${live.profile.credits}`}
           caption={`${live.profile.credits} credits`}
         />
-      </Panel>
+      </Card>
       <div className="ui-fde9ee23">
-        <Panel
+        <Card
           tone="cream"
           shadow={false}
           as="form"
@@ -1030,8 +1029,8 @@ export function ProfilePage() {
           <Button type="submit" className="ui-a752cdc8" variant="secondary">
             {copy.saveProfile}
           </Button>
-        </Panel>
-        <Panel
+        </Card>
+        <Card
           tone="white"
           shadow={false}
           as="form"
@@ -1119,7 +1118,7 @@ export function ProfilePage() {
                 ))}
               </div>
               {selectedPaymentMethod === "CARD" ? (
-                <Panel tone="cream" shadow={false} className="ui-a0bea5c6">
+                <Card tone="cream" shadow={false} className="ui-a0bea5c6">
                   <div className="ui-bd0c0617">
                     <span className="ui-b3c584cf">{copy.cardDetails}</span>
                     <div className="ui-3466874b">
@@ -1146,10 +1145,10 @@ export function ProfilePage() {
                       {copy.billingSync}
                     </label>
                   </div>
-                </Panel>
+                </Card>
               ) : null}
               {selectedPaymentMethod === "SEPA" ? (
-                <Panel tone="cream" shadow={false} className="ui-a0bea5c6">
+                <Card tone="cream" shadow={false} className="ui-a0bea5c6">
                   <div className="ui-bd0c0617">
                     <span className="ui-b3c584cf">{copy.sepaDetails}</span>
                     <div className="ui-3466874b">
@@ -1175,7 +1174,7 @@ export function ProfilePage() {
                       {copy.billingSync}
                     </label>
                   </div>
-                </Panel>
+                </Card>
               ) : null}
             </div>
           </div>
@@ -1186,8 +1185,8 @@ export function ProfilePage() {
             <CreditCard />
             {copy.startCheckout}
           </Button>
-        </Panel>
-        <Panel
+        </Card>
+        <Card
           tone="dark"
           shadow={false}
           as="form"
@@ -1232,7 +1231,7 @@ export function ProfilePage() {
           <Button type="submit" variant="yellow" className="ui-356df208">
             {copy.saveOnboarding}
           </Button>
-        </Panel>
+        </Card>
       </div>
     </div>
   );

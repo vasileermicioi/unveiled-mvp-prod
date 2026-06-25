@@ -1,10 +1,10 @@
 import { copyFor } from "@unveiled/api";
 import {
+  cn,
   ListSkeletonPresentational,
   type ListSkeletonProps,
   type ListSkeletonVariant,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 
 const SKELETON_KEYS: Record<ListSkeletonVariant, string> = {
   "events-grid": "events-grid",

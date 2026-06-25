@@ -1014,4 +1014,10 @@
   .ui-8076ec24 {
     @apply size-16 text-[#ff5f57];
   }
+  .admin-panel-row {
+    @apply grid gap-3 border-b-2 border-brand-dark/20 p-4 last:border-b-0 md:grid-cols-[1.2fr_0.8fr_0.8fr_auto] md:items-center;
+  }
+  .admin-panel-table {
+    @apply overflow-hidden border-4 border-brand-dark bg-white;
+  }
 }

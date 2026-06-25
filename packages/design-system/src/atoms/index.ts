@@ -1,3 +1,4 @@
+export * from "./badge";
 export * from "./button";
 export * from "./card";
 export * from "./divider";
@@ -11,6 +12,7 @@ export * from "./text-area";
 export * from "./text-input";
 export * from "./toast";
 
+import * as Badge from "./badge";
 import * as Button from "./button";
 import * as Card from "./card";
 import * as Divider from "./divider";
@@ -25,6 +27,7 @@ import * as TextInput from "./text-input";
 import * as Toast from "./toast";
 
 export const Atoms = {
+  ...Badge,
   ...Button,
   ...Card,
   ...Divider,

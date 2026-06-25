@@ -1,10 +1,10 @@
 import {
+  cn,
   PublicDiscoverCardPresentational,
   PublicDiscoverHeaderPresentational,
   PublicDiscoverLayoutPresentational,
   PublicDiscoverPresentational,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 import {
   ArrowLeft,
   ArrowRight,

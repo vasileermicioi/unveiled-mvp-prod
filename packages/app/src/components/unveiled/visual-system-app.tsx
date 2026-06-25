@@ -2,12 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Badge,
   Button,
+  Card,
+  cn,
   Field,
-  Panel,
   StatePanel,
   TextInput,
 } from "@unveiled/design-system";
-import { cn } from "@unveiled/design-system/lib/utils";
 import { ArrowRight, Check } from "lucide-react";
 import { useContext, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
@@ -209,7 +209,7 @@ function LandingPage({
         </div>
       </section>
 
-      <Panel tone="white" className="form-shell">
+      <Card tone="white" className="form-shell">
         <div className="ui-17c61589">
           <button
             className={cn("ui-1d8f081a", mode === "login" && "ui-806c1ffa")}
@@ -246,12 +246,12 @@ function LandingPage({
               : copy.auth.helper}
           </p>
         </div>
-        <Panel tone="cream" shadow={false} className="ui-99df8659">
+        <Card tone="cream" shadow={false} className="ui-99df8659">
           <p className="unveiled-meta">{copy.auth.notice}</p>
           <p className="ui-3760c8c2">
             {formMessage || copy.auth.defaultMessage}
           </p>
-        </Panel>
+        </Card>
         {safeCallbackTarget ? (
           <div
             id="deep-link-preview"
@@ -397,7 +397,7 @@ function LandingPage({
             ) : null}
           </form>
         )}
-      </Panel>
+      </Card>
     </div>
   );
 }
