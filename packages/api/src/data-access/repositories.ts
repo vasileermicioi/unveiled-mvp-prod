@@ -115,12 +115,13 @@ export type AdminData = {
 };
 
 export async function getPublicDiscoveryData(
-  filters: DiscoveryFilters = {},
+  filters: DiscoveryFilters & { pageSize?: string } = {},
   database: Db = db,
   language: UiLanguage = "EN",
 ): Promise<PublicDiscoveryData> {
   const page = Math.max(1, Number(filters.page ?? "1"));
-  const pageSize = 6;
+  const requestedPageSize = Number(filters.pageSize ?? "6");
+  const pageSize = Math.min(48, Math.max(1, requestedPageSize || 6));
   const offset = (page - 1) * pageSize;
 
   const [totalCount, eventRows, partnerRows, allUpcomingEvents] =

@@ -336,7 +336,7 @@ export const PartnerInputSchema = z.object({ "partnerId": z.any() }).describe("P
 
 // Auto-generated from OpenAPI schema Surfaces.PublicDiscoveryInput. Do not edit.
 
-export const PublicDiscoveryInputSchema = z.object({ "q": z.string().describe("Search query string.").optional(), "category": z.string().describe("Category filter.").optional(), "district": z.string().describe("District filter.").optional(), "date": z.string().describe("Date filter (ISO-8601).").optional(), "page": z.number().int().describe("Page number (1-indexed).").optional(), "pageSize": z.number().int().describe("Page size.").optional() }).describe("Public discovery surface input.");
+export const PublicDiscoveryInputSchema = z.object({ "q": z.string().describe("Search query string.").optional(), "category": z.string().describe("Category filter.").optional(), "district": z.string().describe("District filter.").optional(), "date": z.string().describe("Date filter (ISO-8601).").optional(), "page": z.number().int().gte(1).describe("Page number (1-indexed).").default(1), "pageSize": z.number().int().gte(1).lte(48).describe("Page size (1..48, default 6).").default(6) }).describe("Public discovery surface input.");
 
 // Auto-generated from OpenAPI schema Surfaces.Surface. Do not edit.
 

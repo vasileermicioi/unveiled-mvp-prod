@@ -1824,11 +1824,16 @@ components:
         page:
           type: integer
           format: int32
+          minimum: 1
           description: Page number (1-indexed).
+          default: 1
         pageSize:
           type: integer
           format: int32
-          description: Page size.
+          minimum: 1
+          maximum: 48
+          description: Page size (1..48, default 6).
+          default: 6
       description: Public discovery surface input.
     Surfaces.Surface:
       anyOf:

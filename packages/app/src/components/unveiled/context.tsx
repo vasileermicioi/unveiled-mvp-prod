@@ -334,6 +334,7 @@ interface PaginationProps {
   hasMore: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  pageSizeOptions?: readonly number[];
   className?: string;
 }
 
@@ -344,9 +345,12 @@ export function Pagination({
   hasMore,
   onPageChange,
   onPageSizeChange,
+  pageSizeOptions = [10, 20, 50, 100] as const,
   className,
 }: PaginationProps) {
-  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const clampedNext = Math.min(page + 1, totalPages);
+  const clampedPrev = Math.max(1, page - 1);
 
   return (
     <div className={cn("ui-dc94094b", className)}>
@@ -361,10 +365,11 @@ export function Pagination({
           }}
           className="ui-def34157"
         >
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
+          {pageSizeOptions.map((option) => (
+            <option key={option} value={String(option)}>
+              {option}
+            </option>
+          ))}
         </SelectInput>
         <span className="unveiled-meta">per page</span>
       </div>
@@ -373,7 +378,7 @@ export function Pagination({
         <Button
           type="button"
           variant="secondary"
-          onClick={() => onPageChange(page - 1)}
+          onClick={() => onPageChange(clampedPrev)}
           disabled={page <= 1}
           className="hover:bg-brand-yellow disabled:opacity-50 disabled:hover:bg-white ui-c79941c7"
         >
@@ -382,15 +387,15 @@ export function Pagination({
         </Button>
 
         <span className="unveiled-meta ui-7cd26142">
-          Page {page} of {totalPages}{" "}
+          Page {Math.min(page, totalPages)} of {totalPages}{" "}
           <span className="ui-0b5a4d12">({totalCount} total)</span>
         </span>
 
         <Button
           type="button"
           variant="secondary"
-          onClick={() => onPageChange(page + 1)}
-          disabled={!hasMore}
+          onClick={() => onPageChange(clampedNext)}
+          disabled={!hasMore || page >= totalPages}
           className="hover:bg-brand-yellow disabled:opacity-50 disabled:hover:bg-white ui-c79941c7"
         >
           <span>Next</span>
@@ -691,22 +696,25 @@ export function VisualSystemProvider({
       ? (initialDiscovery.filters ?? {})
       : {},
   );
+  const isInitialUrlSync = useRef(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (initialDiscovery && "filters" in initialDiscovery) return;
     const params = new URLSearchParams(window.location.search);
-    const fromUrl: DiscoveryFilters = {};
+    const fromUrl: DiscoveryFilters & { pageSize?: string } = {};
     const category = params.get("category");
     const partnerId = params.get("partnerId");
     const startDate = params.get("startDate");
     const endDate = params.get("endDate");
     const page = params.get("page");
+    const pageSize = params.get("pageSize");
     if (category) fromUrl.category = category;
     if (partnerId) fromUrl.partnerId = partnerId;
     if (startDate) fromUrl.startDate = startDate;
     if (endDate) fromUrl.endDate = endDate;
     if (page) fromUrl.page = page;
+    if (pageSize) fromUrl.pageSize = pageSize;
     if (Object.keys(fromUrl).length > 0) {
       setDiscoveryFilters((prev) => ({ ...prev, ...fromUrl }));
     }
@@ -714,10 +722,20 @@ export function VisualSystemProvider({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (isInitialUrlSync.current) {
+      isInitialUrlSync.current = false;
+      return;
+    }
     const url = new URL(window.location.href);
     const params = url.searchParams;
     const apply = (
-      key: "category" | "partnerId" | "startDate" | "endDate" | "page",
+      key:
+        | "category"
+        | "partnerId"
+        | "startDate"
+        | "endDate"
+        | "page"
+        | "pageSize",
       value: string | undefined,
     ) => {
       if (value) {
@@ -731,6 +749,7 @@ export function VisualSystemProvider({
     apply("startDate", discoveryFilters.startDate);
     apply("endDate", discoveryFilters.endDate);
     apply("page", discoveryFilters.page);
+    apply("pageSize", discoveryFilters.pageSize);
     const next = `${url.pathname}?${params.toString()}${url.hash}`;
     const current = `${url.pathname}${url.search}${url.hash}`;
     if (next !== current) {

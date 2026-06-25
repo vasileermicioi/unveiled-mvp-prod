@@ -8,6 +8,17 @@ import {
   loadPublicDiscoveryData,
   toAuthResponse,
 } from "@unveiled/api/worker";
+import { z } from "zod";
+
+const PublicDiscoveryQuerySchema = z.object({
+  category: z.string().optional(),
+  partnerId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  savedOnly: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).default(6),
+});
 
 function filtersFromUrl(url: string) {
   const search = new URL(url).searchParams;
@@ -34,10 +45,28 @@ export function mountDataAccessRoutes(app: AppType): void {
 
       if (surface === "public-discovery") {
         const viewer = await getViewer(c.req.raw);
+        const filters = filtersFromUrl(url);
+        const search = new URL(url).searchParams;
+        const parsed = PublicDiscoveryQuerySchema.safeParse({
+          category: filters.category,
+          partnerId: filters.partnerId,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          savedOnly: filters.savedOnly,
+          page: search.get("page") ?? undefined,
+          pageSize: search.get("pageSize") ?? undefined,
+        });
+        const publicFilters = parsed.success
+          ? {
+              ...filters,
+              page: String(parsed.data.page),
+              pageSize: String(parsed.data.pageSize),
+            }
+          : filters;
         return c.json({
           surface: "public-discovery",
           data: await loadPublicDiscoveryData(
-            filtersFromUrl(url),
+            publicFilters,
             undefined,
             viewer.language,
           ),

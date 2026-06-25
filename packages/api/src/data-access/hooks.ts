@@ -1,4 +1,8 @@
-import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  type UseQueryOptions,
+  useQuery,
+} from "@tanstack/react-query";
 
 import { fetchDataAccessSurface } from "./fetchers";
 import {
@@ -25,6 +29,7 @@ export function usePublicDiscoveryQuery(
         data: PublicDiscoveryData;
       }>("public-discovery", { filters }),
     staleTime: queryStaleTimes.discovery,
+    placeholderData: keepPreviousData,
     ...options,
   });
 }
@@ -42,6 +47,7 @@ export function useMemberDataQuery(
         { filters },
       ),
     staleTime: queryStaleTimes.capacitySensitive,
+    placeholderData: keepPreviousData,
     ...options,
   });
 }
@@ -79,6 +85,7 @@ export function useAdminDataQuery(
         filters,
       }),
     staleTime: queryStaleTimes.admin,
+    placeholderData: keepPreviousData,
     ...options,
   });
 }

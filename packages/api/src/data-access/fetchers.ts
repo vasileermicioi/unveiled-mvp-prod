@@ -30,7 +30,7 @@ export async function fetchDataAccessSurface<T extends DataAccessResponse>(
   }
   const query = params.toString();
   const response = await fetch(
-    `/api/data-access/${surface}.json${query ? `?${query}` : ""}`,
+    `/api/data-access/${surface}${query ? `?${query}` : ""}`,
     init,
   );
   if (!response.ok) {

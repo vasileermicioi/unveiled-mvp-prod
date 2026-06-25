@@ -38,10 +38,13 @@ model PublicDiscoveryInput {
   date?: string;
 
   @doc("Page number (1-indexed).")
-  page?: int32;
+  @minValue(1)
+  page?: int32 = 1;
 
-  @doc("Page size.")
-  pageSize?: int32;
+  @doc("Page size (1..48, default 6).")
+  @minValue(1)
+  @maxValue(48)
+  pageSize?: int32 = 6;
 }
 
 @doc("Member surface input.")
