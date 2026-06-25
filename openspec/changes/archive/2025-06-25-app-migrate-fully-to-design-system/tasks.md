@@ -81,3 +81,5 @@
 - Proposals 02, 03, 04, 05, 06, 09, 10 (the rest of iteration 13) are not part of this change. The proposal's "Depends on" chain was partially satisfied by the current state of the repo (atoms, molecules, organisms, layouts layers exist; the design-system barrel has the canonical exports); partial gaps in the styling-ownership gate (semantic-class catalogue, `tailwind-theme.css` centralization) were filled in where required for the migration to compile.
 - The `lucide-react` icon library is still in use across the app. Full migration to inline SVG with `// source: lucide-static` comments is a separate concern (proposal 10 / follow-up).
 - `packages/app/src/components/providers/heroui-provider.tsx` is the only file that directly imports `@nextui-org/react`. It is on the boundary-test allow-list because the HeroUI provider move is owned by proposal 09.
+
+> Iteration-13 e2e obligations: gherkin parity, visual regression, and dev/readyz smoke per `design-system-e2e-tests-collect` (the canonical regression net for the iteration).

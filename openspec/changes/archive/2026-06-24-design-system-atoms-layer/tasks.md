@@ -65,3 +65,5 @@
 - [ ] 7.5 Boot `bun run dev` and confirm all four Workers come up behind the orchestrator's port-4320 proxy with no port conflicts. Smoke-test `GET /healthz` returns `200 ok` and `GET /readyz` returns `200` once the downstream Workers are green. (Deferred — the dev server boots in a non-interactive shell and was not exercised in this PR.)
 - [ ] 7.6 Run `bun run test:e2e` against the orchestrator's port-4320 proxy; confirm every existing gherkin scenario still passes (call sites are unchanged because the flat re-export + legacy shim preserves every import path). (Deferred — Playwright e2e suite is gated on a running dev server and was not exercised in this PR.)
 - [x] 7.7 Confirm `bun run check:atomic-layers` exits 0 with the new structure and that adding a sample violator (e.g. a new `packages/design-system/src/atoms/foo/foo.tsx` that does not import `@nextui-org/react`) makes the gate fail with a clear message.
+
+> Iteration-13 e2e obligations: gherkin parity per `design-system-e2e-tests-collect` (no call-site change; visual regression and dev/readyz smoke not required for the move itself).
