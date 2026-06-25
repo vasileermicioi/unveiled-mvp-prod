@@ -287,6 +287,8 @@ All commands are run with `bun` from the repo root.
 | `bun run db:migrate:local` | Apply migrations to the local PGlite DB. |
 | `bun run db:migrate` | Apply migrations to the cloud DB (uses `DATABASE_URL`). |
 | `bun run db:seed:operations-smoke` | Seed the operations smoke dataset locally. |
+| `bun run seed:pagination` | Seed the pagination dataset (50 members, 42 partners, 65 events, 40 bookings) so admin and discovery pagination controls are exercisable. |
+| `bun run seed:operations-smoke:full` | Reset the seven seed-owned tables and seed the pagination dataset. Equivalent to `bun run seed:pagination`. |
 | `bun run specs:gen` | Compile TypeSpec + regenerate `typespec/output/` and `src/lib/generated/`. |
 | `bun run specs:check` | Fail if generated artifacts are out of date. |
 | `bun run scripts/codemod-prepend-app-prefix.ts --verify` | Fail if any `.feature` file under `tests/features/**` has an un-prefixed app-route URL; excludes `/healthz`, `/readyz`, `/api/...`, `/ladle/...`, `/favicon.ico`, `/favicon.svg`, full URLs (`http://...`, `https://...`), and content-type strings; skips scenarios whose title matches `/normalizes\|does not normalize/i`. |
