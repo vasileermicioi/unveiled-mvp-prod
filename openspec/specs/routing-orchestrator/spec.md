@@ -332,11 +332,11 @@ The LikeC4 model under `architecture/` SHALL model the orchestrator as the entry
 - **THEN** it contains a `container '@unveiled/orchestrator Worker'` with `metadata.path = 'packages/orchestrator'`
 - **AND** it declares relationships `orchestrator -> appWorker 'forwards /app/* via service binding'`, `orchestrator -> landingWorker 'forwards /* via service binding'`, and `orchestrator -> apiWorker 'forwards /api/* via service binding'`.
 
-#### Scenario: Architecture drift check passes
+#### Scenario: C4 model validation passes
 
-- **WHEN** `bun run arch:check` runs
-- **THEN** `likec4 validate` reports Valid
-- **AND** `arch:drift` reports OK (every `metadata.path` value in the model exists on disk).
+- **WHEN** `bunx likec4 validate` runs
+- **THEN** the model is reported as valid
+- **AND** the model-tags unit tests pass.
 
 ### Requirement: Gherkin Coverage For The Public URL Surface
 

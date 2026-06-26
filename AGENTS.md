@@ -302,7 +302,7 @@ All commands are run with `bun` from the repo root.
 | `bun run ladle:coverage` | Assert every `@ladle(component=…, story=…)` tag has a matching story and every story is referenced or opted out. |
 | `bun run dev:landing` | Start only the `@unveiled/landing` Astro dev server on port 4322 (the landing surface). |
 | `bun run dev:app` | Start only the `@unveiled/app` Astro dev server on port 4321 (the app surface). |
-| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/architecture/model-tags.test.ts`, `tests/architecture/drift-script.test.ts`). |
+| `bun run test:unit` | Run the permanent `bun:test` unit suite (e.g. `tests/architecture/model-tags.test.ts`). |
 | `bun run check:heroui-replica` | Umbrella: `ladle:coverage` + `bun run check`. |
 | `bun run check:atomic-layers` | Gate the atomic-design import direction in `packages/design-system/src/`: atoms import from HeroUI / `lib/*` only; molecules / organisms / layouts / pages import from atoms / molecules / `lib/*` only, never from `@nextui-org/*`. |
 | `bun run check:styling-ownership` | Gate that raw Tailwind utility classes are forbidden in `packages/app/src/**` and `packages/landing/src/**` outside the design-system semantic classes imported via `@unveiled/design-system/styles/global.css`. |

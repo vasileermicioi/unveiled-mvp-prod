@@ -18,10 +18,12 @@ viewer.language = lang;
 
 const ownership = resolveMemberOnboardingRoute(viewer, productRoutes.profile);
 if (!ownership.ok) {
-  const redirectUrl = ownership.redirectTo.startsWith("/")
-    ? `/${lang.toLowerCase()}${ownership.redirectTo}`
-    : `/${lang.toLowerCase()}/${ownership.redirectTo}`;
-  return Astro.redirect(redirectUrl, ownership.status);
+  return Astro.redirect(
+    ownership.redirectTo.startsWith("/")
+      ? `/${lang.toLowerCase()}${ownership.redirectTo}`
+      : `/${lang.toLowerCase()}/${ownership.redirectTo}`,
+    ownership.status
+  );
 }
 
 const initialShell = createShellFromViewer(

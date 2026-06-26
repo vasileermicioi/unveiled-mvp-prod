@@ -2,6 +2,7 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "baseUrl": ".",
+    "suppressDeprecationWarnings": true,
     "paths": {
       "@unveiled/design-system": ["packages/design-system/src/index.ts"],
       "@unveiled/design-system/*": ["packages/design-system/src/*"],

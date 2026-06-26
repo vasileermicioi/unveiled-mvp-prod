@@ -13,11 +13,15 @@ const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
 const viewer = await getViewer(Astro.request, { guestLanguage: lang });
 viewer.language = lang;
 
+let redirectTarget = "";
 if (viewer.kind === "authenticated") {
   const redirectParam = Astro.url.searchParams.get("redirect");
   const safeRedirect = parseSafeRedirectTarget(redirectParam, lang);
-  const nextPath = getAuthRedirectPath(viewer, safeRedirect?.path ?? null);
-  return Astro.redirect(`/${lang.toLowerCase()}${nextPath}`);
+  redirectTarget = `/${lang.toLowerCase()}${getAuthRedirectPath(viewer, safeRedirect?.path ?? null)}`;
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
 }
 
 const redirectParam = Astro.url.searchParams.get("redirect");

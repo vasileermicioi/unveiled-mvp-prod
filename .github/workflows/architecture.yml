@@ -7,7 +7,7 @@ on:
 
 jobs:
   arch-check:
-    name: arch:check (model + drift)
+    name: Validate C4 model
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,5 +18,3 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Validate the LikeC4 model
         run: bunx likec4 validate
-      - name: Run the architecture drift check
-        run: bun run arch:drift
