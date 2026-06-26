@@ -12,9 +12,13 @@ const lang = normalizeLanguage(Astro.params.lang?.toUpperCase());
 const viewer = await getViewer(Astro.request, { guestLanguage: lang });
 viewer.language = lang;
 
+let redirectTarget = "";
 if (viewer.kind === "authenticated") {
-  const nextPath = getAuthRedirectPath(viewer, null);
-  return Astro.redirect(`/${lang.toLowerCase()}${nextPath}`);
+  redirectTarget = `/${lang.toLowerCase()}${getAuthRedirectPath(viewer, null)}`;
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
 }
 
 const initialShell = createShellFromViewer(viewer, "membership");

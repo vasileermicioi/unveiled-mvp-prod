@@ -8,7 +8,7 @@ diagrams outside the model source.
 ## Requirements
 ### Requirement: C4 Architecture Documentation
 
-The project SHALL include a C4 architecture specification mapping system context, runtime containers, and component relationships, sourced from a code-first LikeC4 model under `architecture/`. The LikeC4 model MUST declare a `DesignSystem` container inside `unveiled` (with `Atoms`, `Molecules`, `Organisms`, `Templates`, `Pages` components), MUST declare `HeroUI` as an external library element connected to `Atoms` and `Molecules` with `uses` relationships, MUST declare explicit `uses` relationships from `App` and `Landing` to `DesignSystem`, and MUST keep every `metadata.path` anchored under a live workspace root so `bun run arch:drift` stays green. `docs/architecture.md` MUST contain a "Design system boundary" section that documents the layer hierarchy, the presentational / container split, the CSS ownership rule, the Ladle demo obligation, and the gate-script enforcement, and MUST point at the LikeC4 model source instead of embedding a Mermaid block.
+The project SHALL include a C4 architecture specification mapping system context, runtime containers, and component relationships, sourced from a code-first LikeC4 model under `architecture/`. The LikeC4 model MUST declare a `DesignSystem` container inside `unveiled` (with `Atoms`, `Molecules`, `Organisms`, `Templates`, `Pages` components), MUST declare `HeroUI` as an external library element connected to `Atoms` and `Molecules` with `uses` relationships, MUST declare explicit `uses` relationships from `App` and `Landing` to `DesignSystem`, and MUST keep every `metadata.path` anchored under a live workspace root so the model validation passes. `docs/architecture.md` MUST contain a "Design system boundary" section that documents the layer hierarchy, the presentational / container split, the CSS ownership rule, the Ladle demo obligation, and the gate-script enforcement, and MUST point at the LikeC4 model source instead of embedding a Mermaid block.
 
 #### Scenario: C4 model defines containers and integrations
 
@@ -37,7 +37,7 @@ The project SHALL include a C4 architecture specification mapping system context
 #### Scenario: CI enforces the model
 
 - **WHEN** a pull request is opened or updated
-- **THEN** CI runs `bun run arch:check` and `bun run arch:drift` alongside `bun run check`
+- **THEN** CI runs `bunx likec4 validate` alongside `bun run check`
 - **AND** the build fails if the model does not compile, a referenced file
   path is missing from the repo, or a `metadata.path` value is not anchored
   under a live workspace root

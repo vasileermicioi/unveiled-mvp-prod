@@ -3,8 +3,7 @@
 > **The C4 diagrams in this document are not maintained here.** The single
 > source of truth is the LikeC4 model under [`architecture/`](../architecture/).
 > Hand-edited Mermaid blocks outside the LikeC4 model source are not
-> permitted; the drift check in `bun run arch:drift` fails the build if a
-> referenced file path is missing from the repo. Diagrams are for developer
+> permitted; the model is validated in CI using `bunx likec4 validate`. Diagrams are for developer
 > consumption — open the `.likec4` files in an editor with the [LikeC4 VS Code
 > extension](https://marketplace.visualstudio.com/items?itemName=likec4.likec4)
 > (or any LikeC4-compatible LSP client) to view them.
@@ -17,13 +16,12 @@ themselves live in the model.
 
 | Layer | Location | How it's maintained |
 | :--- | :--- | :--- |
-| C4 model (L1–L5) | `architecture/*.likec4` | Edited by hand; `bun run arch:check` validates. |
+| C4 model (L1–L5) | `architecture/*.likec4` | Edited by hand; `bunx likec4 validate` validates. |
 | Cross-references (openspec, TypeSpec, gherkin) | `architecture/specs.likec4` | Edited by hand; same validation. |
-| Drift check | `scripts/check-architecture-drift.ts` | Runs in `arch:check` and in CI. |
+| Model unit tests | `tests/architecture/model-tags.test.ts` | Enforces tag enums and metadata requirements. |
 
 To update the architecture, edit the `.likec4` files, then run
-`bun run arch:check` to validate the model and verify the drift check still
-passes. CI will fail the build if either step fails.
+`bunx likec4 validate` to validate the model and run `bun run test:unit` to verify the model-tags tests still pass. CI will fail the build if either step fails.
 
 ---
 
@@ -89,13 +87,9 @@ All component communication boundaries follow strict interface protocols:
 ## 4. Editing the Model
 
 1. Edit the relevant `.likec4` file under `architecture/`.
-2. Run `bun run arch:check` to validate the model and run the drift check.
-3. Commit the change.
-
-The drift check verifies that every element's `metadata.path` value resolves to
-a real file in the repo, so renaming an Astro page without updating the model
-fails the build with a clear error. Use `bun run arch:drift --update` from a
-renaming PR to surface the affected files.
+2. Run `bunx likec4 validate` to validate the model.
+3. Run `bun run test:unit` to verify the model-tags tests.
+4. Commit the change.
 
 To view the diagrams while editing, install the
 [LikeC4 VS Code extension](https://marketplace.visualstudio.com/items?itemName=likec4.likec4).
