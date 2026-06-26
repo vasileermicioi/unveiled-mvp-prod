@@ -11,10 +11,9 @@ import {
   ShellStatusBannerPresentational,
 } from "@unveiled/design-system";
 import { Check, Download, QrCode } from "lucide-react";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   downloadCsv,
-  LanguageContext,
   Pagination,
   runServerAction,
   useCopy,
@@ -22,8 +21,9 @@ import {
 } from "./context";
 
 export function PartnerPortal() {
-  const copy = useCopy().admin;
-  const selectedLanguage = useContext(LanguageContext);
+  const allCopy = useCopy();
+  const copy = allCopy.admin;
+  const partnerCopy = allCopy.partner;
   const live = useLiveData();
   const [checkInMessage, setCheckInMessage] = useState<string>(
     copy.checkInDefault,
@@ -120,6 +120,22 @@ export function PartnerPortal() {
   const guestRows: PartnerPortalGuestRow[] = filteredGuests.map((guest) => {
     const isUsed = guest.statusRaw === "USED";
     const errorMessage = rowErrors.get(guest.bookingId);
+    const statusLabel =
+      guest.statusLabel === "Waitlist"
+        ? partnerCopy.statusLabels.waitlist
+        : guest.statusLabel === "Confirmed"
+          ? partnerCopy.statusLabels.confirmed
+          : guest.statusLabel === "Cancelled"
+            ? partnerCopy.statusLabels.cancelled
+            : guest.statusLabel;
+    const checkInLabel =
+      guest.checkedInLabel === "Checked in"
+        ? partnerCopy.actionLabels.checkedIn
+        : guest.checkedInLabel === "Check-in available"
+          ? partnerCopy.actionLabels.checkInAvailable
+          : guest.checkedInLabel === "Closed"
+            ? partnerCopy.actionLabels.closed
+            : guest.checkedInLabel;
     return {
       bookingId: guest.bookingId,
       name: guest.name,
@@ -134,25 +150,9 @@ export function PartnerPortal() {
                 : "inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-yellow px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark"
             }
           >
-            {guest.statusLabel === "Waitlist"
-              ? selectedLanguage === "DE"
-                ? "Warteliste"
-                : "Waitlist"
-              : guest.statusLabel === "Confirmed"
-                ? selectedLanguage === "DE"
-                  ? "Bestätigt"
-                  : "Confirmed"
-                : guest.statusLabel === "Cancelled"
-                  ? selectedLanguage === "DE"
-                    ? "Storniert"
-                    : "Cancelled"
-                  : guest.statusLabel}
+            {statusLabel}
           </span>
-          {isUsed ? (
-            <Badge tone="dark">
-              {selectedLanguage === "DE" ? "Bereits genutzt" : "Already used"}
-            </Badge>
-          ) : null}
+          {isUsed ? <Badge tone="dark">{partnerCopy.alreadyUsed}</Badge> : null}
         </>
       ),
       actionButton: (
@@ -163,29 +163,13 @@ export function PartnerPortal() {
           disabled={guest.checkInDisabled || isUsed}
           onClick={() => void handleCheckIn(guest.bookingId)}
         >
-          {guest.checkedInLabel === "Checked in"
-            ? selectedLanguage === "DE"
-              ? "Eingecheckt"
-              : "Checked in"
-            : guest.checkedInLabel === "Check-in available"
-              ? selectedLanguage === "DE"
-                ? "Check-in verfügbar"
-                : "Check-in available"
-              : guest.checkedInLabel === "Closed"
-                ? selectedLanguage === "DE"
-                  ? "Geschlossen"
-                  : "Closed"
-                : guest.checkedInLabel}
+          {checkInLabel}
         </Button>
       ),
       errorBanner: errorMessage ? (
         <ShellStatusBannerPresentational
           type="error"
-          title={
-            selectedLanguage === "DE"
-              ? "Check-in fehlgeschlagen"
-              : "Check-in failed"
-          }
+          title={partnerCopy.checkInFailed}
           body={errorMessage}
           data-testid={`partner-checkin-error-${guest.bookingId}`}
         />
@@ -241,12 +225,8 @@ export function PartnerPortal() {
               );
               setCheckInMessage(
                 downloaded
-                  ? selectedLanguage === "DE"
-                    ? "CSV-Export heruntergeladen."
-                    : "CSV export downloaded."
-                  : selectedLanguage === "DE"
-                    ? "Keine Export-Zeilen."
-                    : "No export rows.",
+                  ? partnerCopy.csvDownloaded
+                  : partnerCopy.noExportRows,
               );
             },
           )

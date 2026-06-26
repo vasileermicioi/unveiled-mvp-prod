@@ -82,6 +82,8 @@ export const appCopy = {
         EMAIL_NOT_VERIFIED: "Bitte bestätige zuerst deine Email-Adresse.",
         unknown: "Die Anfrage konnte nicht abgeschlossen werden.",
       },
+      openApp: "App öffnen",
+      alreadySignedIn: "Bereits angemeldet",
     },
     shell: {
       tagline: "Kuratierter Kulturzugang in Berlin",
@@ -437,6 +439,21 @@ export const appCopy = {
       emptyStateMessage:
         "Such- und Event-Filter können einen leeren Gästelisten-Zustand anzeigen.",
       placeholderSearch: "Name, E-Mail, Event oder Code",
+      staleData: "Veraltete Daten",
+      alreadyUsed: "Bereits genutzt",
+      checkInFailed: "Check-in fehlgeschlagen",
+      csvDownloaded: "CSV-Export heruntergeladen.",
+      noExportRows: "Keine Export-Zeilen.",
+      statusLabels: {
+        waitlist: "Warteliste",
+        confirmed: "Bestätigt",
+        cancelled: "Storniert",
+      },
+      actionLabels: {
+        checkedIn: "Eingecheckt",
+        checkInAvailable: "Check-in verfügbar",
+        closed: "Geschlossen",
+      },
     },
     action: {
       saved: "Gespeichert.",
@@ -463,6 +480,8 @@ export const appCopy = {
         "Dieser sichere Link prüft deine nächste berechtigte, bestätigte Buchung an diesem Veranstaltungsort.",
       continueSignIn: "Weiter zum Login",
       checkIn: "Einchecken",
+      checkingIn: "Checke ein...",
+      checkInFailedText: "Check-in fehlgeschlagen.",
       ready: "Bereit",
     },
     routing: {
@@ -529,6 +548,9 @@ export const appCopy = {
           "Der Stripe-Event-Typ wird vom Vertrag nicht unterstützt.",
       },
     },
+    readyz: {
+      failingProbe: "Bereitschaftsprüfung fehlgeschlagen",
+    },
   },
   EN: {
     auth: {
@@ -589,6 +611,8 @@ export const appCopy = {
         EMAIL_NOT_VERIFIED: "Please verify your email address first.",
         unknown: "The request could not be completed.",
       },
+      openApp: "Open app",
+      alreadySignedIn: "Already signed in",
     },
     shell: {
       tagline: "Curated cultural access in Berlin",
@@ -942,6 +966,21 @@ export const appCopy = {
       emptyStateMessage:
         "Search and event filters can render an empty guest list state.",
       placeholderSearch: "Name, email, event, or code",
+      staleData: "Stale data",
+      alreadyUsed: "Already used",
+      checkInFailed: "Check-in failed",
+      csvDownloaded: "CSV export downloaded.",
+      noExportRows: "No export rows.",
+      statusLabels: {
+        waitlist: "Waitlist",
+        confirmed: "Confirmed",
+        cancelled: "Cancelled",
+      },
+      actionLabels: {
+        checkedIn: "Checked in",
+        checkInAvailable: "Check-in available",
+        closed: "Closed",
+      },
     },
     action: {
       saved: "Saved.",
@@ -968,6 +1007,8 @@ export const appCopy = {
         "This secure link checks for your closest eligible confirmed booking at this venue.",
       continueSignIn: "Continue to sign in",
       checkIn: "Check in",
+      checkingIn: "Checking in...",
+      checkInFailedText: "Check-in failed.",
       ready: "Ready",
     },
     routing: {
@@ -1032,6 +1073,9 @@ export const appCopy = {
         errorUnhandled:
           "The Stripe event type is not supported by the contract.",
       },
+    },
+    readyz: {
+      failingProbe: "Readiness probe failed",
     },
   },
 } as const;

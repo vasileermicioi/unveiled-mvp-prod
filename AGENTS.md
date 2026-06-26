@@ -306,6 +306,7 @@ All commands are run with `bun` from the repo root.
 | `bun run check:heroui-replica` | Umbrella: `ladle:coverage` + `bun run check`. |
 | `bun run check:atomic-layers` | Gate the atomic-design import direction in `packages/design-system/src/`: atoms import from HeroUI / `lib/*` only; molecules / organisms / layouts / pages import from atoms / molecules / `lib/*` only, never from `@nextui-org/*`. |
 | `bun run check:styling-ownership` | Gate that raw Tailwind utility classes are forbidden in `packages/app/src/**` and `packages/landing/src/**` outside the design-system semantic classes imported via `@unveiled/design-system/styles/global.css`. |
+| `bun run check:i18n-coverage` | Assert every `copyFor(language).<path>` access in `packages/app/src/**` and `packages/landing/src/**` resolves to a leaf or branch in both the `DE` and `EN` dictionaries in `packages/api/src/i18n.ts`. See `docs/i18n.md`. |
 | `bun run preview` | Astro preview of the local build. |
 | `bun run preview:cloudflare` | Build + chained Wrangler deploys (api → app → landing → orchestrator) with `--remote` semantics. |
 | `bun run deploy:cloudflare` | Build + chained `wrangler deploy` (api → app → landing → orchestrator). |

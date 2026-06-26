@@ -328,7 +328,7 @@ export function AdminPanel({
               data-testid="admin-stale-data-badge"
               className="ui-a3c18814"
             >
-              Stale data
+              {copy.staleData}
             </Badge>
           ) : null
         }
