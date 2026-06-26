@@ -81,7 +81,28 @@ export type PartnerData = {
   ticketCount: number;
   exportAvailable: boolean;
   exportRows: PartnerGuestExportRow[];
+  guestsPage: number;
+  guestsPageSize: number;
+  guestsTotalCount: number;
+  guestsHasMore: boolean;
 };
+
+const PARTNER_GUESTS_DEFAULT_PAGE_SIZE = 20;
+const PARTNER_GUESTS_MAX_PAGE_SIZE = 50;
+
+export function partnerGuestsPageSize(value?: string | number) {
+  const raw = Number(value ?? PARTNER_GUESTS_DEFAULT_PAGE_SIZE);
+  if (!Number.isFinite(raw) || raw <= 0) {
+    return PARTNER_GUESTS_DEFAULT_PAGE_SIZE;
+  }
+  return Math.min(PARTNER_GUESTS_MAX_PAGE_SIZE, Math.max(1, Math.floor(raw)));
+}
+
+export function partnerGuestsPage(value?: string | number) {
+  const raw = Number(value ?? 1);
+  if (!Number.isFinite(raw) || raw <= 0) return 1;
+  return Math.max(1, Math.floor(raw));
+}
 
 export type AdminData = {
   dashboard: {
@@ -275,6 +296,10 @@ function activeRangeLabel(
 
 export async function getPartnerData(
   partnerId: string,
+  options: {
+    partnerGuestsPage?: string | number;
+    partnerGuestsPageSize?: string | number;
+  } = {},
   database: Db = db,
 ): Promise<PartnerData | null> {
   const partner = await database.query.partners.findFirst({
@@ -282,26 +307,45 @@ export async function getPartnerData(
   });
   if (!partner) return null;
 
-  const [eventRows, guestRows] = await Promise.all([
-    database
-      .select()
-      .from(events)
-      .where(eq(events.partnerId, partnerId))
-      .orderBy(asc(events.dateTime))
-      .limit(100),
-    database
-      .select({
-        booking: bookings,
-        event: events,
-        user,
-      })
-      .from(bookings)
-      .innerJoin(events, eq(bookings.eventId, events.id))
-      .innerJoin(user, eq(bookings.userId, user.id))
-      .where(eq(bookings.partnerId, partnerId))
-      .orderBy(desc(bookings.createdAt))
-      .limit(100),
-  ]);
+  const guestsPage = partnerGuestsPage(options.partnerGuestsPage);
+  const guestsPageSize = partnerGuestsPageSize(options.partnerGuestsPageSize);
+  const guestsOffset = (guestsPage - 1) * guestsPageSize;
+
+  const [eventRows, guestRows, totalGuestRows, ticketAggregateRows] =
+    await Promise.all([
+      database
+        .select()
+        .from(events)
+        .where(eq(events.partnerId, partnerId))
+        .orderBy(asc(events.dateTime))
+        .limit(100),
+      database
+        .select({
+          booking: bookings,
+          event: events,
+          user,
+        })
+        .from(bookings)
+        .innerJoin(events, eq(bookings.eventId, events.id))
+        .innerJoin(user, eq(bookings.userId, user.id))
+        .where(eq(bookings.partnerId, partnerId))
+        .orderBy(desc(bookings.createdAt))
+        .limit(guestsPageSize)
+        .offset(guestsOffset),
+      database
+        .select({ count: count() })
+        .from(bookings)
+        .where(eq(bookings.partnerId, partnerId)),
+      database
+        .select({
+          totalTickets: sql<number>`coalesce(sum(${bookings.ticketsCount}), 0)`,
+        })
+        .from(bookings)
+        .where(eq(bookings.partnerId, partnerId)),
+    ]);
+
+  const guestsTotalCount = totalGuestRows[0]?.count ?? 0;
+  const ticketCount = Number(ticketAggregateRows[0]?.totalTickets ?? 0);
 
   return {
     partner: mapPartnerView(partner),
@@ -312,11 +356,8 @@ export async function getPartnerData(
     })),
     guests: guestRows.map(mapGuestView),
     guestCount: guestRows.length,
-    ticketCount: guestRows.reduce(
-      (sum, row) => sum + row.booking.ticketsCount,
-      0,
-    ),
-    exportAvailable: guestRows.length > 0,
+    ticketCount,
+    exportAvailable: guestsTotalCount > 0,
     exportRows: guestRows.map((row) => ({
       bookingId: row.booking.id,
       userId: row.booking.userId,
@@ -326,6 +367,10 @@ export async function getPartnerData(
       tickets: row.booking.ticketsCount,
       createdAt: row.booking.createdAt,
     })),
+    guestsPage,
+    guestsPageSize,
+    guestsTotalCount,
+    guestsHasMore: guestsOffset + guestRows.length < guestsTotalCount,
   };
 }
 

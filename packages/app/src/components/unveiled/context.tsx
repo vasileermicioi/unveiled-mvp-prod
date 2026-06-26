@@ -562,6 +562,14 @@ function useLiveDataView(
     eventsPage?: string;
     eventsPageSize?: string;
   },
+  partnerFilters?: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  },
+  setPartnerFilters?: (filters: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  }) => void,
 ) {
   const publicInitial =
     initialSurface?.surface === "public" ? initialSurface : undefined;
@@ -584,10 +592,14 @@ function useLiveDataView(
       enabled: Boolean(memberInitial),
     },
   );
-  const partnerQuery = usePartnerDataQuery(partnerInitial?.partnerId ?? "", {
-    initialData: partnerInitial?.data,
-    enabled: Boolean(partnerInitial),
-  });
+  const partnerQuery = usePartnerDataQuery(
+    partnerInitial?.partnerId ?? "",
+    partnerFilters ?? partnerInitial?.partnerGuests ?? {},
+    {
+      initialData: partnerInitial?.data,
+      enabled: Boolean(partnerInitial),
+    },
+  );
   const adminQuery = useAdminDataQuery(adminFilters, {
     initialData: adminInitial?.data,
     enabled: Boolean(adminInitial),
@@ -629,6 +641,7 @@ function useLiveDataView(
       },
     },
     setDiscoveryFilters,
+    setPartnerFilters,
     discoveryFilters,
   });
 
@@ -731,6 +744,18 @@ export function VisualSystemProvider({
       ? (initialDiscovery.filters ?? {})
       : {},
   );
+  const initialPartnerGuests =
+    initialDiscovery &&
+    "surface" in initialDiscovery &&
+    initialDiscovery.surface === "partner"
+      ? initialDiscovery.partnerGuests
+      : undefined;
+  const [partnerGuestsPage, setPartnerGuestsPage] = useState(
+    Number(initialPartnerGuests?.partnerGuestsPage ?? "1") || 1,
+  );
+  const [partnerGuestsPageSize, setPartnerGuestsPageSize] = useState(
+    Number(initialPartnerGuests?.partnerGuestsPageSize ?? "20") || 20,
+  );
   const isInitialUrlSync = useRef(true);
 
   useEffect(() => {
@@ -785,12 +810,22 @@ export function VisualSystemProvider({
     apply("endDate", discoveryFilters.endDate);
     apply("page", discoveryFilters.page);
     apply("pageSize", discoveryFilters.pageSize);
+    if (partnerGuestsPage > 1) {
+      params.set("partnerGuestsPage", String(partnerGuestsPage));
+    } else {
+      params.delete("partnerGuestsPage");
+    }
+    if (partnerGuestsPageSize !== 20) {
+      params.set("partnerGuestsPageSize", String(partnerGuestsPageSize));
+    } else {
+      params.delete("partnerGuestsPageSize");
+    }
     const next = `${url.pathname}?${params.toString()}${url.hash}`;
     const current = `${url.pathname}${url.search}${url.hash}`;
     if (next !== current) {
       window.history.replaceState(null, "", next);
     }
-  }, [discoveryFilters]);
+  }, [discoveryFilters, partnerGuestsPage, partnerGuestsPageSize]);
 
   const setDiscoveryFiltersWrapped = (
     value: React.SetStateAction<DiscoveryFilters>,
@@ -842,11 +877,46 @@ export function VisualSystemProvider({
     ],
   );
 
+  const partnerFilters = useMemo(
+    () => ({
+      partnerGuestsPage: String(partnerGuestsPage),
+      partnerGuestsPageSize: String(partnerGuestsPageSize),
+    }),
+    [partnerGuestsPage, partnerGuestsPageSize],
+  );
+
+  const setPartnerFiltersWrapped = (
+    value: Partial<{
+      partnerGuestsPage: string;
+      partnerGuestsPageSize: string;
+    }>,
+  ) => {
+    if (
+      typeof value.partnerGuestsPage === "string" &&
+      value.partnerGuestsPage !== String(partnerGuestsPage)
+    ) {
+      const next = Number(value.partnerGuestsPage);
+      if (Number.isFinite(next) && next >= 1) setPartnerGuestsPage(next);
+    }
+    if (
+      typeof value.partnerGuestsPageSize === "string" &&
+      value.partnerGuestsPageSize !== String(partnerGuestsPageSize)
+    ) {
+      const next = Number(value.partnerGuestsPageSize);
+      if (Number.isFinite(next) && next >= 1 && next <= 50) {
+        setPartnerGuestsPageSize(next);
+        setPartnerGuestsPage(1);
+      }
+    }
+  };
+
   const live = useLiveDataView(
     initialDiscovery,
     discoveryFilters,
     setDiscoveryFiltersWrapped,
     adminFilters,
+    partnerFilters,
+    setPartnerFiltersWrapped,
   );
 
   const handleOpenEvent = (event: EventCardView | null) => {

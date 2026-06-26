@@ -37,23 +37,31 @@ export async function loadMemberData(
 export async function loadPartnerData(
   input: Viewer | Request | Headers,
   partnerId: string,
+  options: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  } = {},
   database: Db = db,
 ) {
   await requirePartnerForResource(input, partnerId);
-  const data = await getPartnerData(partnerId, database);
+  const data = await getPartnerData(partnerId, options, database);
   if (!data) throw new AuthAccessError(authFailure("forbidden"));
   return data;
 }
 
 export async function loadCurrentPartnerData(
   input: Viewer | Request | Headers,
+  options: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  } = {},
   database: Db = db,
 ) {
   const viewer = await requireUser(input);
   if (viewer.role !== "PARTNER" || !viewer.partnerId) {
     throw new AuthAccessError(authFailure("forbidden"));
   }
-  return loadPartnerData(input, viewer.partnerId, database);
+  return loadPartnerData(input, viewer.partnerId, options, database);
 }
 
 export async function loadAdminData(

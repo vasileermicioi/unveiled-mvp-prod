@@ -66,6 +66,7 @@ describe("parity data-access regression", () => {
           role: "PARTNER",
           partnerId: parityFixtureIds.partner,
         }),
+        {},
         testDb,
       );
       const adminData = await loadAdminData(
@@ -137,6 +138,7 @@ describe("parity data-access regression", () => {
           partnerId: parityFixtureIds.partner,
         }),
         "partner-outside-scope",
+        {},
         testDb,
       ),
     );

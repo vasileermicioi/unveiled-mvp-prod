@@ -308,11 +308,11 @@ export const PartnerExportRowSchema = z.object({ "bookingId": z.any(), "userShor
 
 // Auto-generated from OpenAPI schema Partner.PartnerGuestRow. Do not edit.
 
-export const PartnerGuestRowSchema = z.object({ "bookingId": z.any(), "guestShortId": z.string(), "userShortId": z.string(), "eventTitle": z.string(), "redemptionCode": z.string().optional(), "status": z.any(), "ticketQuantity": z.number().int(), "createdAt": z.any(), "checkedInAt": z.any().optional(), "checkInAvailable": z.boolean() }).describe("Guest row for the partner portal guest list.");
+export const PartnerGuestRowSchema = z.object({ "bookingId": z.any(), "guestShortId": z.string(), "userShortId": z.string(), "eventTitle": z.string(), "redemptionCode": z.string().optional(), "status": z.any(), "statusRaw": z.string(), "ticketQuantity": z.number().int(), "createdAt": z.any(), "checkedInAt": z.any().optional(), "checkInAvailable": z.boolean() }).describe("Guest row for the partner portal guest list.");
 
 // Auto-generated from OpenAPI schema Partner.PartnerPortal. Do not edit.
 
-export const PartnerPortalSchema = z.object({ "partner": z.any(), "events": z.array(z.any()), "guestList": z.array(z.any()), "qrPath": z.string(), "venueToken": z.string(), "aggregateGuests": z.number().int(), "exportAvailable": z.boolean() }).describe("Partner portal home data.");
+export const PartnerPortalSchema = z.object({ "partner": z.any(), "events": z.array(z.any()), "guestList": z.array(z.any()), "qrPath": z.string(), "venueToken": z.string(), "aggregateGuests": z.number().int(), "exportAvailable": z.boolean(), "guestsPage": z.number().int(), "guestsPageSize": z.number().int(), "guestsTotalCount": z.number().int(), "guestsHasMore": z.boolean() }).describe("Partner portal home data.");
 
 // Auto-generated from OpenAPI schema Partner.VenueQrCheckInRequest. Do not edit.
 
@@ -332,7 +332,7 @@ export const MemberInputSchema = z.object({ "page": z.number().int().optional(),
 
 // Auto-generated from OpenAPI schema Surfaces.PartnerInput. Do not edit.
 
-export const PartnerInputSchema = z.object({ "partnerId": z.any() }).describe("Partner surface input.");
+export const PartnerInputSchema = z.object({ "partnerId": z.any(), "partnerGuestsPage": z.number().int().gte(1).describe("Guest list page (1-indexed, default 1).").default(1), "partnerGuestsPageSize": z.number().int().gte(1).lte(50).describe("Guest list page size (1..50, default 20).").default(20) }).describe("Partner surface input.");
 
 // Auto-generated from OpenAPI schema Surfaces.PublicDiscoveryInput. Do not edit.
 
