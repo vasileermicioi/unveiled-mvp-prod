@@ -131,10 +131,7 @@ const copy = copyFor(lang).venueCheckIn;
       </p>
     </div>
   </main>
-  <script is:inline define:vars={{ lang }}>
-    const isGerman = lang === "DE";
-    const checkingInText = isGerman ? "Checke ein..." : "Checking in...";
-    const checkInFailedText = isGerman ? "Check-in failed." : "Check-in failed.";
+  <script is:inline define:vars={{ lang, checkingInText: copy.checkingIn, checkInFailedText: copy.checkInFailedText }}>
   </script>
   <script>
     import { actions } from "astro:actions";
