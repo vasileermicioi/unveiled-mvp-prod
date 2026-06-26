@@ -12,3 +12,8 @@ preview_id = "a970664d170d4d18833718fb6b0cd0ee"
 [[r2_buckets]]
 binding = "ASSETS_BUCKET"
 bucket_name = "unveiled-dev"
+
+# Cloudflare secrets (not declared as [vars]): BETTER_AUTH_SECRET, STRIPE_SECRET_KEY, RESEND_API_KEY
+[env.production.vars]
+PUBLIC_ASSET_BASE_URL = ""
+PUBLIC_ORCHESTRATOR_URL = ""

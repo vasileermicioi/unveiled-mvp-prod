@@ -18,9 +18,12 @@ binding = "API"
 service = "unveiled-api"
 entrypoint = "fetch"
 
+# Cloudflare secrets (not declared as [vars]): BETTER_AUTH_SECRET, STRIPE_SECRET_KEY, RESEND_API_KEY
 [env.production.vars]
 BETTER_AUTH_TRUSTED_ORIGINS = ""
 PUBLIC_ORCHESTRATOR_URL = ""
+PUBLIC_ASSET_BASE_URL = ""
+AUTH_COOKIE_DOMAIN = ""
 
 [env.staging.vars]
 BETTER_AUTH_TRUSTED_ORIGINS = ""

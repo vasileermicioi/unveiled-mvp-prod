@@ -13,9 +13,14 @@ preview_id = "a970664d170d4d18833718fb6b0cd0ee"
 binding = "ASSETS_BUCKET"
 bucket_name = "unveiled-dev"
 
+# Cloudflare secrets (not declared as [vars]): BETTER_AUTH_SECRET, STRIPE_SECRET_KEY, RESEND_API_KEY
 [env.production.vars]
 BETTER_AUTH_TRUSTED_ORIGINS = ""
 PUBLIC_ORCHESTRATOR_URL = ""
+DATABASE_URL = ""
+BETTER_AUTH_URL = ""
+PUBLIC_ASSET_BASE_URL = ""
+AUTH_COOKIE_DOMAIN = ""
 
 [env.staging.vars]
 BETTER_AUTH_TRUSTED_ORIGINS = ""
