@@ -21,6 +21,7 @@ import {
 import {
   LanguageContext,
   LiveDataContext,
+  useLiveData,
 } from "~/components/unveiled/context-primitives";
 import { APP_BASE_PREFIX, stripAppBase } from "~/lib/app-base";
 import {
@@ -36,6 +37,8 @@ import {
   usePublicDiscoveryQuery,
 } from "~/lib/data-access/hooks";
 import {
+  type AdminTabId,
+  type AdminTabStatus,
   createLiveDataView,
   emptyPublicData,
   type LiveDataView,
@@ -603,7 +606,7 @@ function useLiveDataView(
     partnerQuery.isError ||
     adminQuery.isError;
 
-  return createLiveDataView({
+  const view = createLiveDataView({
     publicData,
     memberData: memberQuery.data,
     partnerData: partnerQuery.data,
@@ -617,9 +620,41 @@ function useLiveDataView(
       else if (initialSurface?.surface === "admin") void adminQuery.refetch();
       else void publicQuery.refetch();
     },
+    adminFetchState: {
+      isPending: adminQuery.isPending,
+      isFetching: adminQuery.isFetching,
+      isError: adminQuery.isError,
+      refetch: () => {
+        void adminQuery.refetch();
+      },
+    },
     setDiscoveryFilters,
     discoveryFilters,
   });
+
+  return view;
+}
+
+export function useAdminTabStatus(tab: AdminTabId): AdminTabStatus {
+  const live = useLiveData();
+  const adminData = live.adminFetchState;
+
+  const data =
+    tab === "events"
+      ? live.adminEvents
+      : tab === "partners"
+        ? live.adminPartners
+        : live.adminMembers;
+
+  const hasData = Array.isArray(data) && data.length > 0;
+  const isPending = adminData.isFetching && !hasData;
+
+  return {
+    data,
+    isPending,
+    isError: adminData.isError,
+    refetch: adminData.refetch,
+  };
 }
 
 function localizeShellViewModel(
