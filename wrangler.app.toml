@@ -17,3 +17,11 @@ bucket_name = "unveiled-dev"
 binding = "API"
 service = "unveiled-api"
 entrypoint = "fetch"
+
+[env.production.vars]
+BETTER_AUTH_TRUSTED_ORIGINS = ""
+PUBLIC_ORCHESTRATOR_URL = ""
+
+[env.staging.vars]
+BETTER_AUTH_TRUSTED_ORIGINS = ""
+PUBLIC_ORCHESTRATOR_URL = ""

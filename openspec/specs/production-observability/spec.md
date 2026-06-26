@@ -63,3 +63,13 @@ The system SHALL expose a typed logger API with the methods `debug`, `info`, `wa
 - **WHEN** a previously-console-logging call site (cron summary, action error, session-track failure) is migrated to the logger
 - **THEN** the same number of log lines is emitted, and each line carries the previous call's information in the structured `context` field.
 
+### Requirement: Secret Readiness Probe
+
+The readiness endpoint SHALL report the resolved Better Auth configuration alongside the existing secret readiness flags so operators can confirm at runtime that trusted origins and the `baseURL` are wired correctly for the active environment. After this change, `getSecretReadiness` MUST include `trustedOrigins` (number) and `baseUrl` (string) in addition to the existing boolean flags; the readiness payload returned from `GET /readyz` MUST reflect those fields.
+
+#### Scenario: Readiness reports trustedOrigins count and baseURL
+
+- **WHEN** a GET request hits `/readyz`
+- **THEN** the response body includes `trustedOrigins: number`, `baseUrl: string`, and the existing boolean `authSecret`
+- **AND** `trustedOrigins` is at least 1 in every environment
+
