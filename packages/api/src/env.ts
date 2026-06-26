@@ -27,6 +27,47 @@ export type ApiBindings = {
   ASSETS_BUCKET?: R2Bucket;
 };
 
+export const PRODUCTION_ENVS = [
+  "DATABASE_URL",
+  "BETTER_AUTH_SECRET",
+  "BETTER_AUTH_URL",
+  "STRIPE_SECRET_KEY",
+  "RESEND_API_KEY",
+  "PUBLIC_ASSET_BASE_URL",
+  "AUTH_COOKIE_DOMAIN",
+  "PUBLIC_ORCHESTRATOR_URL",
+] as const;
+
+export const PRODUCTION_SECRETS = [
+  "BETTER_AUTH_SECRET",
+  "STRIPE_SECRET_KEY",
+  "RESEND_API_KEY",
+] as const;
+
+export type ProductionEnvKey = (typeof PRODUCTION_ENVS)[number];
+
+export const PRODUCTION_ENVS_BY_FILE: Readonly<
+  Record<string, readonly ProductionEnvKey[]>
+> = {
+  "wrangler.api.toml": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "STRIPE_SECRET_KEY",
+    "RESEND_API_KEY",
+    "PUBLIC_ASSET_BASE_URL",
+    "AUTH_COOKIE_DOMAIN",
+  ],
+  "wrangler.app.toml": [
+    "PUBLIC_ASSET_BASE_URL",
+    "AUTH_COOKIE_DOMAIN",
+    "PUBLIC_ORCHESTRATOR_URL",
+  ],
+  "wrangler.landing.toml": ["PUBLIC_ASSET_BASE_URL", "PUBLIC_ORCHESTRATOR_URL"],
+  "wrangler.orchestrator.toml": [],
+  "wrangler.jobs.toml": [],
+};
+
 export function getRuntimeEnv(env: RuntimeEnv = {}): RuntimeEnv {
   const runtimeEnv: RuntimeEnv = {
     ...process.env,
@@ -96,16 +137,31 @@ export function resolveBaseURL(runtimeEnv: RuntimeEnv): string {
   );
 }
 
-export function getSecretReadiness(env: RuntimeEnv = {}) {
+export type SecretReadiness = {
+  authSecret: boolean;
+  authUrl: boolean;
+  databaseUrl: boolean;
+  resendApiKey: boolean;
+  assetBaseUrl: boolean;
+  trustedOrigins: number;
+  baseUrl: string;
+  trustedOriginsCount: number;
+  stripeAccountId: string | null;
+};
+
+export function getSecretReadiness(env: RuntimeEnv = {}): SecretReadiness {
   const runtimeEnv = getRuntimeEnv(env);
+  const trustedOrigins = resolveTrustedOrigins(runtimeEnv);
   return {
     authSecret: Boolean(runtimeEnv.BETTER_AUTH_SECRET),
     authUrl: Boolean(runtimeEnv.BETTER_AUTH_URL),
     databaseUrl: Boolean(runtimeEnv.DATABASE_URL),
     resendApiKey: Boolean(runtimeEnv.RESEND_API_KEY),
     assetBaseUrl: Boolean(runtimeEnv.PUBLIC_ASSET_BASE_URL),
-    trustedOrigins: resolveTrustedOrigins(runtimeEnv).length,
+    trustedOrigins: trustedOrigins.length,
     baseUrl: resolveBaseURL(runtimeEnv),
+    trustedOriginsCount: trustedOrigins.length,
+    stripeAccountId: null,
   };
 }
 

@@ -310,6 +310,7 @@ All commands are run with `bun` from the repo root.
 | `bun run preview:cloudflare` | Build + chained Wrangler deploys (api → app → landing → orchestrator) with `--remote` semantics. |
 | `bun run deploy:cloudflare` | Build + chained `wrangler deploy` (api → app → landing → orchestrator). |
 | `bun run deploy:jobs` | `wrangler deploy` for the cron/queue jobs. |
+| `bun run wrangler:check-env` | Assert every `PRODUCTION_ENVS` key is declared in the matching `wrangler.*.toml` (or as a Cloudflare secret). See `docs/deployment.md`. |
 
 ## 8. Definition of done
 
