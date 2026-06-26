@@ -48,11 +48,36 @@ export function getPublicConfig(env: RuntimeEnv = {}) {
 
 export function getSecretReadiness(env: RuntimeEnv = {}) {
   const runtimeEnv = getRuntimeEnv(env);
+  const trustedOrigins = new Set<string>();
+  if (runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS) {
+    for (const part of runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed) trustedOrigins.add(trimmed);
+    }
+  }
+  if (runtimeEnv.PUBLIC_APP_URL) trustedOrigins.add(runtimeEnv.PUBLIC_APP_URL);
+  if (runtimeEnv.PUBLIC_ORCHESTRATOR_URL) {
+    trustedOrigins.add(runtimeEnv.PUBLIC_ORCHESTRATOR_URL);
+  }
+  for (const origin of [
+    "http://localhost:4320",
+    "http://127.0.0.1:4320",
+    "http://localhost:8787",
+  ]) {
+    trustedOrigins.add(origin);
+  }
+  const baseUrl =
+    runtimeEnv.BETTER_AUTH_URL ??
+    runtimeEnv.PUBLIC_BETTER_AUTH_URL ??
+    runtimeEnv.PUBLIC_ORCHESTRATOR_URL ??
+    "http://localhost:4320";
   return {
     authSecret: Boolean(runtimeEnv.BETTER_AUTH_SECRET),
     authUrl: Boolean(runtimeEnv.BETTER_AUTH_URL),
     databaseUrl: Boolean(runtimeEnv.DATABASE_URL),
     resendApiKey: Boolean(runtimeEnv.RESEND_API_KEY),
     assetBaseUrl: Boolean(runtimeEnv.PUBLIC_ASSET_BASE_URL),
+    trustedOrigins: trustedOrigins.size,
+    baseUrl,
   };
 }

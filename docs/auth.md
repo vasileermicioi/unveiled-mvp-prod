@@ -77,3 +77,77 @@ The public nav primary action in `createShellFromViewer`
 - Authenticated → "App öffnen" / "Open app" →
   `/<lang>/<routePathFor(viewer.viewerContext)>`
   (`/app`, `/admin`, or `/partner`).
+
+## Better Auth trusted origins + `baseURL` reliability
+
+Better Auth refuses requests whose `Origin` header is not on a configured
+trusted list, and it issues cookies/redirects against whatever `baseURL` it
+was configured with. The API Worker therefore resolves both from environment
+variables at request time so secret rotation via the Cloudflare dashboard
+takes effect without a redeploy.
+
+### Resolver contract
+
+`packages/api/src/env.ts` exports `resolveTrustedOrigins(runtimeEnv)` and
+`resolveBaseURL(runtimeEnv)`. Both run inside `createAuth(env)` for every
+Better Auth instance built by `authMiddleware()`.
+
+`trustedOrigins` (deduped, in order):
+
+1. `BETTER_AUTH_TRUSTED_ORIGINS` — comma-separated full origins.
+2. `PUBLIC_APP_URL` — included when set.
+3. `PUBLIC_ORCHESTRATOR_URL` — included when set.
+4. Dev fallback set (always appended): `http://localhost:4320`,
+   `http://127.0.0.1:4320`, `http://localhost:8787`.
+
+`baseURL` (first non-empty):
+
+1. `BETTER_AUTH_URL`.
+2. `PUBLIC_BETTER_AUTH_URL`.
+3. `PUBLIC_ORCHESTRATOR_URL`.
+4. `http://localhost:4320` (dev fallback).
+
+### Local development
+
+The `.env.example` defaults are enough to run `bun run dev`:
+
+- `BETTER_AUTH_URL` and `PUBLIC_BETTER_AUTH_URL` point at the app surface
+  (`http://localhost:4321`).
+- `PUBLIC_ORCHESTRATOR_URL` points at the orchestrator dev proxy
+  (`http://localhost:4320`).
+- `BETTER_AUTH_TRUSTED_ORIGINS` is unset; the dev fallback set is appended
+  automatically, so login from `http://localhost:4320` works without the
+  "please add to trustedOrigins" warning.
+
+### Production env contract
+
+`wrangler.app.toml` and `wrangler.api.toml` declare
+`BETTER_AUTH_TRUSTED_ORIGINS` and `PUBLIC_ORCHESTRATOR_URL` under
+`[env.production.vars]` with empty defaults. Operators populate them via
+the Cloudflare dashboard:
+
+| Variable | Required | Example value |
+| --- | --- | --- |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | yes | `https://app.unveiled.com,https://admin.unveiled.com` |
+| `PUBLIC_ORCHESTRATOR_URL` | yes | `https://unveiled.com` |
+| `BETTER_AUTH_URL` | optional | overrides `PUBLIC_ORCHESTRATOR_URL` for cookie/redirect origin |
+
+The resolved config is logged once at startup
+(`"better-auth resolved baseURL"`) and surfaced on `/api/readiness.json`
+under `trustedOrigins`, `baseUrl`, and `authSecret`. Operators can confirm
+the contract without a redeploy by `curl`-ing the readiness endpoint.
+
+### Rotation playbook
+
+When the production hostname rotates:
+
+1. Update `BETTER_AUTH_TRUSTED_ORIGINS` to include the new origin
+   (comma-separated; do not include wildcards — Better Auth matches full
+   origins only).
+2. Update `PUBLIC_ORCHESTRATOR_URL` to the new orchestrator hostname.
+3. Leave `BETTER_AUTH_URL` unset unless the cookie origin must differ from
+   the public hostname (rare).
+4. `curl https://<orchestrator>/api/readiness.json` and confirm
+   `baseUrl`, `trustedOrigins`, and `authSecret` reflect the new values.
+5. Roll back by reverting the dashboard values; no redeploy is required
+   because the resolver reads the env at request time.

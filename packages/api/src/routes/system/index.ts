@@ -53,6 +53,9 @@ const readinessRoute = createRoute({
           schema: z.object({
             ok: z.literal(true),
             status: z.literal("ready"),
+            trustedOrigins: z.number().int().nonnegative(),
+            baseUrl: z.string(),
+            authSecret: z.boolean(),
             dependencies: z.object({
               database: z.literal("ok"),
               auth: z.literal("configured"),
@@ -129,7 +132,13 @@ export function mountSystemRoutes(app: AppType): void {
 
     const config = getSecretReadiness(env);
     const missing = Object.entries(config)
-      .filter(([key, present]) => key !== "resendApiKey" && !present)
+      .filter(
+        ([key, present]) =>
+          key !== "resendApiKey" &&
+          key !== "trustedOrigins" &&
+          key !== "baseUrl" &&
+          !present,
+      )
       .map(([key]) => key);
 
     if (missing.length > 0) {
@@ -149,6 +158,9 @@ export function mountSystemRoutes(app: AppType): void {
       {
         ok: true,
         status: "ready" as const,
+        trustedOrigins: config.trustedOrigins,
+        baseUrl: config.baseUrl,
+        authSecret: config.authSecret,
         dependencies: {
           database: "ok" as const,
           auth: "configured" as const,

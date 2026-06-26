@@ -12,3 +12,11 @@ preview_id = "a970664d170d4d18833718fb6b0cd0ee"
 [[r2_buckets]]
 binding = "ASSETS_BUCKET"
 bucket_name = "unveiled-dev"
+
+[env.production.vars]
+BETTER_AUTH_TRUSTED_ORIGINS = ""
+PUBLIC_ORCHESTRATOR_URL = ""
+
+[env.staging.vars]
+BETTER_AUTH_TRUSTED_ORIGINS = ""
+PUBLIC_ORCHESTRATOR_URL = ""

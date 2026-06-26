@@ -1,6 +1,11 @@
 import { createDb } from "@unveiled/api/db/client";
 import * as schema from "@unveiled/api/db/schema";
-import { getRuntimeEnv, type RuntimeEnv } from "@unveiled/api/env";
+import {
+  getRuntimeEnv,
+  type RuntimeEnv,
+  resolveBaseURL,
+  resolveTrustedOrigins,
+} from "@unveiled/api/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { MiddlewareHandler } from "hono";
@@ -12,12 +17,28 @@ export type SessionContext = {
   session?: { id: string; userId: string; expiresAt: Date };
 };
 
+let lastLoggedBaseUrl: string | undefined;
+
 export function createAuth(env?: RuntimeEnv): AuthInstance {
   const runtimeEnv = getRuntimeEnv(env);
   const authDatabaseEnv = {
     ...runtimeEnv,
     DATABASE_DRIVER: "neon-http" as const,
   };
+
+  const baseURL = resolveBaseURL(runtimeEnv);
+  if (lastLoggedBaseUrl !== baseURL) {
+    lastLoggedBaseUrl = baseURL;
+    const line = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      message: "better-auth resolved baseURL",
+      service: "unveiled-api",
+      env: runtimeEnv.NODE_ENV ?? "unknown",
+      context: { baseURL },
+    });
+    console.info(line);
+  }
 
   return betterAuth({
     database: drizzleAdapter(createDb(authDatabaseEnv), {
@@ -31,10 +52,8 @@ export function createAuth(env?: RuntimeEnv): AuthInstance {
       },
     },
     secret: runtimeEnv.BETTER_AUTH_SECRET,
-    baseURL:
-      runtimeEnv.BETTER_AUTH_URL ??
-      runtimeEnv.PUBLIC_BETTER_AUTH_URL ??
-      runtimeEnv.PUBLIC_APP_URL,
+    baseURL,
+    trustedOrigins: resolveTrustedOrigins(runtimeEnv),
     advanced: runtimeEnv.AUTH_COOKIE_DOMAIN
       ? {
           crossSubDomainCookies: {

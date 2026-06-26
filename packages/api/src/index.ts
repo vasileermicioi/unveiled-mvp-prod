@@ -16,6 +16,8 @@ export {
   getRuntimeEnv,
   getSecretReadiness,
   type RuntimeEnv,
+  resolveBaseURL,
+  resolveTrustedOrigins,
 } from "./env";
 export type { UiLanguage as UiLanguageSchema } from "./forms/schemas";
 export type { UiLanguage } from "./i18n";
