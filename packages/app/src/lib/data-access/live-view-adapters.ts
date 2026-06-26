@@ -90,11 +90,26 @@ export type LiveDataView = {
   isLoading: boolean;
   isError: boolean;
   refetchActiveSurface: () => void;
+  adminFetchState: {
+    isPending: boolean;
+    isFetching: boolean;
+    isError: boolean;
+    refetch: () => void;
+  };
   setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
   totalCount?: number;
   page?: number;
   pageSize?: number;
   hasMore?: boolean;
+};
+
+export type AdminTabId = "events" | "partners" | "members";
+
+export type AdminTabStatus = {
+  data: unknown;
+  isPending: boolean;
+  isError: boolean;
+  refetch: () => void;
 };
 
 export const emptyPublicData: PublicDiscoveryData = {
@@ -173,6 +188,12 @@ export const emptyLiveDataView: LiveDataView = {
   isLoading: false,
   isError: false,
   refetchActiveSurface: () => undefined,
+  adminFetchState: {
+    isPending: false,
+    isFetching: false,
+    isError: false,
+    refetch: () => undefined,
+  },
 };
 
 export function createLiveDataView(input: {
@@ -183,6 +204,12 @@ export function createLiveDataView(input: {
   isLoading: boolean;
   isError: boolean;
   refetchActiveSurface: () => void;
+  adminFetchState?: {
+    isPending: boolean;
+    isFetching: boolean;
+    isError: boolean;
+    refetch: () => void;
+  };
   setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
   discoveryFilters?: DiscoveryFilters;
 }): LiveDataView {
@@ -322,6 +349,12 @@ export function createLiveDataView(input: {
     isLoading: input.isLoading,
     isError: input.isError,
     refetchActiveSurface: input.refetchActiveSurface,
+    adminFetchState: input.adminFetchState ?? {
+      isPending: input.isLoading,
+      isFetching: input.isLoading,
+      isError: input.isError,
+      refetch: input.refetchActiveSurface,
+    },
     setDiscoveryFilters: input.setDiscoveryFilters,
     totalCount:
       input.memberData?.discovery.totalCount ?? input.publicData.totalCount,

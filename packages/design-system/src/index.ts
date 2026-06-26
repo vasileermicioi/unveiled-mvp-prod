@@ -79,6 +79,9 @@ export type {
   ShellIconButtonProps,
   ShellLogoProps,
   ShellMobileDrawerProps,
+  ShellStatusBannerAction,
+  ShellStatusBannerProps,
+  ShellStatusBannerType,
   SignupFormCopy,
   SignupFormPresentationalProps,
   SignupFormValues,
@@ -87,6 +90,8 @@ export type {
   StripeCheckoutRedirectButtonCopy,
   StripeCheckoutRedirectButtonProps,
   SubscriptionPortalLinkProps,
+  TableSkeletonDensity,
+  TableSkeletonProps,
 } from "./organisms";
 export {
   AdminFreezeUnfreezeFormPresentational,
@@ -132,9 +137,11 @@ export {
   ShellIconButtonPresentational,
   ShellLogoPresentational,
   ShellMobileDrawerPresentational,
+  ShellStatusBannerPresentational,
   SignupFormPresentational,
   StripeCheckoutRedirectButtonPresentational,
   SubscriptionPortalLinkPresentational,
+  TableSkeletonPresentational,
 } from "./organisms";
 export * as Providers from "./providers";
 export type { UnveiledThemeProviderProps } from "./providers/theme-provider";

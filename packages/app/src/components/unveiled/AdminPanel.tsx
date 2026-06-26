@@ -9,7 +9,9 @@ import {
   Divider,
   Field,
   SelectInput,
+  ShellStatusBannerPresentational,
   StatePanel,
+  TableSkeletonPresentational,
   TextArea,
   TextInput,
 } from "@unveiled/design-system";
@@ -26,13 +28,11 @@ import { ModalShell } from "~/components/unveiled/app-shell";
 import {
   AdminAssetUploadField,
   downloadCsv,
-  EventRowSkeleton,
   LanguageContext,
-  MemberCardSkeleton,
   Pagination,
-  PartnerRowSkeleton,
   runServerAction,
   StatPanel,
+  useAdminTabStatus,
   useCopy,
   useLiveData,
 } from "./context";
@@ -85,6 +85,15 @@ export function AdminPanel({
   }, [copy.adminMessageDefault]);
 
   const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const eventsStatus = useAdminTabStatus("events");
+  const partnersStatus = useAdminTabStatus("partners");
+  const membersStatus = useAdminTabStatus("members");
+  const showStaleDataBadge =
+    (activeTab === "events" && eventsStatus.isError && eventsStatus.data) ||
+    (activeTab === "partners" &&
+      partnersStatus.isError &&
+      partnersStatus.data) ||
+    (activeTab === "members" && membersStatus.isError && membersStatus.data);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -312,6 +321,17 @@ export function AdminPanel({
       <AdminPanelHeaderPresentational
         badge="Admin"
         title={copy.operationsOverview || "Operations overview."}
+        trailing={
+          showStaleDataBadge ? (
+            <Badge
+              tone="yellow"
+              data-testid="admin-stale-data-badge"
+              className="ui-a3c18814"
+            >
+              Stale data
+            </Badge>
+          ) : null
+        }
       />
       <AdminPanelTabBarPresentational
         tabs={(["metrics", "events", "partners", "members"] as const).map(
@@ -371,93 +391,108 @@ export function AdminPanel({
             </Button>
           </div>
           <div className="admin-panel-table">
-            {live.isLoading ? (
-              <>
-                <EventRowSkeleton />
-                <EventRowSkeleton />
-                <EventRowSkeleton />
-              </>
-            ) : live.adminEvents.length === 0 ? (
+            {eventsStatus.isError ? (
+              <ShellStatusBannerPresentational
+                type="error"
+                title="Live admin data could not be loaded."
+                body="The events tab could not refresh. Retry to fetch the latest rows."
+                actions={[
+                  {
+                    id: "retry-events",
+                    label: "Retry",
+                    onSelect: () => eventsStatus.refetch(),
+                    testId: "admin-events-retry",
+                  },
+                ]}
+              />
+            ) : null}
+            {eventsStatus.isPending ? (
+              <TableSkeletonPresentational
+                columns={6}
+                rows={4}
+                label="Loading admin events"
+                data-testid="admin-events-skeleton"
+              />
+            ) : !eventsStatus.isError && live.adminEvents.length === 0 ? (
               <StatePanel
                 title="No admin events"
-                text={
-                  live.isError
-                    ? "Live admin data could not be loaded."
-                    : "Admin event rows will appear after events are created."
-                }
-                state={live.isError ? "error" : "empty"}
+                text="Admin event rows will appear after events are created."
+                state="empty"
               />
-            ) : (
-              live.adminEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="admin-panel-row grid-cols-1 ui-dcdadbf5"
-                >
-                  <div>
-                    <span className="ui-10d0083b">Event</span>
-                    <p className="ui-8a48840f">{event.title}</p>
-                    <p className="ui-600d3d0f">{event.partnerName}</p>
-                  </div>
-                  <div>
-                    <span className="ui-10d0083b">Date</span>
-                    <p className="ui-2eb25574">{event.dateLabel}</p>
-                  </div>
-                  <div>
-                    <span className="ui-10d0083b">Capacity</span>
-                    <p className="ui-2eb25574">{event.capacityLabel}</p>
-                  </div>
-                  <div>
-                    <span className="ui-10d0083b">Details</span>
-                    <p className="ui-da162047">
-                      {event.codeStrategyLabel} {" // "}
-                      {event.creditPrice} credits
-                    </p>
-                  </div>
-                  <div>
-                    <span className="ui-10d0083b">Status</span>
+            ) : null}
+            {!eventsStatus.isError && !eventsStatus.isPending
+              ? live.adminEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="admin-panel-row grid-cols-1 ui-dcdadbf5"
+                  >
                     <div>
-                      <Badge
-                        tone={event.statusLabel === "Draft" ? "grey" : "yellow"}
+                      <span className="ui-10d0083b">Event</span>
+                      <p className="ui-8a48840f">{event.title}</p>
+                      <p className="ui-600d3d0f">{event.partnerName}</p>
+                    </div>
+                    <div>
+                      <span className="ui-10d0083b">Date</span>
+                      <p className="ui-2eb25574">{event.dateLabel}</p>
+                    </div>
+                    <div>
+                      <span className="ui-10d0083b">Capacity</span>
+                      <p className="ui-2eb25574">{event.capacityLabel}</p>
+                    </div>
+                    <div>
+                      <span className="ui-10d0083b">Details</span>
+                      <p className="ui-da162047">
+                        {event.codeStrategyLabel} {" // "}
+                        {event.creditPrice} credits
+                      </p>
+                    </div>
+                    <div>
+                      <span className="ui-10d0083b">Status</span>
+                      <div>
+                        <Badge
+                          tone={
+                            event.statusLabel === "Draft" ? "grey" : "yellow"
+                          }
+                        >
+                          {event.statusLabel}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="ui-9bc94b54">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="ui-7306d872"
+                        onClick={() => {
+                          setEditingEventId(event.id);
+                          setEventFieldErrors({});
+                          updateTab("add-event");
+                        }}
                       >
-                        {event.statusLabel}
-                      </Badge>
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        className="ui-7306d872"
+                        onClick={() => {
+                          setDeleteErrorMessage(null);
+                          setDeleteConfirmTarget({
+                            type: "event",
+                            id: event.id,
+                            name: event.title,
+                          });
+                        }}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
-                  <div className="ui-9bc94b54">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="ui-7306d872"
-                      onClick={() => {
-                        setEditingEventId(event.id);
-                        setEventFieldErrors({});
-                        updateTab("add-event");
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      className="ui-7306d872"
-                      onClick={() => {
-                        setDeleteErrorMessage(null);
-                        setDeleteConfirmTarget({
-                          type: "event",
-                          id: event.id,
-                          name: event.title,
-                        });
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-            {!live.isLoading && live.adminEvents.length > 0 && (
+                ))
+              : null}
+            {!eventsStatus.isPending && live.adminEvents.length > 0 && (
               <Pagination
                 page={eventsPage}
                 pageSize={eventsPageSize}
@@ -1115,107 +1150,124 @@ export function AdminPanel({
           </div>
 
           <div className="admin-panel-table">
-            {live.isLoading ? (
-              <>
-                <PartnerRowSkeleton />
-                <PartnerRowSkeleton />
-                <PartnerRowSkeleton />
-              </>
-            ) : live.adminPartners.length === 0 ? (
+            {partnersStatus.isError ? (
+              <ShellStatusBannerPresentational
+                type="error"
+                title="Live partner data could not be loaded."
+                body="The partners tab could not refresh. Retry to fetch the latest rows."
+                actions={[
+                  {
+                    id: "retry-partners",
+                    label: "Retry",
+                    onSelect: () => partnersStatus.refetch(),
+                    testId: "admin-partners-retry",
+                  },
+                ]}
+              />
+            ) : null}
+            {partnersStatus.isPending ? (
+              <TableSkeletonPresentational
+                columns={2}
+                rows={4}
+                label="Loading admin partners"
+                data-testid="admin-partners-skeleton"
+              />
+            ) : !partnersStatus.isError && live.adminPartners.length === 0 ? (
               <StatePanel
                 title="No partner venues"
                 text="Admin partner rows will appear after partner venues are created."
                 state="empty"
               />
-            ) : (
-              live.adminPartners.map((partner) => (
-                <div
-                  key={partner.id}
-                  className="admin-panel-row grid-cols-1 ui-3ea32e50"
-                >
-                  <div>
-                    <span className="ui-10d0083b">Partner</span>
-                    <p className="ui-8a48840f">{partner.name}</p>
-                    <p className="ui-600d3d0f">
-                      {partner.portalLoginLabel} {" // "}{" "}
-                      {partner.venueQrTokenLabel}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="ui-79d8b63e">Actions</span>
-                    <div className="app-page-toolbar">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="ui-7306d872"
-                        onClick={() => {
-                          setEditingPartnerId(partner.id);
-                          setPartnerFieldErrors({});
-                          updateTab("add-partner");
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="ui-7306d872"
-                        onClick={() =>
-                          void runServerAction(
-                            () =>
-                              actions.createPartnerPortalAccess({
-                                partnerId: partner.id,
-                                email: partner.contactEmail,
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          )
-                        }
-                      >
-                        <ExternalLink /> Portal
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="ui-7306d872"
-                        onClick={() =>
-                          void runServerAction(
-                            () =>
-                              actions.rotatePartnerVenueToken({
-                                partnerId: partner.id,
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          )
-                        }
-                      >
-                        <QrCode /> QR
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        className="ui-7306d872"
-                        onClick={() => {
-                          setDeleteErrorMessage(null);
-                          setDeleteConfirmTarget({
-                            type: "partner",
-                            id: partner.id,
-                            name: partner.name,
-                          });
-                        }}
-                      >
-                        Delete
-                      </Button>
+            ) : null}
+            {!partnersStatus.isError && !partnersStatus.isPending
+              ? live.adminPartners.map((partner) => (
+                  <div
+                    key={partner.id}
+                    className="admin-panel-row grid-cols-1 ui-3ea32e50"
+                  >
+                    <div>
+                      <span className="ui-10d0083b">Partner</span>
+                      <p className="ui-8a48840f">{partner.name}</p>
+                      <p className="ui-600d3d0f">
+                        {partner.portalLoginLabel} {" // "}{" "}
+                        {partner.venueQrTokenLabel}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="ui-79d8b63e">Actions</span>
+                      <div className="app-page-toolbar">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="ui-7306d872"
+                          onClick={() => {
+                            setEditingPartnerId(partner.id);
+                            setPartnerFieldErrors({});
+                            updateTab("add-partner");
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="ui-7306d872"
+                          onClick={() =>
+                            void runServerAction(
+                              () =>
+                                actions.createPartnerPortalAccess({
+                                  partnerId: partner.id,
+                                  email: partner.contactEmail,
+                                }),
+                              setAdminMessage,
+                              live.refetchActiveSurface,
+                            )
+                          }
+                        >
+                          <ExternalLink /> Portal
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="ui-7306d872"
+                          onClick={() =>
+                            void runServerAction(
+                              () =>
+                                actions.rotatePartnerVenueToken({
+                                  partnerId: partner.id,
+                                }),
+                              setAdminMessage,
+                              live.refetchActiveSurface,
+                            )
+                          }
+                        >
+                          <QrCode /> QR
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          className="ui-7306d872"
+                          onClick={() => {
+                            setDeleteErrorMessage(null);
+                            setDeleteConfirmTarget({
+                              type: "partner",
+                              id: partner.id,
+                              name: partner.name,
+                            });
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-            {!live.isLoading && live.adminPartners.length > 0 && (
+                ))
+              : null}
+            {!partnersStatus.isPending && live.adminPartners.length > 0 && (
               <Pagination
                 page={partnersPage}
                 pageSize={partnersPageSize}
@@ -1469,326 +1521,347 @@ export function AdminPanel({
           </Card>
 
           <div className="auth-stack">
-            {live.isLoading ? (
-              <>
-                <MemberCardSkeleton />
-                <MemberCardSkeleton />
-                <MemberCardSkeleton />
-              </>
-            ) : filteredMembers.length === 0 ? (
+            {membersStatus.isError ? (
+              <ShellStatusBannerPresentational
+                type="error"
+                title="Live member data could not be loaded."
+                body="The members tab could not refresh. Retry to fetch the latest rows."
+                actions={[
+                  {
+                    id: "retry-members",
+                    label: "Retry",
+                    onSelect: () => membersStatus.refetch(),
+                    testId: "admin-members-retry",
+                  },
+                ]}
+              />
+            ) : null}
+            {membersStatus.isPending ? (
+              <TableSkeletonPresentational
+                columns={3}
+                rows={4}
+                label="Loading admin members"
+                data-testid="admin-members-skeleton"
+              />
+            ) : !membersStatus.isError && filteredMembers.length === 0 ? (
               <StatePanel
                 title="No members found"
-                text={
-                  live.isError
-                    ? "Live member rows could not be loaded."
-                    : "No members match your search criteria or none signed up yet."
-                }
-                state={live.isError ? "error" : "empty"}
+                text="No members match your search criteria or none signed up yet."
+                state="empty"
               />
-            ) : (
-              filteredMembers.map((member) => (
-                <Card key={member.userId} className="ui-b2b8b472">
-                  <div className="ui-204f9214">
-                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
-                    {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
-                    <div
-                      className="ui-063b2c11"
-                      onClick={() =>
-                        setExpandedMemberId(
-                          expandedMemberId === member.userId
-                            ? null
-                            : member.userId,
-                        )
-                      }
-                    >
-                      <div className="ui-00ebb85d">
-                        <p className="ui-8a48840f">{member.fullName}</p>
-                        <span className="ui-dd637d47">
-                          {expandedMemberId === member.userId
-                            ? "(Hide Intel)"
-                            : "(Show Intel)"}
-                        </span>
+            ) : null}
+            {!membersStatus.isError && !membersStatus.isPending
+              ? filteredMembers.map((member) => (
+                  <Card key={member.userId} className="ui-b2b8b472">
+                    <div className="ui-204f9214">
+                      {/* biome-ignore lint/a11y/useKeyWithClickEvents: admin panel toggle */}
+                      {/* biome-ignore lint/a11y/noStaticElementInteractions: admin panel toggle */}
+                      <div
+                        className="ui-063b2c11"
+                        onClick={() =>
+                          setExpandedMemberId(
+                            expandedMemberId === member.userId
+                              ? null
+                              : member.userId,
+                          )
+                        }
+                      >
+                        <div className="ui-00ebb85d">
+                          <p className="ui-8a48840f">{member.fullName}</p>
+                          <span className="ui-dd637d47">
+                            {expandedMemberId === member.userId
+                              ? "(Hide Intel)"
+                              : "(Show Intel)"}
+                          </span>
+                        </div>
+                        <p className="ui-600d3d0f">
+                          {member.subscriptionStatusLabel} {" // "}
+                          {member.credits} credits {" // "}
+                          {member.roleLabel}
+                        </p>
+                        <p className="ui-115c9c32">
+                          {member.email} {" // "}
+                          {member.bookingCount} bookings {" // "}
+                          {member.savedCount} saved {" // "}
+                          {member.waitlistCount} waitlist
+                        </p>
+                        <p className="ui-115c9c32">
+                          {member.providerStatus ?? "No provider"} {" // "}
+                          {member.currentPeriodLabel} {" // "}
+                          {member.historySummary}
+                        </p>
                       </div>
-                      <p className="ui-600d3d0f">
-                        {member.subscriptionStatusLabel} {" // "}
-                        {member.credits} credits {" // "}
-                        {member.roleLabel}
-                      </p>
-                      <p className="ui-115c9c32">
-                        {member.email} {" // "}
-                        {member.bookingCount} bookings {" // "}
-                        {member.savedCount} saved {" // "}
-                        {member.waitlistCount} waitlist
-                      </p>
-                      <p className="ui-115c9c32">
-                        {member.providerStatus ?? "No provider"} {" // "}
-                        {member.currentPeriodLabel} {" // "}
-                        {member.historySummary}
-                      </p>
+                      <div className="ui-7c5144aa">
+                        <div className="ui-c354e22d">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              void runServerAction(
+                                () =>
+                                  actions.adjustMemberCredits({
+                                    userId: member.userId,
+                                    amount: 1,
+                                    reason: "Admin panel adjustment",
+                                    idempotencyKey: crypto.randomUUID(),
+                                  }),
+                                setAdminMessage,
+                                live.refetchActiveSurface,
+                              )
+                            }
+                          >
+                            + Credit
+                          </Button>
+                        </div>
+                        <AdminFreezeUnfreezeForm
+                          userId={member.userId}
+                          isFrozen={member.billingOverrideActions.includes(
+                            "freeze",
+                          )}
+                          resultMessage={adminMessage}
+                          onSubmit={async (input) => {
+                            await runServerAction(
+                              () =>
+                                actions.toggleUserFreeze({
+                                  userId: input.userId,
+                                  frozen: input.frozen,
+                                }),
+                              setAdminMessage,
+                              live.refetchActiveSurface,
+                            );
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="ui-7c5144aa">
-                      <div className="ui-c354e22d">
+
+                    {expandedMemberId === member.userId && (
+                      <div className="ui-d5cabae9">
+                        <div className="grid-cols-1 ui-0710d2a7">
+                          <div className="auth-stack">
+                            <div className="ui-8be98ec0">Preferences</div>
+                            <div className="ui-e93697cc">
+                              Age {member.preferences.ageGroup || "Unknown"} /
+                              Radius {member.preferences.maxDistance}km /{" "}
+                              {member.preferences.accessibility
+                                ? "Accessible"
+                                : "No accessibility flag"}
+                            </div>
+                            <div className="ui-b8ceaab1">
+                              {[
+                                {
+                                  label: "Interests",
+                                  values: member.preferences.interests,
+                                },
+                                {
+                                  label: "Moods",
+                                  values: member.preferences.moods,
+                                },
+                                {
+                                  label: "Districts",
+                                  values: member.preferences.districts,
+                                },
+                                {
+                                  label: "Timing",
+                                  values: member.preferences.preferredDays
+                                    ? member.preferences.timing
+                                    : [],
+                                },
+                                {
+                                  label: "Days",
+                                  values: member.preferences.preferredDays,
+                                },
+                                {
+                                  label: "Languages",
+                                  values: member.preferences.preferredLanguages,
+                                },
+                              ].map((group) => (
+                                <div key={group.label} className="ui-27e6c432">
+                                  <div className="ui-04a3b34c">
+                                    {group.label}
+                                  </div>
+                                  <div className="ui-94a65763">
+                                    {(group.values?.length
+                                      ? group.values
+                                      : ["None"]
+                                    ).map((value) => (
+                                      <Badge
+                                        key={`${group.label}-${value}`}
+                                        tone="white"
+                                        className="ui-a3c18814"
+                                      >
+                                        {value}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="auth-stack">
+                            <div className="ui-8be98ec0">History</div>
+                            <div className="grid-cols-2 ui-73b06403">
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Bookings</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.bookingCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Waitlist</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.waitlistCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Saved</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.savedCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Sessions</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.sessionCount}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="auth-stack">
+                            <div className="ui-8be98ec0">Behavior Intel</div>
+                            <div className="grid-cols-2 ui-73b06403">
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Event Opens</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.eventOpenCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">
+                                  Filter Applies
+                                </div>
+                                <div className="ui-6d76c1b3">
+                                  {member.filterApplyCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Saves</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.savedCount}
+                                </div>
+                              </div>
+                              <div className="ui-820d9618">
+                                <div className="ui-dd637d47">Unsaves</div>
+                                <div className="ui-6d76c1b3">
+                                  {member.unsavedCount}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="ui-27e6c432">
+                              <div className="ui-04a3b34c">Latest Signals</div>
+                              <div className="ui-7d9ca3c3">
+                                <div>
+                                  Last View: {member.lastView || "Unknown"}
+                                </div>
+                                <div>
+                                  Last Seen:{" "}
+                                  {member.lastSeenAt
+                                    ? new Date(
+                                        member.lastSeenAt,
+                                      ).toLocaleString()
+                                    : "Unknown"}
+                                </div>
+                                <div>
+                                  Last Booking:{" "}
+                                  {member.lastBookedEventId || "None"}
+                                </div>
+                                <div>
+                                  Last Waitlist:{" "}
+                                  {member.lastWaitlistedEventId || "None"}
+                                </div>
+                                <div>
+                                  Pref Update:{" "}
+                                  {member.preferencesUpdatedAt
+                                    ? new Date(
+                                        member.preferencesUpdatedAt,
+                                      ).toLocaleString()
+                                    : "Never"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="ui-26717177">
+                              <div className="ui-04a3b34c">
+                                Recently Touched Events
+                              </div>
+                              <div className="ui-94a65763">
+                                {member.recentEventIds.length === 0 ? (
+                                  <span className="ui-dd637d47">
+                                    No tracked event opens.
+                                  </span>
+                                ) : (
+                                  member.recentEventIds.map((eventId) => {
+                                    const matchingEvent =
+                                      live.events.find(
+                                        (e) => e.id === eventId,
+                                      ) ||
+                                      live.adminEvents.find(
+                                        (e) => e.id === eventId,
+                                      );
+                                    return (
+                                      <Badge
+                                        key={eventId}
+                                        tone="yellow"
+                                        className="ui-a3c18814"
+                                      >
+                                        {matchingEvent
+                                          ? matchingEvent.title
+                                          : eventId}
+                                      </Badge>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Divider className="ui-4078b3ee" />
                         <Button
                           type="button"
                           size="sm"
                           variant="secondary"
-                          onClick={() =>
+                          onClick={() => {
                             void runServerAction(
                               () =>
-                                actions.adjustMemberCredits({
+                                actions.createAdminTicket({
                                   userId: member.userId,
-                                  amount: 1,
-                                  reason: "Admin panel adjustment",
+                                  eventId: live.adminEvents[0]?.id ?? "",
+                                  ticketQuantity: 1,
+                                  consumeCapacity: true,
+                                  debitCredits: false,
                                   idempotencyKey: crypto.randomUUID(),
                                 }),
                               setAdminMessage,
                               live.refetchActiveSurface,
-                            )
-                          }
+                            );
+                          }}
                         >
-                          + Credit
+                          Create ticket
                         </Button>
+                        <p className="ui-7825411d">
+                          History, preferences, bookings, and adjustment
+                          controls are expandable.
+                        </p>
                       </div>
-                      <AdminFreezeUnfreezeForm
-                        userId={member.userId}
-                        isFrozen={member.billingOverrideActions.includes(
-                          "freeze",
-                        )}
-                        resultMessage={adminMessage}
-                        onSubmit={async (input) => {
-                          await runServerAction(
-                            () =>
-                              actions.toggleUserFreeze({
-                                userId: input.userId,
-                                frozen: input.frozen,
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {expandedMemberId === member.userId && (
-                    <div className="ui-d5cabae9">
-                      <div className="grid-cols-1 ui-0710d2a7">
-                        <div className="auth-stack">
-                          <div className="ui-8be98ec0">Preferences</div>
-                          <div className="ui-e93697cc">
-                            Age {member.preferences.ageGroup || "Unknown"} /
-                            Radius {member.preferences.maxDistance}km /{" "}
-                            {member.preferences.accessibility
-                              ? "Accessible"
-                              : "No accessibility flag"}
-                          </div>
-                          <div className="ui-b8ceaab1">
-                            {[
-                              {
-                                label: "Interests",
-                                values: member.preferences.interests,
-                              },
-                              {
-                                label: "Moods",
-                                values: member.preferences.moods,
-                              },
-                              {
-                                label: "Districts",
-                                values: member.preferences.districts,
-                              },
-                              {
-                                label: "Timing",
-                                values: member.preferences.preferredDays
-                                  ? member.preferences.timing
-                                  : [],
-                              },
-                              {
-                                label: "Days",
-                                values: member.preferences.preferredDays,
-                              },
-                              {
-                                label: "Languages",
-                                values: member.preferences.preferredLanguages,
-                              },
-                            ].map((group) => (
-                              <div key={group.label} className="ui-27e6c432">
-                                <div className="ui-04a3b34c">{group.label}</div>
-                                <div className="ui-94a65763">
-                                  {(group.values?.length
-                                    ? group.values
-                                    : ["None"]
-                                  ).map((value) => (
-                                    <Badge
-                                      key={`${group.label}-${value}`}
-                                      tone="white"
-                                      className="ui-a3c18814"
-                                    >
-                                      {value}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="auth-stack">
-                          <div className="ui-8be98ec0">History</div>
-                          <div className="grid-cols-2 ui-73b06403">
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Bookings</div>
-                              <div className="ui-6d76c1b3">
-                                {member.bookingCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Waitlist</div>
-                              <div className="ui-6d76c1b3">
-                                {member.waitlistCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Saved</div>
-                              <div className="ui-6d76c1b3">
-                                {member.savedCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Sessions</div>
-                              <div className="ui-6d76c1b3">
-                                {member.sessionCount}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="auth-stack">
-                          <div className="ui-8be98ec0">Behavior Intel</div>
-                          <div className="grid-cols-2 ui-73b06403">
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Event Opens</div>
-                              <div className="ui-6d76c1b3">
-                                {member.eventOpenCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Filter Applies</div>
-                              <div className="ui-6d76c1b3">
-                                {member.filterApplyCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Saves</div>
-                              <div className="ui-6d76c1b3">
-                                {member.savedCount}
-                              </div>
-                            </div>
-                            <div className="ui-820d9618">
-                              <div className="ui-dd637d47">Unsaves</div>
-                              <div className="ui-6d76c1b3">
-                                {member.unsavedCount}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="ui-27e6c432">
-                            <div className="ui-04a3b34c">Latest Signals</div>
-                            <div className="ui-7d9ca3c3">
-                              <div>
-                                Last View: {member.lastView || "Unknown"}
-                              </div>
-                              <div>
-                                Last Seen:{" "}
-                                {member.lastSeenAt
-                                  ? new Date(member.lastSeenAt).toLocaleString()
-                                  : "Unknown"}
-                              </div>
-                              <div>
-                                Last Booking:{" "}
-                                {member.lastBookedEventId || "None"}
-                              </div>
-                              <div>
-                                Last Waitlist:{" "}
-                                {member.lastWaitlistedEventId || "None"}
-                              </div>
-                              <div>
-                                Pref Update:{" "}
-                                {member.preferencesUpdatedAt
-                                  ? new Date(
-                                      member.preferencesUpdatedAt,
-                                    ).toLocaleString()
-                                  : "Never"}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="ui-26717177">
-                            <div className="ui-04a3b34c">
-                              Recently Touched Events
-                            </div>
-                            <div className="ui-94a65763">
-                              {member.recentEventIds.length === 0 ? (
-                                <span className="ui-dd637d47">
-                                  No tracked event opens.
-                                </span>
-                              ) : (
-                                member.recentEventIds.map((eventId) => {
-                                  const matchingEvent =
-                                    live.events.find((e) => e.id === eventId) ||
-                                    live.adminEvents.find(
-                                      (e) => e.id === eventId,
-                                    );
-                                  return (
-                                    <Badge
-                                      key={eventId}
-                                      tone="yellow"
-                                      className="ui-a3c18814"
-                                    >
-                                      {matchingEvent
-                                        ? matchingEvent.title
-                                        : eventId}
-                                    </Badge>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Divider className="ui-4078b3ee" />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          void runServerAction(
-                            () =>
-                              actions.createAdminTicket({
-                                userId: member.userId,
-                                eventId: live.adminEvents[0]?.id ?? "",
-                                ticketQuantity: 1,
-                                consumeCapacity: true,
-                                debitCredits: false,
-                                idempotencyKey: crypto.randomUUID(),
-                              }),
-                            setAdminMessage,
-                            live.refetchActiveSurface,
-                          );
-                        }}
-                      >
-                        Create ticket
-                      </Button>
-                      <p className="ui-7825411d">
-                        History, preferences, bookings, and adjustment controls
-                        are expandable.
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              ))
-            )}
-            {!live.isLoading && live.adminMembers.length > 0 && (
+                    )}
+                  </Card>
+                ))
+              : null}
+            {!membersStatus.isPending && live.adminMembers.length > 0 && (
               <Pagination
                 page={membersPage}
                 pageSize={membersPageSize}

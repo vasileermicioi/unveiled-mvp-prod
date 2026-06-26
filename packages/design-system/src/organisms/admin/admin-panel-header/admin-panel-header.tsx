@@ -1,20 +1,25 @@
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 export interface AdminPanelHeaderProps {
   badge: string;
   title: string;
+  trailing?: ReactNode;
 }
 
 export function AdminPanelHeaderPresentational({
   badge,
   title,
+  trailing,
 }: AdminPanelHeaderProps): ReactElement {
   return (
-    <section className="border-4 border-brand-dark bg-white p-5 md:p-7">
-      <span className="inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-yellow px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark">
-        {badge}
-      </span>
-      <h1 className="headline-lg mt-5">{title}</h1>
+    <section className="flex flex-wrap items-start justify-between gap-4 border-4 border-brand-dark bg-white p-5 md:p-7">
+      <div>
+        <span className="inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-yellow px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark">
+          {badge}
+        </span>
+        <h1 className="headline-lg mt-5">{title}</h1>
+      </div>
+      {trailing ? <div className="pt-2">{trailing}</div> : null}
     </section>
   );
 }

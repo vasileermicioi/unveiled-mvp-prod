@@ -1,4 +1,6 @@
 export * from "./_shared/loading-skeleton";
+export * from "./_shared/shell-status-banner";
+export * from "./_shared/table-skeleton";
 export * from "./admin";
 export * from "./auth";
 export * from "./bookings";
@@ -13,6 +15,8 @@ export * from "./payments";
 export * from "./shell";
 
 import * as LoadingSkeleton from "./_shared/loading-skeleton";
+import * as ShellStatusBanner from "./_shared/shell-status-banner";
+import * as TableSkeleton from "./_shared/table-skeleton";
 import * as Admin from "./admin";
 import * as Auth from "./auth";
 import * as Bookings from "./bookings";
@@ -36,6 +40,8 @@ export const Organisms = {
   ...LandingHero,
   ...LandingTemplate,
   ...LoadingSkeleton,
+  ...ShellStatusBanner,
+  ...TableSkeleton,
   ...Members,
   ...PartnerPortal,
   ...Payments,
