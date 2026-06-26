@@ -23,6 +23,10 @@ export type MemberInitialSurfaceData = {
 export type PartnerInitialSurfaceData = {
   surface: "partner";
   partnerId: string;
+  partnerGuests?: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  };
   data: PartnerData;
 };
 
@@ -58,11 +62,20 @@ export function createMemberInitialSurfaceData(
 export function createPartnerInitialSurfaceData(
   viewer: Viewer,
   data: PartnerData,
+  partnerGuests?: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  },
 ): PartnerInitialSurfaceData {
   if (viewer.kind !== "authenticated" || !viewer.partnerId) {
     throw new Error("Partner initial data requires a partner viewer.");
   }
-  return { surface: "partner", partnerId: viewer.partnerId, data };
+  return {
+    surface: "partner",
+    partnerId: viewer.partnerId,
+    partnerGuests,
+    data,
+  };
 }
 
 export function createAdminInitialSurfaceData(

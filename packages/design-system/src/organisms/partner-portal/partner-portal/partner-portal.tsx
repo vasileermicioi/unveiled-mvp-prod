@@ -175,6 +175,7 @@ export interface PartnerPortalGuestRow {
   eventTitle: string;
   statusBadge: ReactNode;
   actionButton: ReactNode;
+  errorBanner?: ReactNode;
 }
 
 export interface PartnerPortalListCopy {
@@ -231,34 +232,39 @@ export function PartnerPortalListPresentational(
           rows.map((guest) => (
             <section
               key={guest.bookingId}
-              className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] md:items-center gap-4 border-t-2 border-brand-dark/10 p-4"
+              className="border-t-2 border-brand-dark/10"
             >
-              <div>
-                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  {guestLabel}
-                </span>
-                <p className="text-sm font-black uppercase tracking-widest">
-                  {guest.name}
-                </p>
-                <p className="text-xs font-bold opacity-55">{guest.email}</p>
-              </div>
-              <div>
-                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  {eventLabel}
-                </span>
-                <p className="text-sm font-bold">{guest.eventTitle}</p>
-              </div>
-              <div>
-                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
-                  {statusLabel}
-                </span>
-                {guest.statusBadge}
-              </div>
-              <div>
-                <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
-                  {actionLabel}
-                </span>
-                {guest.actionButton}
+              {guest.errorBanner ? (
+                <div className="px-4 pt-4">{guest.errorBanner}</div>
+              ) : null}
+              <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_0.8fr_auto] md:items-center gap-4 p-4">
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                    {guestLabel}
+                  </span>
+                  <p className="text-sm font-black uppercase tracking-widest">
+                    {guest.name}
+                  </p>
+                  <p className="text-xs font-bold opacity-55">{guest.email}</p>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                    {eventLabel}
+                  </span>
+                  <p className="text-sm font-bold">{guest.eventTitle}</p>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden">
+                    {statusLabel}
+                  </span>
+                  {guest.statusBadge}
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest opacity-40 md:hidden mb-2">
+                    {actionLabel}
+                  </span>
+                  {guest.actionButton}
+                </div>
               </div>
             </section>
           ))

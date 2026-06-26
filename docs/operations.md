@@ -163,3 +163,41 @@ first-paint skeleton and the retry path, and
 `packages/design-system/src/organisms/_shared/table-skeleton/table-skeleton.test.tsx`
 asserts the skeleton's `aria-busy="true"` host, grid template, cell
 count, and clamping behaviour.
+
+## Partner portal guest list pagination + per-row error feedback
+
+The partner portal (`/app/[lang]/partner`) renders the authenticated
+partner's confirmed bookings as a paginated list. The contract mirrors
+the admin tab pagination contract so the same primitives carry both
+surfaces:
+
+- Query params: `?partnerGuestsPage=<n>&partnerGuestsPageSize=<m>`.
+  `partnerGuestsPage` defaults to `1`; `partnerGuestsPageSize` defaults
+  to `20` and is clamped server-side to `[1, 50]`.
+- Response shape: the partner surface returns
+  `guestsPage`, `guestsPageSize`, `guestsTotalCount`, `guestsHasMore`
+  alongside the existing `guests`, `guestCount`, `ticketCount`,
+  `exportRows`, and `exportAvailable` fields.
+- Page-size dropdown resets `partnerGuestsPage` to `1` and forwards the
+  new size to the API Worker; the URL is kept in sync via
+  `history.replaceState` so the back button stays clean.
+- The control component is the existing `<Pagination />` atom (already
+  used by the admin tabs); no partner-specific primitive is
+  introduced.
+
+A check-in mutation that fails (booking already used, partner does not
+own the event, or the booking is in `CANCELLED_PENDING`) MUST surface
+the failure as a per-row `<ShellStatusBannerPresentational type="error">`
+keyed by the row's `bookingId`. The banner is rendered above the row
+inside `PartnerPortalListPresentational`, is scoped to the row that
+triggered the failure, and is dismissed when the row drops off the
+current page or transitions to `USED` after a successful refetch.
+Rows whose status is `USED` render an `<Badge tone="dark">Already
+used</Badge>` next to the guest name and disable the "Check in"
+button so the action cannot be re-triggered from the UI.
+
+`tests/features/partner/guest-pagination/feature.feature` exercises the
+Next-page control, the already-used row, and the page-size reset.
+`tests/features/partner/check-in-failure/feature.feature` exercises the
+per-row banner states (no banner, error banner after a failed check-in,
+banner cleared after a successful refetch).

@@ -42,11 +42,11 @@ export function mountDataAccessRoutes(app: AppType): void {
     try {
       const surface = c.req.param("surface");
       const url = c.req.url;
+      const search = new URL(url).searchParams;
 
       if (surface === "public-discovery") {
         const viewer = await getViewer(c.req.raw);
         const filters = filtersFromUrl(url);
-        const search = new URL(url).searchParams;
         const parsed = PublicDiscoveryQuerySchema.safeParse({
           category: filters.category,
           partnerId: filters.partnerId,
@@ -79,9 +79,14 @@ export function mountDataAccessRoutes(app: AppType): void {
         });
       }
       if (surface === "partner") {
+        const partnerFilters = {
+          partnerGuestsPage: search.get("partnerGuestsPage") ?? undefined,
+          partnerGuestsPageSize:
+            search.get("partnerGuestsPageSize") ?? undefined,
+        };
         return c.json({
           surface: "partner",
-          data: await loadCurrentPartnerData(c.req.raw),
+          data: await loadCurrentPartnerData(c.req.raw, partnerFilters),
         });
       }
       if (surface === "admin") {

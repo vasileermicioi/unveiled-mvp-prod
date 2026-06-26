@@ -25,9 +25,18 @@ const initialShell = createShellFromViewer(
   ownership.viewer,
   ownership.route.id,
 );
+const partnerGuestsPage =
+  Astro.url.searchParams.get("partnerGuestsPage") ?? undefined;
+const partnerGuestsPageSize =
+  Astro.url.searchParams.get("partnerGuestsPageSize") ?? undefined;
+const partnerGuests = {
+  partnerGuestsPage,
+  partnerGuestsPageSize,
+};
 const initialDiscovery = createPartnerInitialSurfaceData(
   ownership.viewer,
-  await loadCurrentPartnerData(ownership.viewer),
+  await loadCurrentPartnerData(ownership.viewer, partnerGuests),
+  partnerGuests,
 );
 ---
 

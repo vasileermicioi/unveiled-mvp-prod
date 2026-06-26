@@ -56,6 +56,15 @@ model MemberInput {
 @doc("Partner surface input.")
 model PartnerInput {
   partnerId: Id;
+
+  @doc("Guest list page (1-indexed, default 1).")
+  @minValue(1)
+  partnerGuestsPage?: int32 = 1;
+
+  @doc("Guest list page size (1..50, default 20).")
+  @minValue(1)
+  @maxValue(50)
+  partnerGuestsPageSize?: int32 = 20;
 }
 
 @doc("Admin surface input.")

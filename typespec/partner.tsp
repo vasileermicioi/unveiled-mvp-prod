@@ -19,6 +19,7 @@ model PartnerGuestRow {
   eventTitle: string;
   redemptionCode?: string;
   status: BookingState;
+  statusRaw: string;
   ticketQuantity: int32;
   createdAt: Timestamp;
   checkedInAt?: Timestamp;
@@ -34,6 +35,10 @@ model PartnerPortal {
   venueToken: string;
   aggregateGuests: int32;
   exportAvailable: boolean;
+  guestsPage: int32;
+  guestsPageSize: int32;
+  guestsTotalCount: int32;
+  guestsHasMore: boolean;
 }
 
 @doc("Partner check-in request.")

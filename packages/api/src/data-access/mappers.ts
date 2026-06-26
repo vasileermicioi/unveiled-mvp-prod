@@ -132,6 +132,7 @@ export type DataAccessGuestView = {
   eventTitle: string;
   redemptionCode: string | null;
   statusLabel: string;
+  statusRaw: string;
   tickets: number;
   createdAt: string;
   checkedInLabel: string;
@@ -449,6 +450,7 @@ export function mapGuestView(input: {
     eventTitle: input.event.title,
     redemptionCode: input.booking.redemptionInfo,
     statusLabel: labelize(input.booking.status),
+    statusRaw: input.booking.status,
     tickets: input.booking.ticketsCount,
     createdAt: formatDateLabel(input.booking.createdAt),
     checkedInLabel: input.booking.checkedInAt

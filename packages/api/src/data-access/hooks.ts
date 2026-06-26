@@ -54,15 +54,21 @@ export function useMemberDataQuery(
 
 export function usePartnerDataQuery(
   partnerId: string,
+  pagination: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  } = {},
   options: Partial<UseQueryOptions<PartnerData>> = {},
 ) {
   return useQuery({
-    queryKey: dataQueryKeys.partnerPortal(partnerId),
+    queryKey: [...dataQueryKeys.partnerPortal(partnerId), pagination],
     queryFn: () =>
       fetchDataAccessSurface<{ surface: "partner"; data: PartnerData }>(
         "partner",
+        { filters: pagination },
       ),
     staleTime: queryStaleTimes.partnerGuests,
+    placeholderData: keepPreviousData,
     ...options,
   });
 }

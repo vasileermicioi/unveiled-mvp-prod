@@ -224,6 +224,7 @@ function partnerData(): PartnerData {
         eventTitle: "Live Event",
         redemptionCode: "LIVE",
         statusLabel: "Confirmed",
+        statusRaw: "CONFIRMED",
         tickets: 2,
         createdAt: "Today",
         checkedInLabel: "Not checked in",
@@ -244,6 +245,10 @@ function partnerData(): PartnerData {
         createdAt: new Date("2026-05-04T18:00:00.000Z"),
       },
     ],
+    guestsPage: 1,
+    guestsPageSize: 20,
+    guestsTotalCount: 1,
+    guestsHasMore: false,
   };
 }
 

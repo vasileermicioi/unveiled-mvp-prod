@@ -196,7 +196,12 @@ describe("authorized data loaders", () => {
 
   test("rejects partner reads for another partner before database access", async () => {
     const error = await captureError(() =>
-      loadPartnerData(partnerViewer("partner-1"), "partner-2", throwingDb()),
+      loadPartnerData(
+        partnerViewer("partner-1"),
+        "partner-2",
+        {},
+        throwingDb(),
+      ),
     );
     expect(error).toMatchObject({ code: "forbidden", status: 403 });
   });

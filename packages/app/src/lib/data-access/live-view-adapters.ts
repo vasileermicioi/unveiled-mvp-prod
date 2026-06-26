@@ -50,6 +50,8 @@ export type LiveDataView = {
     partnersPageSize?: string;
     eventsPage?: string;
     eventsPageSize?: string;
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
   };
   savedCount: number;
   bookings: MemberData["bookings"];
@@ -68,11 +70,16 @@ export type LiveDataView = {
     eventTitle: string;
     tickets: number;
     statusLabel: string;
+    statusRaw?: string;
     checkedInLabel: string;
     checkInDisabled: boolean;
     exportCode: string;
   }>;
   partnerGuestTotal: string;
+  partnerGuestsPage: number;
+  partnerGuestsPageSize: number;
+  partnerGuestsTotalCount: number;
+  partnerGuestsHasMore: boolean;
   adminDashboardMetrics: Array<{
     label: string;
     value: string;
@@ -97,6 +104,10 @@ export type LiveDataView = {
     refetch: () => void;
   };
   setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
+  setPartnerFilters?: (filters: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  }) => void;
   totalCount?: number;
   page?: number;
   pageSize?: number;
@@ -171,6 +182,10 @@ export const emptyLiveDataView: LiveDataView = {
   partnerEventOptions: [],
   partnerGuests: [],
   partnerGuestTotal: "0 guests",
+  partnerGuestsPage: 1,
+  partnerGuestsPageSize: 20,
+  partnerGuestsTotalCount: 0,
+  partnerGuestsHasMore: false,
   adminDashboardMetrics: [
     { label: "Bookings", value: "0", caption: "Confirmed access" },
     { label: "Members", value: "0", caption: "Active accounts" },
@@ -211,6 +226,10 @@ export function createLiveDataView(input: {
     refetch: () => void;
   };
   setDiscoveryFilters?: (filters: DiscoveryFilters) => void;
+  setPartnerFilters?: (filters: {
+    partnerGuestsPage?: string;
+    partnerGuestsPageSize?: string;
+  }) => void;
   discoveryFilters?: DiscoveryFilters;
 }): LiveDataView {
   const memberProfile = input.memberData?.profile;
@@ -236,11 +255,13 @@ export function createLiveDataView(input: {
       eventTitle: guest.eventTitle,
       tickets: guest.tickets,
       statusLabel: guest.statusLabel,
+      statusRaw: guest.statusRaw,
       checkedInLabel:
         guest.checkedInLabel === "Not checked in"
           ? guest.checkInAvailableLabel
           : "Checked in",
       checkInDisabled:
+        guest.statusRaw === "USED" ||
         guest.checkedInLabel !== "Not checked in" ||
         guest.checkInAvailableLabel !== "Check-in available",
       exportCode: guest.redemptionCode ?? "",
@@ -315,6 +336,10 @@ export function createLiveDataView(input: {
     partnerEventOptions: input.partnerData?.eventOptions ?? [],
     partnerGuests: guests,
     partnerGuestTotal: `${guestCount} guests`,
+    partnerGuestsPage: input.partnerData?.guestsPage ?? 1,
+    partnerGuestsPageSize: input.partnerData?.guestsPageSize ?? 20,
+    partnerGuestsTotalCount: input.partnerData?.guestsTotalCount ?? 0,
+    partnerGuestsHasMore: input.partnerData?.guestsHasMore ?? false,
     adminDashboardMetrics: [
       {
         label: "Bookings",
@@ -356,6 +381,7 @@ export function createLiveDataView(input: {
       refetch: input.refetchActiveSurface,
     },
     setDiscoveryFilters: input.setDiscoveryFilters,
+    setPartnerFilters: input.setPartnerFilters,
     totalCount:
       input.memberData?.discovery.totalCount ?? input.publicData.totalCount,
     page: input.memberData?.discovery.page ?? input.publicData.page,

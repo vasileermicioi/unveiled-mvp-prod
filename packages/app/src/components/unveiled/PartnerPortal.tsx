@@ -1,5 +1,6 @@
 import { actions } from "astro:actions";
 import {
+  Badge,
   Button,
   type PartnerPortalFiltersCopy,
   PartnerPortalFiltersPresentational,
@@ -7,12 +8,14 @@ import {
   type PartnerPortalHeaderCopy,
   PartnerPortalHeaderPresentational,
   PartnerPortalListPresentational,
+  ShellStatusBannerPresentational,
 } from "@unveiled/design-system";
 import { Check, Download, QrCode } from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
 import {
   downloadCsv,
   LanguageContext,
+  Pagination,
   runServerAction,
   useCopy,
   useLiveData,
@@ -30,6 +33,8 @@ export function PartnerPortal() {
   }, [copy.checkInDefault]);
   const [guestSearch, setGuestSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("");
+  const [rowErrors, setRowErrors] = useState<Map<string, string>>(new Map());
+
   const filteredGuests = useMemo(() => {
     const search = guestSearch.trim().toLowerCase();
     return live.partnerGuests.filter((guest) => {
@@ -43,6 +48,37 @@ export function PartnerPortal() {
       return matchesSearch && matchesEvent;
     });
   }, [eventFilter, guestSearch, live.partnerGuests]);
+
+  useEffect(() => {
+    setRowErrors((prev) => {
+      const visibleBookingIds = new Set(filteredGuests.map((g) => g.bookingId));
+      const usedBookingIds = new Set(
+        filteredGuests
+          .filter((g) => g.statusRaw === "USED")
+          .map((g) => g.bookingId),
+      );
+      let mutated = false;
+      const next = new Map(prev);
+      for (const bookingId of Array.from(prev.keys())) {
+        if (
+          !visibleBookingIds.has(bookingId) ||
+          usedBookingIds.has(bookingId)
+        ) {
+          next.delete(bookingId);
+          mutated = true;
+        }
+      }
+      return mutated ? next : prev;
+    });
+  }, [filteredGuests]);
+
+  const setRowError = (bookingId: string, message: string) => {
+    setRowErrors((prev) => {
+      const next = new Map(prev);
+      next.set(bookingId, message);
+      return next;
+    });
+  };
 
   const headerCopy: PartnerPortalHeaderCopy = {
     portalBadge: copy.partnerPortal,
@@ -59,68 +95,103 @@ export function PartnerPortal() {
     downloadCsvLabel: copy.downloadCsv,
   };
 
-  const guestRows: PartnerPortalGuestRow[] = filteredGuests.map((guest) => ({
-    bookingId: guest.bookingId,
-    name: guest.name,
-    email: guest.email,
-    eventTitle: guest.eventTitle,
-    statusBadge: (
-      <span
-        className={
-          guest.statusLabel === "Waitlist"
-            ? "inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-grey px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark"
-            : "inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-yellow px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark"
-        }
-      >
-        {guest.statusLabel === "Waitlist"
-          ? selectedLanguage === "DE"
-            ? "Warteliste"
-            : "Waitlist"
-          : guest.statusLabel === "Confirmed"
-            ? selectedLanguage === "DE"
-              ? "Bestätigt"
-              : "Confirmed"
-            : guest.statusLabel === "Cancelled"
+  const handleCheckIn = async (bookingId: string) => {
+    if (!live.partner?.id) return;
+    setRowErrors((prev) => {
+      if (!prev.has(bookingId)) return prev;
+      const next = new Map(prev);
+      next.delete(bookingId);
+      return next;
+    });
+    await runServerAction(
+      () =>
+        actions.checkInBooking({
+          bookingId,
+          partnerId: live.partner?.id ?? "",
+        }),
+      setCheckInMessage,
+      live.refetchActiveSurface,
+      (_fieldErrors, formError) => {
+        if (formError) setRowError(bookingId, formError);
+      },
+    );
+  };
+
+  const guestRows: PartnerPortalGuestRow[] = filteredGuests.map((guest) => {
+    const isUsed = guest.statusRaw === "USED";
+    const errorMessage = rowErrors.get(guest.bookingId);
+    return {
+      bookingId: guest.bookingId,
+      name: guest.name,
+      email: guest.email,
+      eventTitle: guest.eventTitle,
+      statusBadge: (
+        <>
+          <span
+            className={
+              guest.statusLabel === "Waitlist"
+                ? "inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-grey px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark"
+                : "inline-flex items-center gap-1 border-2 border-brand-dark bg-brand-yellow px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-dark"
+            }
+          >
+            {guest.statusLabel === "Waitlist"
               ? selectedLanguage === "DE"
-                ? "Storniert"
-                : "Cancelled"
-              : guest.statusLabel}
-      </span>
-    ),
-    actionButton: (
-      <Button
-        type="button"
-        className="ui-38864ed6"
-        variant={guest.checkedInLabel === "Checked in" ? "copied" : "primary"}
-        disabled={guest.checkInDisabled}
-        onClick={() =>
-          void runServerAction(
-            () =>
-              actions.checkInBooking({
-                bookingId: guest.bookingId,
-                partnerId: live.partner?.id ?? "",
-              }),
-            setCheckInMessage,
-            live.refetchActiveSurface,
-          )
-        }
-      >
-        {guest.checkedInLabel === "Checked in"
-          ? selectedLanguage === "DE"
-            ? "Eingecheckt"
-            : "Checked in"
-          : guest.checkedInLabel === "Check-in available"
+                ? "Warteliste"
+                : "Waitlist"
+              : guest.statusLabel === "Confirmed"
+                ? selectedLanguage === "DE"
+                  ? "Bestätigt"
+                  : "Confirmed"
+                : guest.statusLabel === "Cancelled"
+                  ? selectedLanguage === "DE"
+                    ? "Storniert"
+                    : "Cancelled"
+                  : guest.statusLabel}
+          </span>
+          {isUsed ? (
+            <Badge tone="dark">
+              {selectedLanguage === "DE" ? "Bereits genutzt" : "Already used"}
+            </Badge>
+          ) : null}
+        </>
+      ),
+      actionButton: (
+        <Button
+          type="button"
+          className="ui-38864ed6"
+          variant={guest.checkedInLabel === "Checked in" ? "copied" : "primary"}
+          disabled={guest.checkInDisabled || isUsed}
+          onClick={() => void handleCheckIn(guest.bookingId)}
+        >
+          {guest.checkedInLabel === "Checked in"
             ? selectedLanguage === "DE"
-              ? "Check-in verfügbar"
-              : "Check-in available"
-            : guest.checkedInLabel === "Closed"
+              ? "Eingecheckt"
+              : "Checked in"
+            : guest.checkedInLabel === "Check-in available"
               ? selectedLanguage === "DE"
-                ? "Geschlossen"
-                : "Closed"
-              : guest.checkedInLabel}
-      </Button>
-    ),
-  }));
+                ? "Check-in verfügbar"
+                : "Check-in available"
+              : guest.checkedInLabel === "Closed"
+                ? selectedLanguage === "DE"
+                  ? "Geschlossen"
+                  : "Closed"
+                : guest.checkedInLabel}
+        </Button>
+      ),
+      errorBanner: errorMessage ? (
+        <ShellStatusBannerPresentational
+          type="error"
+          title={
+            selectedLanguage === "DE"
+              ? "Check-in fehlgeschlagen"
+              : "Check-in failed"
+          }
+          body={errorMessage}
+          data-testid={`partner-checkin-error-${guest.bookingId}`}
+        />
+      ) : undefined,
+    };
+  });
 
   return (
     <div className="ui-e400b83c">
@@ -130,7 +201,7 @@ export function PartnerPortal() {
         partnerAddress={live.partner?.address ?? null}
         stats={{
           label: copy.totalGuests,
-          value: live.partnerGuestTotal.replace(" guests", ""),
+          value: `${live.partnerGuestsTotalCount}`,
           caption: copy.acrossSelected,
         }}
         qrIcon={<QrCode className="ui-ebd37e04" />}
@@ -195,6 +266,26 @@ export function PartnerPortal() {
         rows={guestRows}
         checkInStatusMessage={checkInMessage}
       />
+      {live.partnerGuestsTotalCount > 0 ? (
+        <Pagination
+          page={live.partnerGuestsPage}
+          pageSize={live.partnerGuestsPageSize}
+          totalCount={live.partnerGuestsTotalCount}
+          hasMore={live.partnerGuestsHasMore}
+          onPageChange={(next: number) =>
+            live.setPartnerFilters?.({
+              partnerGuestsPage: String(next),
+              partnerGuestsPageSize: String(live.partnerGuestsPageSize),
+            })
+          }
+          onPageSizeChange={(next: number) =>
+            live.setPartnerFilters?.({
+              partnerGuestsPage: "1",
+              partnerGuestsPageSize: String(next),
+            })
+          }
+        />
+      ) : null}
     </div>
   );
 }
